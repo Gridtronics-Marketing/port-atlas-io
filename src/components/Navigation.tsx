@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Building2, Menu, X, User, Settings, LogOut } from "lucide-react";
+import { Menu, X, User, Settings, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link, useLocation } from "react-router-dom";
@@ -11,6 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import portAtlasLogo from "@/assets/port-atlas-logo.png";
 
 export const Navigation = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -32,12 +33,14 @@ export const Navigation = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2">
-            <div className="p-2 bg-gradient-primary rounded-lg">
-              <Building2 className="h-6 w-6 text-white" />
-            </div>
+          <Link to="/" className="flex items-center gap-3">
+            <img 
+              src={portAtlasLogo} 
+              alt="Port Atlas" 
+              className="h-10 w-auto"
+            />
             <span className="text-xl font-bold text-foreground hidden sm:inline">
-              JobSite Pro
+              Port Atlas
             </span>
           </Link>
 
