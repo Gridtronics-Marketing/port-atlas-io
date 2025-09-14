@@ -20,7 +20,7 @@ interface DropPoint {
 }
 
 interface InteractiveMapProps {
-  locationId: number;
+  locationId: string;
 }
 
 // Mock drop points for demonstration

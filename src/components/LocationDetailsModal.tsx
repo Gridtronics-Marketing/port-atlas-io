@@ -54,7 +54,7 @@ export const LocationDetailsModal = ({ location, open, onOpenChange }: LocationD
                   {location.status}
                 </Badge>
                 <span className="text-sm text-muted-foreground">
-                  {location.client} • {location.address}
+                  {location.project?.client?.name || 'No Client'} • {location.address}
                 </span>
               </div>
             </div>
@@ -73,7 +73,7 @@ export const LocationDetailsModal = ({ location, open, onOpenChange }: LocationD
                 <div className="flex items-center gap-2">
                   <Cable className="h-5 w-5 text-primary" />
                   <div>
-                    <p className="text-2xl font-bold text-foreground">{location.dropPoints}</p>
+                    <p className="text-2xl font-bold text-foreground">{location.drop_points_count || 0}</p>
                     <p className="text-sm text-muted-foreground">Drop Points</p>
                   </div>
                 </div>
@@ -97,7 +97,7 @@ export const LocationDetailsModal = ({ location, open, onOpenChange }: LocationD
                 <div className="flex items-center gap-2">
                   <FileText className="h-5 w-5 text-warning" />
                   <div>
-                    <p className="text-2xl font-bold text-foreground">{location.completion}%</p>
+                    <p className="text-2xl font-bold text-foreground">{location.completion_percentage}%</p>
                     <p className="text-sm text-muted-foreground">Complete</p>
                   </div>
                 </div>
