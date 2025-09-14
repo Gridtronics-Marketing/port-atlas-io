@@ -14,17 +14,19 @@ import {
 import { LocationGrid } from "@/components/LocationGrid";
 import { AddLocationModal } from "@/components/AddLocationModal";
 import { Navigation } from "@/components/Navigation";
+import { useLocations } from "@/hooks/useLocations";
 
 const Locations = () => {
   const [showAddLocation, setShowAddLocation] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const { locations } = useLocations();
 
   const stats = [
-    { label: "Total Locations", value: "12", color: "text-primary" },
-    { label: "Active Projects", value: "8", color: "text-success" },
-    { label: "Completed", value: "3", color: "text-muted-foreground" },
-    { label: "Planning Phase", value: "1", color: "text-warning" },
+    { label: "Total Locations", value: locations.length.toString(), color: "text-primary" },
+    { label: "Active Projects", value: locations.filter(l => l.status === 'Active').length.toString(), color: "text-success" },
+    { label: "Completed", value: locations.filter(l => l.status === 'Completed').length.toString(), color: "text-muted-foreground" },
+    { label: "In Progress", value: locations.filter(l => l.status === 'In Progress').length.toString(), color: "text-warning" },
   ];
 
   return (
@@ -113,7 +115,7 @@ const Locations = () => {
                 <MapPin className="h-5 w-5 text-primary" />
                 All Locations
               </span>
-              <Badge variant="secondary">12 Total</Badge>
+              <Badge variant="secondary">{locations.length} Total</Badge>
             </CardTitle>
             <CardDescription>
               Manage installation sites and track project progress

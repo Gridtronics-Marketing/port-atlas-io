@@ -1,9 +1,16 @@
 import { useState } from "react";
-import { Users, Plus, Wrench, Shield, User, Phone, Mail, Calendar, MoreHorizontal } from "lucide-react";
+import { Users, Plus, Search, Filter, Shield, Wrench, MoreHorizontal, Eye, Edit, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,87 +18,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Navigation } from "@/components/Navigation";
-
-const mockEmployees = [
-  {
-    id: 1,
-    name: "John Doe",
-    role: "Lead Technician",
-    email: "john.doe@company.com",
-    phone: "(555) 123-0001",
-    status: "Active",
-    currentAssignments: 3,
-    completedJobs: 45,
-    hireDate: "2023-03-15",
-    avatar: "/avatars/john.jpg",
-    initials: "JD",
-    permissions: ["add_drops", "edit_drops", "upload_photos", "manage_assignments"],
-    currentLocation: "Downtown Office Complex",
-  },
-  {
-    id: 2,
-    name: "Sarah Wilson",
-    role: "Installation Specialist",
-    email: "sarah.wilson@company.com",
-    phone: "(555) 123-0002",
-    status: "Active",
-    currentAssignments: 2,
-    completedJobs: 38,
-    hireDate: "2023-05-20",
-    avatar: "/avatars/sarah.jpg",
-    initials: "SW",
-    permissions: ["add_drops", "edit_drops", "upload_photos"],
-    currentLocation: "Manufacturing Facility A",
-  },
-  {
-    id: 3,
-    name: "Mike Johnson",
-    role: "Security Specialist",
-    email: "mike.johnson@company.com",
-    phone: "(555) 123-0003",
-    status: "Active",
-    currentAssignments: 1,
-    completedJobs: 22,
-    hireDate: "2023-08-10",
-    avatar: "/avatars/mike.jpg",
-    initials: "MJ",
-    permissions: ["add_drops", "edit_drops", "upload_photos", "security_access"],
-    currentLocation: "Retail Store Network",
-  },
-  {
-    id: 4,
-    name: "Emily Chen",
-    role: "Project Manager",
-    email: "emily.chen@company.com",
-    phone: "(555) 123-0004",
-    status: "Active",
-    currentAssignments: 5,
-    completedJobs: 67,
-    hireDate: "2022-11-01",
-    avatar: "/avatars/emily.jpg",
-    initials: "EC",
-    permissions: ["add_drops", "edit_drops", "remove_drops", "manage_assignments", "upload_photos", "admin_access"],
-    currentLocation: "Multiple Locations",
-  },
-  {
-    id: 5,
-    name: "David Martinez",
-    role: "Fiber Technician",
-    email: "david.martinez@company.com",
-    phone: "(555) 123-0005",
-    status: "On Leave",
-    currentAssignments: 0,
-    completedJobs: 31,
-    hireDate: "2023-06-12",
-    avatar: "/avatars/david.jpg",
-    initials: "DM",
-    permissions: ["add_drops", "edit_drops", "upload_photos", "fiber_specialist"],
-    currentLocation: "N/A",
-  },
-];
+import { useEmployees } from "@/hooks/useEmployees";
 
 const Employees = () => {
-  const [employees, setEmployees] = useState(mockEmployees);
+  const { employees, loading, deleteEmployee } = useEmployees();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [roleFilter, setRoleFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   const getRoleIcon = (role: string) => {
     if (role.includes("Lead") || role.includes("Manager")) return Shield;
@@ -107,23 +40,18 @@ const Employees = () => {
         return "bg-warning text-warning-foreground";
       case "Inactive":
         return "bg-muted text-muted-foreground";
+      case "Terminated":
+        return "bg-destructive text-destructive-foreground";
       default:
         return "bg-secondary text-secondary-foreground";
     }
   };
 
-  const getRoleColor = (role: string) => {
-    if (role.includes("Lead") || role.includes("Manager")) return "text-primary bg-primary/10";
-    if (role.includes("Security")) return "text-destructive bg-destructive/10";
-    if (role.includes("Fiber")) return "text-warning bg-warning/10";
-    return "text-muted-foreground bg-muted";
-  };
-
   const stats = [
     { label: "Total Employees", value: employees.length.toString(), color: "text-primary" },
-    { label: "Active Workers", value: employees.filter(e => e.status === "Active").length.toString(), color: "text-success" },
-    { label: "Current Assignments", value: employees.reduce((sum, e) => sum + e.currentAssignments, 0).toString(), color: "text-warning" },
-    { label: "Completed Jobs", value: employees.reduce((sum, e) => sum + e.completedJobs, 0).toString(), color: "text-muted-foreground" },
+    { label: "Active", value: employees.filter(e => e.status === 'Active').length.toString(), color: "text-success" },
+    { label: "On Leave", value: employees.filter(e => e.status === 'On Leave').length.toString(), color: "text-warning" },
+    { label: "Inactive", value: employees.filter(e => e.status === 'Inactive').length.toString(), color: "text-destructive" },
   ];
 
   return (
@@ -138,13 +66,13 @@ const Employees = () => {
               Employee Management
             </h1>
             <p className="text-muted-foreground mt-1">
-              Manage field teams, assignments, and access permissions
+              Manage team members, skills, and certifications
             </p>
           </div>
           
           <Button className="bg-gradient-primary hover:bg-primary-hover shadow-medium">
             <Plus className="h-4 w-4 mr-2" />
-            Add Employee
+            Add New Employee
           </Button>
         </div>
 
@@ -165,111 +93,134 @@ const Employees = () => {
           ))}
         </div>
 
-        {/* Employees List */}
+        {/* Filters */}
+        <Card className="shadow-soft">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Filter className="h-5 w-5" />
+              Filter & Search
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search employees, roles, or skills..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              
+              <Select value={roleFilter} onValueChange={setRoleFilter}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="Role" />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border">
+                  <SelectItem value="all">All Roles</SelectItem>
+                  <SelectItem value="technician">Technician</SelectItem>
+                  <SelectItem value="manager">Manager</SelectItem>
+                  <SelectItem value="engineer">Engineer</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border">
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="on-leave">On Leave</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Employees Grid */}
         <Card className="shadow-soft">
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span className="flex items-center gap-2">
                 <Users className="h-5 w-5 text-primary" />
-                Field Team
+                All Employees
               </span>
               <Badge variant="secondary">{employees.length} Total</Badge>
             </CardTitle>
             <CardDescription>
-              Manage employee accounts, permissions, and job assignments
+              Manage team members, skills, and certifications
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {employees.map((employee) => {
-                const RoleIcon = getRoleIcon(employee.role);
-                
-                return (
-                  <div
-                    key={employee.id}
-                    className="flex items-center justify-between p-4 border border-border rounded-lg hover:shadow-soft transition-all duration-200 bg-card"
-                  >
-                    <div className="flex items-center gap-4 flex-1">
-                      <Avatar className="h-12 w-12">
-                        <AvatarImage src={employee.avatar} alt={employee.name} />
-                        <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-                          {employee.initials}
-                        </AvatarFallback>
-                      </Avatar>
-                      
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-semibold text-foreground text-lg">
-                            {employee.name}
-                          </h3>
-                          <Badge className={getStatusColor(employee.status)}>
-                            {employee.status}
-                          </Badge>
+            {loading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                <span className="ml-2 text-muted-foreground">Loading employees...</span>
+              </div>
+            ) : employees.length === 0 ? (
+              <div className="text-center py-8">
+                <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">No employees found</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {employees.map((employee) => {
+                  const RoleIcon = getRoleIcon(employee.role);
+                  return (
+                    <div
+                      key={employee.id}
+                      className="flex items-center justify-between p-4 border border-border rounded-lg hover:shadow-soft transition-all duration-200 bg-card"
+                    >
+                      <div className="flex items-start gap-3 flex-1">
+                        <div className="p-2 bg-primary/10 rounded-lg">
+                          <RoleIcon className="h-5 w-5 text-primary" />
                         </div>
                         
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className={`p-1 rounded ${getRoleColor(employee.role)}`}>
-                            <RoleIcon className="h-3 w-3" />
-                          </div>
-                          <span className="text-sm font-medium text-foreground">
-                            {employee.role}
-                          </span>
-                        </div>
-                        
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                            <span className="flex items-center gap-1">
-                              <Mail className="h-3 w-3" />
-                              {employee.email}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Phone className="h-3 w-3" />
-                              {employee.phone}
-                            </span>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="font-semibold text-foreground truncate">
+                              {employee.first_name} {employee.last_name}
+                            </h3>
+                            <Badge className={getStatusColor(employee.status)}>
+                              {employee.status}
+                            </Badge>
                           </div>
                           
-                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                            <span className="flex items-center gap-1">
-                              <Wrench className="h-3 w-3" />
-                              {employee.currentAssignments} active assignments
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Calendar className="h-3 w-3" />
-                              {employee.completedJobs} completed jobs
-                            </span>
-                            <span>Hired: {new Date(employee.hireDate).toLocaleDateString()}</span>
+                          <p className="text-sm text-muted-foreground mb-2">
+                            {employee.role} • {employee.department || 'No Department'}
+                          </p>
+                          
+                          <div className="flex items-center gap-4 text-xs text-muted-foreground mb-2">
+                            <span>{employee.email || 'No Email'}</span>
+                            <span>{employee.phone || 'No Phone'}</span>
+                            <span>Hired: {employee.hire_date ? new Date(employee.hire_date).toLocaleDateString() : 'Unknown'}</span>
                           </div>
                           
-                          {employee.currentLocation !== "N/A" && (
-                            <div className="text-xs text-muted-foreground">
-                              <strong>Current Assignment:</strong> {employee.currentLocation}
-                            </div>
-                          )}
-                          
-                          <div className="flex flex-wrap gap-1 mt-2">
-                            {employee.permissions.slice(0, 3).map((permission) => (
-                              <Badge key={permission} variant="outline" className="text-xs">
-                                {permission.replace('_', ' ')}
-                              </Badge>
-                            ))}
-                            {employee.permissions.length > 3 && (
+                          <div className="flex flex-wrap gap-1">
+                            {employee.skills && employee.skills.length > 0 ? (
+                              <>
+                                {employee.skills.slice(0, 3).map((skill, index) => (
+                                  <Badge key={index} variant="outline" className="text-xs">
+                                    {skill}
+                                  </Badge>
+                                ))}
+                                {employee.skills.length > 3 && (
+                                  <Badge variant="outline" className="text-xs">
+                                    +{employee.skills.length - 3} more
+                                  </Badge>
+                                )}
+                              </>
+                            ) : (
                               <Badge variant="outline" className="text-xs">
-                                +{employee.permissions.length - 3} more
+                                No skills listed
                               </Badge>
                             )}
                           </div>
                         </div>
                       </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm">
-                        View Schedule
-                      </Button>
-                      
-                      <Button variant="outline" size="sm">
-                        Assign Job
-                      </Button>
                       
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -279,27 +230,27 @@ const Employees = () => {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="bg-popover border">
                           <DropdownMenuItem>
-                            Edit Profile
+                            <Eye className="mr-2 h-4 w-4" />
+                            View Details
                           </DropdownMenuItem>
                           <DropdownMenuItem>
-                            Manage Permissions
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit Employee
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            View Performance
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            Send Message
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive">
-                            Deactivate Employee
+                          <DropdownMenuItem 
+                            className="text-destructive"
+                            onClick={() => deleteEmployee(employee.id)}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete Employee
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </CardContent>
         </Card>
       </main>

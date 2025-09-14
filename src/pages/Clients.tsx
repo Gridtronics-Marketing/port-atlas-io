@@ -1,9 +1,16 @@
 import { useState } from "react";
-import { Users, Plus, Building2, Phone, Mail, MapPin, MoreHorizontal } from "lucide-react";
+import { Building2, Plus, Search, Filter, MoreHorizontal, Eye, Edit, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,85 +18,20 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Navigation } from "@/components/Navigation";
-
-const mockClients = [
-  {
-    id: 1,
-    name: "TechCorp Inc.",
-    contact: "John Smith",
-    email: "john.smith@techcorp.com",
-    phone: "(555) 123-4567",
-    locations: 3,
-    activeProjects: 2,
-    status: "Active",
-    joinDate: "2023-08-15",
-    avatar: "/avatars/techcorp.jpg",
-    initials: "TC",
-  },
-  {
-    id: 2,
-    name: "Industrial Solutions",
-    contact: "Sarah Johnson",
-    email: "s.johnson@industrial.com",
-    phone: "(555) 234-5678",
-    locations: 2,
-    activeProjects: 1,
-    status: "Active",
-    joinDate: "2023-09-22",
-    avatar: "/avatars/industrial.jpg",
-    initials: "IS",
-  },
-  {
-    id: 3,
-    name: "ShopMart",
-    contact: "Mike Wilson",
-    email: "mike.w@shopmart.com",
-    phone: "(555) 345-6789",
-    locations: 5,
-    activeProjects: 3,
-    status: "Active",
-    joinDate: "2023-07-10",
-    avatar: "/avatars/shopmart.jpg",
-    initials: "SM",
-  },
-  {
-    id: 4,
-    name: "Global Enterprises",
-    contact: "Lisa Chen",
-    email: "lisa.chen@global-ent.com",
-    phone: "(555) 456-7890",
-    locations: 1,
-    activeProjects: 0,
-    status: "Completed",
-    joinDate: "2023-06-05",
-    avatar: "/avatars/global.jpg",
-    initials: "GE",
-  },
-  {
-    id: 5,
-    name: "Local Business Co.",
-    contact: "David Brown",
-    email: "d.brown@localbiz.com",
-    phone: "(555) 567-8901",
-    locations: 1,
-    activeProjects: 1,
-    status: "Planning",
-    joinDate: "2024-01-12",
-    avatar: "/avatars/localbiz.jpg",
-    initials: "LB",
-  },
-];
+import { useClients } from "@/hooks/useClients";
 
 const Clients = () => {
-  const [clients, setClients] = useState(mockClients);
+  const { clients, loading, deleteClient } = useClients();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case "Active":
         return "bg-success text-success-foreground";
-      case "Planning":
+      case "Pending":
         return "bg-warning text-warning-foreground";
-      case "Completed":
+      case "Inactive":
         return "bg-muted text-muted-foreground";
       default:
         return "bg-secondary text-secondary-foreground";
@@ -98,9 +40,9 @@ const Clients = () => {
 
   const stats = [
     { label: "Total Clients", value: clients.length.toString(), color: "text-primary" },
-    { label: "Active Projects", value: clients.filter(c => c.status === "Active").length.toString(), color: "text-success" },
-    { label: "Total Locations", value: clients.reduce((sum, c) => sum + c.locations, 0).toString(), color: "text-warning" },
-    { label: "New This Month", value: "2", color: "text-muted-foreground" },
+    { label: "Active Clients", value: clients.filter(c => c.status === 'Active').length.toString(), color: "text-success" },
+    { label: "Pending", value: clients.filter(c => c.status === 'Pending').length.toString(), color: "text-warning" },
+    { label: "Inactive", value: clients.filter(c => c.status === 'Inactive').length.toString(), color: "text-muted-foreground" },
   ];
 
   return (
@@ -115,7 +57,7 @@ const Clients = () => {
               Client Management
             </h1>
             <p className="text-muted-foreground mt-1">
-              Manage client relationships, access, and project assignments
+              Manage client relationships and track business development
             </p>
           </div>
           
@@ -135,91 +77,106 @@ const Clients = () => {
                     <p className="text-sm text-muted-foreground">{stat.label}</p>
                     <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
                   </div>
-                  <Users className="h-8 w-8 text-primary opacity-20" />
+                  <Building2 className="h-8 w-8 text-primary opacity-20" />
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
 
-        {/* Clients List */}
+        {/* Filters */}
+        <Card className="shadow-soft">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Filter className="h-5 w-5" />
+              Filter & Search
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search clients, contacts, or email..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border">
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Clients Grid */}
         <Card className="shadow-soft">
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-primary" />
+                <Building2 className="h-5 w-5 text-primary" />
                 All Clients
               </span>
               <Badge variant="secondary">{clients.length} Total</Badge>
             </CardTitle>
             <CardDescription>
-              Manage client accounts and project access
+              Manage client relationships and track project progress
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {clients.map((client) => (
-                <div
-                  key={client.id}
-                  className="flex items-center justify-between p-4 border border-border rounded-lg hover:shadow-soft transition-all duration-200 bg-card"
-                >
-                  <div className="flex items-center gap-4 flex-1">
-                    <Avatar className="h-12 w-12">
-                      <AvatarImage src={client.avatar} alt={client.name} />
-                      <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-                        {client.initials}
-                      </AvatarFallback>
-                    </Avatar>
-                    
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold text-foreground text-lg">
-                          {client.name}
-                        </h3>
-                        <Badge className={getStatusColor(client.status)}>
-                          {client.status}
-                        </Badge>
+            {loading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                <span className="ml-2 text-muted-foreground">Loading clients...</span>
+              </div>
+            ) : clients.length === 0 ? (
+              <div className="text-center py-8">
+                <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">No clients found</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {clients.map((client) => (
+                  <div
+                    key={client.id}
+                    className="flex items-center justify-between p-4 border border-border rounded-lg hover:shadow-soft transition-all duration-200 bg-card"
+                  >
+                    <div className="flex items-start gap-3 flex-1">
+                      <div className="p-2 bg-primary/10 rounded-lg">
+                        <Building2 className="h-5 w-5 text-primary" />
                       </div>
                       
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                          <span className="flex items-center gap-1">
-                            <Users className="h-3 w-3" />
-                            {client.contact}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Mail className="h-3 w-3" />
-                            {client.email}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Phone className="h-3 w-3" />
-                            {client.phone}
-                          </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-semibold text-foreground truncate">
+                            {client.name}
+                          </h3>
+                          <Badge className={getStatusColor(client.status)}>
+                            {client.status}
+                          </Badge>
                         </div>
                         
+                        <p className="text-sm text-muted-foreground mb-2">
+                          {client.contact_name || 'No Contact'} • {client.contact_email || 'No Email'}
+                        </p>
+                        
                         <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                          <span className="flex items-center gap-1">
-                            <MapPin className="h-3 w-3" />
-                            {client.locations} locations
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Building2 className="h-3 w-3" />
-                            {client.activeProjects} active projects
-                          </span>
-                          <span>Joined: {new Date(client.joinDate).toLocaleDateString()}</span>
+                          <span>{client.contact_phone || 'No Phone'}</span>
+                          <span>{client.address || 'No Address'}</span>
+                          <span>Added: {new Date(client.created_at).toLocaleDateString()}</span>
                         </div>
                       </div>
                     </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm">
-                      View Locations
-                    </Button>
-                    
-                    <Button variant="outline" size="sm">
-                      Client Portal
-                    </Button>
                     
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -229,26 +186,26 @@ const Clients = () => {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="bg-popover border">
                         <DropdownMenuItem>
+                          <Eye className="mr-2 h-4 w-4" />
+                          View Details
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                          <Edit className="mr-2 h-4 w-4" />
                           Edit Client
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          Manage Access
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          Send Message
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          View Reports
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive">
-                          Deactivate Client
+                        <DropdownMenuItem 
+                          className="text-destructive"
+                          onClick={() => deleteClient(client.id)}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete Client
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </main>

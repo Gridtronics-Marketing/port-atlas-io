@@ -8,6 +8,7 @@ import { StatsOverview } from "@/components/StatsOverview";
 import { RecentActivity } from "@/components/RecentActivity";
 import { AddLocationModal } from "@/components/AddLocationModal";
 import { Navigation } from "@/components/Navigation";
+import { SeedDataButton } from "@/components/SeedDataButton";
 
 const Index = () => {
   const [showAddLocation, setShowAddLocation] = useState(false);
@@ -17,6 +18,8 @@ const Index = () => {
       <Navigation />
       
       <main className="container mx-auto px-4 py-6 space-y-6">
+        <SeedDataButton />
+        
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
