@@ -18,12 +18,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Navigation } from "@/components/Navigation";
+import { AddClientModal } from "@/components/AddClientModal";
 import { useClients } from "@/hooks/useClients";
 
 const Clients = () => {
-  const { clients, loading, deleteClient } = useClients();
+  const { clients, loading, addClient, deleteClient } = useClients();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -61,7 +63,10 @@ const Clients = () => {
             </p>
           </div>
           
-          <Button className="bg-gradient-primary hover:bg-primary-hover shadow-medium">
+          <Button 
+            onClick={() => setIsAddModalOpen(true)}
+            className="bg-gradient-primary hover:bg-primary-hover shadow-medium"
+          >
             <Plus className="h-4 w-4 mr-2" />
             Add New Client
           </Button>
@@ -209,6 +214,12 @@ const Clients = () => {
           </CardContent>
         </Card>
       </main>
+
+      <AddClientModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onAddClient={addClient}
+      />
     </div>
   );
 };
