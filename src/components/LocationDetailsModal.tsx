@@ -13,16 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { InteractiveMap } from "@/components/InteractiveMap";
 import { DropPointList } from "@/components/DropPointList";
 
-interface Location {
-  id: number;
-  name: string;
-  client: string;
-  address: string;
-  status: string;
-  dropPoints: number;
-  completion: number;
-  lastUpdate: string;
-}
+import { type Location } from "@/hooks/useLocations";
 
 interface LocationDetailsModalProps {
   location: Location | null;

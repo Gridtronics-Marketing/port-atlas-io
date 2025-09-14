@@ -14,7 +14,720 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      clients: {
+        Row: {
+          address: string | null
+          billing_address: string | null
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          created_at: string
+          id: string
+          name: string
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          billing_address?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          billing_address?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      daily_logs: {
+        Row: {
+          created_at: string
+          crew_members: string[] | null
+          employee_id: string
+          hours_worked: number | null
+          id: string
+          issues_encountered: string | null
+          location_id: string | null
+          log_date: string
+          materials_used: Json | null
+          photos: string[] | null
+          project_id: string | null
+          safety_incidents: string | null
+          updated_at: string
+          weather_conditions: string | null
+          work_description: string | null
+          work_order_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          crew_members?: string[] | null
+          employee_id: string
+          hours_worked?: number | null
+          id?: string
+          issues_encountered?: string | null
+          location_id?: string | null
+          log_date: string
+          materials_used?: Json | null
+          photos?: string[] | null
+          project_id?: string | null
+          safety_incidents?: string | null
+          updated_at?: string
+          weather_conditions?: string | null
+          work_description?: string | null
+          work_order_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          crew_members?: string[] | null
+          employee_id?: string
+          hours_worked?: number | null
+          id?: string
+          issues_encountered?: string | null
+          location_id?: string | null
+          log_date?: string
+          materials_used?: Json | null
+          photos?: string[] | null
+          project_id?: string | null
+          safety_incidents?: string | null
+          updated_at?: string
+          weather_conditions?: string | null
+          work_description?: string | null
+          work_order_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_logs_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_logs_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_logs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_logs_work_order_id_fkey"
+            columns: ["work_order_id"]
+            isOneToOne: false
+            referencedRelation: "work_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      drop_points: {
+        Row: {
+          cable_id: string | null
+          created_at: string
+          floor: number | null
+          id: string
+          installed_by: string | null
+          installed_date: string | null
+          ip_address: unknown | null
+          label: string
+          location_id: string | null
+          mac_address: string | null
+          notes: string | null
+          patch_panel_port: string | null
+          point_type: string | null
+          room: string | null
+          status: string | null
+          switch_port: string | null
+          test_results: Json | null
+          tested_by: string | null
+          tested_date: string | null
+          updated_at: string
+          vlan: string | null
+          x_coordinate: number | null
+          y_coordinate: number | null
+        }
+        Insert: {
+          cable_id?: string | null
+          created_at?: string
+          floor?: number | null
+          id?: string
+          installed_by?: string | null
+          installed_date?: string | null
+          ip_address?: unknown | null
+          label: string
+          location_id?: string | null
+          mac_address?: string | null
+          notes?: string | null
+          patch_panel_port?: string | null
+          point_type?: string | null
+          room?: string | null
+          status?: string | null
+          switch_port?: string | null
+          test_results?: Json | null
+          tested_by?: string | null
+          tested_date?: string | null
+          updated_at?: string
+          vlan?: string | null
+          x_coordinate?: number | null
+          y_coordinate?: number | null
+        }
+        Update: {
+          cable_id?: string | null
+          created_at?: string
+          floor?: number | null
+          id?: string
+          installed_by?: string | null
+          installed_date?: string | null
+          ip_address?: unknown | null
+          label?: string
+          location_id?: string | null
+          mac_address?: string | null
+          notes?: string | null
+          patch_panel_port?: string | null
+          point_type?: string | null
+          room?: string | null
+          status?: string | null
+          switch_port?: string | null
+          test_results?: Json | null
+          tested_by?: string | null
+          tested_date?: string | null
+          updated_at?: string
+          vlan?: string | null
+          x_coordinate?: number | null
+          y_coordinate?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drop_points_installed_by_fkey"
+            columns: ["installed_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drop_points_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drop_points_tested_by_fkey"
+            columns: ["tested_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employees: {
+        Row: {
+          certification_expiry: Json | null
+          certifications: string[] | null
+          created_at: string
+          department: string | null
+          email: string | null
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
+          employee_number: string | null
+          first_name: string
+          hire_date: string | null
+          hourly_rate: number | null
+          id: string
+          last_name: string
+          phone: string | null
+          role: string
+          skills: string[] | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          certification_expiry?: Json | null
+          certifications?: string[] | null
+          created_at?: string
+          department?: string | null
+          email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          employee_number?: string | null
+          first_name: string
+          hire_date?: string | null
+          hourly_rate?: number | null
+          id?: string
+          last_name: string
+          phone?: string | null
+          role: string
+          skills?: string[] | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          certification_expiry?: Json | null
+          certifications?: string[] | null
+          created_at?: string
+          department?: string | null
+          email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          employee_number?: string | null
+          first_name?: string
+          hire_date?: string | null
+          hourly_rate?: number | null
+          id?: string
+          last_name?: string
+          phone?: string | null
+          role?: string
+          skills?: string[] | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      equipment: {
+        Row: {
+          asset_tag: string | null
+          assigned_to: string | null
+          cost: number | null
+          created_at: string
+          equipment_type: string
+          firmware_version: string | null
+          id: string
+          location_id: string | null
+          make: string | null
+          model: string | null
+          name: string
+          notes: string | null
+          purchase_date: string | null
+          rack_id: string | null
+          rack_position: number | null
+          serial_number: string | null
+          status: string | null
+          updated_at: string
+          warranty_expiry: string | null
+        }
+        Insert: {
+          asset_tag?: string | null
+          assigned_to?: string | null
+          cost?: number | null
+          created_at?: string
+          equipment_type: string
+          firmware_version?: string | null
+          id?: string
+          location_id?: string | null
+          make?: string | null
+          model?: string | null
+          name: string
+          notes?: string | null
+          purchase_date?: string | null
+          rack_id?: string | null
+          rack_position?: number | null
+          serial_number?: string | null
+          status?: string | null
+          updated_at?: string
+          warranty_expiry?: string | null
+        }
+        Update: {
+          asset_tag?: string | null
+          assigned_to?: string | null
+          cost?: number | null
+          created_at?: string
+          equipment_type?: string
+          firmware_version?: string | null
+          id?: string
+          location_id?: string | null
+          make?: string | null
+          model?: string | null
+          name?: string
+          notes?: string | null
+          purchase_date?: string | null
+          rack_id?: string | null
+          rack_position?: number | null
+          serial_number?: string | null
+          status?: string | null
+          updated_at?: string
+          warranty_expiry?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "equipment_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "equipment_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      locations: {
+        Row: {
+          access_instructions: string | null
+          address: string
+          building_type: string | null
+          completion_percentage: number | null
+          contact_onsite: string | null
+          contact_phone: string | null
+          created_at: string
+          floors: number | null
+          id: string
+          latitude: number | null
+          longitude: number | null
+          name: string
+          project_id: string | null
+          status: string | null
+          total_square_feet: number | null
+          updated_at: string
+        }
+        Insert: {
+          access_instructions?: string | null
+          address: string
+          building_type?: string | null
+          completion_percentage?: number | null
+          contact_onsite?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          floors?: number | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          name: string
+          project_id?: string | null
+          status?: string | null
+          total_square_feet?: number | null
+          updated_at?: string
+        }
+        Update: {
+          access_instructions?: string | null
+          address?: string
+          building_type?: string | null
+          completion_percentage?: number | null
+          contact_onsite?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          floors?: number | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          name?: string
+          project_id?: string | null
+          status?: string | null
+          total_square_feet?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "locations_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          actual_cost: number | null
+          client_id: string | null
+          created_at: string
+          description: string | null
+          end_date: string | null
+          estimated_budget: number | null
+          id: string
+          name: string
+          priority: string | null
+          project_type: string | null
+          start_date: string | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          actual_cost?: number | null
+          client_id?: string | null
+          created_at?: string
+          description?: string | null
+          end_date?: string | null
+          estimated_budget?: number | null
+          id?: string
+          name: string
+          priority?: string | null
+          project_type?: string | null
+          start_date?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          actual_cost?: number | null
+          client_id?: string | null
+          created_at?: string
+          description?: string | null
+          end_date?: string | null
+          estimated_budget?: number | null
+          id?: string
+          name?: string
+          priority?: string | null
+          project_type?: string | null
+          start_date?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      racks: {
+        Row: {
+          cooling_required: boolean | null
+          created_at: string
+          floor: number | null
+          id: string
+          location_id: string | null
+          notes: string | null
+          power_available: number | null
+          rack_name: string
+          rack_units: number | null
+          room: string | null
+          updated_at: string
+          x_coordinate: number | null
+          y_coordinate: number | null
+        }
+        Insert: {
+          cooling_required?: boolean | null
+          created_at?: string
+          floor?: number | null
+          id?: string
+          location_id?: string | null
+          notes?: string | null
+          power_available?: number | null
+          rack_name: string
+          rack_units?: number | null
+          room?: string | null
+          updated_at?: string
+          x_coordinate?: number | null
+          y_coordinate?: number | null
+        }
+        Update: {
+          cooling_required?: boolean | null
+          created_at?: string
+          floor?: number | null
+          id?: string
+          location_id?: string | null
+          notes?: string | null
+          power_available?: number | null
+          rack_name?: string
+          rack_units?: number | null
+          room?: string | null
+          updated_at?: string
+          x_coordinate?: number | null
+          y_coordinate?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "racks_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      safety_incidents: {
+        Row: {
+          corrective_actions: string | null
+          created_at: string
+          description: string
+          id: string
+          incident_date: string
+          incident_type: string
+          injured_person: string | null
+          investigation_notes: string | null
+          investigation_required: boolean | null
+          location_id: string | null
+          photos: string[] | null
+          project_id: string | null
+          reported_by: string
+          severity: string | null
+          updated_at: string
+          witness_names: string[] | null
+        }
+        Insert: {
+          corrective_actions?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          incident_date: string
+          incident_type: string
+          injured_person?: string | null
+          investigation_notes?: string | null
+          investigation_required?: boolean | null
+          location_id?: string | null
+          photos?: string[] | null
+          project_id?: string | null
+          reported_by: string
+          severity?: string | null
+          updated_at?: string
+          witness_names?: string[] | null
+        }
+        Update: {
+          corrective_actions?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          incident_date?: string
+          incident_type?: string
+          injured_person?: string | null
+          investigation_notes?: string | null
+          investigation_required?: boolean | null
+          location_id?: string | null
+          photos?: string[] | null
+          project_id?: string | null
+          reported_by?: string
+          severity?: string | null
+          updated_at?: string
+          witness_names?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safety_incidents_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "safety_incidents_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "safety_incidents_reported_by_fkey"
+            columns: ["reported_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      work_orders: {
+        Row: {
+          actual_hours: number | null
+          assigned_to: string | null
+          completed_date: string | null
+          completion_notes: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          due_date: string | null
+          estimated_hours: number | null
+          id: string
+          location_id: string | null
+          priority: string | null
+          project_id: string | null
+          status: string | null
+          title: string
+          updated_at: string
+          work_type: string | null
+        }
+        Insert: {
+          actual_hours?: number | null
+          assigned_to?: string | null
+          completed_date?: string | null
+          completion_notes?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          estimated_hours?: number | null
+          id?: string
+          location_id?: string | null
+          priority?: string | null
+          project_id?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string
+          work_type?: string | null
+        }
+        Update: {
+          actual_hours?: number | null
+          assigned_to?: string | null
+          completed_date?: string | null
+          completion_notes?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          estimated_hours?: number | null
+          id?: string
+          location_id?: string | null
+          priority?: string | null
+          project_id?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string
+          work_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_orders_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_orders_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_orders_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_orders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Upload, X, MapPin } from "lucide-react";
 import {
   Dialog,
-  DialogContent,
+  DialogContent,  
   DialogDescription,
   DialogFooter,
   DialogHeader,
@@ -20,6 +20,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
+import { useClients } from "@/hooks/useClients";
+import { useLocations } from "@/hooks/useLocations";
 
 interface AddLocationModalProps {
   open: boolean;
@@ -28,6 +30,8 @@ interface AddLocationModalProps {
 
 export const AddLocationModal = ({ open, onOpenChange }: AddLocationModalProps) => {
   const [layoutFile, setLayoutFile] = useState<File | null>(null);
+  const { clients } = useClients();
+  const { addLocation } = useLocations();
   const [formData, setFormData] = useState({
     name: "",
     client: "",
@@ -90,9 +94,9 @@ export const AddLocationModal = ({ open, onOpenChange }: AddLocationModalProps) 
                   <SelectValue placeholder="Select client" />
                 </SelectTrigger>
                 <SelectContent className="bg-popover border">
-                  {mockClients.map((client) => (
-                    <SelectItem key={client} value={client}>
-                      {client}
+                  {clients.map((client) => (
+                    <SelectItem key={client.id} value={client.id}>
+                      {client.name}
                     </SelectItem>
                   ))}
                 </SelectContent>

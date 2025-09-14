@@ -1,50 +1,19 @@
 import { useState } from "react";
-import { MapPin, MoreHorizontal, Eye, Edit, Trash2, Cable } from "lucide-react";
+import { MapPin, MoreHorizontal, Eye, Edit, Trash2, Cable, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
-  DropdownMenuContent,
+  DropdownMenuContent,  
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { LocationDetailsModal } from "@/components/LocationDetailsModal";
-
-const mockLocations = [
-  {
-    id: 1,
-    name: "Downtown Office Complex",
-    client: "TechCorp Inc.",
-    address: "123 Business Ave, Suite 100",
-    status: "Active",
-    dropPoints: 24,
-    completion: 85,
-    lastUpdate: "2 hours ago",
-  },
-  {
-    id: 2,
-    name: "Manufacturing Facility A",
-    client: "Industrial Solutions",
-    address: "456 Factory Road",
-    status: "In Progress",
-    dropPoints: 18,
-    completion: 60,
-    lastUpdate: "1 day ago",
-  },
-  {
-    id: 3,
-    name: "Retail Store Network",
-    client: "ShopMart",
-    address: "789 Commerce Street",
-    status: "Completed",
-    dropPoints: 32,
-    completion: 100,
-    lastUpdate: "3 days ago",
-  },
-];
+import { useLocations, type Location } from "@/hooks/useLocations";
 
 export const LocationGrid = () => {
-  const [selectedLocation, setSelectedLocation] = useState<typeof mockLocations[0] | null>(null);
+  const { locations, loading, deleteLocation } = useLocations();
+  const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -65,10 +34,28 @@ export const LocationGrid = () => {
     return "text-destructive";
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        <span className="ml-2 text-muted-foreground">Loading locations...</span>
+      </div>
+    );
+  }
+
+  if (locations.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <MapPin className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+        <p className="text-muted-foreground">No locations found</p>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="space-y-3">
-        {mockLocations.map((location) => (
+        {locations.map((location) => (
           <div
             key={location.id}
             className="flex items-center justify-between p-4 border border-border rounded-lg hover:shadow-soft transition-all duration-200 bg-card"
@@ -89,18 +76,18 @@ export const LocationGrid = () => {
                 </div>
                 
                 <p className="text-sm text-muted-foreground mb-2">
-                  {location.client} • {location.address}
+                  {location.project?.client?.name || 'No Client'} • {location.address}
                 </p>
                 
                 <div className="flex items-center gap-4 text-xs text-muted-foreground">
                   <div className="flex items-center gap-1">
                     <Cable className="h-3 w-3" />
-                    {location.dropPoints} drops
+                    {location.drop_points_count || 0} drops
                   </div>
-                  <div className={`font-medium ${getCompletionColor(location.completion)}`}>
-                    {location.completion}% complete
+                  <div className={`font-medium ${getCompletionColor(location.completion_percentage)}`}>
+                    {location.completion_percentage}% complete
                   </div>
-                  <span>Updated {location.lastUpdate}</span>
+                  <span>Updated {new Date(location.updated_at).toLocaleDateString()}</span>
                 </div>
               </div>
             </div>
@@ -120,7 +107,10 @@ export const LocationGrid = () => {
                   <Edit className="mr-2 h-4 w-4" />
                   Edit Location
                 </DropdownMenuItem>
-                <DropdownMenuItem className="text-destructive">
+                <DropdownMenuItem 
+                  className="text-destructive"
+                  onClick={() => deleteLocation(location.id)}
+                >
                   <Trash2 className="mr-2 h-4 w-4" />
                   Delete Location
                 </DropdownMenuItem>

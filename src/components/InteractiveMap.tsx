@@ -34,7 +34,7 @@ const mockDropPoints: DropPoint[] = [
 
 export const InteractiveMap = ({ locationId }: InteractiveMapProps) => {
   const [dropPoints, setDropPoints] = useState<DropPoint[]>(mockDropPoints);
-  const [selectedPoint, setSelectedPoint] = useState<DropPoint | null>(null);
+  const [selectedPoint, setSelectedPoint] = useState<any>(null);
   const [isAddingPoint, setIsAddingPoint] = useState(false);
 
   const getDropPointIcon = (type: string) => {
