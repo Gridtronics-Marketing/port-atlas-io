@@ -1,38 +1,52 @@
 import { MapPin, Users, Cable, CheckCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-const stats = [
-  {
-    title: "Active Locations",
-    value: "12",
-    change: "+2 this month",
-    icon: MapPin,
-    color: "text-primary",
-  },
-  {
-    title: "Total Clients",
-    value: "8",
-    change: "+1 this week",
-    icon: Users,
-    color: "text-success",
-  },
-  {
-    title: "Drop Points",
-    value: "248",
-    change: "+15 today",
-    icon: Cable,
-    color: "text-warning",
-  },
-  {
-    title: "Completed Jobs",
-    value: "95%",
-    change: "+5% this week",
-    icon: CheckCircle,
-    color: "text-success",
-  },
-];
+import { useLocations } from "@/hooks/useLocations";
+import { useClients } from "@/hooks/useClients";
+import { useDropPoints } from "@/hooks/useDropPoints";
+import { useEmployees } from "@/hooks/useEmployees";
 
 export const StatsOverview = () => {
+  const { locations } = useLocations();
+  const { clients } = useClients();
+  const { dropPoints } = useDropPoints();
+  const { employees } = useEmployees();
+
+  const activeLocations = locations.filter(loc => loc.status === 'Active').length;
+  const totalDropPoints = dropPoints.length;
+  const completedDropPoints = dropPoints.filter(dp => dp.status === 'tested' || dp.status === 'active').length;
+  const completionRate = totalDropPoints > 0 ? Math.round((completedDropPoints / totalDropPoints) * 100) : 0;
+
+  const stats = [
+    {
+      title: "Active Locations",
+      value: activeLocations.toString(),
+      change: `${locations.length} total`,
+      icon: MapPin,
+      color: "text-primary",
+    },
+    {
+      title: "Total Clients",
+      value: clients.length.toString(),
+      change: `${clients.filter(c => c.status === 'Active').length} active`,
+      icon: Users,
+      color: "text-success",
+    },
+    {
+      title: "Drop Points",
+      value: totalDropPoints.toString(),
+      change: `${completedDropPoints} completed`,
+      icon: Cable,
+      color: "text-warning",
+    },
+    {
+      title: "Completion Rate",
+      value: `${completionRate}%`,
+      change: `${employees.filter(e => e.status === 'Active').length} active employees`,
+      icon: CheckCircle,
+      color: "text-success",
+    },
+  ];
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       {stats.map((stat, index) => (

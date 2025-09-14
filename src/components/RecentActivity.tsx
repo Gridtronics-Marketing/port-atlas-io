@@ -1,61 +1,84 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Cable, Upload, UserPlus, MapPin } from "lucide-react";
-
-const activities = [
-  {
-    id: 1,
-    type: "drop_added",
-    user: "John Doe",
-    userInitials: "JD",
-    action: "Added fiber drop",
-    location: "Downtown Office",
-    time: "2 minutes ago",
-    icon: Cable,
-    color: "text-success",
-  },
-  {
-    id: 2,
-    type: "photo_uploaded",
-    user: "Sarah Wilson",
-    userInitials: "SW", 
-    action: "Uploaded test results",
-    location: "Manufacturing A",
-    time: "15 minutes ago",
-    icon: Upload,
-    color: "text-primary",
-  },
-  {
-    id: 3,
-    type: "client_added",
-    user: "Admin",
-    userInitials: "AD",
-    action: "Added new client",
-    location: "System",
-    time: "1 hour ago",
-    icon: UserPlus,
-    color: "text-warning",
-  },
-  {
-    id: 4,
-    type: "location_created",
-    user: "Mike Johnson",
-    userInitials: "MJ",
-    action: "Created new location",
-    location: "Retail Store",
-    time: "3 hours ago",
-    icon: MapPin,
-    color: "text-primary",
-  },
-];
+import { Cable, MapPin, Users, Building2 } from "lucide-react";
+import { useLocations } from "@/hooks/useLocations";
+import { useClients } from "@/hooks/useClients";
+import { useDropPoints } from "@/hooks/useDropPoints";
+import { useEmployees } from "@/hooks/useEmployees";
+import { useMemo } from "react";
 
 export const RecentActivity = () => {
+  const { locations } = useLocations();
+  const { clients } = useClients();
+  const { dropPoints } = useDropPoints();
+  const { employees } = useEmployees();
+
+  const recentActivities = useMemo(() => {
+    const activities: any[] = [];
+
+    // Add recent locations
+    locations.slice(0, 2).forEach((location) => {
+      activities.push({
+        id: `location-${location.id}`,
+        type: "location_created",
+        user: "System",
+        userInitials: "SY",
+        action: `Created location`,
+        location: location.name,
+        time: new Date(location.created_at).toLocaleDateString(),
+        icon: MapPin,
+        color: "text-primary",
+      });
+    });
+
+    // Add recent clients
+    clients.slice(0, 1).forEach((client) => {
+      activities.push({
+        id: `client-${client.id}`,
+        type: "client_added",
+        user: "Admin",
+        userInitials: "AD",
+        action: `Added client`,
+        location: client.name,
+        time: new Date(client.created_at).toLocaleDateString(),
+        icon: Users,
+        color: "text-success",
+      });
+    });
+
+    // Add recent drop points
+    dropPoints.slice(0, 2).forEach((dropPoint) => {
+      activities.push({
+        id: `drop-${dropPoint.id}`,
+        type: "drop_added",
+        user: "Technician",
+        userInitials: "TC",
+        action: `Added drop point`,
+        location: dropPoint.label,
+        time: new Date(dropPoint.created_at).toLocaleDateString(),
+        icon: Cable,
+        color: "text-warning",
+      });
+    });
+
+    return activities.slice(0, 4);
+  }, [locations, clients, dropPoints]);
+
+  if (recentActivities.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+        <p className="text-sm text-muted-foreground">No recent activity</p>
+        <p className="text-xs text-muted-foreground mt-1">Add some data to see activity here</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
-      {activities.map((activity) => (
+      {recentActivities.map((activity) => (
         <div key={activity.id} className="flex items-start gap-3">
           <Avatar className="h-8 w-8">
-            <AvatarImage src={`/avatars/${activity.user.toLowerCase().replace(' ', '')}.jpg`} />
             <AvatarFallback className="bg-muted text-muted-foreground text-xs">
               {activity.userInitials}
             </AvatarFallback>

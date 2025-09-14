@@ -3,15 +3,18 @@ import { Plus, MapPin, Users, Building2, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Link } from "react-router-dom";
 import { LocationGrid } from "@/components/LocationGrid";
 import { StatsOverview } from "@/components/StatsOverview";
 import { RecentActivity } from "@/components/RecentActivity";
 import { AddLocationModal } from "@/components/AddLocationModal";
 import { Navigation } from "@/components/Navigation";
 import { SeedDataButton } from "@/components/SeedDataButton";
+import { useLocations } from "@/hooks/useLocations";
 
 const Index = () => {
   const [showAddLocation, setShowAddLocation] = useState(false);
+  const { locations } = useLocations();
 
   return (
     <div className="min-h-screen bg-background">
@@ -58,7 +61,7 @@ const Index = () => {
                     Manage installation sites and client locations
                   </CardDescription>
                 </div>
-                <Badge variant="secondary">12 Active</Badge>
+                <Badge variant="secondary">{locations.filter(l => l.status === 'Active').length} Active</Badge>
               </CardHeader>
               <CardContent>
                 <LocationGrid />
@@ -86,13 +89,17 @@ const Index = () => {
                 <CardTitle>Quick Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Button variant="outline" className="w-full justify-start">
-                  <Users className="h-4 w-4 mr-2" />
-                  Manage Users
+                <Button variant="outline" className="w-full justify-start" asChild>
+                  <Link to="/employees">
+                    <Users className="h-4 w-4 mr-2" />
+                    Manage Users
+                  </Link>
                 </Button>
-                <Button variant="outline" className="w-full justify-start">
-                  <Building2 className="h-4 w-4 mr-2" />
-                  View Reports
+                <Button variant="outline" className="w-full justify-start" asChild>
+                  <Link to="/locations">
+                    <Building2 className="h-4 w-4 mr-2" />
+                    View Reports
+                  </Link>
                 </Button>
               </CardContent>
             </Card>
