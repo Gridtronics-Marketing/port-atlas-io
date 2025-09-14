@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Users, Plus, Search, Filter, Shield, Wrench, MoreHorizontal, Eye, Edit, Trash2, Loader2 } from "lucide-react";
+import { Users, Plus, Search, Filter, Shield, Wrench, MoreHorizontal, Eye, Edit, Trash2, Loader2, UserPlus, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,13 +18,20 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Navigation } from "@/components/Navigation";
+import { AddEmployeeModal } from "@/components/AddEmployeeModal";
+import { EmployeeDetailsModal } from "@/components/EmployeeDetailsModal";
+import { CrewAssignmentModal } from "@/components/CrewAssignmentModal";
 import { useEmployees } from "@/hooks/useEmployees";
 
 const Employees = () => {
-  const { employees, loading, deleteEmployee } = useEmployees();
+  const { employees, loading, addEmployee, deleteEmployee } = useEmployees();
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [isCrewModalOpen, setIsCrewModalOpen] = useState(false);
 
   const getRoleIcon = (role: string) => {
     if (role.includes("Lead") || role.includes("Manager")) return Shield;
@@ -70,10 +77,23 @@ const Employees = () => {
             </p>
           </div>
           
-          <Button className="bg-gradient-primary hover:bg-primary-hover shadow-medium">
-            <Plus className="h-4 w-4 mr-2" />
-            Add New Employee
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              onClick={() => setIsCrewModalOpen(true)}
+              variant="outline"
+              className="shadow-medium"
+            >
+              <UserPlus className="h-4 w-4 mr-2" />
+              Assign Crew
+            </Button>
+            <Button 
+              onClick={() => setIsAddModalOpen(true)}
+              className="bg-gradient-primary hover:bg-primary-hover shadow-medium"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add New Employee
+            </Button>
+          </div>
         </div>
 
         {/* Stats Cards */}
@@ -229,9 +249,16 @@ const Employees = () => {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="bg-popover border">
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => {
+                            setSelectedEmployee(employee);
+                            setIsDetailsModalOpen(true);
+                          }}>
                             <Eye className="mr-2 h-4 w-4" />
                             View Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            <Clock className="mr-2 h-4 w-4" />
+                            Time Tracking
                           </DropdownMenuItem>
                           <DropdownMenuItem>
                             <Edit className="mr-2 h-4 w-4" />
@@ -254,6 +281,27 @@ const Employees = () => {
           </CardContent>
         </Card>
       </main>
+
+      <AddEmployeeModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onAddEmployee={addEmployee}
+      />
+
+      <EmployeeDetailsModal
+        employee={selectedEmployee}
+        isOpen={isDetailsModalOpen}
+        onClose={() => {
+          setIsDetailsModalOpen(false);
+          setSelectedEmployee(null);
+        }}
+      />
+
+      <CrewAssignmentModal
+        employees={employees}
+        isOpen={isCrewModalOpen}
+        onClose={() => setIsCrewModalOpen(false)}
+      />
     </div>
   );
 };
