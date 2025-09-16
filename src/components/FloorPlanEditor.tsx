@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Canvas as FabricCanvas, Circle, Rect, FabricText } from "fabric";
+import { Canvas as FabricCanvas, Circle, Rect, Text } from "fabric";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -59,8 +59,10 @@ export const FloorPlanEditor = ({
     });
 
     // Initialize the freeDrawingBrush
-    canvas.freeDrawingBrush.color = activeColor;
-    canvas.freeDrawingBrush.width = brushWidth;
+    if (canvas.freeDrawingBrush) {
+      canvas.freeDrawingBrush.color = activeColor;
+      canvas.freeDrawingBrush.width = brushWidth;
+    }
 
     setFabricCanvas(canvas);
 
@@ -73,7 +75,7 @@ export const FloorPlanEditor = ({
     return () => {
       canvas.dispose();
     };
-  }, [backgroundImage]);
+  }, []);
 
   useEffect(() => {
     if (!fabricCanvas) return;
@@ -115,7 +117,7 @@ export const FloorPlanEditor = ({
       fabricCanvas.add(circle);
       fabricCanvas.setActiveObject(circle);
     } else if (tool === "text") {
-      const text = new FabricText("Drop Point", {
+      const text = new Text("Drop Point", {
         left: 100,
         top: 100,
         fill: activeColor,
