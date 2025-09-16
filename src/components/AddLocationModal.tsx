@@ -177,8 +177,8 @@ export const AddLocationModal = ({ open, onOpenChange }: AddLocationModalProps) 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] max-h-[85vh] flex flex-col bg-card border">
-        <DialogHeader className="flex-shrink-0">
+      <DialogContent className="sm:max-w-[700px] h-[85vh] flex flex-col bg-card border overflow-hidden">
+        <DialogHeader className="flex-shrink-0 px-6 pt-6">
           <DialogTitle className="flex items-center gap-2 text-xl">
             <MapPin className="h-6 w-6 text-primary" />
             Add New Location
@@ -188,8 +188,8 @@ export const AddLocationModal = ({ open, onOpenChange }: AddLocationModalProps) 
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 px-1">
-          <div className="space-y-6 py-2">
+        <div className="flex-1 overflow-y-auto px-6">
+          <div className="space-y-6 py-4">
             {/* Basic Information Section */}
             <Card className="shadow-soft border-border">
               <CardHeader className="pb-4">
@@ -456,11 +456,11 @@ export const AddLocationModal = ({ open, onOpenChange }: AddLocationModalProps) 
               </Card>
             )}
           </div>
-        </ScrollArea>
+        </div>
 
         <Separator className="flex-shrink-0" />
         
-        <DialogFooter className="flex-shrink-0 pt-4">
+        <DialogFooter className="flex-shrink-0 p-6">
           <Button variant="outline" onClick={() => onOpenChange(false)} className="min-w-[100px]">
             Cancel
           </Button>
