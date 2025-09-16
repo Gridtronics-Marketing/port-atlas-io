@@ -1,5 +1,19 @@
 import { useState } from "react";
-import { MapPin, Cable, Plus, Camera, FileText, Users } from "lucide-react";
+import { 
+  MapPin, 
+  Cable, 
+  Plus, 
+  Camera, 
+  FileText, 
+  Users, 
+  Building2,
+  Phone,
+  User,
+  Calendar,
+  Layers,
+  Square,
+  Info
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -22,7 +36,7 @@ interface LocationDetailsModalProps {
 }
 
 export const LocationDetailsModal = ({ location, open, onOpenChange }: LocationDetailsModalProps) => {
-  const [activeTab, setActiveTab] = useState("map");
+  const [activeTab, setActiveTab] = useState("details");
 
   if (!location) return null;
 
@@ -34,6 +48,8 @@ export const LocationDetailsModal = ({ location, open, onOpenChange }: LocationD
         return "bg-warning text-warning-foreground";
       case "Completed":
         return "bg-muted text-muted-foreground";
+      case "On Hold":
+        return "bg-destructive text-destructive-foreground";
       default:
         return "bg-secondary text-secondary-foreground";
     }
@@ -66,8 +82,20 @@ export const LocationDetailsModal = ({ location, open, onOpenChange }: LocationD
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Quick Stats */}
-          <div className="grid grid-cols-3 gap-4">
+          {/* Enhanced Quick Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Card className="shadow-soft">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2">
+                  <Layers className="h-5 w-5 text-primary" />
+                  <div>
+                    <p className="text-2xl font-bold text-foreground">{location.floors}</p>
+                    <p className="text-sm text-muted-foreground">Floor{location.floors > 1 ? 's' : ''}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             <Card className="shadow-soft">
               <CardContent className="p-4">
                 <div className="flex items-center gap-2">
@@ -83,10 +111,12 @@ export const LocationDetailsModal = ({ location, open, onOpenChange }: LocationD
             <Card className="shadow-soft">
               <CardContent className="p-4">
                 <div className="flex items-center gap-2">
-                  <Camera className="h-5 w-5 text-success" />
+                  <Square className="h-5 w-5 text-success" />
                   <div>
-                    <p className="text-2xl font-bold text-foreground">18</p>
-                    <p className="text-sm text-muted-foreground">Photos</p>
+                    <p className="text-2xl font-bold text-foreground">
+                      {location.total_square_feet ? `${location.total_square_feet.toLocaleString()}` : 'N/A'}
+                    </p>
+                    <p className="text-sm text-muted-foreground">Sq Ft</p>
                   </div>
                 </div>
               </CardContent>
@@ -105,12 +135,16 @@ export const LocationDetailsModal = ({ location, open, onOpenChange }: LocationD
             </Card>
           </div>
 
-          {/* Tabs */}
+          {/* Enhanced Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-3 bg-muted">
+            <TabsList className="grid w-full grid-cols-4 bg-muted">
+              <TabsTrigger value="details" className="flex items-center gap-2">
+                <Info className="h-4 w-4" />
+                Details
+              </TabsTrigger>
               <TabsTrigger value="map" className="flex items-center gap-2">
                 <MapPin className="h-4 w-4" />
-                Interactive Map
+                Floor Plans
               </TabsTrigger>
               <TabsTrigger value="drops" className="flex items-center gap-2">
                 <Cable className="h-4 w-4" />
@@ -122,16 +156,145 @@ export const LocationDetailsModal = ({ location, open, onOpenChange }: LocationD
               </TabsTrigger>
             </TabsList>
 
+            {/* Details Tab */}
+            <TabsContent value="details" className="mt-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Basic Information */}
+                <Card className="shadow-soft">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Building2 className="h-5 w-5 text-primary" />
+                      Location Information
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <p className="font-medium text-sm text-muted-foreground mb-1">Address</p>
+                      <p className="text-foreground">{location.address}</p>
+                    </div>
+                    
+                    {location.building_type && (
+                      <div>
+                        <p className="font-medium text-sm text-muted-foreground mb-1">Building Type</p>
+                        <p className="text-foreground">{location.building_type}</p>
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="font-medium text-sm text-muted-foreground mb-1">Floors</p>
+                        <p className="text-foreground">{location.floors}</p>
+                      </div>
+                      
+                      {location.total_square_feet && (
+                        <div>
+                          <p className="font-medium text-sm text-muted-foreground mb-1">Square Feet</p>
+                          <p className="text-foreground">{location.total_square_feet.toLocaleString()}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <p className="font-medium text-sm text-muted-foreground mb-1">Status</p>
+                      <Badge className={getStatusColor(location.status)}>
+                        {location.status}
+                      </Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Contact Information */}
+                <Card className="shadow-soft">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <User className="h-5 w-5 text-primary" />
+                      Contact Information
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {location.contact_onsite && (
+                      <div className="flex items-start gap-3">
+                        <User className="h-5 w-5 text-muted-foreground mt-0.5" />
+                        <div>
+                          <p className="font-medium text-sm text-muted-foreground">On-site Contact</p>
+                          <p className="text-foreground">{location.contact_onsite}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {location.contact_phone && (
+                      <div className="flex items-start gap-3">
+                        <Phone className="h-5 w-5 text-muted-foreground mt-0.5" />
+                        <div>
+                          <p className="font-medium text-sm text-muted-foreground">Phone</p>
+                          <p className="text-foreground">{location.contact_phone}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex items-start gap-3">
+                      <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
+                      <div>
+                        <p className="font-medium text-sm text-muted-foreground">Created</p>
+                        <p className="text-foreground">
+                          {new Date(location.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+
+                    {location.project?.client?.name && (
+                      <div className="flex items-start gap-3">
+                        <Building2 className="h-5 w-5 text-muted-foreground mt-0.5" />
+                        <div>
+                          <p className="font-medium text-sm text-muted-foreground">Client</p>
+                          <p className="text-foreground">{location.project.client.name}</p>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Access Instructions */}
+                {location.access_instructions && (
+                  <Card className="shadow-soft lg:col-span-2">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <FileText className="h-5 w-5 text-primary" />
+                        Access Instructions
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="p-4 bg-muted rounded-lg">
+                        <p className="text-foreground whitespace-pre-wrap">
+                          {location.access_instructions}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            </TabsContent>
+
             <TabsContent value="map" className="mt-6">
               <Card className="shadow-soft">
                 <CardHeader>
-                  <CardTitle>Layout Map</CardTitle>
+                  <CardTitle>Floor Plans & Layout Maps</CardTitle>
                   <CardDescription>
-                    Click on areas to add drop points or view existing installations
+                    Interactive floor plans for all {location.floors} floor{location.floors > 1 ? 's' : ''}. Click on areas to add drop points or view installations.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <InteractiveMap locationId={location.id} />
+                  {location.floors > 1 && (
+                    <div className="mb-4">
+                      <Badge variant="outline" className="mb-2">
+                        {location.floors} Floors Available
+                      </Badge>
+                      <p className="text-sm text-muted-foreground">
+                        Use the floor selector to navigate between different levels
+                      </p>
+                    </div>
+                  )}
+                  <InteractiveMap locationId={location.id} floors={location.floors} />
                 </CardContent>
               </Card>
             </TabsContent>
@@ -141,7 +304,7 @@ export const LocationDetailsModal = ({ location, open, onOpenChange }: LocationD
                 <CardHeader>
                   <CardTitle>Drop Point Management</CardTitle>
                   <CardDescription>
-                    Manage all installation points and their details
+                    Manage all installation points across {location.floors} floor{location.floors > 1 ? 's' : ''}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -155,6 +318,7 @@ export const LocationDetailsModal = ({ location, open, onOpenChange }: LocationD
                 <Card className="shadow-soft">
                   <CardHeader>
                     <CardTitle>Assigned Team</CardTitle>
+                    <CardDescription>Personnel assigned to this location</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
@@ -176,29 +340,39 @@ export const LocationDetailsModal = ({ location, open, onOpenChange }: LocationD
                           <p className="text-sm text-muted-foreground">Installation Specialist</p>
                         </div>
                       </div>
+                      <Button variant="outline" className="w-full">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Assign Team Member
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
 
                 <Card className="shadow-soft">
                   <CardHeader>
-                    <CardTitle>Location Notes</CardTitle>
+                    <CardTitle>Project Notes</CardTitle>
+                    <CardDescription>Important notes and observations</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3 text-sm">
+                      {location.access_instructions && (
+                        <div className="p-3 bg-muted rounded-lg">
+                          <p className="text-foreground">
+                            <strong>Access Requirements:</strong> {location.access_instructions}
+                          </p>
+                        </div>
+                      )}
+                      
                       <div className="p-3 bg-muted rounded-lg">
                         <p className="text-foreground">
-                          <strong>Access Requirements:</strong> Security badge required for floors 3-5. 
-                          Contact security desk for escort.
+                          <strong>Building Details:</strong> {location.floors} floor{location.floors > 1 ? 's' : ''}, 
+                          {location.building_type && ` ${location.building_type} building,`}
+                          {location.total_square_feet && ` ${location.total_square_feet.toLocaleString()} sq ft total`}
                         </p>
                       </div>
-                      <div className="p-3 bg-muted rounded-lg">
-                        <p className="text-foreground">
-                          <strong>Special Equipment:</strong> High-ceiling areas require extended ladder. 
-                          Cable runs through existing conduit system.
-                        </p>
-                      </div>
+                      
                       <Button variant="outline" className="w-full">
+                        <Plus className="h-4 w-4 mr-2" />
                         Add Note
                       </Button>
                     </div>

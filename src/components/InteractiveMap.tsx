@@ -21,6 +21,7 @@ interface DropPoint {
 
 interface InteractiveMapProps {
   locationId: string;
+  floors?: number;
 }
 
 // Mock drop points for demonstration
@@ -32,7 +33,7 @@ const mockDropPoints: DropPoint[] = [
   { id: 5, x: 65, y: 70, type: "data", label: "DP-003", room: "Conference", status: "installed" },
 ];
 
-export const InteractiveMap = ({ locationId }: InteractiveMapProps) => {
+export const InteractiveMap = ({ locationId, floors = 1 }: InteractiveMapProps) => {
   const [dropPoints, setDropPoints] = useState<DropPoint[]>(mockDropPoints);
   const [selectedPoint, setSelectedPoint] = useState<any>(null);
   const [isAddingPoint, setIsAddingPoint] = useState(false);
