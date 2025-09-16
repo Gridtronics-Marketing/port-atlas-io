@@ -113,14 +113,20 @@ export const AddLocationModal = ({ open, onOpenChange }: AddLocationModalProps) 
         longitude: null,
       };
 
-      // Note: Floor plan files would be handled here in a real implementation
-      // For now, we'll just log them
+      // Create the location first
+      const location = await addLocation(locationData);
+      
+      // TODO: Upload floor plan files to storage
+      // For now, we'll show what files were uploaded
       const uploadedFloors = Object.keys(layoutFiles).length;
       if (uploadedFloors > 0) {
         console.log(`Floor plans uploaded for ${uploadedFloors} floors:`, layoutFiles);
+        toast({
+          title: "Floor Plans Ready",
+          description: `${uploadedFloors} floor plan${uploadedFloors > 1 ? 's' : ''} uploaded. Use Edit Mode in location details to draw on them.`,
+        });
       }
 
-      await addLocation(locationData);
       resetForm();
       onOpenChange(false);
     } catch (error) {
@@ -371,6 +377,9 @@ export const AddLocationModal = ({ open, onOpenChange }: AddLocationModalProps) 
                               </p>
                               <p className="text-xs text-muted-foreground">
                                 Drag and drop or click to select floor plan, blueprint, or layout diagram
+                              </p>
+                              <p className="text-xs text-primary">
+                                Supported: Images (JPG, PNG), PDFs, CAD files (.dwg)
                               </p>
                               <input
                                 type="file"

@@ -26,6 +26,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { InteractiveMap } from "@/components/InteractiveMap";
 import { DropPointList } from "@/components/DropPointList";
+import { FloorPlanEditor } from "@/components/FloorPlanEditor";
+import { FloorPlanDemo } from "@/components/FloorPlanDemo";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 import { type Location } from "@/hooks/useLocations";
 
@@ -37,6 +46,9 @@ interface LocationDetailsModalProps {
 
 export const LocationDetailsModal = ({ location, open, onOpenChange }: LocationDetailsModalProps) => {
   const [activeTab, setActiveTab] = useState("details");
+  const [selectedFloor, setSelectedFloor] = useState(1);
+  const [editMode, setEditMode] = useState(false);
+  const [showDemo, setShowDemo] = useState(true); // Show demo when no floor plans uploaded
 
   if (!location) return null;
 
@@ -278,23 +290,80 @@ export const LocationDetailsModal = ({ location, open, onOpenChange }: LocationD
             <TabsContent value="map" className="mt-6">
               <Card className="shadow-soft">
                 <CardHeader>
-                  <CardTitle>Floor Plans & Layout Maps</CardTitle>
-                  <CardDescription>
-                    Interactive floor plans for all {location.floors} floor{location.floors > 1 ? 's' : ''}. Click on areas to add drop points or view installations.
-                  </CardDescription>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle>Floor Plans & Layout Maps</CardTitle>
+                      <CardDescription>
+                        Interactive floor plans for all {location.floors} floor{location.floors > 1 ? 's' : ''}. Click on areas to add drop points or view installations.
+                      </CardDescription>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {location.floors > 1 && (
+                        <Select value={selectedFloor.toString()} onValueChange={(value) => setSelectedFloor(parseInt(value))}>
+                          <SelectTrigger className="w-32">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Array.from({ length: location.floors }, (_, i) => i + 1).map((floor) => (
+                              <SelectItem key={floor} value={floor.toString()}>
+                                Floor {floor}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                      <Button 
+                        variant={editMode ? "default" : "outline"} 
+                        onClick={() => setEditMode(!editMode)}
+                      >
+                        {editMode ? "View Mode" : "Edit Mode"}
+                      </Button>
+                    </div>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   {location.floors > 1 && (
                     <div className="mb-4">
                       <Badge variant="outline" className="mb-2">
-                        {location.floors} Floors Available
+                        Floor {selectedFloor} of {location.floors}
                       </Badge>
-                      <p className="text-sm text-muted-foreground">
-                        Use the floor selector to navigate between different levels
-                      </p>
                     </div>
                   )}
-                  <InteractiveMap locationId={location.id} floors={location.floors} />
+                  
+                  {editMode ? (
+                    <FloorPlanEditor 
+                      floorNumber={selectedFloor}
+                      locationName={location.name}
+                      backgroundImage={null} // TODO: Load actual uploaded floor plan
+                      onSave={(canvasData) => {
+                        console.log(`Saving floor ${selectedFloor} plan:`, canvasData);
+                        setEditMode(false);
+                        setShowDemo(false);
+                      }}
+                    />
+                  ) : showDemo ? (
+                    <FloorPlanDemo 
+                      floorNumber={selectedFloor}
+                      totalFloors={location.floors}
+                      onStartEditor={() => setEditMode(true)}
+                    />
+                  ) : (
+                    <InteractiveMap 
+                      locationId={location.id} 
+                      floors={location.floors}
+                      currentFloor={selectedFloor}
+                    />
+                  )}
+                  
+                  <div className="mt-4 p-3 bg-muted/50 rounded-lg text-sm text-muted-foreground">
+                    <p className="font-medium mb-1">Quick Tips:</p>
+                    <ul className="space-y-1 text-xs">
+                      <li>• <strong>Upload Floor Plans:</strong> Add building layouts when creating locations</li>
+                      <li>• <strong>Edit Mode:</strong> Interactive editor for drawing and placing drop points</li>
+                      <li>• <strong>View Mode:</strong> See existing drop points and click for details</li>
+                      <li>• {location.floors > 1 ? 'Use the floor selector to switch between floors' : 'Single floor layout'}</li>
+                    </ul>
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>

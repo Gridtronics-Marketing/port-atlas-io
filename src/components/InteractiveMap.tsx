@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MapPin, Plus, Zap, Shield, Wifi } from "lucide-react";
+import { MapPin, Plus, Zap, Shield, Wifi, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -22,6 +22,7 @@ interface DropPoint {
 interface InteractiveMapProps {
   locationId: string;
   floors?: number;
+  currentFloor?: number;
 }
 
 // Mock drop points for demonstration
@@ -33,7 +34,7 @@ const mockDropPoints: DropPoint[] = [
   { id: 5, x: 65, y: 70, type: "data", label: "DP-003", room: "Conference", status: "installed" },
 ];
 
-export const InteractiveMap = ({ locationId, floors = 1 }: InteractiveMapProps) => {
+export const InteractiveMap = ({ locationId, floors = 1, currentFloor = 1 }: InteractiveMapProps) => {
   const [dropPoints, setDropPoints] = useState<DropPoint[]>(mockDropPoints);
   const [selectedPoint, setSelectedPoint] = useState<any>(null);
   const [isAddingPoint, setIsAddingPoint] = useState(false);
@@ -91,6 +92,12 @@ export const InteractiveMap = ({ locationId, floors = 1 }: InteractiveMapProps) 
       {/* Controls */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
+          {floors > 1 && (
+            <Badge variant="secondary" className="flex items-center gap-1">
+              <Layers className="h-3 w-3" />
+              Floor {currentFloor}
+            </Badge>
+          )}
           <Badge variant="outline" className="flex items-center gap-1">
             <Zap className="h-3 w-3" />
             Data: {dropPoints.filter(p => p.type === "data").length}
@@ -138,8 +145,11 @@ export const InteractiveMap = ({ locationId, floors = 1 }: InteractiveMapProps) 
         <div className="absolute inset-4 border-2 border-dashed border-muted-foreground/30 rounded flex items-center justify-center">
           <div className="text-center text-muted-foreground">
             <MapPin className="h-12 w-12 mx-auto mb-2 opacity-50" />
-            <p className="text-sm font-medium">Interactive Floor Plan</p>
-            <p className="text-xs">Upload layout to see actual building structure</p>
+            <p className="text-sm font-medium">
+              {floors > 1 ? `Floor ${currentFloor} Plan` : 'Interactive Floor Plan'}
+            </p>
+            <p className="text-xs">Upload floor plan images to see actual building structure</p>
+            <p className="text-xs mt-1">Click "Edit Mode" above to use the floor plan editor</p>
           </div>
         </div>
 
