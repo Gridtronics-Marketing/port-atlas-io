@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { useClients } from "@/hooks/useClients";
 import { useLocations } from "@/hooks/useLocations";
 import { useToast } from "@/hooks/use-toast";
@@ -30,7 +31,7 @@ interface AddLocationModalProps {
 }
 
 export const AddLocationModal = ({ open, onOpenChange }: AddLocationModalProps) => {
-  const [layoutFile, setLayoutFile] = useState<File | null>(null);
+  const [layoutFiles, setLayoutFiles] = useState<{ [floorNumber: number]: File | null }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { clients } = useClients();
   const { addLocation } = useLocations();
@@ -62,14 +63,25 @@ export const AddLocationModal = ({ open, onOpenChange }: AddLocationModalProps) 
       project_id: "",
       status: "Active",
     });
-    setLayoutFile(null);
+    setLayoutFiles({});
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (floorNumber: number, event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      setLayoutFile(file);
+      setLayoutFiles(prev => ({
+        ...prev,
+        [floorNumber]: file
+      }));
     }
+  };
+
+  const removeFile = (floorNumber: number) => {
+    setLayoutFiles(prev => {
+      const updated = { ...prev };
+      delete updated[floorNumber];
+      return updated;
+    });
   };
 
   const handleSubmit = async () => {
@@ -101,6 +113,13 @@ export const AddLocationModal = ({ open, onOpenChange }: AddLocationModalProps) 
         longitude: null,
       };
 
+      // Note: Floor plan files would be handled here in a real implementation
+      // For now, we'll just log them
+      const uploadedFloors = Object.keys(layoutFiles).length;
+      if (uploadedFloors > 0) {
+        console.log(`Floor plans uploaded for ${uploadedFloors} floors:`, layoutFiles);
+      }
+
       await addLocation(locationData);
       resetForm();
       onOpenChange(false);
@@ -112,13 +131,33 @@ export const AddLocationModal = ({ open, onOpenChange }: AddLocationModalProps) 
   };
 
   const adjustFloors = (increment: boolean) => {
+    const newFloors = increment 
+      ? formData.floors + 1 
+      : Math.max(1, formData.floors - 1);
+      
     setFormData(prev => ({
       ...prev,
-      floors: increment 
-        ? prev.floors + 1 
-        : Math.max(1, prev.floors - 1)
+      floors: newFloors
     }));
+
+    // Clean up layout files if reducing floors
+    if (!increment && newFloors < formData.floors) {
+      setLayoutFiles(prev => {
+        const updated = { ...prev };
+        // Remove files for floors that no longer exist
+        Object.keys(updated).forEach(floorStr => {
+          const floor = parseInt(floorStr);
+          if (floor > newFloors) {
+            delete updated[floor];
+          }
+        });
+        return updated;
+      });
+    }
   };
+
+  // Generate array of floor numbers for rendering
+  const floorNumbers = Array.from({ length: formData.floors }, (_, i) => i + 1);
 
   const mockClients = [
     "TechCorp Inc.",
@@ -273,60 +312,88 @@ export const AddLocationModal = ({ open, onOpenChange }: AddLocationModalProps) 
             />
           </div>
 
-          {/* Layout Upload */}
-          <div className="space-y-2">
-            <Label>Layout Map</Label>
-            <Card className="border-dashed border-2 border-muted-foreground/25 hover:border-primary/50 transition-colors">
-              <CardContent className="p-6">
-                {layoutFile ? (
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-primary/10 rounded-lg">
-                        <Upload className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-foreground">{layoutFile.name}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {(layoutFile.size / 1024 / 1024).toFixed(2)} MB
-                        </p>
-                      </div>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setLayoutFile(null)}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="text-center">
-                    <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium text-foreground">
-                        Upload Layout Map
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Drag and drop or click to select floor plan, blueprint, or layout diagram
-                      </p>
-                      <input
-                        type="file"
-                        accept="image/*,.pdf,.dwg"
-                        onChange={handleFileChange}
-                        className="hidden"
-                        id="layout-upload"
-                      />
-                      <Label htmlFor="layout-upload">
-                        <Button variant="outline" className="cursor-pointer" asChild>
-                          <span>Choose File</span>
-                        </Button>
-                      </Label>
-                    </div>
-                  </div>
+          {/* Floor Plans Section */}
+          {formData.floors > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Label className="text-base font-semibold">Floor Plans</Label>
+                {formData.floors > 1 && (
+                  <Badge variant="secondary" className="text-xs">
+                    {formData.floors} floors
+                  </Badge>
                 )}
-              </CardContent>
-            </Card>
-          </div>
+              </div>
+              
+              <div className="space-y-4">
+                {floorNumbers.map((floorNumber) => {
+                  const file = layoutFiles[floorNumber];
+                  return (
+                    <Card key={floorNumber} className="border-dashed border-2 border-muted-foreground/25 hover:border-primary/50 transition-colors">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <Label className="font-medium">
+                            {formData.floors === 1 ? 'Floor Plan' : `Floor ${floorNumber} Plan`}
+                          </Label>
+                          {formData.floors > 1 && (
+                            <Badge variant="outline" className="text-xs">
+                              Floor {floorNumber}
+                            </Badge>
+                          )}
+                        </div>
+                        
+                        {file ? (
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 bg-primary/10 rounded-lg">
+                                <Upload className="h-5 w-5 text-primary" />
+                              </div>
+                              <div>
+                                <p className="font-medium text-foreground">{file.name}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {(file.size / 1024 / 1024).toFixed(2)} MB
+                                </p>
+                              </div>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeFile(floorNumber)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="text-center py-4">
+                            <Upload className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
+                            <div className="space-y-2">
+                              <p className="text-sm font-medium text-foreground">
+                                Upload {formData.floors === 1 ? 'Floor Plan' : `Floor ${floorNumber} Plan`}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                Drag and drop or click to select floor plan, blueprint, or layout diagram
+                              </p>
+                              <input
+                                type="file"
+                                accept="image/*,.pdf,.dwg"
+                                onChange={(e) => handleFileChange(floorNumber, e)}
+                                className="hidden"
+                                id={`layout-upload-${floorNumber}`}
+                              />
+                              <Label htmlFor={`layout-upload-${floorNumber}`}>
+                                <Button variant="outline" size="sm" className="cursor-pointer" asChild>
+                                  <span>Choose File</span>
+                                </Button>
+                              </Label>
+                            </div>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         <DialogFooter>
