@@ -392,6 +392,7 @@ export type Database = {
           contact_onsite: string | null
           contact_phone: string | null
           created_at: string
+          floor_plan_files: Json | null
           floors: number | null
           id: string
           latitude: number | null
@@ -410,6 +411,7 @@ export type Database = {
           contact_onsite?: string | null
           contact_phone?: string | null
           created_at?: string
+          floor_plan_files?: Json | null
           floors?: number | null
           id?: string
           latitude?: number | null
@@ -428,6 +430,7 @@ export type Database = {
           contact_onsite?: string | null
           contact_phone?: string | null
           created_at?: string
+          floor_plan_files?: Json | null
           floors?: number | null
           id?: string
           latitude?: number | null
