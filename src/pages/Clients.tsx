@@ -19,13 +19,16 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Navigation } from "@/components/Navigation";
 import { AddClientModal } from "@/components/AddClientModal";
-import { useClients } from "@/hooks/useClients";
+import { ClientDetailsModal } from "@/components/ClientDetailsModal";
+import { useClients, Client } from "@/hooks/useClients";
 
 const Clients = () => {
   const { clients, loading, addClient, deleteClient } = useClients();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -190,7 +193,12 @@ const Clients = () => {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="bg-popover border">
-                        <DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => {
+                            setSelectedClient(client);
+                            setIsDetailsModalOpen(true);
+                          }}
+                        >
                           <Eye className="mr-2 h-4 w-4" />
                           View Details
                         </DropdownMenuItem>
@@ -219,6 +227,15 @@ const Clients = () => {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onAddClient={addClient}
+      />
+      
+      <ClientDetailsModal
+        client={selectedClient}
+        isOpen={isDetailsModalOpen}
+        onClose={() => {
+          setIsDetailsModalOpen(false);
+          setSelectedClient(null);
+        }}
       />
     </div>
   );
