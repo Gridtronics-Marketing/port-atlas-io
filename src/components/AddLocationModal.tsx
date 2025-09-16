@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Upload, X, MapPin, Plus, Minus } from "lucide-react";
+import { Upload, X, MapPin, Plus, Minus, Building2, Users, Phone, FileText } from "lucide-react";
 import {
   Dialog,
   DialogContent,  
@@ -19,8 +19,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 import { useClients } from "@/hooks/useClients";
 import { useLocations } from "@/hooks/useLocations";
 import { useToast } from "@/hooks/use-toast";
@@ -175,243 +177,296 @@ export const AddLocationModal = ({ open, onOpenChange }: AddLocationModalProps) 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] bg-card border">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <MapPin className="h-5 w-5 text-primary" />
+      <DialogContent className="sm:max-w-[700px] max-h-[85vh] flex flex-col bg-card border">
+        <DialogHeader className="flex-shrink-0">
+          <DialogTitle className="flex items-center gap-2 text-xl">
+            <MapPin className="h-6 w-6 text-primary" />
             Add New Location
           </DialogTitle>
-          <DialogDescription>
-            Create a new jobsite location and upload the layout map for drop point management.
+          <DialogDescription className="text-muted-foreground">
+            Create a new jobsite location and upload floor plans for comprehensive drop point management.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
-          {/* Basic Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Location Name *</Label>
-              <Input
-                id="name"
-                placeholder="Enter location name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="building_type">Building Type</Label>
-              <Input
-                id="building_type"
-                placeholder="Office, Warehouse, Retail, etc."
-                value={formData.building_type}
-                onChange={(e) => setFormData({ ...formData, building_type: e.target.value })}
-              />
-            </div>
-          </div>
+        <ScrollArea className="flex-1 px-1">
+          <div className="space-y-6 py-2">
+            {/* Basic Information Section */}
+            <Card className="shadow-soft border-border">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Building2 className="h-5 w-5 text-primary" />
+                  Basic Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name" className="text-sm font-medium">Location Name *</Label>
+                    <Input
+                      id="name"
+                      placeholder="Enter location name"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      className="h-10"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="building_type" className="text-sm font-medium">Building Type</Label>
+                    <Input
+                      id="building_type"
+                      placeholder="Office, Warehouse, Retail, etc."
+                      value={formData.building_type}
+                      onChange={(e) => setFormData({ ...formData, building_type: e.target.value })}
+                      className="h-10"
+                    />
+                  </div>
+                </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="address">Address *</Label>
-            <Input
-              id="address"
-              placeholder="Enter full address"
-              value={formData.address}
-              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-            />
-          </div>
+                <div className="space-y-2">
+                  <Label htmlFor="address" className="text-sm font-medium">Address *</Label>
+                  <Input
+                    id="address"
+                    placeholder="Enter full street address"
+                    value={formData.address}
+                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    className="h-10"
+                  />
+                </div>
 
-          {/* Floor and Size Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="floors">Number of Floors *</Label>
-              <div className="flex items-center gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => adjustFloors(false)}
-                  disabled={formData.floors <= 1}
-                >
-                  <Minus className="h-4 w-4" />
-                </Button>
-                <Input
-                  id="floors"
-                  type="number"
-                  min="1"
-                  max="50"
-                  value={formData.floors}
-                  onChange={(e) => setFormData({ 
-                    ...formData, 
-                    floors: Math.max(1, parseInt(e.target.value) || 1)
-                  })}
-                  className="text-center"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => adjustFloors(true)}
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="total_square_feet">Total Square Feet</Label>
-              <Input
-                id="total_square_feet"
-                type="number"
-                placeholder="Enter total sq ft"
-                value={formData.total_square_feet}
-                onChange={(e) => setFormData({ ...formData, total_square_feet: e.target.value })}
-              />
-            </div>
-          </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="floors" className="text-sm font-medium">Number of Floors *</Label>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => adjustFloors(false)}
+                        disabled={formData.floors <= 1}
+                        className="h-10 w-10 p-0"
+                      >
+                        <Minus className="h-4 w-4" />
+                      </Button>
+                      <Input
+                        id="floors"
+                        type="number"
+                        min="1"
+                        max="50"
+                        value={formData.floors}
+                        onChange={(e) => setFormData({ 
+                          ...formData, 
+                          floors: Math.max(1, parseInt(e.target.value) || 1)
+                        })}
+                        className="text-center h-10 flex-1"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => adjustFloors(true)}
+                        className="h-10 w-10 p-0"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="total_square_feet" className="text-sm font-medium">Total Square Feet</Label>
+                    <Input
+                      id="total_square_feet"
+                      type="number"
+                      placeholder="Enter total sq ft"
+                      value={formData.total_square_feet}
+                      onChange={(e) => setFormData({ ...formData, total_square_feet: e.target.value })}
+                      className="h-10"
+                    />
+                  </div>
+                </div>
 
-          {/* Contact Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="contact_onsite">On-site Contact</Label>
-              <Input
-                id="contact_onsite"
-                placeholder="Contact person name"
-                value={formData.contact_onsite}
-                onChange={(e) => setFormData({ ...formData, contact_onsite: e.target.value })}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="contact_phone">Contact Phone</Label>
-              <Input
-                id="contact_phone"
-                placeholder="Phone number"
-                value={formData.contact_phone}
-                onChange={(e) => setFormData({ ...formData, contact_phone: e.target.value })}
-              />
-            </div>
-          </div>
+                <div className="space-y-2">
+                  <Label htmlFor="status" className="text-sm font-medium">Project Status</Label>
+                  <Select value={formData.status} onValueChange={(value: any) => setFormData({ ...formData, status: value })}>
+                    <SelectTrigger className="h-10 bg-background">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover border z-50">
+                      <SelectItem value="Active">Active</SelectItem>
+                      <SelectItem value="In Progress">In Progress</SelectItem>
+                      <SelectItem value="Completed">Completed</SelectItem>
+                      <SelectItem value="On Hold">On Hold</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardContent>
+            </Card>
 
-          {/* Status */}
-          <div className="space-y-2">
-            <Label htmlFor="status">Status</Label>
-            <Select value={formData.status} onValueChange={(value: any) => setFormData({ ...formData, status: value })}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select status" />
-              </SelectTrigger>
-              <SelectContent className="bg-popover border">
-                <SelectItem value="Active">Active</SelectItem>
-                <SelectItem value="In Progress">In Progress</SelectItem>
-                <SelectItem value="Completed">Completed</SelectItem>
-                <SelectItem value="On Hold">On Hold</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+            {/* Contact Information Section */}
+            <Card className="shadow-soft border-border">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Users className="h-5 w-5 text-primary" />
+                  Contact Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="contact_onsite" className="text-sm font-medium">On-site Contact</Label>
+                    <Input
+                      id="contact_onsite"
+                      placeholder="Contact person name"
+                      value={formData.contact_onsite}
+                      onChange={(e) => setFormData({ ...formData, contact_onsite: e.target.value })}
+                      className="h-10"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="contact_phone" className="text-sm font-medium flex items-center gap-1">
+                      <Phone className="h-3 w-3" />
+                      Contact Phone
+                    </Label>
+                    <Input
+                      id="contact_phone"
+                      placeholder="Phone number"
+                      value={formData.contact_phone}
+                      onChange={(e) => setFormData({ ...formData, contact_phone: e.target.value })}
+                      className="h-10"
+                    />
+                  </div>
+                </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="access_instructions">Access Instructions</Label>
-            <Textarea
-              id="access_instructions"
-              placeholder="Special access instructions, key codes, contact procedures, etc."
-              value={formData.access_instructions}
-              onChange={(e) => setFormData({ ...formData, access_instructions: e.target.value })}
-            />
-          </div>
+                <div className="space-y-2">
+                  <Label htmlFor="access_instructions" className="text-sm font-medium flex items-center gap-1">
+                    <FileText className="h-3 w-3" />
+                    Access Instructions
+                  </Label>
+                  <Textarea
+                    id="access_instructions"
+                    placeholder="Special access instructions, key codes, contact procedures, etc."
+                    value={formData.access_instructions}
+                    onChange={(e) => setFormData({ ...formData, access_instructions: e.target.value })}
+                    className="min-h-[80px] resize-none"
+                  />
+                </div>
+              </CardContent>
+            </Card>
 
-          {/* Floor Plans Section */}
-          {formData.floors > 0 && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <Label className="text-base font-semibold">Floor Plans</Label>
-                {formData.floors > 1 && (
-                  <Badge variant="secondary" className="text-xs">
-                    {formData.floors} floors
-                  </Badge>
-                )}
-              </div>
-              
-              <div className="space-y-4">
-                {floorNumbers.map((floorNumber) => {
-                  const file = layoutFiles[floorNumber];
-                  return (
-                    <Card key={floorNumber} className="border-dashed border-2 border-muted-foreground/25 hover:border-primary/50 transition-colors">
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between mb-3">
-                          <Label className="font-medium">
-                            {formData.floors === 1 ? 'Floor Plan' : `Floor ${floorNumber} Plan`}
-                          </Label>
-                          {formData.floors > 1 && (
-                            <Badge variant="outline" className="text-xs">
-                              Floor {floorNumber}
-                            </Badge>
-                          )}
+            {/* Floor Plans Section */}
+            {formData.floors > 0 && (
+              <Card className="shadow-soft border-border">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <MapPin className="h-5 w-5 text-primary" />
+                      Floor Plans
+                    </CardTitle>
+                    {formData.floors > 1 && (
+                      <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
+                        {formData.floors} Floor{formData.floors > 1 ? 's' : ''}
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Upload floor plans, blueprints, or layout diagrams for each floor
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {floorNumbers.map((floorNumber, index) => {
+                      const file = layoutFiles[floorNumber];
+                      return (
+                        <div key={floorNumber}>
+                          {index > 0 && <Separator className="my-4" />}
+                          <Card className="border-dashed border-2 border-muted-foreground/25 hover:border-primary/40 transition-colors duration-200">
+                            <CardContent className="p-6">
+                              <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center gap-2">
+                                  <Label className="text-sm font-medium text-foreground">
+                                    {formData.floors === 1 ? 'Floor Plan' : `Floor ${floorNumber}`}
+                                  </Label>
+                                  {formData.floors > 1 && (
+                                    <Badge variant="outline" className="text-xs">
+                                      Level {floorNumber}
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+                              
+                              {file ? (
+                                <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                                  <div className="flex items-center gap-3">
+                                    <div className="p-3 bg-primary/10 rounded-lg">
+                                      <Upload className="h-5 w-5 text-primary" />
+                                    </div>
+                                    <div>
+                                      <p className="font-medium text-foreground">{file.name}</p>
+                                      <p className="text-sm text-muted-foreground">
+                                        {(file.size / 1024 / 1024).toFixed(2)} MB • Ready for upload
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => removeFile(floorNumber)}
+                                    className="text-muted-foreground hover:text-destructive"
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              ) : (
+                                <div className="text-center py-8">
+                                  <div className="mx-auto w-12 h-12 bg-muted rounded-full flex items-center justify-center mb-3">
+                                    <Upload className="h-6 w-6 text-muted-foreground" />
+                                  </div>
+                                  <div className="space-y-2">
+                                    <p className="text-sm font-medium text-foreground">
+                                      Upload {formData.floors === 1 ? 'Floor Plan' : `Floor ${floorNumber} Plan`}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                                      Drop files here or click to browse. Supports images (JPG, PNG), PDFs, and CAD files (.dwg)
+                                    </p>
+                                    <input
+                                      type="file"
+                                      accept="image/*,.pdf,.dwg"
+                                      onChange={(e) => handleFileChange(floorNumber, e)}
+                                      className="hidden"
+                                      id={`layout-upload-${floorNumber}`}
+                                    />
+                                    <Label htmlFor={`layout-upload-${floorNumber}`} className="cursor-pointer">
+                                      <Button variant="outline" size="sm" className="mt-2" asChild>
+                                        <span className="bg-background hover:bg-muted">
+                                          Choose File
+                                        </span>
+                                      </Button>
+                                    </Label>
+                                  </div>
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
                         </div>
-                        
-                        {file ? (
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className="p-2 bg-primary/10 rounded-lg">
-                                <Upload className="h-5 w-5 text-primary" />
-                              </div>
-                              <div>
-                                <p className="font-medium text-foreground">{file.name}</p>
-                                <p className="text-sm text-muted-foreground">
-                                  {(file.size / 1024 / 1024).toFixed(2)} MB
-                                </p>
-                              </div>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeFile(floorNumber)}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        ) : (
-                          <div className="text-center py-4">
-                            <Upload className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
-                            <div className="space-y-2">
-                              <p className="text-sm font-medium text-foreground">
-                                Upload {formData.floors === 1 ? 'Floor Plan' : `Floor ${floorNumber} Plan`}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                Drag and drop or click to select floor plan, blueprint, or layout diagram
-                              </p>
-                              <p className="text-xs text-primary">
-                                Supported: Images (JPG, PNG), PDFs, CAD files (.dwg)
-                              </p>
-                              <input
-                                type="file"
-                                accept="image/*,.pdf,.dwg"
-                                onChange={(e) => handleFileChange(floorNumber, e)}
-                                className="hidden"
-                                id={`layout-upload-${floorNumber}`}
-                              />
-                              <Label htmlFor={`layout-upload-${floorNumber}`}>
-                                <Button variant="outline" size="sm" className="cursor-pointer" asChild>
-                                  <span>Choose File</span>
-                                </Button>
-                              </Label>
-                            </div>
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </ScrollArea>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        <Separator className="flex-shrink-0" />
+        
+        <DialogFooter className="flex-shrink-0 pt-4">
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="min-w-[100px]">
             Cancel
           </Button>
           <Button 
             onClick={handleSubmit} 
-            className="bg-gradient-primary hover:bg-primary-hover"
+            className="bg-gradient-primary hover:bg-primary-hover min-w-[140px]"
             disabled={isSubmitting}
           >
             {isSubmitting ? "Creating..." : "Create Location"}
