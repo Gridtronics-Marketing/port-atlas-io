@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Upload, X, MapPin } from "lucide-react";
+import { Upload, X, MapPin, Plus, Minus } from "lucide-react";
 import {
   Dialog,
   DialogContent,  
@@ -22,6 +22,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { useClients } from "@/hooks/useClients";
 import { useLocations } from "@/hooks/useLocations";
+import { useToast } from "@/hooks/use-toast";
 
 interface AddLocationModalProps {
   open: boolean;
@@ -30,14 +31,39 @@ interface AddLocationModalProps {
 
 export const AddLocationModal = ({ open, onOpenChange }: AddLocationModalProps) => {
   const [layoutFile, setLayoutFile] = useState<File | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { clients } = useClients();
   const { addLocation } = useLocations();
+  const { toast } = useToast();
+  
   const [formData, setFormData] = useState({
     name: "",
-    client: "",
     address: "",
-    description: "",
+    building_type: "",
+    floors: 1,
+    total_square_feet: "",
+    access_instructions: "",
+    contact_onsite: "",
+    contact_phone: "",
+    project_id: "",
+    status: "Active" as "Active" | "In Progress" | "Completed" | "On Hold",
   });
+
+  const resetForm = () => {
+    setFormData({
+      name: "",
+      address: "",
+      building_type: "",
+      floors: 1,
+      total_square_feet: "",
+      access_instructions: "",
+      contact_onsite: "",
+      contact_phone: "",
+      project_id: "",
+      status: "Active",
+    });
+    setLayoutFile(null);
+  };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -46,16 +72,57 @@ export const AddLocationModal = ({ open, onOpenChange }: AddLocationModalProps) 
     }
   };
 
-  const handleSubmit = () => {
-    // Handle form submission
-    console.log("Form data:", formData);
-    console.log("Layout file:", layoutFile);
-    onOpenChange(false);
+  const handleSubmit = async () => {
+    if (!formData.name.trim() || !formData.address.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill in all required fields (Name and Address)",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      
+      const locationData = {
+        name: formData.name.trim(),
+        address: formData.address.trim(),
+        building_type: formData.building_type.trim() || null,
+        floors: formData.floors,
+        total_square_feet: formData.total_square_feet ? parseInt(formData.total_square_feet) : null,
+        access_instructions: formData.access_instructions.trim() || null,
+        contact_onsite: formData.contact_onsite.trim() || null,
+        contact_phone: formData.contact_phone.trim() || null,
+        project_id: formData.project_id || null,
+        status: formData.status,
+        completion_percentage: 0,
+        latitude: null,
+        longitude: null,
+      };
+
+      await addLocation(locationData);
+      resetForm();
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error creating location:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const adjustFloors = (increment: boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      floors: increment 
+        ? prev.floors + 1 
+        : Math.max(1, prev.floors - 1)
+    }));
   };
 
   const mockClients = [
     "TechCorp Inc.",
-    "Industrial Solutions",
+    "Industrial Solutions", 
     "ShopMart",
     "Global Enterprises",
     "Local Business Co.",
@@ -88,19 +155,13 @@ export const AddLocationModal = ({ open, onOpenChange }: AddLocationModalProps) 
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="client">Client *</Label>
-              <Select value={formData.client} onValueChange={(value) => setFormData({ ...formData, client: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select client" />
-                </SelectTrigger>
-                <SelectContent className="bg-popover border">
-                  {clients.map((client) => (
-                    <SelectItem key={client.id} value={client.id}>
-                      {client.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label htmlFor="building_type">Building Type</Label>
+              <Input
+                id="building_type"
+                placeholder="Office, Warehouse, Retail, etc."
+                value={formData.building_type}
+                onChange={(e) => setFormData({ ...formData, building_type: e.target.value })}
+              />
             </div>
           </div>
 
@@ -114,13 +175,101 @@ export const AddLocationModal = ({ open, onOpenChange }: AddLocationModalProps) 
             />
           </div>
 
+          {/* Floor and Size Information */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="floors">Number of Floors *</Label>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => adjustFloors(false)}
+                  disabled={formData.floors <= 1}
+                >
+                  <Minus className="h-4 w-4" />
+                </Button>
+                <Input
+                  id="floors"
+                  type="number"
+                  min="1"
+                  max="50"
+                  value={formData.floors}
+                  onChange={(e) => setFormData({ 
+                    ...formData, 
+                    floors: Math.max(1, parseInt(e.target.value) || 1)
+                  })}
+                  className="text-center"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => adjustFloors(true)}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="total_square_feet">Total Square Feet</Label>
+              <Input
+                id="total_square_feet"
+                type="number"
+                placeholder="Enter total sq ft"
+                value={formData.total_square_feet}
+                onChange={(e) => setFormData({ ...formData, total_square_feet: e.target.value })}
+              />
+            </div>
+          </div>
+
+          {/* Contact Information */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="contact_onsite">On-site Contact</Label>
+              <Input
+                id="contact_onsite"
+                placeholder="Contact person name"
+                value={formData.contact_onsite}
+                onChange={(e) => setFormData({ ...formData, contact_onsite: e.target.value })}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="contact_phone">Contact Phone</Label>
+              <Input
+                id="contact_phone"
+                placeholder="Phone number"
+                value={formData.contact_phone}
+                onChange={(e) => setFormData({ ...formData, contact_phone: e.target.value })}
+              />
+            </div>
+          </div>
+
+          {/* Status */}
           <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="status">Status</Label>
+            <Select value={formData.status} onValueChange={(value: any) => setFormData({ ...formData, status: value })}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select status" />
+              </SelectTrigger>
+              <SelectContent className="bg-popover border">
+                <SelectItem value="Active">Active</SelectItem>
+                <SelectItem value="In Progress">In Progress</SelectItem>
+                <SelectItem value="Completed">Completed</SelectItem>
+                <SelectItem value="On Hold">On Hold</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="access_instructions">Access Instructions</Label>
             <Textarea
-              id="description"
-              placeholder="Enter location description (optional)"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              id="access_instructions"
+              placeholder="Special access instructions, key codes, contact procedures, etc."
+              value={formData.access_instructions}
+              onChange={(e) => setFormData({ ...formData, access_instructions: e.target.value })}
             />
           </div>
 
@@ -184,8 +333,12 @@ export const AddLocationModal = ({ open, onOpenChange }: AddLocationModalProps) 
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit} className="bg-gradient-primary hover:bg-primary-hover">
-            Create Location
+          <Button 
+            onClick={handleSubmit} 
+            className="bg-gradient-primary hover:bg-primary-hover"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Creating..." : "Create Location"}
           </Button>
         </DialogFooter>
       </DialogContent>
