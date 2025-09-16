@@ -23,6 +23,7 @@ interface InteractiveMapProps {
   locationId: string;
   floors?: number;
   currentFloor?: number;
+  backgroundImage?: string;
 }
 
 // Mock drop points for demonstration
@@ -34,7 +35,7 @@ const mockDropPoints: DropPoint[] = [
   { id: 5, x: 65, y: 70, type: "data", label: "DP-003", room: "Conference", status: "installed" },
 ];
 
-export const InteractiveMap = ({ locationId, floors = 1, currentFloor = 1 }: InteractiveMapProps) => {
+export const InteractiveMap = ({ locationId, floors = 1, currentFloor = 1, backgroundImage }: InteractiveMapProps) => {
   const [dropPoints, setDropPoints] = useState<DropPoint[]>(mockDropPoints);
   const [selectedPoint, setSelectedPoint] = useState<any>(null);
   const [isAddingPoint, setIsAddingPoint] = useState(false);
@@ -142,16 +143,24 @@ export const InteractiveMap = ({ locationId, floors = 1, currentFloor = 1 }: Int
         />
         
         {/* Layout placeholder - would show actual floor plan */}
-        <div className="absolute inset-4 border-2 border-dashed border-muted-foreground/30 rounded flex items-center justify-center">
-          <div className="text-center text-muted-foreground">
-            <MapPin className="h-12 w-12 mx-auto mb-2 opacity-50" />
-            <p className="text-sm font-medium">
-              {floors > 1 ? `Floor ${currentFloor} Plan` : 'Interactive Floor Plan'}
-            </p>
-            <p className="text-xs">Upload floor plan images to see actual building structure</p>
-            <p className="text-xs mt-1">Click "Edit Mode" above to use the floor plan editor</p>
+        {backgroundImage ? (
+          <img 
+            src={backgroundImage} 
+            alt={`Floor ${currentFloor} plan`}
+            className="absolute inset-0 w-full h-full object-contain opacity-80"
+          />
+        ) : (
+          <div className="absolute inset-4 border-2 border-dashed border-muted-foreground/30 rounded flex items-center justify-center">
+            <div className="text-center text-muted-foreground">
+              <MapPin className="h-12 w-12 mx-auto mb-2 opacity-50" />
+              <p className="text-sm font-medium">
+                {floors > 1 ? `Floor ${currentFloor} Plan` : 'Interactive Floor Plan'}
+              </p>
+              <p className="text-xs">Upload floor plan images to see actual building structure</p>
+              <p className="text-xs mt-1">Click "Edit Mode" above to use the floor plan editor</p>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Drop Points */}
         <TooltipProvider>

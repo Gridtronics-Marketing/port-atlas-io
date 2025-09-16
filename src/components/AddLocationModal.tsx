@@ -26,6 +26,7 @@ import { Separator } from "@/components/ui/separator";
 import { useClients } from "@/hooks/useClients";
 import { useLocations } from "@/hooks/useLocations";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AddLocationModalProps {
   open: boolean;
@@ -113,26 +114,64 @@ export const AddLocationModal = ({ open, onOpenChange }: AddLocationModalProps) 
         completion_percentage: 0,
         latitude: null,
         longitude: null,
+        floor_plan_files: {},
       };
 
       // Create the location first
       const location = await addLocation(locationData);
       
-      // TODO: Upload floor plan files to storage
-      // For now, we'll show what files were uploaded
-      const uploadedFloors = Object.keys(layoutFiles).length;
-      if (uploadedFloors > 0) {
-        console.log(`Floor plans uploaded for ${uploadedFloors} floors:`, layoutFiles);
-        toast({
-          title: "Floor Plans Ready",
-          description: `${uploadedFloors} floor plan${uploadedFloors > 1 ? 's' : ''} uploaded. Use Edit Mode in location details to draw on them.`,
-        });
+      // Upload floor plan files to storage if any were selected
+      const uploadedFiles: { [key: number]: string } = {};
+      const uploadPromises = Object.entries(layoutFiles).map(async ([floorStr, file]) => {
+        if (file) {
+          const floorNumber = parseInt(floorStr);
+          const fileExt = file.name.split('.').pop();
+          const fileName = `${location.id}/floor_${floorNumber}.${fileExt}`;
+          
+          const { data, error } = await supabase.storage
+            .from('floor-plans')
+            .upload(fileName, file, {
+              cacheControl: '3600',
+              upsert: true
+            });
+
+          if (error) {
+            console.error(`Error uploading floor ${floorNumber} plan:`, error);
+            throw error;
+          }
+
+          uploadedFiles[floorNumber] = fileName;
+        }
+      });
+
+      await Promise.all(uploadPromises);
+
+      // Update location with floor plan file paths
+      if (Object.keys(uploadedFiles).length > 0) {
+        const { error } = await supabase
+          .from('locations')
+          .update({ floor_plan_files: uploadedFiles })
+          .eq('id', location.id);
+
+        if (error) {
+          console.error('Error updating location with floor plans:', error);
+        } else {
+          toast({
+            title: "Floor Plans Uploaded",
+            description: `${Object.keys(uploadedFiles).length} floor plan${Object.keys(uploadedFiles).length > 1 ? 's' : ''} uploaded successfully.`,
+          });
+        }
       }
 
       resetForm();
       onOpenChange(false);
     } catch (error) {
       console.error('Error creating location:', error);
+      toast({
+        title: "Upload Error",
+        description: "Failed to upload floor plans. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }

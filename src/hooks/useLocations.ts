@@ -17,6 +17,7 @@ export interface Location {
   longitude: number | null;
   status: 'Active' | 'In Progress' | 'Completed' | 'On Hold';
   completion_percentage: number;
+  floor_plan_files?: { [floorNumber: number]: string };
   created_at: string;
   updated_at: string;
   // Joined data

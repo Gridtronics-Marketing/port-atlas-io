@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   MapPin, 
   Cable, 
@@ -35,7 +35,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
+import { supabase } from "@/integrations/supabase/client";
 import { type Location } from "@/hooks/useLocations";
 
 interface LocationDetailsModalProps {
@@ -48,7 +48,38 @@ export const LocationDetailsModal = ({ location, open, onOpenChange }: LocationD
   const [activeTab, setActiveTab] = useState("details");
   const [selectedFloor, setSelectedFloor] = useState(1);
   const [editMode, setEditMode] = useState(false);
-  const [showDemo, setShowDemo] = useState(true); // Show demo when no floor plans uploaded
+  const [floorPlanUrls, setFloorPlanUrls] = useState<{ [floorNumber: number]: string }>({});
+
+  // Check if floor plans exist and get their URLs
+  useEffect(() => {
+    const loadFloorPlans = async () => {
+      if (!location?.floor_plan_files) {
+        setFloorPlanUrls({});
+        return;
+      }
+
+      const urls: { [floorNumber: number]: string } = {};
+      
+      for (const [floorStr, filePath] of Object.entries(location.floor_plan_files)) {
+        if (filePath) {
+          const { data } = supabase.storage
+            .from('floor-plans')
+            .getPublicUrl(filePath);
+          
+          urls[parseInt(floorStr)] = data.publicUrl;
+        }
+      }
+      
+      setFloorPlanUrls(urls);
+    };
+
+    if (open && location) {
+      loadFloorPlans();
+    }
+  }, [location, open]);
+
+  const hasFloorPlans = location?.floor_plan_files && Object.keys(location.floor_plan_files).length > 0;
+  const currentFloorPlanUrl = floorPlanUrls[selectedFloor];
 
   if (!location) return null;
 
@@ -334,24 +365,24 @@ export const LocationDetailsModal = ({ location, open, onOpenChange }: LocationD
                     <FloorPlanEditor 
                       floorNumber={selectedFloor}
                       locationName={location.name}
-                      backgroundImage={null} // TODO: Load actual uploaded floor plan
+                      backgroundImage={currentFloorPlanUrl || null}
                       onSave={(canvasData) => {
                         console.log(`Saving floor ${selectedFloor} plan:`, canvasData);
                         setEditMode(false);
-                        setShowDemo(false);
                       }}
                     />
-                  ) : showDemo ? (
-                    <FloorPlanDemo 
-                      floorNumber={selectedFloor}
-                      totalFloors={location.floors}
-                      onStartEditor={() => setEditMode(true)}
-                    />
-                  ) : (
+                  ) : hasFloorPlans ? (
                     <InteractiveMap 
                       locationId={location.id} 
                       floors={location.floors}
                       currentFloor={selectedFloor}
+                      backgroundImage={currentFloorPlanUrl}
+                    />
+                  ) : (
+                    <FloorPlanDemo 
+                      floorNumber={selectedFloor}
+                      totalFloors={location.floors}
+                      onStartEditor={() => setEditMode(true)}
                     />
                   )}
                   
@@ -360,7 +391,7 @@ export const LocationDetailsModal = ({ location, open, onOpenChange }: LocationD
                     <ul className="space-y-1 text-xs">
                       <li>• <strong>Upload Floor Plans:</strong> Add building layouts when creating locations</li>
                       <li>• <strong>Edit Mode:</strong> Interactive editor for drawing and placing drop points</li>
-                      <li>• <strong>View Mode:</strong> See existing drop points and click for details</li>
+                      <li>• <strong>View Mode:</strong> {hasFloorPlans ? 'See uploaded floor plans with existing drop points' : 'Demo mode - upload floor plans to see actual layouts'}</li>
                       <li>• {location.floors > 1 ? 'Use the floor selector to switch between floors' : 'Single floor layout'}</li>
                     </ul>
                   </div>
