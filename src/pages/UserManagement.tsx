@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { Plus, Shield, Users, Mail, Calendar, UserCheck } from "lucide-react";
+import { Plus, Shield, Users, Mail, Calendar, UserCheck, UserCog } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { AddUserModal } from "@/components/AddUserModal";
 import { RoleManagementModal } from "@/components/RoleManagementModal";
+import { ManualRoleAssignmentModal } from "@/components/ManualRoleAssignmentModal";
 import { useUserRoles } from "@/hooks/useUserRoles";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -22,6 +23,7 @@ const UserManagement = () => {
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [selectedUserEmail, setSelectedUserEmail] = useState<string>("");
   const [showRoleModal, setShowRoleModal] = useState(false);
+  const [showManualRoleModal, setShowManualRoleModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   
   const { userRoles, loading, hasRole, fetchAllUserRoles } = useUserRoles();
@@ -83,13 +85,23 @@ const UserManagement = () => {
               Manage system users, roles, and permissions
             </p>
           </div>
-          <Button 
-            onClick={() => setShowAddUser(true)}
-            className="bg-gradient-primary hover:bg-primary-hover"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add User
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline"
+              onClick={() => setShowManualRoleModal(true)}
+              className="flex items-center gap-2"
+            >
+              <UserCog className="h-4 w-4" />
+              Assign Role to Existing User
+            </Button>
+            <Button 
+              onClick={() => setShowAddUser(true)}
+              className="bg-gradient-primary hover:bg-primary-hover"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add New User
+            </Button>
+          </div>
         </div>
 
         {/* Stats Cards */}
@@ -149,7 +161,14 @@ const UserManagement = () => {
             <div className="flex justify-between items-center">
               <div>
                 <CardTitle>System Users</CardTitle>
-                <CardDescription>Manage user accounts and role assignments</CardDescription>
+                <CardDescription>
+                  Manage user accounts and role assignments
+                  {userRoles.length === 0 && (
+                    <span className="block text-orange-600 text-sm mt-1">
+                      ⚠️ No users with roles found. If users exist without roles, use "Add User" to assign roles.
+                    </span>
+                  )}
+                </CardDescription>
               </div>
               <div className="w-72">
                 <Input
@@ -224,12 +243,19 @@ const UserManagement = () => {
                   })}
                   
                   {filteredUsers.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={4} className="text-center py-8">
-                        <p className="text-muted-foreground">No users found</p>
-                      </TableCell>
-                    </TableRow>
-                  )}
+                     <TableRow>
+                       <TableCell colSpan={4} className="text-center py-8">
+                         <div className="space-y-2">
+                           <p className="text-muted-foreground">No users with roles found</p>
+                           <p className="text-sm text-orange-600">
+                             If there are users without roles in Supabase Auth, they won't appear here.
+                             <br />
+                             Use the "Add User" button to create users with roles, or manually assign roles to existing users.
+                           </p>
+                         </div>
+                       </TableCell>
+                     </TableRow>
+                   )}
                 </TableBody>
               </Table>
             )}
@@ -248,6 +274,12 @@ const UserManagement = () => {
           onClose={() => setShowRoleModal(false)}
           userId={selectedUserId}
           userEmail={selectedUserEmail}
+        />
+
+        <ManualRoleAssignmentModal
+          open={showManualRoleModal}
+          onOpenChange={setShowManualRoleModal}
+          onRoleAssigned={fetchAllUserRoles}
         />
       </main>
   );
