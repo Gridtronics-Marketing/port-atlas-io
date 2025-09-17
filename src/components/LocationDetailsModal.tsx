@@ -54,7 +54,11 @@ export const LocationDetailsModal = ({ location, open, onOpenChange }: LocationD
   useEffect(() => {
     const loadFloorPlans = async () => {
       if (!location?.floor_plan_files) {
-        setFloorPlanUrls({});
+        // Fallback: check for demo floor plans in public folder
+        const demoUrls: { [floorNumber: number]: string } = {};
+        // For demo purposes, check if Floor_1_Plan.png exists
+        demoUrls[1] = '/floor-plans/Floor_1_Plan.png';
+        setFloorPlanUrls(demoUrls);
         return;
       }
 
@@ -78,7 +82,7 @@ export const LocationDetailsModal = ({ location, open, onOpenChange }: LocationD
     }
   }, [location, open]);
 
-  const hasFloorPlans = location?.floor_plan_files && Object.keys(location.floor_plan_files).length > 0;
+  const hasFloorPlans = (location?.floor_plan_files && Object.keys(location.floor_plan_files).length > 0) || Object.keys(floorPlanUrls).length > 0;
   const currentFloorPlanUrl = floorPlanUrls[selectedFloor];
 
   if (!location) return null;

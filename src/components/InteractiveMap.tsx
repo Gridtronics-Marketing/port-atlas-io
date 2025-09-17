@@ -8,6 +8,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useDropPoints, type DropPoint as DBDropPoint } from "@/hooks/useDropPoints";
 
 interface DropPoint {
   id: number;
@@ -26,19 +27,23 @@ interface InteractiveMapProps {
   backgroundImage?: string;
 }
 
-// Mock drop points for demonstration
-const mockDropPoints: DropPoint[] = [
-  { id: 1, x: 20, y: 30, type: "data", label: "DP-001", room: "Reception", status: "tested" },
-  { id: 2, x: 45, y: 25, type: "fiber", label: "FP-001", room: "Server Room", status: "installed" },
-  { id: 3, x: 70, y: 40, type: "security", label: "SP-001", room: "Entrance", status: "tested" },
-  { id: 4, x: 35, y: 60, type: "data", label: "DP-002", room: "Office A", status: "planned" },
-  { id: 5, x: 65, y: 70, type: "data", label: "DP-003", room: "Conference", status: "installed" },
-];
-
 export const InteractiveMap = ({ locationId, floors = 1, currentFloor = 1, backgroundImage }: InteractiveMapProps) => {
-  const [dropPoints, setDropPoints] = useState<DropPoint[]>(mockDropPoints);
+  const { dropPoints: dbDropPoints } = useDropPoints(locationId);
   const [selectedPoint, setSelectedPoint] = useState<any>(null);
   const [isAddingPoint, setIsAddingPoint] = useState(false);
+  
+  // Convert database drop points to display format
+  const dropPoints: DropPoint[] = dbDropPoints
+    .filter(dp => !dp.floor || dp.floor === currentFloor)
+    .map(dp => ({
+      id: parseInt(dp.id) || 0,
+      x: dp.x_coordinate || 0,
+      y: dp.y_coordinate || 0,
+      type: dp.point_type as "data" | "fiber" | "security",
+      label: dp.label,
+      room: dp.room || "Unknown",
+      status: dp.status as "planned" | "installed" | "tested"
+    }));
 
   const getDropPointIcon = (type: string) => {
     switch (type) {
@@ -73,19 +78,9 @@ export const InteractiveMap = ({ locationId, floors = 1, currentFloor = 1, backg
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
 
-    const newPoint: DropPoint = {
-      id: dropPoints.length + 1,
-      x,
-      y,
-      type: "data",
-      label: `DP-${(dropPoints.length + 1).toString().padStart(3, "0")}`,
-      room: "New Room",
-      status: "planned",
-    };
-
-    setDropPoints([...dropPoints, newPoint]);
+    // For now, just show a placeholder - in a real app, this would open a modal to add a drop point
+    console.log(`Would add drop point at ${x.toFixed(1)}%, ${y.toFixed(1)}%`);
     setIsAddingPoint(false);
-    setSelectedPoint(newPoint);
   };
 
   return (
