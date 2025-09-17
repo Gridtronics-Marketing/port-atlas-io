@@ -9,11 +9,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { LocationDetailsModal } from "@/components/LocationDetailsModal";
+import { AddLocationModal } from "@/components/AddLocationModal";
 import { useLocations, type Location } from "@/hooks/useLocations";
 
 export const LocationGrid = () => {
   const { locations, loading, deleteLocation } = useLocations();
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
+  const [editingLocation, setEditingLocation] = useState<Location | null>(null);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -103,7 +105,7 @@ export const LocationGrid = () => {
                   <Eye className="mr-2 h-4 w-4" />
                   View Details
                 </DropdownMenuItem>
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setEditingLocation(location)}>
                   <Edit className="mr-2 h-4 w-4" />
                   Edit Location
                 </DropdownMenuItem>
@@ -124,6 +126,12 @@ export const LocationGrid = () => {
         location={selectedLocation}
         open={!!selectedLocation}
         onOpenChange={(open) => !open && setSelectedLocation(null)}
+      />
+      
+      <AddLocationModal
+        location={editingLocation}
+        open={!!editingLocation}
+        onOpenChange={(open) => !open && setEditingLocation(null)}
       />
     </>
   );

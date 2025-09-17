@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Upload, X, MapPin, Plus, Minus, Building2, Users, Phone, FileText } from "lucide-react";
 import {
   Dialog,
@@ -24,21 +24,23 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useClients } from "@/hooks/useClients";
-import { useLocations } from "@/hooks/useLocations";
+import { useLocations, type Location } from "@/hooks/useLocations";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 interface AddLocationModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  location?: Location | null; // Optional location for editing
 }
 
-export const AddLocationModal = ({ open, onOpenChange }: AddLocationModalProps) => {
+export const AddLocationModal = ({ open, onOpenChange, location }: AddLocationModalProps) => {
   const [layoutFiles, setLayoutFiles] = useState<{ [floorNumber: number]: File | null }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { clients } = useClients();
-  const { addLocation } = useLocations();
+  const { addLocation, updateLocation } = useLocations();
   const { toast } = useToast();
+  const isEditing = !!location;
   
   const [formData, setFormData] = useState({
     name: "",
@@ -52,6 +54,26 @@ export const AddLocationModal = ({ open, onOpenChange }: AddLocationModalProps) 
     project_id: "",
     status: "Active" as "Active" | "In Progress" | "Completed" | "On Hold",
   });
+
+  // Effect to populate form when editing
+  useEffect(() => {
+    if (location && open) {
+      setFormData({
+        name: location.name || "",
+        address: location.address || "",
+        building_type: location.building_type || "",
+        floors: location.floors || 1,
+        total_square_feet: location.total_square_feet?.toString() || "",
+        access_instructions: location.access_instructions || "",
+        contact_onsite: location.contact_onsite || "",
+        contact_phone: location.contact_phone || "",
+        project_id: location.project_id || "",
+        status: location.status as any || "Active",
+      });
+    } else if (!location && open) {
+      resetForm();
+    }
+  }, [location, open]);
 
   const resetForm = () => {
     setFormData({
@@ -117,8 +139,10 @@ export const AddLocationModal = ({ open, onOpenChange }: AddLocationModalProps) 
         floor_plan_files: {},
       };
 
-      // Create the location first
-      const location = await addLocation(locationData);
+      // Create or update the location
+      const resultLocation = isEditing 
+        ? await updateLocation(location!.id, locationData)
+        : await addLocation(locationData);
       
       // Upload floor plan files to storage if any were selected
       const uploadedFiles: { [key: number]: string } = {};
@@ -126,7 +150,7 @@ export const AddLocationModal = ({ open, onOpenChange }: AddLocationModalProps) 
         if (file) {
           const floorNumber = parseInt(floorStr);
           const fileExt = file.name.split('.').pop();
-          const fileName = `${location.id}/floor_${floorNumber}.${fileExt}`;
+          const fileName = `${resultLocation.id}/floor_${floorNumber}.${fileExt}`;
           
           const { data, error } = await supabase.storage
             .from('floor-plans')
@@ -151,7 +175,7 @@ export const AddLocationModal = ({ open, onOpenChange }: AddLocationModalProps) 
         const { error } = await supabase
           .from('locations')
           .update({ floor_plan_files: uploadedFiles })
-          .eq('id', location.id);
+          .eq('id', resultLocation.id);
 
         if (error) {
           console.error('Error updating location with floor plans:', error);
@@ -220,10 +244,13 @@ export const AddLocationModal = ({ open, onOpenChange }: AddLocationModalProps) 
         <DialogHeader className="flex-shrink-0 px-6 pt-6">
           <DialogTitle className="flex items-center gap-2 text-xl">
             <MapPin className="h-6 w-6 text-primary" />
-            Add New Location
+            {isEditing ? 'Edit Location' : 'Add New Location'}
           </DialogTitle>
           <DialogDescription className="text-muted-foreground">
-            Create a new jobsite location and upload floor plans for comprehensive drop point management.
+            {isEditing 
+              ? 'Update location details and manage floor plans for your jobsite.'
+              : 'Create a new jobsite location and upload floor plans for comprehensive drop point management.'
+            }
           </DialogDescription>
         </DialogHeader>
 
@@ -508,7 +535,10 @@ export const AddLocationModal = ({ open, onOpenChange }: AddLocationModalProps) 
             className="bg-gradient-primary hover:bg-primary-hover min-w-[140px]"
             disabled={isSubmitting}
           >
-            {isSubmitting ? "Creating..." : "Create Location"}
+            {isSubmitting 
+              ? (isEditing ? "Updating..." : "Creating...") 
+              : (isEditing ? "Update Location" : "Create Location")
+            }
           </Button>
         </DialogFooter>
       </DialogContent>
