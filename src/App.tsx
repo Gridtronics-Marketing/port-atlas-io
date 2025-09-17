@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import Locations from "./pages/Locations";
 import Clients from "./pages/Clients";
 import Employees from "./pages/Employees";
+import WorkOrders from "./pages/WorkOrders";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -41,6 +42,11 @@ const App = () => (
             <Route path="/employees" element={
               <ProtectedRoute>
                 <Employees />
+              </ProtectedRoute>
+            } />
+            <Route path="/work-orders" element={
+              <ProtectedRoute>
+                <WorkOrders />
               </ProtectedRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

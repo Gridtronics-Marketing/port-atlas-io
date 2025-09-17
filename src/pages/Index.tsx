@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, MapPin, Users, Building2, Activity } from "lucide-react";
+import { Plus, MapPin, Users, Building2, Activity, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,11 +10,15 @@ import { RecentActivity } from "@/components/RecentActivity";
 import { AddLocationModal } from "@/components/AddLocationModal";
 import { Navigation } from "@/components/Navigation";
 import { SeedDataButton } from "@/components/SeedDataButton";
+import { ProjectDashboard } from "@/components/ProjectDashboard";
+import { WorkOrderList } from "@/components/WorkOrderList";
 import { useLocations } from "@/hooks/useLocations";
+import { useWorkOrders } from "@/hooks/useWorkOrders";
 
 const Index = () => {
   const [showAddLocation, setShowAddLocation] = useState(false);
   const { locations } = useLocations();
+  const { workOrders } = useWorkOrders();
 
   return (
     <div className="min-h-screen bg-background">
@@ -46,10 +50,39 @@ const Index = () => {
         {/* Stats Overview */}
         <StatsOverview />
 
+        {/* Project Dashboard */}
+        <ProjectDashboard />
+
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+          {/* Work Orders */}
+          <div className="xl:col-span-2">
+            <Card className="shadow-soft">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Activity className="h-5 w-5 text-primary" />
+                    Recent Work Orders
+                  </CardTitle>
+                  <CardDescription>
+                    Latest work orders and their status
+                  </CardDescription>
+                </div>
+                <Badge variant="secondary">{workOrders.filter(wo => wo.status !== 'Completed').length} Active</Badge>
+              </CardHeader>
+              <CardContent>
+                <WorkOrderList limit={5} />
+                <div className="mt-4">
+                  <Button variant="outline" className="w-full" asChild>
+                    <Link to="/work-orders">View All Work Orders</Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
           {/* Locations */}
-          <div className="lg:col-span-2">
+          <div className="xl:col-span-1">
             <Card className="shadow-soft">
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
@@ -58,10 +91,10 @@ const Index = () => {
                     Active Locations
                   </CardTitle>
                   <CardDescription>
-                    Manage installation sites and client locations
+                    Installation sites
                   </CardDescription>
                 </div>
-                <Badge variant="secondary">{locations.filter(l => l.status === 'Active').length} Active</Badge>
+                <Badge variant="secondary">{locations.filter(l => l.status === 'Active').length}</Badge>
               </CardHeader>
               <CardContent>
                 <LocationGrid />
@@ -69,8 +102,8 @@ const Index = () => {
             </Card>
           </div>
 
-          {/* Recent Activity */}
-          <div className="space-y-6">
+          {/* Quick Actions */}
+          <div className="xl:col-span-1 space-y-6">
             <Card className="shadow-soft">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -83,12 +116,17 @@ const Index = () => {
               </CardContent>
             </Card>
 
-            {/* Quick Actions */}
             <Card className="shadow-soft">
               <CardHeader>
                 <CardTitle>Quick Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
+                <Button variant="outline" className="w-full justify-start" asChild>
+                  <Link to="/work-orders">
+                    <FileText className="h-4 w-4 mr-2" />
+                    Work Orders
+                  </Link>
+                </Button>
                 <Button variant="outline" className="w-full justify-start" asChild>
                   <Link to="/employees">
                     <Users className="h-4 w-4 mr-2" />
