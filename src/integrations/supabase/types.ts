@@ -760,6 +760,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_current_user_email: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_employee_directory: {
         Args: Record<PropertyKey, never>
         Returns: {
