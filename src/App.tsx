@@ -14,6 +14,7 @@ import FieldOperations from "./pages/FieldOperations";
 import QualityAssurance from "./pages/QualityAssurance";
 import AdvancedFeatures from "./pages/AdvancedFeatures";
 import Integrations from "./pages/Integrations";
+import UserManagement from "./pages/UserManagement";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -71,6 +72,11 @@ const App = () => (
             <Route path="/integrations" element={
               <ProtectedRoute>
                 <Integrations />
+              </ProtectedRoute>
+            } />
+            <Route path="/user-management" element={
+              <ProtectedRoute>
+                <UserManagement />
               </ProtectedRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

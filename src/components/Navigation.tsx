@@ -12,18 +12,20 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserRoles } from "@/hooks/useUserRoles";
 import portAtlasLogo from "@/assets/port-atlas-logo.png";
 
 export const Navigation = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
   const { user, signOut } = useAuth();
+  const { hasRole } = useUserRoles();
 
   const isActiveRoute = (path: string) => {
     return location.pathname === path;
   };
 
-  const navItems = [
+  const baseNavItems = [
     { name: "Dashboard", path: "/" },
     { name: "Work Orders", path: "/work-orders" },
     { name: "Field Ops", path: "/field-operations" },
@@ -34,6 +36,11 @@ export const Navigation = () => {
     { name: "Clients", path: "/clients" },
     { name: "Employees", path: "/employees" },
   ];
+
+  // Add admin-only items
+  const navItems = hasRole('admin') 
+    ? [...baseNavItems, { name: "User Management", path: "/user-management" }]
+    : baseNavItems;
 
   return (
     <nav className="bg-card border-b border-border shadow-soft sticky top-0 z-50">
