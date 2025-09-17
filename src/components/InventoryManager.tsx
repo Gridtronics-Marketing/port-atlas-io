@@ -174,7 +174,35 @@ export function InventoryManager() {
   });
 
   if (loading) {
-    return <div className="text-center py-8">Loading inventory...</div>;
+    return (
+      <Card>
+        <CardContent className="py-12">
+          <div className="text-center text-muted-foreground">
+            <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <h3 className="text-lg font-semibold mb-2">Loading Inventory</h3>
+            <p>Please wait while we fetch your inventory data...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!inventory || inventory.length === 0) {
+    return (
+      <Card>
+        <CardContent className="py-12">
+          <div className="text-center text-muted-foreground">
+            <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <h3 className="text-lg font-semibold mb-2">No Inventory Items</h3>
+            <p>Start by adding your first inventory item to get started.</p>
+            <Button className="mt-4" onClick={() => setShowAddItem(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add First Item
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
 
   if (!inventory) {

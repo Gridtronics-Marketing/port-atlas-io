@@ -142,7 +142,17 @@ export function FinancialDashboard() {
   const projectSummary = selectedProject ? getProjectFinancialSummary(selectedProject) : null;
 
   if (loading) {
-    return <div className="text-center py-8">Loading financial data...</div>;
+    return (
+      <Card>
+        <CardContent className="py-12">
+          <div className="text-center text-muted-foreground">
+            <DollarSign className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <h3 className="text-lg font-semibold mb-2">Loading Financial Data</h3>
+            <p>Please wait while we fetch your financial information...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
 
   if (!expenses || !timeEntries || !budgets) {
