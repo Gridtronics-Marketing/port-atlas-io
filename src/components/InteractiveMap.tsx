@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MapPin, Plus, Zap, Shield, Wifi, Layers } from "lucide-react";
+import { MapPin, Plus, Zap, Shield, Wifi, Layers, Radio } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -9,15 +9,16 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useDropPoints, type DropPoint as DBDropPoint } from "@/hooks/useDropPoints";
+import { AddDropPointModal } from "@/components/AddDropPointModal";
 
 interface DropPoint {
   id: number;
   x: number;
   y: number;
-  type: "data" | "fiber" | "security";
+  type: "data" | "fiber" | "security" | "wireless" | "power";
   label: string;
   room: string;
-  status: "planned" | "installed" | "tested";
+  status: "planned" | "installed" | "tested" | "active" | "inactive";
 }
 
 interface InteractiveMapProps {
@@ -28,9 +29,11 @@ interface InteractiveMapProps {
 }
 
 export const InteractiveMap = ({ locationId, floors = 1, currentFloor = 1, backgroundImage }: InteractiveMapProps) => {
-  const { dropPoints: dbDropPoints } = useDropPoints(locationId);
+  const { dropPoints: dbDropPoints, fetchDropPoints } = useDropPoints(locationId);
   const [selectedPoint, setSelectedPoint] = useState<any>(null);
   const [isAddingPoint, setIsAddingPoint] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [clickCoordinates, setClickCoordinates] = useState<{ x: number; y: number } | null>(null);
   
   // Convert database drop points to display format
   const dropPoints: DropPoint[] = dbDropPoints
@@ -39,10 +42,10 @@ export const InteractiveMap = ({ locationId, floors = 1, currentFloor = 1, backg
       id: parseInt(dp.id) || 0,
       x: dp.x_coordinate || 0,
       y: dp.y_coordinate || 0,
-      type: dp.point_type as "data" | "fiber" | "security",
+      type: dp.point_type as "data" | "fiber" | "security" | "wireless" | "power",
       label: dp.label,
       room: dp.room || "Unknown",
-      status: dp.status as "planned" | "installed" | "tested"
+      status: dp.status as "planned" | "installed" | "tested" | "active" | "inactive"
     }));
 
   const getDropPointIcon = (type: string) => {
@@ -53,6 +56,10 @@ export const InteractiveMap = ({ locationId, floors = 1, currentFloor = 1, backg
         return Wifi;
       case "security":
         return Shield;
+      case "wireless":
+        return Radio;
+      case "power":
+        return Plus;
       default:
         return MapPin;
     }
@@ -64,6 +71,10 @@ export const InteractiveMap = ({ locationId, floors = 1, currentFloor = 1, backg
         return "text-success bg-success/10 border-success/20";
       case "installed":
         return "text-warning bg-warning/10 border-warning/20";
+      case "active":
+        return "text-success bg-success/20 border-success/40";
+      case "inactive":
+        return "text-destructive bg-destructive/10 border-destructive/20";
       case "planned":
         return "text-muted-foreground bg-muted border-border";
       default:
@@ -78,8 +89,8 @@ export const InteractiveMap = ({ locationId, floors = 1, currentFloor = 1, backg
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
 
-    // For now, just show a placeholder - in a real app, this would open a modal to add a drop point
-    console.log(`Would add drop point at ${x.toFixed(1)}%, ${y.toFixed(1)}%`);
+    setClickCoordinates({ x, y });
+    setShowAddModal(true);
     setIsAddingPoint(false);
   };
 
@@ -105,6 +116,14 @@ export const InteractiveMap = ({ locationId, floors = 1, currentFloor = 1, backg
           <Badge variant="outline" className="flex items-center gap-1">
             <Shield className="h-3 w-3" />
             Security: {dropPoints.filter(p => p.type === "security").length}
+          </Badge>
+          <Badge variant="outline" className="flex items-center gap-1">
+            <Radio className="h-3 w-3" />
+            Wireless: {dropPoints.filter(p => p.type === "wireless").length}
+          </Badge>
+          <Badge variant="outline" className="flex items-center gap-1">
+            <Plus className="h-3 w-3" />
+            Power: {dropPoints.filter(p => p.type === "power").length}
           </Badge>
         </div>
         
@@ -137,12 +156,16 @@ export const InteractiveMap = ({ locationId, floors = 1, currentFloor = 1, backg
           }}
         />
         
-        {/* Layout placeholder - would show actual floor plan */}
+        {/* Floor plan background */}
         {backgroundImage ? (
           <img 
             src={backgroundImage} 
             alt={`Floor ${currentFloor} plan`}
             className="absolute inset-0 w-full h-full object-contain opacity-80"
+            onError={(e) => {
+              console.error("Failed to load floor plan image:", backgroundImage);
+              e.currentTarget.style.display = 'none';
+            }}
           />
         ) : (
           <div className="absolute inset-4 border-2 border-dashed border-muted-foreground/30 rounded flex items-center justify-center">
@@ -225,6 +248,21 @@ export const InteractiveMap = ({ locationId, floors = 1, currentFloor = 1, backg
           </div>
         </div>
       )}
+
+      {/* Add Drop Point Modal */}
+      <AddDropPointModal
+        open={showAddModal}
+        onOpenChange={(open) => {
+          setShowAddModal(open);
+          if (!open) {
+            setClickCoordinates(null);
+            fetchDropPoints(); // Refresh points after adding
+          }
+        }}
+        locationId={locationId}
+        coordinates={clickCoordinates || undefined}
+        floor={currentFloor}
+      />
     </div>
   );
 };

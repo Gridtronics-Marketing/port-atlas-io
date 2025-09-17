@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { DollarSign, Package, MessageSquare, TrendingUp } from 'lucide-react';
+import { DollarSign, Package, MessageSquare, TrendingUp, Settings } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Navigation } from '@/components/Navigation';
 import { InventoryManager } from '@/components/InventoryManager';
 import { FinancialDashboard } from '@/components/FinancialDashboard';
+import { DropPointTypesManager } from '@/components/DropPointTypesManager';
 
 const AdvancedFeatures = () => {
   return (
@@ -22,7 +23,7 @@ const AdvancedFeatures = () => {
         </div>
 
         <Tabs defaultValue="inventory" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="inventory">
               <Package className="h-4 w-4 mr-2" />
               Inventory
@@ -30,6 +31,10 @@ const AdvancedFeatures = () => {
             <TabsTrigger value="financial">
               <DollarSign className="h-4 w-4 mr-2" />
               Financial
+            </TabsTrigger>
+            <TabsTrigger value="configuration">
+              <Settings className="h-4 w-4 mr-2" />
+              Configuration
             </TabsTrigger>
             <TabsTrigger value="communication">
               <MessageSquare className="h-4 w-4 mr-2" />
@@ -43,6 +48,10 @@ const AdvancedFeatures = () => {
           
           <TabsContent value="financial" className="space-y-6">
             <FinancialDashboard />
+          </TabsContent>
+          
+          <TabsContent value="configuration" className="space-y-6">
+            <DropPointTypesManager />
           </TabsContent>
           
           <TabsContent value="communication" className="space-y-6">
