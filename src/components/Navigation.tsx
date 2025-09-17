@@ -27,6 +27,7 @@ export const Navigation = () => {
     { name: "Dashboard", path: "/" },
     { name: "Work Orders", path: "/work-orders" },
     { name: "Field Ops", path: "/field-operations" },
+    { name: "Quality", path: "/quality-assurance" },
     { name: "Locations", path: "/locations" },
     { name: "Clients", path: "/clients" },
     { name: "Employees", path: "/employees" },
