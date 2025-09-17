@@ -21,6 +21,7 @@ export interface Employee {
   status: 'Active' | 'Inactive' | 'On Leave' | 'Terminated';
   emergency_contact_name: string | null;
   emergency_contact_phone: string | null;
+  client_id: string | null;
   created_at: string;
   updated_at: string;
 }

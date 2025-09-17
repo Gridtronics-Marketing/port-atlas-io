@@ -243,6 +243,7 @@ export type Database = {
         Row: {
           certification_expiry: Json | null
           certifications: string[] | null
+          client_id: string | null
           created_at: string
           department: string | null
           email: string | null
@@ -263,6 +264,7 @@ export type Database = {
         Insert: {
           certification_expiry?: Json | null
           certifications?: string[] | null
+          client_id?: string | null
           created_at?: string
           department?: string | null
           email?: string | null
@@ -283,6 +285,7 @@ export type Database = {
         Update: {
           certification_expiry?: Json | null
           certifications?: string[] | null
+          client_id?: string | null
           created_at?: string
           department?: string | null
           email?: string | null
@@ -300,7 +303,15 @@ export type Database = {
           status?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "employees_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       equipment: {
         Row: {
@@ -760,6 +771,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_current_user_client_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_current_user_email: {
         Args: Record<PropertyKey, never>
         Returns: string

@@ -24,7 +24,12 @@ const QualityAssurance = () => {
   const { qualityChecklists, qualitySubmissions } = useTestResults();
 
   const technicians = employees.filter(emp => 
-    emp.role === 'technician' || emp.role === 'project_manager'
+    emp.role === 'technician' || 
+    emp.role === 'project_manager' ||
+    emp.role === 'Network Technician' ||
+    emp.role === 'Fiber Technician' ||
+    emp.role === 'Installation Technician' ||
+    emp.role === 'Field Engineer'
   );
 
   const currentRack = racks.find(rack => rack.id === selectedRack);
@@ -69,15 +74,16 @@ const QualityAssurance = () => {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label>Technician</Label>
+                <Label>Technician/Employee</Label>
                 <Select value={selectedTechnician} onValueChange={setSelectedTechnician}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select technician" />
+                    <SelectValue placeholder="Select technician or employee" />
                   </SelectTrigger>
                   <SelectContent>
                     {technicians.map((tech) => (
                       <SelectItem key={tech.id} value={tech.id}>
-                        {tech.first_name} {tech.last_name}
+                        {tech.first_name} {tech.last_name} 
+                        {tech.client_id ? ' (Client Technician)' : ' (Company Employee)'}
                       </SelectItem>
                     ))}
                   </SelectContent>

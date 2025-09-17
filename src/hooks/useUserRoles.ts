@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 
-export type AppRole = 'admin' | 'hr_manager' | 'project_manager' | 'technician' | 'viewer';
+export type AppRole = 'admin' | 'hr_manager' | 'project_manager' | 'technician' | 'viewer' | 'client_technician' | 'client_admin';
 
 export interface UserRole {
   id: string;
@@ -130,7 +130,7 @@ export const useUserRoles = () => {
   };
 
   const canManageEmployees = (): boolean => {
-    return hasAnyRole(['admin', 'hr_manager']);
+    return hasAnyRole(['admin', 'hr_manager', 'client_admin']);
   };
 
   const canViewSensitiveData = (): boolean => {
@@ -138,7 +138,15 @@ export const useUserRoles = () => {
   };
 
   const canEditEmployees = (): boolean => {
-    return hasAnyRole(['admin', 'hr_manager']);
+    return hasAnyRole(['admin', 'hr_manager', 'client_admin']);
+  };
+
+  const isClientUser = (): boolean => {
+    return hasAnyRole(['client_technician', 'client_admin']);
+  };
+
+  const isCompanyUser = (): boolean => {
+    return hasAnyRole(['admin', 'hr_manager', 'project_manager', 'technician', 'viewer']);
   };
 
   useEffect(() => {
@@ -167,5 +175,7 @@ export const useUserRoles = () => {
     canManageEmployees,
     canViewSensitiveData,
     canEditEmployees,
+    isClientUser,
+    isCompanyUser,
   };
 };

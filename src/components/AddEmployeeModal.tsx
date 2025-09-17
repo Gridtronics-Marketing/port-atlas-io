@@ -20,6 +20,8 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { useClients } from "@/hooks/useClients";
+import { useUserRoles } from "@/hooks/useUserRoles";
 
 interface AddEmployeeModalProps {
   isOpen: boolean;
@@ -41,6 +43,8 @@ const commonCertifications = [
 
 export const AddEmployeeModal = ({ isOpen, onClose, onAddEmployee }: AddEmployeeModalProps) => {
   const { toast } = useToast();
+  const { clients } = useClients();
+  const { isCompanyUser } = useUserRoles();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     employee_number: "",
@@ -57,7 +61,8 @@ export const AddEmployeeModal = ({ isOpen, onClose, onAddEmployee }: AddEmployee
     certification_expiry: {} as Record<string, string>,
     status: "Active",
     emergency_contact_name: "",
-    emergency_contact_phone: ""
+    emergency_contact_phone: "",
+    client_id: ""
   });
   
   const [newSkill, setNewSkill] = useState("");
@@ -82,6 +87,7 @@ export const AddEmployeeModal = ({ isOpen, onClose, onAddEmployee }: AddEmployee
         ...formData,
         hourly_rate: formData.hourly_rate ? parseFloat(formData.hourly_rate) : null,
         hire_date: formData.hire_date || null,
+        client_id: formData.client_id || null,
       };
       
       await onAddEmployee(employeeData);
@@ -106,7 +112,8 @@ export const AddEmployeeModal = ({ isOpen, onClose, onAddEmployee }: AddEmployee
         certification_expiry: {},
         status: "Active",
         emergency_contact_name: "",
-        emergency_contact_phone: ""
+        emergency_contact_phone: "",
+        client_id: ""
       });
       onClose();
     } catch (error) {
@@ -319,6 +326,29 @@ export const AddEmployeeModal = ({ isOpen, onClose, onAddEmployee }: AddEmployee
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Client Assignment - Only for company users creating client technicians */}
+              {isCompanyUser && (
+                <div className="space-y-2">
+                  <Label htmlFor="client_id">Client (Optional)</Label>
+                  <Select value={formData.client_id} onValueChange={(value) => handleInputChange("client_id", value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select client for technician" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Company Employee</SelectItem>
+                      {clients.map((client) => (
+                        <SelectItem key={client.id} value={client.id}>
+                          {client.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Assign to a client to create a client technician, or leave empty for company employee
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
