@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useUserRoles } from '@/hooks/useUserRoles';
 
+// Full employee data - HR and Admin only
 export interface Employee {
   id: string;
   employee_number: string | null;
@@ -23,10 +25,71 @@ export interface Employee {
   updated_at: string;
 }
 
+// Limited employee data - Project Managers
+export interface EmployeeBasic {
+  id: string;
+  first_name: string;
+  last_name: string;
+  role: string;
+  department: string | null;
+  skills: string[] | null;
+  certifications: string[] | null;
+  status: 'Active' | 'Inactive' | 'On Leave' | 'Terminated';
+}
+
+// Directory-only data - Technicians and Viewers
+export interface EmployeeDirectory {
+  id: string;
+  first_name: string;
+  last_name: string;
+  role: string;
+  department: string | null;
+  status: 'Active' | 'Inactive' | 'On Leave' | 'Terminated';
+}
+
 export const useEmployees = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { canViewSensitiveData, hasRole, hasAnyRole } = useUserRoles();
+
+  // Filter employee data based on user role - return Employee but with sensitive fields nullified
+  const filterEmployeeData = (employee: Employee): Employee => {
+    // HR and Admin see full data
+    if (canViewSensitiveData()) {
+      return employee;
+    }
+    
+    // Project Managers see basic info without sensitive personal data
+    if (hasRole('project_manager')) {
+      return {
+        ...employee,
+        email: null,
+        phone: null,
+        hire_date: null,
+        hourly_rate: null,
+        emergency_contact_name: null,
+        emergency_contact_phone: null,
+        employee_number: null,
+        certification_expiry: null
+      };
+    }
+    
+    // Technicians and Viewers see directory info only
+    return {
+      ...employee,
+      email: null,
+      phone: null,
+      hire_date: null,
+      hourly_rate: null,
+      emergency_contact_name: null,
+      emergency_contact_phone: null,
+      employee_number: null,
+      certification_expiry: null,
+      skills: null,
+      certifications: null
+    };
+  };
 
   const fetchEmployees = async () => {
     try {
@@ -37,7 +100,10 @@ export const useEmployees = () => {
         .order('first_name', { ascending: true });
 
       if (error) throw error;
-      setEmployees((data || []) as Employee[]);
+      
+      // Filter data based on user role
+      const filteredData = (data || []).map(employee => filterEmployeeData(employee as Employee));
+      setEmployees(filteredData);
     } catch (error) {
       console.error('Error fetching employees:', error);
       toast({
@@ -60,7 +126,9 @@ export const useEmployees = () => {
 
       if (error) throw error;
       
-      setEmployees(prev => [...prev, data as Employee].sort((a, b) => a.first_name.localeCompare(b.first_name)));
+      // Apply filtering to the new employee data before adding to state
+      const filteredEmployee = filterEmployeeData(data as Employee);
+      setEmployees(prev => [...prev, filteredEmployee].sort((a, b) => a.first_name.localeCompare(b.first_name)));
       toast({
         title: "Success",
         description: "Employee added successfully",
@@ -88,8 +156,10 @@ export const useEmployees = () => {
 
       if (error) throw error;
       
+      // Apply filtering to the updated employee data before updating state
+      const filteredEmployee = filterEmployeeData(data as Employee);
       setEmployees(prev => prev.map(employee => 
-        employee.id === id ? data as Employee : employee
+        employee.id === id ? filteredEmployee : employee
       ).sort((a, b) => a.first_name.localeCompare(b.first_name)));
       
       toast({
@@ -137,6 +207,12 @@ export const useEmployees = () => {
     fetchEmployees();
   }, []);
 
+  // Helper function to check if user can view sensitive employee data
+  const canViewSensitiveEmployeeData = () => canViewSensitiveData();
+  
+  // Helper function to check if user can view basic employee data (skills, certifications)
+  const canViewBasicEmployeeData = () => canViewSensitiveData() || hasRole('project_manager');
+
   return {
     employees,
     loading,
@@ -144,5 +220,7 @@ export const useEmployees = () => {
     addEmployee,
     updateEmployee,
     deleteEmployee,
+    canViewSensitiveEmployeeData,
+    canViewBasicEmployeeData,
   };
 };
