@@ -143,17 +143,16 @@ export const useUserRoles = () => {
 
   useEffect(() => {
     if (user) {
+      console.log('🔐 useUserRoles: User found, fetching roles for:', user.email);
       fetchCurrentUserRoles();
-      // Only fetch all roles if user has admin privileges
-      if (currentUserRoles.includes('admin') || currentUserRoles.includes('hr_manager')) {
-        fetchAllUserRoles();
-      }
+      fetchAllUserRoles(); // Always fetch all roles for admin interface
     }
   }, [user]);
 
+  // Separate effect to refetch current user roles when they change
   useEffect(() => {
-    fetchCurrentUserRoles();
-  }, [user]);
+    console.log('🔐 useUserRoles: Current user roles updated:', currentUserRoles);
+  }, [currentUserRoles]);
 
   return {
     userRoles,
