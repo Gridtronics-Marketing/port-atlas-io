@@ -94,16 +94,44 @@ export const useEmployees = () => {
   const fetchEmployees = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('employees')
-        .select('*')
-        .order('first_name', { ascending: true });
-
-      if (error) throw error;
       
-      // Filter data based on user role
-      const filteredData = (data || []).map(employee => filterEmployeeData(employee as Employee));
-      setEmployees(filteredData);
+      // For technicians and viewers, use the secure directory function
+      // For HR/Admin and Project Managers, use the full employees table
+      if (hasAnyRole(['technician', 'viewer'])) {
+        const { data, error } = await supabase
+          .rpc('get_employee_directory');
+          
+        if (error) throw error;
+        
+        // Transform directory data to match Employee interface (with nullified sensitive fields)
+        const directoryData = (data || []).map(emp => ({
+          ...emp,
+          employee_number: null,
+          email: null,
+          phone: null,
+          hire_date: null,
+          hourly_rate: null,
+          skills: null,
+          certifications: null,
+          certification_expiry: null,
+          emergency_contact_name: null,
+          emergency_contact_phone: null,
+        } as Employee));
+        
+        setEmployees(directoryData);
+      } else {
+        // HR/Admin and Project Managers get data from main table with filtering
+        const { data, error } = await supabase
+          .from('employees')
+          .select('*')
+          .order('first_name', { ascending: true });
+
+        if (error) throw error;
+        
+        // Filter data based on user role
+        const filteredData = (data || []).map(employee => filterEmployeeData(employee as Employee));
+        setEmployees(filteredData);
+      }
     } catch (error) {
       console.error('Error fetching employees:', error);
       toast({

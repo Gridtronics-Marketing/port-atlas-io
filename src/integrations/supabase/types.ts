@@ -760,6 +760,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_employee_directory: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          created_at: string
+          department: string
+          first_name: string
+          id: string
+          last_name: string
+          role: string
+          status: string
+          updated_at: string
+        }[]
+      }
       has_any_role: {
         Args: { _roles: Database["public"]["Enums"]["app_role"][] }
         Returns: boolean
