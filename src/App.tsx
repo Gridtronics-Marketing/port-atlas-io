@@ -13,6 +13,7 @@ import WorkOrders from "./pages/WorkOrders";
 import FieldOperations from "./pages/FieldOperations";
 import QualityAssurance from "./pages/QualityAssurance";
 import AdvancedFeatures from "./pages/AdvancedFeatures";
+import Integrations from "./pages/Integrations";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -65,6 +66,11 @@ const App = () => (
             <Route path="/advanced-features" element={
               <ProtectedRoute>
                 <AdvancedFeatures />
+              </ProtectedRoute>
+            } />
+            <Route path="/integrations" element={
+              <ProtectedRoute>
+                <Integrations />
               </ProtectedRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

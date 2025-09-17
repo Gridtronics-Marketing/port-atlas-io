@@ -29,6 +29,7 @@ export const Navigation = () => {
     { name: "Field Ops", path: "/field-operations" },
     { name: "Quality", path: "/quality-assurance" },
     { name: "Advanced", path: "/advanced-features" },
+    { name: "Integrations", path: "/integrations" },
     { name: "Locations", path: "/locations" },
     { name: "Clients", path: "/clients" },
     { name: "Employees", path: "/employees" },
