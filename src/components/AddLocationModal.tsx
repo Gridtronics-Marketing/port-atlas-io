@@ -25,6 +25,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useClients } from "@/hooks/useClients";
 import { useLocations, type Location } from "@/hooks/useLocations";
+import { useProjects } from "@/hooks/useProjects";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -38,6 +39,7 @@ export const AddLocationModal = ({ open, onOpenChange, location }: AddLocationMo
   const [layoutFiles, setLayoutFiles] = useState<{ [floorNumber: number]: File | null }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { clients } = useClients();
+  const { projects } = useProjects();
   const { addLocation, updateLocation } = useLocations();
   const { toast } = useToast();
   const isEditing = !!location;
@@ -110,10 +112,10 @@ export const AddLocationModal = ({ open, onOpenChange, location }: AddLocationMo
   };
 
   const handleSubmit = async () => {
-    if (!formData.name.trim() || !formData.address.trim()) {
+    if (!formData.name.trim() || !formData.address.trim() || !formData.project_id) {
       toast({
         title: "Validation Error",
-        description: "Please fill in all required fields (Name and Address)",
+        description: "Please fill in all required fields (Name, Address, and Project Assignment)",
         variant: "destructive",
       });
       return;
@@ -230,14 +232,6 @@ export const AddLocationModal = ({ open, onOpenChange, location }: AddLocationMo
   // Generate array of floor numbers for rendering
   const floorNumbers = Array.from({ length: formData.floors }, (_, i) => i + 1);
 
-  const mockClients = [
-    "TechCorp Inc.",
-    "Industrial Solutions", 
-    "ShopMart",
-    "Global Enterprises",
-    "Local Business Co.",
-  ];
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[700px] h-[85vh] flex flex-col bg-card border overflow-hidden">
@@ -352,7 +346,23 @@ export const AddLocationModal = ({ open, onOpenChange, location }: AddLocationMo
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="status" className="text-sm font-medium">Project Status</Label>
+                  <Label htmlFor="project_id" className="text-sm font-medium">Project Assignment *</Label>
+                  <Select value={formData.project_id} onValueChange={(value) => setFormData({ ...formData, project_id: value })}>
+                    <SelectTrigger className="h-10 bg-background">
+                      <SelectValue placeholder="Select project" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover border z-50">
+                      {projects.map((project) => (
+                        <SelectItem key={project.id} value={project.id}>
+                          {project.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="status" className="text-sm font-medium">Location Status</Label>
                   <Select value={formData.status} onValueChange={(value: any) => setFormData({ ...formData, status: value })}>
                     <SelectTrigger className="h-10 bg-background">
                       <SelectValue placeholder="Select status" />
