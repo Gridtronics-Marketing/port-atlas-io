@@ -62,7 +62,7 @@ export function InventoryManager() {
   const { projects } = useProjects();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
   const [showAddItem, setShowAddItem] = useState(false);
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
   const [stockAction, setStockAction] = useState<'in' | 'out' | 'adjustment'>('in');
@@ -91,7 +91,7 @@ export function InventoryManager() {
       item.sku?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.description?.toLowerCase().includes(searchQuery.toLowerCase());
     
-    const matchesCategory = !selectedCategory || item.category === selectedCategory;
+    const matchesCategory = !selectedCategory || selectedCategory === 'all' || item.category === selectedCategory;
     
     return matchesSearch && matchesCategory;
   });
@@ -273,7 +273,7 @@ export function InventoryManager() {
                 <SelectValue placeholder="All categories" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All categories</SelectItem>
+                <SelectItem value="all">All categories</SelectItem>
                 {categories.map((category) => (
                   <SelectItem key={category} value={category}>
                     {category}

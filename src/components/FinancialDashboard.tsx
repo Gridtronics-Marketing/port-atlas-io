@@ -48,7 +48,7 @@ export function FinancialDashboard() {
 
   const [showAddExpense, setShowAddExpense] = useState(false);
   const [showAddTimeEntry, setShowAddTimeEntry] = useState(false);
-  const [selectedProject, setSelectedProject] = useState('');
+  const [selectedProject, setSelectedProject] = useState('all');
 
   const [newExpense, setNewExpense] = useState({
     project_id: '',
@@ -139,7 +139,7 @@ export function FinancialDashboard() {
     }
   };
 
-  const projectSummary = selectedProject ? getProjectFinancialSummary(selectedProject) : null;
+  const projectSummary = selectedProject && selectedProject !== 'all' ? getProjectFinancialSummary(selectedProject) : null;
 
   if (loading) {
     return (
@@ -223,7 +223,7 @@ export function FinancialDashboard() {
                 <SelectValue placeholder="All projects" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All projects</SelectItem>
+                <SelectItem value="all">All projects</SelectItem>
                 {projects.map((project) => (
                   <SelectItem key={project.id} value={project.id}>
                     {project.name}
@@ -232,8 +232,8 @@ export function FinancialDashboard() {
               </SelectContent>
             </Select>
             
-            {selectedProject && (
-              <Button variant="outline" size="sm" onClick={() => setSelectedProject('')}>
+            {selectedProject && selectedProject !== 'all' && (
+              <Button variant="outline" size="sm" onClick={() => setSelectedProject('all')}>
                 Clear Filter
               </Button>
             )}
