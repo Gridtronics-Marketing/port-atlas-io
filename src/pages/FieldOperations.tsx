@@ -70,18 +70,24 @@ const FieldOperations = () => {
                 </Select>
               </div>
 
-              <div>
-                <Label>Project (Optional)</Label>
+              <div className="space-y-2">
+                <Label>Project</Label>
                 <Select value={selectedProject} onValueChange={setSelectedProject}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select project" />
+                    <SelectValue placeholder={projects.length === 0 ? "No projects available" : "Select project"} />
                   </SelectTrigger>
                   <SelectContent>
-                    {projects.map((project) => (
-                      <SelectItem key={project.id} value={project.id}>
-                        {project.name}
+                    {projects.length === 0 ? (
+                      <SelectItem value="none" disabled>
+                        No projects found - Create a project first
                       </SelectItem>
-                    ))}
+                    ) : (
+                      projects.map((project) => (
+                        <SelectItem key={project.id} value={project.id}>
+                          {project.name}
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
               </div>

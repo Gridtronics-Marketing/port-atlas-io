@@ -7,6 +7,7 @@ import { AuthProvider } from "@/components/AuthProvider";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AppLayout } from "@/components/AppLayout";
 import Index from "./pages/Index";
+import Projects from "./pages/Projects";
 import Locations from "./pages/Locations";
 import Clients from "./pages/Clients";
 import Employees from "./pages/Employees";
@@ -35,6 +36,13 @@ const App = () => (
               <ProtectedRoute>
                 <AppLayout>
                   <Index />
+                </AppLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/projects" element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <Projects />
                 </AppLayout>
               </ProtectedRoute>
             } />

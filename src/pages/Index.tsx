@@ -84,6 +84,12 @@ const Index = () => {
                   New Location
                 </Button>
                 <Button variant="outline" size="lg" asChild>
+                  <Link to="/projects">
+                    <FileText className="h-5 w-5 mr-2" />
+                    Projects
+                  </Link>
+                </Button>
+                <Button variant="outline" size="lg" asChild>
                   <Link to="/work-orders">
                     <FileText className="h-5 w-5 mr-2" />
                     Work Orders

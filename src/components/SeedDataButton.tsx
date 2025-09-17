@@ -93,18 +93,37 @@ export const SeedDataButton = () => {
       // Seed projects
       const projectsData = [
         {
-          name: "Downtown Office Network",
+          name: "Downtown Office Complex - Phase 1",
+          description: "Complete network infrastructure installation for new office complex downtown",
           client_id: clients![0].id,
-          description: "Complete network infrastructure installation",
-          status: "Active",
-          priority: "High"
+          project_type: "Network Installation",
+          status: "In Progress",
+          priority: "High",
+          start_date: "2024-01-15",
+          end_date: "2024-04-30",
+          estimated_budget: 125000
         },
         {
-          name: "Manufacturing Floor Upgrade",
+          name: "Manufacturing Plant Upgrade",
+          description: "Upgrade existing network infrastructure to support new manufacturing equipment",
           client_id: clients![1].id,
-          description: "Industrial network and security system installation",
-          status: "In Progress",
-          priority: "Medium"
+          project_type: "Upgrade",
+          status: "Planning",
+          priority: "Medium",
+          start_date: "2024-02-01",
+          end_date: "2024-06-15",
+          estimated_budget: 85000
+        },
+        {
+          name: "Retail Chain Network Rollout",
+          description: "Network installation across multiple retail locations",
+          client_id: clients![2].id,
+          project_type: "Network Installation",
+          status: "Completed",
+          priority: "Medium",
+          start_date: "2023-11-01",
+          end_date: "2024-01-31",
+          estimated_budget: 75000
         }
       ];
 
