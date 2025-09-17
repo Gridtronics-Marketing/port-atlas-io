@@ -21,10 +21,13 @@ import { Navigation } from "@/components/Navigation";
 import { AddEmployeeModal } from "@/components/AddEmployeeModal";
 import { EmployeeDetailsModal } from "@/components/EmployeeDetailsModal";
 import { CrewAssignmentModal } from "@/components/CrewAssignmentModal";
+import { RoleManagementModal } from "@/components/RoleManagementModal";
 import { useEmployees } from "@/hooks/useEmployees";
+import { useUserRoles } from "@/hooks/useUserRoles";
 
 const Employees = () => {
   const { employees, loading, addEmployee, deleteEmployee } = useEmployees();
+  const { canManageEmployees, canViewSensitiveData, hasAnyRole } = useUserRoles();
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -32,6 +35,8 @@ const Employees = () => {
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isCrewModalOpen, setIsCrewModalOpen] = useState(false);
+  const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
+  const [roleManagementEmployee, setRoleManagementEmployee] = useState<any>(null);
 
   const getRoleIcon = (role: string) => {
     if (role.includes("Lead") || role.includes("Manager")) return Shield;
@@ -86,13 +91,15 @@ const Employees = () => {
               <UserPlus className="h-4 w-4 mr-2" />
               Assign Crew
             </Button>
-            <Button 
-              onClick={() => setIsAddModalOpen(true)}
-              className="bg-gradient-primary hover:bg-primary-hover shadow-medium"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add New Employee
-            </Button>
+            {canManageEmployees() && (
+              <Button 
+                onClick={() => setIsAddModalOpen(true)}
+                className="bg-gradient-primary hover:bg-primary-hover shadow-medium"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add New Employee
+              </Button>
+            )}
           </div>
         </div>
 
@@ -214,9 +221,18 @@ const Employees = () => {
                           </p>
                           
                           <div className="flex items-center gap-4 text-xs text-muted-foreground mb-2">
-                            <span>{employee.email || 'No Email'}</span>
-                            <span>{employee.phone || 'No Phone'}</span>
-                            <span>Hired: {employee.hire_date ? new Date(employee.hire_date).toLocaleDateString() : 'Unknown'}</span>
+                            {canViewSensitiveData() ? (
+                              <>
+                                <span>{employee.email || 'No Email'}</span>
+                                <span>{employee.phone || 'No Phone'}</span>
+                                <span>Hired: {employee.hire_date ? new Date(employee.hire_date).toLocaleDateString() : 'Unknown'}</span>
+                                {employee.hourly_rate && (
+                                  <span className="text-primary font-medium">${employee.hourly_rate}/hr</span>
+                                )}
+                              </>
+                            ) : (
+                              <span>Contact info restricted</span>
+                            )}
                           </div>
                           
                           <div className="flex flex-wrap gap-1">
@@ -256,21 +272,38 @@ const Employees = () => {
                             <Eye className="mr-2 h-4 w-4" />
                             View Details
                           </DropdownMenuItem>
+                          
+                          {hasAnyRole(['admin', 'hr_manager']) && (
+                            <DropdownMenuItem onClick={() => {
+                              setRoleManagementEmployee(employee);
+                              setIsRoleModalOpen(true);
+                            }}>
+                              <Shield className="mr-2 h-4 w-4" />
+                              Manage Roles
+                            </DropdownMenuItem>
+                          )}
+                          
                           <DropdownMenuItem>
                             <Clock className="mr-2 h-4 w-4" />
                             Time Tracking
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit Employee
-                          </DropdownMenuItem>
-                          <DropdownMenuItem 
-                            className="text-destructive"
-                            onClick={() => deleteEmployee(employee.id)}
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete Employee
-                          </DropdownMenuItem>
+                          
+                          {canManageEmployees() && (
+                            <DropdownMenuItem>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Edit Employee
+                            </DropdownMenuItem>
+                          )}
+                          
+                          {canManageEmployees() && (
+                            <DropdownMenuItem 
+                              className="text-destructive"
+                              onClick={() => deleteEmployee(employee.id)}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete Employee
+                            </DropdownMenuItem>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
@@ -301,6 +334,16 @@ const Employees = () => {
         employees={employees}
         isOpen={isCrewModalOpen}
         onClose={() => setIsCrewModalOpen(false)}
+      />
+
+      <RoleManagementModal 
+        isOpen={isRoleModalOpen}
+        onClose={() => {
+          setIsRoleModalOpen(false);
+          setRoleManagementEmployee(null);
+        }}
+        userId={roleManagementEmployee?.id}
+        userEmail={roleManagementEmployee?.email}
       />
     </div>
   );
