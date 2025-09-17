@@ -465,9 +465,9 @@ export const AddLocationModal = ({ open, onOpenChange }: AddLocationModalProps) 
                                     <p className="text-sm font-medium text-foreground">
                                       Upload {formData.floors === 1 ? 'Floor Plan' : `Floor ${floorNumber} Plan`}
                                     </p>
-                                    <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                                      Drop files here or click to browse. Supports images (JPG, PNG), PDFs, and CAD files (.dwg)
-                                    </p>
+                                     <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                                       Drop files here or click to browse. Supports images (JPG, PNG, WEBP), PDFs, and technical drawings
+                                     </p>
                                     <input
                                       type="file"
                                       accept="image/*,.pdf,.dwg"

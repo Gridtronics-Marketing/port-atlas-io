@@ -158,15 +158,41 @@ export const InteractiveMap = ({ locationId, floors = 1, currentFloor = 1, backg
         
         {/* Floor plan background */}
         {backgroundImage ? (
-          <img 
-            src={backgroundImage} 
-            alt={`Floor ${currentFloor} plan`}
-            className="absolute inset-0 w-full h-full object-contain opacity-80"
-            onError={(e) => {
-              console.error("Failed to load floor plan image:", backgroundImage);
-              e.currentTarget.style.display = 'none';
-            }}
-          />
+          (() => {
+            // Check if the background image is a PDF by looking at the URL
+            const isPDF = backgroundImage.toLowerCase().includes('.pdf') || 
+                         backgroundImage.toLowerCase().includes('floor_') && 
+                         !backgroundImage.toLowerCase().match(/\.(jpg|jpeg|png|webp|svg|bmp|tiff)($|\?)/);
+            
+            if (isPDF) {
+              // Don't try to display PDFs as background images
+              return (
+                <div className="absolute inset-4 border-2 border-dashed border-primary/30 rounded flex items-center justify-center bg-primary/5">
+                  <div className="text-center text-muted-foreground">
+                    <MapPin className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm font-medium">
+                      PDF Floor Plan Available
+                    </p>
+                    <p className="text-xs">Switch to View mode to see the PDF floor plan</p>
+                    <p className="text-xs mt-1">Use Edit Mode to add drop points on this interactive canvas</p>
+                  </div>
+                </div>
+              );
+            }
+            
+            // Display image backgrounds normally
+            return (
+              <img 
+                src={backgroundImage} 
+                alt={`Floor ${currentFloor} plan`}
+                className="absolute inset-0 w-full h-full object-contain opacity-80"
+                onError={(e) => {
+                  console.error("Failed to load floor plan image:", backgroundImage);
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+            );
+          })()
         ) : (
           <div className="absolute inset-4 border-2 border-dashed border-muted-foreground/30 rounded flex items-center justify-center">
             <div className="text-center text-muted-foreground">

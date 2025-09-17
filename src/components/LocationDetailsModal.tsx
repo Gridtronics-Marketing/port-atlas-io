@@ -28,6 +28,7 @@ import { InteractiveMap } from "@/components/InteractiveMap";
 import { DropPointList } from "@/components/DropPointList";
 import { FloorPlanEditor } from "@/components/FloorPlanEditor";
 import { FloorPlanDemo } from "@/components/FloorPlanDemo";
+import { FloorPlanViewer } from "@/components/FloorPlanViewer";
 import {
   Select,
   SelectContent,
@@ -362,22 +363,30 @@ export const LocationDetailsModal = ({ location, open, onOpenChange }: LocationD
                   )}
                   
                   {editMode ? (
-                    <FloorPlanEditor 
-                      floorNumber={selectedFloor}
-                      locationName={location.name}
-                      backgroundImage={currentFloorPlanUrl || null}
-                      onSave={(canvasData) => {
-                        console.log(`Saving floor ${selectedFloor} plan:`, canvasData);
-                        setEditMode(false);
-                      }}
-                    />
-                  ) : hasFloorPlans ? (
-                    <InteractiveMap 
-                      locationId={location.id} 
-                      floors={location.floors}
-                      currentFloor={selectedFloor}
-                      backgroundImage={currentFloorPlanUrl}
-                    />
+                     <FloorPlanEditor 
+                       floorNumber={selectedFloor}
+                       locationName={location.name}
+                       backgroundImage={currentFloorPlanUrl || null}
+                       onSave={(canvasData) => {
+                         console.log(`Saving floor ${selectedFloor} plan:`, canvasData);
+                         setEditMode(false);
+                       }}
+                     />
+                   ) : hasFloorPlans ? (
+                     <div className="space-y-4">
+                       <FloorPlanViewer
+                         fileUrl={currentFloorPlanUrl}
+                         fileName={`floor_${selectedFloor}.${location.floor_plan_files?.[selectedFloor]?.split('.').pop() || 'pdf'}`}
+                         floorNumber={selectedFloor}
+                         className="mb-4"
+                       />
+                       <InteractiveMap 
+                         locationId={location.id} 
+                         floors={location.floors}
+                         currentFloor={selectedFloor}
+                         backgroundImage={currentFloorPlanUrl}
+                       />
+                     </div>
                   ) : (
                     <FloorPlanDemo 
                       floorNumber={selectedFloor}

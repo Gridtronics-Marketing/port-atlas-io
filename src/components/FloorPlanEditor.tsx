@@ -68,8 +68,20 @@ export const FloorPlanEditor = ({
 
     // Load background image if provided
     if (backgroundImage) {
-      // TODO: Load background image
-      console.log("Loading background image:", backgroundImage);
+      // Check if background is a PDF - PDFs cannot be loaded as canvas backgrounds
+      const isPDF = backgroundImage.toLowerCase().includes('.pdf');
+      if (isPDF) {
+        console.log("PDF background detected - PDF files cannot be used as canvas backgrounds in the editor");
+        toast({
+          title: "PDF Background Detected",
+          description: "PDF floor plans cannot be used as backgrounds in the editor. Switch to View mode to see the PDF.",
+          variant: "default",
+        });
+      } else {
+        // Load image background
+        console.log("Loading background image:", backgroundImage);
+        // TODO: Implement image loading onto canvas
+      }
     }
 
     return () => {
