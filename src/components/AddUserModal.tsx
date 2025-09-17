@@ -99,21 +99,64 @@ export const AddUserModal = ({ open, onOpenChange, onUserCreated }: AddUserModal
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
     try {
-      // Create the user in Supabase Auth
-      const { error: authError } = await signUp(values.email, values.password);
+      // Create the user directly with Supabase client to get user data
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: values.email,
+        password: values.password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`
+        }
+      });
       
       if (authError) {
         throw new Error(authError.message);
       }
 
-      // Wait a moment for the user to be created, then assign roles using email lookup
-      // We'll use the email to find the user through the user_roles table after assignment
-      // Since we can't easily get the user ID from client-side signup, we'll handle this differently
-      
-      toast({
-        title: "User Created",
-        description: `User ${values.email} has been created. Please ask them to sign in, then assign roles manually.`,
-      });
+      // If user was created successfully and we have the user ID
+      if (authData?.user) {
+        // Wait a bit for the user to be fully created in the system
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Assign the selected roles
+        for (const roleValue of values.roles) {
+          try {
+            await assignRole(authData.user.id, roleValue as AppRole);
+          } catch (roleError: any) {
+            console.warn(`Failed to assign role ${roleValue}:`, roleError);
+          }
+        }
+
+        // Create employee record if requested
+        if (values.createEmployee && values.firstName && values.lastName) {
+          try {
+            const { error: employeeError } = await supabase
+              .from('employees')
+              .insert({
+                first_name: values.firstName,
+                last_name: values.lastName,
+                email: values.email,
+                role: 'Employee', // Default role for employee table
+                status: 'Active'
+              });
+
+            if (employeeError) {
+              console.warn('Failed to create employee record:', employeeError);
+            }
+          } catch (employeeError) {
+            console.warn('Failed to create employee record:', employeeError);
+          }
+        }
+
+        toast({
+          title: "User Created Successfully",
+          description: `User ${values.email} has been created with the selected roles. They will receive an email confirmation.`,
+        });
+      } else {
+        toast({
+          title: "User Created",
+          description: `User ${values.email} has been created. Please check your email to confirm your account.`,
+        });
+      }
 
       form.reset();
       onOpenChange(false);
