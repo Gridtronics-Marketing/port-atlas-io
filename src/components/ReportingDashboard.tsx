@@ -30,20 +30,10 @@ export const ReportingDashboard = () => {
     exportToPDF,
   } = useReporting();
 
-  // Mock chart data
-  const performanceData = [
-    { name: 'Week 1', completion: 92, budget: 95, safety: 100 },
-    { name: 'Week 2', completion: 87, budget: 88, safety: 98 },
-    { name: 'Week 3', completion: 94, budget: 92, safety: 100 },
-    { name: 'Week 4', completion: 89, budget: 85, safety: 96 },
-  ];
+  // Fresh install - no data available yet
+  const performanceData: any[] = [];
 
-  const projectStatusData = [
-    { name: 'Completed', value: 42, color: COLORS[0] },
-    { name: 'In Progress', value: 18, color: COLORS[1] },
-    { name: 'On Hold', value: 3, color: COLORS[2] },
-    { name: 'Planning', value: 7, color: COLORS[3] },
-  ];
+  const projectStatusData: any[] = [];
 
   const handleGenerateReport = (type: string) => {
     switch (type) {
@@ -131,11 +121,11 @@ export const ReportingDashboard = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Active Projects</p>
-                    <p className="text-2xl font-bold">18</p>
+                    <p className="text-2xl font-bold">0</p>
                   </div>
                   <BarChart3 className="h-8 w-8 text-primary" />
                 </div>
-                <p className="text-xs text-muted-foreground mt-2">+2 from last month</p>
+                <p className="text-xs text-muted-foreground mt-2">No projects yet</p>
               </CardContent>
             </Card>
             
@@ -144,11 +134,11 @@ export const ReportingDashboard = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Completion Rate</p>
-                    <p className="text-2xl font-bold">94.2%</p>
+                    <p className="text-2xl font-bold">0%</p>
                   </div>
                   <TrendingUp className="h-8 w-8 text-primary" />
                 </div>
-                <p className="text-xs text-muted-foreground mt-2">+3.1% from last month</p>
+                <p className="text-xs text-muted-foreground mt-2">No data available</p>
               </CardContent>
             </Card>
             
@@ -157,11 +147,11 @@ export const ReportingDashboard = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Total Hours</p>
-                    <p className="text-2xl font-bold">1,248</p>
+                    <p className="text-2xl font-bold">0</p>
                   </div>
                   <Clock className="h-8 w-8 text-primary" />
                 </div>
-                <p className="text-xs text-muted-foreground mt-2">This month</p>
+                <p className="text-xs text-muted-foreground mt-2">No hours logged</p>
               </CardContent>
             </Card>
             
@@ -170,11 +160,11 @@ export const ReportingDashboard = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Revenue</p>
-                    <p className="text-2xl font-bold">$142k</p>
+                    <p className="text-2xl font-bold">$0</p>
                   </div>
                   <DollarSign className="h-8 w-8 text-primary" />
                 </div>
-                <p className="text-xs text-muted-foreground mt-2">+12.5% from last month</p>
+                <p className="text-xs text-muted-foreground mt-2">No revenue data</p>
               </CardContent>
             </Card>
           </div>
@@ -187,17 +177,13 @@ export const ReportingDashboard = () => {
                 <CardDescription>Weekly completion, budget, and safety metrics</CardDescription>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={performanceData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Line type="monotone" dataKey="completion" stroke="hsl(var(--primary))" strokeWidth={2} />
-                    <Line type="monotone" dataKey="budget" stroke="hsl(var(--secondary))" strokeWidth={2} />
-                    <Line type="monotone" dataKey="safety" stroke="hsl(var(--accent))" strokeWidth={2} />
-                  </LineChart>
-                </ResponsiveContainer>
+                <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+                  <div className="text-center">
+                    <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p className="text-lg font-medium">No Performance Data</p>
+                    <p className="text-sm">Charts will appear once you start tracking projects</p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
@@ -207,25 +193,13 @@ export const ReportingDashboard = () => {
                 <CardDescription>Current project status breakdown</CardDescription>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={projectStatusData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      outerRadius={100}
-                      fill="#8884d8"
-                      dataKey="value"
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                    >
-                      {projectStatusData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
+                <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+                  <div className="text-center">
+                    <TrendingUp className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p className="text-lg font-medium">No Project Data</p>
+                    <p className="text-sm">Project status distribution will appear here</p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>

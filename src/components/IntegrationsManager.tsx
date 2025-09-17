@@ -80,60 +80,73 @@ export const IntegrationsManager = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {integrations.map((integration) => (
-              <div key={integration.id} className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex items-center gap-3">
-                  <div className="text-2xl">{getTypeIcon(integration.type)}</div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold">{integration.name}</h3>
-                      {getStatusIcon(integration.status)}
-                    </div>
-                    <p className="text-sm text-muted-foreground capitalize">
-                      {integration.type.replace('_', ' ')} Integration
-                    </p>
-                    {integration.last_sync && (
-                      <p className="text-xs text-muted-foreground">
-                        Last sync: {format(new Date(integration.last_sync), 'MMM dd, yyyy HH:mm')}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  {getStatusBadge(integration.status)}
-                  
-                  <div className="flex gap-1">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => testConnection(integration.id)}
-                      disabled={isLoading}
-                    >
-                      <Zap className="h-4 w-4" />
-                    </Button>
-                    
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => syncIntegration(integration.id)}
-                      disabled={isLoading || integration.status !== 'connected'}
-                    >
-                      <RefreshCw className="h-4 w-4" />
-                    </Button>
-                    
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => disconnectIntegration(integration.id)}
-                      disabled={isLoading}
-                    >
-                      <Settings className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
+            {integrations.length === 0 ? (
+              <div className="text-center py-12">
+                <Plug className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                <h3 className="text-lg font-semibold mb-2">No Integrations Connected</h3>
+                <p className="text-muted-foreground mb-4">
+                  Connect your first integration to start synchronizing data across platforms
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Choose from the available integrations below to get started
+                </p>
               </div>
-            ))}
+            ) : (
+              integrations.map((integration) => (
+                <div key={integration.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="text-2xl">{getTypeIcon(integration.type)}</div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold">{integration.name}</h3>
+                        {getStatusIcon(integration.status)}
+                      </div>
+                      <p className="text-sm text-muted-foreground capitalize">
+                        {integration.type.replace('_', ' ')} Integration
+                      </p>
+                      {integration.last_sync && (
+                        <p className="text-xs text-muted-foreground">
+                          Last sync: {format(new Date(integration.last_sync), 'MMM dd, yyyy HH:mm')}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    {getStatusBadge(integration.status)}
+                    
+                    <div className="flex gap-1">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => testConnection(integration.id)}
+                        disabled={isLoading}
+                      >
+                        <Zap className="h-4 w-4" />
+                      </Button>
+                      
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => syncIntegration(integration.id)}
+                        disabled={isLoading || integration.status !== 'connected'}
+                      >
+                        <RefreshCw className="h-4 w-4" />
+                      </Button>
+                      
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => disconnectIntegration(integration.id)}
+                        disabled={isLoading}
+                      >
+                        <Settings className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </CardContent>
       </Card>
@@ -183,29 +196,39 @@ export const IntegrationsManager = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {syncLogs.map((log) => {
-              const integration = integrations.find(i => i.id === log.integration_id);
-              return (
-                <div key={log.id} className="flex items-center justify-between py-2">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-2 h-2 rounded-full ${
-                      log.status === 'success' ? 'bg-green-500' : 
-                      log.status === 'error' ? 'bg-red-500' : 'bg-yellow-500'
-                    }`} />
-                    <div>
-                      <p className="text-sm font-medium">{integration?.name || 'Unknown Integration'}</p>
-                      <p className="text-xs text-muted-foreground">{log.message}</p>
+            {syncLogs.length === 0 ? (
+              <div className="text-center py-8">
+                <Clock className="h-8 w-8 mx-auto mb-4 text-muted-foreground opacity-50" />
+                <p className="text-muted-foreground">No synchronization history available</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Sync logs will appear here once you connect and sync integrations
+                </p>
+              </div>
+            ) : (
+              syncLogs.map((log) => {
+                const integration = integrations.find(i => i.id === log.integration_id);
+                return (
+                  <div key={log.id} className="flex items-center justify-between py-2">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-2 h-2 rounded-full ${
+                        log.status === 'success' ? 'bg-green-500' : 
+                        log.status === 'error' ? 'bg-red-500' : 'bg-yellow-500'
+                      }`} />
+                      <div>
+                        <p className="text-sm font-medium">{integration?.name || 'Unknown Integration'}</p>
+                        <p className="text-xs text-muted-foreground">{log.message}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-medium">{log.records_processed} records</p>
+                      <p className="text-xs text-muted-foreground">
+                        {format(new Date(log.created_at), 'MMM dd, HH:mm')}
+                      </p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-medium">{log.records_processed} records</p>
-                    <p className="text-xs text-muted-foreground">
-                      {format(new Date(log.created_at), 'MMM dd, HH:mm')}
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
         </CardContent>
       </Card>

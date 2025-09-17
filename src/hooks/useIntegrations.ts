@@ -35,38 +35,8 @@ export const useIntegrations = () => {
   const fetchIntegrations = async () => {
     setIsLoading(true);
     try {
-      // Mock data for integrations
-      const mockIntegrations: Integration[] = [
-        {
-          id: '1',
-          name: 'Salesforce CRM',
-          type: 'crm',
-          status: 'connected',
-          last_sync: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-          config: { api_version: 'v52.0', sandbox: false },
-          created_at: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-        },
-        {
-          id: '2',
-          name: 'QuickBooks Online',
-          type: 'accounting',
-          status: 'connected',
-          last_sync: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-          config: { company_id: 'qbo_12345', sandbox: true },
-          created_at: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
-        },
-        {
-          id: '3',
-          name: 'Slack Workspace',
-          type: 'communication',
-          status: 'disconnected',
-          last_sync: null,
-          config: { team_id: 'slack_789', webhook_url: '' },
-          created_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-        },
-      ];
-
-      setIntegrations(mockIntegrations);
+      // Fresh install - no integrations configured yet
+      setIntegrations([]);
     } catch (error) {
       toast({
         title: "Error",
@@ -80,35 +50,8 @@ export const useIntegrations = () => {
 
   const fetchSyncLogs = async () => {
     try {
-      // Mock data for sync logs
-      const mockLogs: SyncLog[] = [
-        {
-          id: '1',
-          integration_id: '1',
-          status: 'success',
-          message: 'Successfully synced 15 clients and 8 projects',
-          records_processed: 23,
-          created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-        },
-        {
-          id: '2',
-          integration_id: '2',
-          status: 'success',
-          message: 'Financial data synchronized successfully',
-          records_processed: 42,
-          created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-        },
-        {
-          id: '3',
-          integration_id: '3',
-          status: 'error',
-          message: 'Connection timeout - webhook not responding',
-          records_processed: 0,
-          created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-        },
-      ];
-
-      setSyncLogs(mockLogs);
+      // Fresh install - no sync logs yet
+      setSyncLogs([]);
     } catch (error) {
       console.error('Failed to fetch sync logs:', error);
     }
