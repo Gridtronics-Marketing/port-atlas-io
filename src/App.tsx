@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/components/AuthProvider";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { AppLayout } from "@/components/AppLayout";
 import Index from "./pages/Index";
 import Locations from "./pages/Locations";
 import Clients from "./pages/Clients";
@@ -32,57 +33,79 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/" element={
               <ProtectedRoute>
-                <Index />
+                <AppLayout>
+                  <Index />
+                </AppLayout>
               </ProtectedRoute>
             } />
             <Route path="/locations" element={
               <ProtectedRoute>
-                <Locations />
+                <AppLayout>
+                  <Locations />
+                </AppLayout>
               </ProtectedRoute>
             } />
             <Route path="/clients" element={
               <ProtectedRoute>
-                <Clients />
+                <AppLayout>
+                  <Clients />
+                </AppLayout>
               </ProtectedRoute>
             } />
             <Route path="/employees" element={
               <ProtectedRoute>
-                <Employees />
+                <AppLayout>
+                  <Employees />
+                </AppLayout>
               </ProtectedRoute>
             } />
             <Route path="/work-orders" element={
               <ProtectedRoute>
-                <WorkOrders />
+                <AppLayout>
+                  <WorkOrders />
+                </AppLayout>
               </ProtectedRoute>
             } />
             <Route path="/field-operations" element={
               <ProtectedRoute>
-                <FieldOperations />
+                <AppLayout>
+                  <FieldOperations />
+                </AppLayout>
               </ProtectedRoute>
             } />
             <Route path="/quality-assurance" element={
               <ProtectedRoute>
-                <QualityAssurance />
+                <AppLayout>
+                  <QualityAssurance />
+                </AppLayout>
               </ProtectedRoute>
             } />
             <Route path="/advanced-features" element={
               <ProtectedRoute>
-                <AdvancedFeatures />
+                <AppLayout>
+                  <AdvancedFeatures />
+                </AppLayout>
               </ProtectedRoute>
             } />
             <Route path="/integrations" element={
               <ProtectedRoute>
-                <Integrations />
+                <AppLayout>
+                  <Integrations />
+                </AppLayout>
               </ProtectedRoute>
             } />
             <Route path="/user-management" element={
               <ProtectedRoute>
-                <UserManagement />
+                <AppLayout>
+                  <UserManagement />
+                </AppLayout>
               </ProtectedRoute>
             } />
             <Route path="/profile" element={
               <ProtectedRoute>
-                <Profile />
+                <AppLayout>
+                  <Profile />
+                </AppLayout>
               </ProtectedRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

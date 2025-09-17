@@ -51,17 +51,14 @@ const Clients = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navigation />
-      
-      <main className="container mx-auto px-4 py-6 space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold bg-gradient-hero bg-clip-text text-transparent">
-              Client Management
-            </h1>
-            <p className="text-muted-foreground mt-1">
+    <main className="container mx-auto px-4 py-6 space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold bg-gradient-hero bg-clip-text text-transparent">
+            Client Management
+          </h1>
+          <p className="text-muted-foreground mt-1">
               Manage client relationships and track business development
             </p>
           </div>
