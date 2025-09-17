@@ -18,6 +18,7 @@ export const PDFViewer = ({
 }: PDFViewerProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [showFallback, setShowFallback] = useState(false);
 
   const handleLoad = () => {
     setIsLoading(false);
@@ -27,6 +28,11 @@ export const PDFViewer = ({
   const handleError = () => {
     setIsLoading(false);
     setHasError(true);
+  };
+
+  const handleObjectError = () => {
+    setShowFallback(true);
+    setIsLoading(false);
   };
 
   const openInNewTab = () => {
@@ -42,23 +48,23 @@ export const PDFViewer = ({
     document.body.removeChild(link);
   };
 
-  if (hasError) {
+  if (hasError || showFallback) {
     return (
       <Card className={`w-full ${className}`}>
         <CardContent className="flex flex-col items-center justify-center p-8 space-y-4" style={{ height }}>
           <FileText className="h-16 w-16 text-muted-foreground" />
           <div className="text-center space-y-2">
-            <h3 className="text-lg font-semibold">PDF Preview Not Available</h3>
+            <h3 className="text-lg font-semibold">PDF Preview Blocked</h3>
             <p className="text-sm text-muted-foreground">
-              Unable to display PDF inline. Use the buttons below to view or download.
+              Chrome security settings prevent PDF display. Use the options below to view the file.
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={openInNewTab} className="flex items-center gap-2">
+            <Button variant="default" onClick={openInNewTab} className="flex items-center gap-2">
               <ExternalLink className="h-4 w-4" />
               Open in New Tab
             </Button>
-            <Button variant="default" onClick={downloadPDF} className="flex items-center gap-2">
+            <Button variant="outline" onClick={downloadPDF} className="flex items-center gap-2">
               <Download className="h-4 w-4" />
               Download PDF
             </Button>
@@ -111,18 +117,47 @@ export const PDFViewer = ({
             </div>
           )}
           
-          <iframe
-            src={`${pdfUrl}#toolbar=1&navpanes=1&scrollbar=1`}
-            style={{ 
-              width: '100%', 
-              height,
-              display: isLoading ? 'none' : 'block'
-            }}
-            onLoad={handleLoad}
-            onError={handleError}
-            title={fileName}
-            className="border-0 rounded-lg"
-          />
+          {!showFallback ? (
+            <object
+              data={`${pdfUrl}#toolbar=1&navpanes=1&scrollbar=1`}
+              type="application/pdf"
+              style={{ 
+                width: '100%', 
+                height,
+                display: isLoading ? 'none' : 'block'
+              }}
+              onLoad={handleLoad}
+              onError={handleObjectError}
+              title={fileName}
+              className="border-0 rounded-lg"
+            >
+              <iframe
+                src={`${pdfUrl}#toolbar=1&navpanes=1&scrollbar=1`}
+                style={{ 
+                  width: '100%', 
+                  height,
+                  display: isLoading ? 'none' : 'block'
+                }}
+                onLoad={handleLoad}
+                onError={handleError}
+                title={fileName}
+                className="border-0 rounded-lg"
+              />
+            </object>
+          ) : (
+            <iframe
+              src={`${pdfUrl}#toolbar=1&navpanes=1&scrollbar=1`}
+              style={{ 
+                width: '100%', 
+                height,
+                display: isLoading ? 'none' : 'block'
+              }}
+              onLoad={handleLoad}
+              onError={handleError}
+              title={fileName}
+              className="border-0 rounded-lg"
+            />
+          )}
         </CardContent>
       </Card>
     </div>
