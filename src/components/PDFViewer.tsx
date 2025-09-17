@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { FileText, Download, ExternalLink, ZoomIn, ZoomOut } from "lucide-react";
+import { FileText, Download, ExternalLink } from "lucide-react";
 
 interface PDFViewerProps {
   pdfUrl: string;
@@ -16,23 +16,23 @@ export const PDFViewer = ({
   height = "600px",
   className = "" 
 }: PDFViewerProps) => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
   const [showFallback, setShowFallback] = useState(false);
 
+  // Auto-show fallback after 2 seconds if PDF doesn't load (Chrome blocking)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowFallback(true);
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   const handleLoad = () => {
-    setIsLoading(false);
-    setHasError(false);
+    // PDF loaded successfully, keep showing it
   };
 
   const handleError = () => {
-    setIsLoading(false);
-    setHasError(true);
-  };
-
-  const handleObjectError = () => {
     setShowFallback(true);
-    setIsLoading(false);
   };
 
   const openInNewTab = () => {
@@ -48,7 +48,7 @@ export const PDFViewer = ({
     document.body.removeChild(link);
   };
 
-  if (hasError || showFallback) {
+  if (showFallback) {
     return (
       <Card className={`w-full ${className}`}>
         <CardContent className="flex flex-col items-center justify-center p-8 space-y-4" style={{ height }}>
@@ -105,59 +105,25 @@ export const PDFViewer = ({
       
       <Card className="w-full">
         <CardContent className="p-0">
-          {isLoading && (
+          <object
+            data={`${pdfUrl}#toolbar=1&navpanes=1&scrollbar=1`}
+            type="application/pdf"
+            style={{ width: '100%', height }}
+            onLoad={handleLoad}
+            onError={handleError}
+            title={fileName}
+            className="border-0 rounded-lg"
+          >
             <div 
               className="flex items-center justify-center bg-muted"
               style={{ height }}
             >
               <div className="flex flex-col items-center space-y-2">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                <FileText className="h-12 w-12 text-muted-foreground" />
                 <p className="text-sm text-muted-foreground">Loading PDF...</p>
               </div>
             </div>
-          )}
-          
-          {!showFallback ? (
-            <object
-              data={`${pdfUrl}#toolbar=1&navpanes=1&scrollbar=1`}
-              type="application/pdf"
-              style={{ 
-                width: '100%', 
-                height,
-                display: isLoading ? 'none' : 'block'
-              }}
-              onLoad={handleLoad}
-              onError={handleObjectError}
-              title={fileName}
-              className="border-0 rounded-lg"
-            >
-              <iframe
-                src={`${pdfUrl}#toolbar=1&navpanes=1&scrollbar=1`}
-                style={{ 
-                  width: '100%', 
-                  height,
-                  display: isLoading ? 'none' : 'block'
-                }}
-                onLoad={handleLoad}
-                onError={handleError}
-                title={fileName}
-                className="border-0 rounded-lg"
-              />
-            </object>
-          ) : (
-            <iframe
-              src={`${pdfUrl}#toolbar=1&navpanes=1&scrollbar=1`}
-              style={{ 
-                width: '100%', 
-                height,
-                display: isLoading ? 'none' : 'block'
-              }}
-              onLoad={handleLoad}
-              onError={handleError}
-              title={fileName}
-              className="border-0 rounded-lg"
-            />
-          )}
+          </object>
         </CardContent>
       </Card>
     </div>
