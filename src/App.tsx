@@ -12,6 +12,7 @@ import Employees from "./pages/Employees";
 import WorkOrders from "./pages/WorkOrders";
 import FieldOperations from "./pages/FieldOperations";
 import QualityAssurance from "./pages/QualityAssurance";
+import AdvancedFeatures from "./pages/AdvancedFeatures";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -59,6 +60,11 @@ const App = () => (
             <Route path="/quality-assurance" element={
               <ProtectedRoute>
                 <QualityAssurance />
+              </ProtectedRoute>
+            } />
+            <Route path="/advanced-features" element={
+              <ProtectedRoute>
+                <AdvancedFeatures />
               </ProtectedRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
