@@ -7,7 +7,6 @@ import { Progress } from "@/components/ui/progress";
 import { Link } from "react-router-dom";
 import { WorkOrderList } from "@/components/WorkOrderList";
 import { AddLocationModal } from "@/components/AddLocationModal";
-import { Navigation } from "@/components/Navigation";
 import { SeedDataButton } from "@/components/SeedDataButton";
 import { useLocations } from "@/hooks/useLocations";
 import { useWorkOrders } from "@/hooks/useWorkOrders";
@@ -35,10 +34,7 @@ const Index = () => {
     Math.round((dropPoints.filter(dp => dp.status === 'tested' || dp.status === 'active').length / dropPoints.length) * 100) : 0;
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navigation />
-      
-      <main className="container mx-auto px-4 py-6 space-y-8">
+    <main className="container mx-auto px-4 py-6 space-y-8">
         <SeedDataButton />
         
         {/* Hero Section */}
@@ -251,7 +247,6 @@ const Index = () => {
           onOpenChange={setShowAddLocation} 
         />
       </main>
-    </div>
   );
 };
 

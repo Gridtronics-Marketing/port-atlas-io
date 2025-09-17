@@ -5,7 +5,6 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Navigation } from '@/components/Navigation';
 import { AddWorkOrderModal } from '@/components/AddWorkOrderModal';
 import { WorkOrderList } from '@/components/WorkOrderList';
 import { useWorkOrders } from '@/hooks/useWorkOrders';
@@ -23,10 +22,7 @@ const WorkOrders = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navigation />
-      
-      <main className="container mx-auto px-4 py-6 space-y-6">
+    <main className="container mx-auto px-4 py-6 space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
@@ -139,7 +135,6 @@ const WorkOrders = () => {
           onOpenChange={setShowAddWorkOrder} 
         />
       </main>
-    </div>
   );
 };
 

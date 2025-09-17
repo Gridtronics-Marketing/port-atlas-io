@@ -17,7 +17,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Navigation } from "@/components/Navigation";
 import { AddEmployeeModal } from "@/components/AddEmployeeModal";
 import { EmployeeDetailsModal } from "@/components/EmployeeDetailsModal";
 import { CrewAssignmentModal } from "@/components/CrewAssignmentModal";
@@ -67,9 +66,7 @@ const Employees = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navigation />
-      
+    <>
       <main className="container mx-auto px-4 py-6 space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -345,7 +342,7 @@ const Employees = () => {
         userId={roleManagementEmployee?.id}
         userEmail={roleManagementEmployee?.email}
       />
-    </div>
+    </>
   );
 };
 

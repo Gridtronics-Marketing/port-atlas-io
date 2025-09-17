@@ -4,7 +4,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Navigation } from '@/components/Navigation';
 import { TimeTrackingCard } from '@/components/TimeTrackingCard';
 import { PhotoCaptureCard } from '@/components/PhotoCaptureCard';
 import { SafetyChecklistModal } from '@/components/SafetyChecklistModal';
@@ -34,10 +33,7 @@ const FieldOperations = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navigation />
-      
-      <main className="container mx-auto px-4 py-6 space-y-6">
+    <main className="container mx-auto px-4 py-6 space-y-6">
         {/* Header */}
         <div>
           <h1 className="text-3xl font-bold bg-gradient-hero bg-clip-text text-transparent">
@@ -227,7 +223,6 @@ const FieldOperations = () => {
           />
         )}
       </main>
-    </div>
   );
 };
 

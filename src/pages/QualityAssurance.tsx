@@ -6,7 +6,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Navigation } from '@/components/Navigation';
 import { RackVisualizer } from '@/components/RackVisualizer';
 import { TestResultsManager } from '@/components/TestResultsManager';
 import { SafetyChecklistModal } from '@/components/SafetyChecklistModal';
@@ -51,10 +50,7 @@ const QualityAssurance = () => {
   const stats = getChecklistStats();
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navigation />
-      
-      <main className="container mx-auto px-4 py-6 space-y-6">
+    <main className="container mx-auto px-4 py-6 space-y-6">
         {/* Header */}
         <div>
           <h1 className="text-3xl font-bold bg-gradient-hero bg-clip-text text-transparent">
@@ -249,7 +245,6 @@ const QualityAssurance = () => {
           />
         )}
       </main>
-    </div>
   );
 };
 

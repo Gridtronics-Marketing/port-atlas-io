@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Navigation } from "@/components/Navigation";
 import { AddUserModal } from "@/components/AddUserModal";
 import { RoleManagementModal } from "@/components/RoleManagementModal";
 import { useUserRoles } from "@/hooks/useUserRoles";
@@ -32,20 +31,17 @@ const UserManagement = () => {
 
   if (!isAdmin) {
     return (
-      <div className="min-h-screen bg-background">
-        <Navigation />
-        <main className="container mx-auto px-4 py-6">
-          <Card className="max-w-md mx-auto mt-20">
-            <CardContent className="p-6 text-center">
-              <Shield className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <h2 className="text-xl font-semibold mb-2">Access Denied</h2>
-              <p className="text-muted-foreground">
-                You need admin privileges to access user management.
-              </p>
-            </CardContent>
-          </Card>
-        </main>
-      </div>
+      <main className="container mx-auto px-4 py-6">
+        <Card className="max-w-md mx-auto mt-20">
+          <CardContent className="p-6 text-center">
+            <Shield className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+            <h2 className="text-xl font-semibold mb-2">Access Denied</h2>
+            <p className="text-muted-foreground">
+              You need admin privileges to access user management.
+            </p>
+          </CardContent>
+        </Card>
+      </main>
     );
   }
 
@@ -75,10 +71,7 @@ const UserManagement = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navigation />
-      
-      <main className="container mx-auto px-4 py-6 space-y-6">
+    <main className="container mx-auto px-4 py-6 space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start">
           <div>
@@ -257,7 +250,6 @@ const UserManagement = () => {
           userEmail={selectedUserEmail}
         />
       </main>
-    </div>
   );
 };
 
