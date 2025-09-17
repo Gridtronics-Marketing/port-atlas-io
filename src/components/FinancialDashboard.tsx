@@ -145,6 +145,10 @@ export function FinancialDashboard() {
     return <div className="text-center py-8">Loading financial data...</div>;
   }
 
+  if (!expenses || !timeEntries || !budgets) {
+    return <div className="text-center py-8 text-muted-foreground">Failed to load financial data. Please try refreshing the page.</div>;
+  }
+
   return (
     <div className="space-y-6">
       {/* Financial Overview */}

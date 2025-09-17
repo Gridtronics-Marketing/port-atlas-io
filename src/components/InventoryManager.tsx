@@ -177,6 +177,10 @@ export function InventoryManager() {
     return <div className="text-center py-8">Loading inventory...</div>;
   }
 
+  if (!inventory) {
+    return <div className="text-center py-8 text-muted-foreground">Failed to load inventory data. Please try refreshing the page.</div>;
+  }
+
   return (
     <div className="space-y-6">
       {/* Inventory Stats */}
