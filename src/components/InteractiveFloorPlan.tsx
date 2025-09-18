@@ -35,10 +35,13 @@ export const InteractiveFloorPlan = ({
   const [isRepairing, setIsRepairing] = useState(false);
   const [selectedDropPoint, setSelectedDropPoint] = useState<any>(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [draggedPoint, setDraggedPoint] = useState<any>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   
-  const { dropPoints, loading: dropPointsLoading } = useDropPoints(locationId);
+  const { dropPoints, loading: dropPointsLoading, updateDropPoint } = useDropPoints(locationId);
   
   // Generate the actual file URL from path or use provided URL
   const actualFileUrl = fileUrl || (filePath ? getStorageUrl('floor-plans', filePath) : undefined);
@@ -56,7 +59,7 @@ export const InteractiveFloorPlan = ({
   const isImage = ['jpg', 'jpeg', 'png', 'webp', 'svg', 'bmp', 'tiff'].includes(fileExtension);
 
   const handleContainerClick = (e: React.MouseEvent) => {
-    if (!isAddingPoint || !containerRef.current) return;
+    if (!isAddingPoint || !containerRef.current || isDragging) return;
 
     const rect = containerRef.current.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
@@ -66,6 +69,123 @@ export const InteractiveFloorPlan = ({
     setShowAddModal(true);
     setIsAddingPoint(false);
   };
+
+  const handleMouseDown = (e: React.MouseEvent, point: any) => {
+    e.stopPropagation();
+    if (!containerRef.current) return;
+
+    const rect = containerRef.current.getBoundingClientRect();
+    const pointX = (point.x_coordinate / 100) * rect.width;
+    const pointY = (point.y_coordinate / 100) * rect.height;
+    
+    setDraggedPoint(point);
+    setIsDragging(true);
+    setDragOffset({
+      x: e.clientX - rect.left - pointX,
+      y: e.clientY - rect.top - pointY
+    });
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !draggedPoint || !containerRef.current) return;
+
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = ((e.clientX - rect.left - dragOffset.x) / rect.width) * 100;
+    const y = ((e.clientY - rect.top - dragOffset.y) / rect.height) * 100;
+
+    // Constrain to container bounds
+    const constrainedX = Math.max(0, Math.min(100, x));
+    const constrainedY = Math.max(0, Math.min(100, y));
+
+    // Update the dragged point's position temporarily
+    setDraggedPoint(prev => ({
+      ...prev,
+      x_coordinate: constrainedX,
+      y_coordinate: constrainedY
+    }));
+  };
+
+  const handleMouseUp = async () => {
+    if (!isDragging || !draggedPoint) return;
+
+    try {
+      await updateDropPoint(draggedPoint.id, {
+        x_coordinate: draggedPoint.x_coordinate,
+        y_coordinate: draggedPoint.y_coordinate
+      });
+      toast({
+        title: "Drop Point Moved",
+        description: `${draggedPoint.label} has been repositioned.`,
+      });
+    } catch (error) {
+      console.error('Error updating drop point position:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update drop point position.",
+        variant: "destructive",
+      });
+    }
+
+    setIsDragging(false);
+    setDraggedPoint(null);
+    setDragOffset({ x: 0, y: 0 });
+  };
+
+  // Add mouse event listeners to handle dragging outside the container
+  useEffect(() => {
+    if (isDragging) {
+      const handleGlobalMouseMove = (e: MouseEvent) => {
+        if (!containerRef.current || !draggedPoint) return;
+        
+        const rect = containerRef.current.getBoundingClientRect();
+        const x = ((e.clientX - rect.left - dragOffset.x) / rect.width) * 100;
+        const y = ((e.clientY - rect.top - dragOffset.y) / rect.height) * 100;
+
+        const constrainedX = Math.max(0, Math.min(100, x));
+        const constrainedY = Math.max(0, Math.min(100, y));
+
+        setDraggedPoint(prev => ({
+          ...prev,
+          x_coordinate: constrainedX,
+          y_coordinate: constrainedY
+        }));
+      };
+
+      const handleGlobalMouseUp = async () => {
+        if (!draggedPoint) return;
+
+        try {
+          await updateDropPoint(draggedPoint.id, {
+            x_coordinate: draggedPoint.x_coordinate,
+            y_coordinate: draggedPoint.y_coordinate
+          });
+          toast({
+            title: "Drop Point Moved",
+            description: `${draggedPoint.label} has been repositioned.`,
+          });
+        } catch (error) {
+          console.error('Error updating drop point position:', error);
+          toast({
+            title: "Error",
+            description: "Failed to update drop point position.",
+            variant: "destructive",
+          });
+        }
+
+        setIsDragging(false);
+        setDraggedPoint(null);
+        setDragOffset({ x: 0, y: 0 });
+      };
+
+      document.addEventListener('mousemove', handleGlobalMouseMove);
+      document.addEventListener('mouseup', handleGlobalMouseUp);
+
+      return () => {
+        document.removeEventListener('mousemove', handleGlobalMouseMove);
+        document.removeEventListener('mouseup', handleGlobalMouseUp);
+      };
+    }
+  }, [isDragging, draggedPoint, dragOffset, updateDropPoint, toast]);
 
   const adjustScale = (increment: boolean) => {
     setScale(prev => {
@@ -179,7 +299,7 @@ export const InteractiveFloorPlan = ({
       <CardContent>
         <div 
           ref={containerRef}
-          className="relative bg-muted rounded-lg overflow-hidden cursor-pointer"
+          className={`relative bg-muted rounded-lg overflow-hidden ${isDragging ? 'cursor-grabbing' : 'cursor-pointer'}`}
           style={{ 
             transform: `scale(${scale})`,
             transformOrigin: 'top left',
@@ -187,6 +307,8 @@ export const InteractiveFloorPlan = ({
             minHeight: '400px'
           }}
           onClick={handleContainerClick}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
         >
           {/* Background Content */}
           {isImage && actualFileUrl ? (
@@ -227,33 +349,47 @@ export const InteractiveFloorPlan = ({
 
           {/* Drop Points Overlay */}
           <TooltipProvider>
-            {floorDropPoints.map((point) => (
-              <Tooltip key={point.id}>
-                <TooltipTrigger asChild>
-                  <div
-                    className={`absolute transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full border-2 flex items-center justify-center text-white font-bold cursor-pointer hover:scale-110 transition-transform shadow-lg ${getDropPointColor(point.status)}`}
-                    style={{
-                      left: `${point.x_coordinate || 50}%`,
-                      top: `${point.y_coordinate || 50}%`,
-                    }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedDropPoint(point);
-                      setDetailsModalOpen(true);
-                    }}
-                  >
-                    <span className="text-xs">{getDropPointIcon(point.point_type)}</span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent className="bg-popover border">
-                  <div className="text-sm">
-                    <p className="font-medium">{point.label}</p>
-                    <p className="text-muted-foreground">{point.room}</p>
-                    <p className="text-xs capitalize">{point.point_type} • {point.status}</p>
-                  </div>
-                </TooltipContent>
-              </Tooltip>
-            ))}
+            {floorDropPoints.map((point) => {
+              // Use dragged point coordinates if this point is being dragged
+              const displayPoint = draggedPoint && draggedPoint.id === point.id ? draggedPoint : point;
+              
+              return (
+                <Tooltip key={point.id}>
+                  <TooltipTrigger asChild>
+                    <div
+                      className={`absolute transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full border-2 flex items-center justify-center text-white font-bold hover:scale-110 transition-transform shadow-lg ${
+                        draggedPoint && draggedPoint.id === point.id 
+                          ? `cursor-grabbing scale-110 ${getDropPointColor(point.status)}` 
+                          : `cursor-grab ${getDropPointColor(point.status)}`
+                      }`}
+                      style={{
+                        left: `${displayPoint.x_coordinate || 50}%`,
+                        top: `${displayPoint.y_coordinate || 50}%`,
+                        zIndex: draggedPoint && draggedPoint.id === point.id ? 50 : 10,
+                      }}
+                      onMouseDown={(e) => handleMouseDown(e, point)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!isDragging) {
+                          setSelectedDropPoint(point);
+                          setDetailsModalOpen(true);
+                        }
+                      }}
+                    >
+                      <span className="text-xs">{getDropPointIcon(point.point_type)}</span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent className="bg-popover border">
+                    <div className="text-sm">
+                      <p className="font-medium">{point.label}</p>
+                      <p className="text-muted-foreground">{point.room}</p>
+                      <p className="text-xs capitalize">{point.point_type} • {point.status}</p>
+                      <p className="text-xs text-muted-foreground mt-1">Click and drag to move</p>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              );
+            })}
           </TooltipProvider>
 
           {/* Add Point Indicator */}
@@ -269,8 +405,9 @@ export const InteractiveFloorPlan = ({
           <p className="font-medium mb-1">Interactive Controls:</p>
           <ul className="space-y-1 text-xs">
             <li>• <strong>Add Drop Point:</strong> Click the button above, then click on the plan</li>
+            <li>• <strong>Move Drop Point:</strong> Click and drag existing points to reposition them</li>
             <li>• <strong>Zoom:</strong> Use the zoom controls or mouse wheel</li>
-            <li>• <strong>View Details:</strong> Hover over existing drop points</li>
+            <li>• <strong>View Details:</strong> Click on existing drop points (when not dragging)</li>
             <li>• <strong>Scale:</strong> Adjust view scale with zoom controls</li>
           </ul>
         </div>
