@@ -50,9 +50,9 @@ export const ScheduleAssignmentModal: React.FC<ScheduleAssignmentModalProps> = (
 
   const [formData, setFormData] = useState<FormData>({
     employee_id: employeeId || '',
-    project_id: '',
-    location_id: '',
-    work_order_id: '',
+    project_id: 'none',
+    location_id: 'none',
+    work_order_id: 'none',
     schedule_date: selectedDate,
     start_time: '09:00',
     end_time: '17:00',
@@ -81,9 +81,9 @@ export const ScheduleAssignmentModal: React.FC<ScheduleAssignmentModalProps> = (
 
     const scheduleData = {
       employee_id: formData.employee_id,
-      project_id: formData.project_id || undefined,
-      location_id: formData.location_id || undefined,
-      work_order_id: formData.work_order_id || undefined,
+      project_id: formData.project_id && formData.project_id !== 'none' ? formData.project_id : undefined,
+      location_id: formData.location_id && formData.location_id !== 'none' ? formData.location_id : undefined,
+      work_order_id: formData.work_order_id && formData.work_order_id !== 'none' ? formData.work_order_id : undefined,
       schedule_date: format(formData.schedule_date, 'yyyy-MM-dd'),
       start_time: formData.start_time,
       end_time: formData.end_time,
@@ -98,9 +98,9 @@ export const ScheduleAssignmentModal: React.FC<ScheduleAssignmentModalProps> = (
       // Reset form
       setFormData({
         employee_id: employeeId || '',
-        project_id: '',
-        location_id: '',
-        work_order_id: '',
+        project_id: 'none',
+        location_id: 'none', 
+        work_order_id: 'none',
         schedule_date: selectedDate,
         start_time: '09:00',
         end_time: '17:00',
@@ -240,13 +240,13 @@ export const ScheduleAssignmentModal: React.FC<ScheduleAssignmentModalProps> = (
             <Label htmlFor="project">Project (Optional)</Label>
             <Select
               value={formData.project_id}
-              onValueChange={(value) => handleInputChange('project_id', value)}
+              onValueChange={(value) => handleInputChange('project_id', value === 'none' ? '' : value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select project" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">No Project</SelectItem>
+                <SelectItem value="none">No Project</SelectItem>
                 {projects.map((project) => (
                   <SelectItem key={project.id} value={project.id}>
                     {project.name}
@@ -260,13 +260,13 @@ export const ScheduleAssignmentModal: React.FC<ScheduleAssignmentModalProps> = (
             <Label htmlFor="location">Location (Optional)</Label>
             <Select
               value={formData.location_id}
-              onValueChange={(value) => handleInputChange('location_id', value)}
+              onValueChange={(value) => handleInputChange('location_id', value === 'none' ? '' : value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select location" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">No Location</SelectItem>
+                <SelectItem value="none">No Location</SelectItem>
                 {locations.map((location) => (
                   <SelectItem key={location.id} value={location.id}>
                     {location.name}
@@ -280,13 +280,13 @@ export const ScheduleAssignmentModal: React.FC<ScheduleAssignmentModalProps> = (
             <Label htmlFor="work_order">Work Order (Optional)</Label>
             <Select
               value={formData.work_order_id}
-              onValueChange={(value) => handleInputChange('work_order_id', value)}
+              onValueChange={(value) => handleInputChange('work_order_id', value === 'none' ? '' : value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select work order" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">No Work Order</SelectItem>
+                <SelectItem value="none">No Work Order</SelectItem>
                 {workOrders.map((workOrder) => (
                   <SelectItem key={workOrder.id} value={workOrder.id}>
                     {workOrder.title}
