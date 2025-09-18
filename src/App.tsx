@@ -12,6 +12,7 @@ import Locations from "./pages/Locations";
 import Clients from "./pages/Clients";
 import Employees from "./pages/Employees";
 import WorkOrders from "./pages/WorkOrders";
+import Scheduling from "./pages/Scheduling";
 import FieldOperations from "./pages/FieldOperations";
 import QualityAssurance from "./pages/QualityAssurance";
 import AdvancedFeatures from "./pages/AdvancedFeatures";
@@ -71,6 +72,13 @@ const App = () => (
               <ProtectedRoute>
                 <AppLayout>
                   <WorkOrders />
+                </AppLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/scheduling" element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <Scheduling />
                 </AppLayout>
               </ProtectedRoute>
             } />

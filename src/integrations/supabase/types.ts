@@ -239,6 +239,108 @@ export type Database = {
           },
         ]
       }
+      employee_availability: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          availability_type: string
+          created_at: string
+          employee_id: string
+          end_date: string
+          end_time: string | null
+          id: string
+          notes: string | null
+          reason: string | null
+          start_date: string
+          start_time: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          availability_type?: string
+          created_at?: string
+          employee_id: string
+          end_date: string
+          end_time?: string | null
+          id?: string
+          notes?: string | null
+          reason?: string | null
+          start_date: string
+          start_time?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          availability_type?: string
+          created_at?: string
+          employee_id?: string
+          end_date?: string
+          end_time?: string | null
+          id?: string
+          notes?: string | null
+          reason?: string | null
+          start_date?: string
+          start_time?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      employee_schedules: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          employee_id: string
+          end_time: string
+          id: string
+          location_id: string | null
+          notes: string | null
+          project_id: string | null
+          schedule_date: string
+          schedule_type: string
+          start_time: string
+          status: string
+          updated_at: string
+          work_order_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          employee_id: string
+          end_time: string
+          id?: string
+          location_id?: string | null
+          notes?: string | null
+          project_id?: string | null
+          schedule_date: string
+          schedule_type?: string
+          start_time: string
+          status?: string
+          updated_at?: string
+          work_order_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          employee_id?: string
+          end_time?: string
+          id?: string
+          location_id?: string | null
+          notes?: string | null
+          project_id?: string | null
+          schedule_date?: string
+          schedule_type?: string
+          start_time?: string
+          status?: string
+          updated_at?: string
+          work_order_id?: string | null
+        }
+        Relationships: []
+      }
       employees: {
         Row: {
           certification_expiry: Json | null
@@ -652,6 +754,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      schedule_templates: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          days_of_week: number[]
+          effective_end_date: string | null
+          effective_start_date: string
+          employee_id: string | null
+          end_time: string
+          id: string
+          is_active: boolean
+          location_id: string | null
+          notes: string | null
+          project_id: string | null
+          start_time: string
+          template_name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          days_of_week: number[]
+          effective_end_date?: string | null
+          effective_start_date: string
+          employee_id?: string | null
+          end_time: string
+          id?: string
+          is_active?: boolean
+          location_id?: string | null
+          notes?: string | null
+          project_id?: string | null
+          start_time: string
+          template_name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          days_of_week?: number[]
+          effective_end_date?: string | null
+          effective_start_date?: string
+          employee_id?: string | null
+          end_time?: string
+          id?: string
+          is_active?: boolean
+          location_id?: string | null
+          notes?: string | null
+          project_id?: string | null
+          start_time?: string
+          template_name?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       test_results: {
         Row: {

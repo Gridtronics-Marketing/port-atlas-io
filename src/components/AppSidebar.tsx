@@ -10,7 +10,8 @@ import {
   UserCog,
   User,
   LogOut,
-  FolderOpen
+  FolderOpen,
+  Calendar
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -44,6 +45,7 @@ const navigationItems = [
   { title: "Dashboard", url: "/", icon: Home },
   { title: "Projects", url: "/projects", icon: FolderOpen },
   { title: "Work Orders", url: "/work-orders", icon: ClipboardList },
+  { title: "Scheduling", url: "/scheduling", icon: Calendar },
   { title: "Field Operations", url: "/field-operations", icon: MapPin },
   { title: "Quality Assurance", url: "/quality-assurance", icon: Shield },
   { title: "Advanced Features", url: "/advanced-features", icon: Settings },
