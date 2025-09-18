@@ -29,12 +29,14 @@ const QualityAssurance = () => {
   const isAdmin = hasRole('admin') || hasRole('hr_manager');
 
   const technicians = employees.filter(emp => 
-    emp.role === 'technician' || 
-    emp.role === 'project_manager' ||
-    emp.role === 'Network Technician' ||
+    emp.role === 'Lead Technician' || 
+    emp.role === 'Project Manager' ||
+    emp.role === 'Network Engineer' ||
     emp.role === 'Fiber Technician' ||
     emp.role === 'Installation Technician' ||
-    emp.role === 'Field Engineer'
+    emp.role === 'Field Engineer' ||
+    emp.role.toLowerCase().includes('technician') ||
+    emp.role.toLowerCase().includes('engineer')
   );
 
   const currentRack = racks.find(rack => rack.id === selectedRack);
