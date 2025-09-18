@@ -87,7 +87,7 @@ export const AddEmployeeModal = ({ isOpen, onClose, onAddEmployee }: AddEmployee
         ...formData,
         hourly_rate: formData.hourly_rate ? parseFloat(formData.hourly_rate) : null,
         hire_date: formData.hire_date || null,
-        client_id: formData.client_id || null,
+        client_id: formData.client_id === "company" ? null : (formData.client_id || null),
       };
       
       await onAddEmployee(employeeData);
@@ -113,7 +113,7 @@ export const AddEmployeeModal = ({ isOpen, onClose, onAddEmployee }: AddEmployee
         status: "Active",
         emergency_contact_name: "",
         emergency_contact_phone: "",
-        client_id: ""
+        client_id: "company"
       });
       onClose();
     } catch (error) {
@@ -336,7 +336,7 @@ export const AddEmployeeModal = ({ isOpen, onClose, onAddEmployee }: AddEmployee
                       <SelectValue placeholder="Select client for technician" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Company Employee</SelectItem>
+                      <SelectItem value="company">Company Employee</SelectItem>
                       {clients.map((client) => (
                         <SelectItem key={client.id} value={client.id}>
                           {client.name}
