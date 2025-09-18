@@ -11,7 +11,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { AddProjectModal } from "@/components/AddProjectModal";
-import { useProjects } from "@/hooks/useProjects";
+import { EditProjectModal } from "@/components/EditProjectModal";
+import { useProjects, Project } from "@/hooks/useProjects";
 import { useClients } from "@/hooks/useClients";
 import { useWorkOrders } from "@/hooks/useWorkOrders";
 import { useLocations } from "@/hooks/useLocations";
@@ -19,7 +20,9 @@ import { format } from "date-fns";
 
 const Projects = () => {
   const [showAddProject, setShowAddProject] = useState(false);
-  const { projects, addProject, deleteProject, loading } = useProjects();
+  const [showEditProject, setShowEditProject] = useState(false);
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const { projects, addProject, updateProject, deleteProject, loading } = useProjects();
   const { clients } = useClients();
   const { workOrders } = useWorkOrders();
   const { locations } = useLocations();
@@ -59,6 +62,11 @@ const Projects = () => {
       case 'Low': return 'bg-muted text-muted-foreground';
       default: return 'bg-muted text-muted-foreground';
     }
+  };
+
+  const handleEditProject = (project: Project) => {
+    setEditingProject(project);
+    setShowEditProject(true);
   };
 
   const handleDeleteProject = async (id: string) => {
@@ -208,7 +216,7 @@ const Projects = () => {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="bg-popover border">
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleEditProject(project)}>
                             <Edit className="h-4 w-4 mr-2" />
                             Edit Project
                           </DropdownMenuItem>
@@ -291,6 +299,14 @@ const Projects = () => {
         isOpen={showAddProject} 
         onClose={() => setShowAddProject(false)}
         onAddProject={addProject}
+      />
+
+      {/* Edit Project Modal */}
+      <EditProjectModal 
+        isOpen={showEditProject} 
+        onClose={() => setShowEditProject(false)}
+        onUpdateProject={updateProject}
+        project={editingProject}
       />
     </div>
   );
