@@ -154,12 +154,15 @@ export const DropPointList = ({ locationId }: DropPointListProps) => {
                     <TableCell className="font-medium">{point.label}</TableCell>
                     <TableCell>{point.room || "—"}</TableCell>
                     <TableCell>{point.floor || "—"}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {getTypeIcon(point.point_type)({ className: "h-4 w-4" })}
-                        <span className="capitalize">{point.point_type}</span>
-                      </div>
-                    </TableCell>
+                     <TableCell>
+                       <div className="flex items-center gap-2">
+                         {(() => {
+                           const IconComponent = getTypeIcon(point.point_type);
+                           return <IconComponent className="h-4 w-4" />;
+                         })()}
+                         <span className="capitalize">{point.point_type}</span>
+                       </div>
+                     </TableCell>
                     <TableCell>
                       <Badge className={getStatusColor(point.status)}>
                         {point.status}
