@@ -1,4 +1,4 @@
-import { PDFRenderer } from "./PDFRenderer";
+import { InteractiveFloorPlan } from './InteractiveFloorPlan';
 
 interface FloorPlanViewerProps {
   fileUrl: string;
@@ -24,24 +24,7 @@ export const FloorPlanViewer = ({
   };
 
   const fileExtension = getFileExtension(fileUrl, fileName);
-  const isPDF = fileExtension === 'pdf';
   const isImage = ['jpg', 'jpeg', 'png', 'webp', 'svg', 'bmp', 'tiff'].includes(fileExtension);
-
-  if (isPDF) {
-    return (
-      <div className={`w-full ${className}`}>
-        <div className="flex items-center gap-2 mb-2">
-          <span className="text-sm font-medium">Floor {floorNumber} Plan - {fileName}</span>
-        </div>
-        <PDFRenderer
-          fileUrl={fileUrl}
-          pageNumber={1}
-          scale={1.0}
-          className="w-full"
-        />
-      </div>
-    );
-  }
 
   if (isImage) {
     return (

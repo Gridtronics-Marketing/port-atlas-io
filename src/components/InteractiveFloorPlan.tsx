@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { PDFRenderer } from './PDFRenderer';
 import { AddDropPointModal } from './AddDropPointModal';
 import { useDropPoints } from '@/hooks/useDropPoints';
 import { getStorageUrl, repairFloorPlanFiles } from '@/lib/storage-utils';
@@ -51,7 +50,6 @@ export const InteractiveFloorPlan = ({
   };
 
   const fileExtension = getFileExtension(actualFileUrl, filePath, fileName);
-  const isPDF = fileExtension === 'pdf';
   const isImage = ['jpg', 'jpeg', 'png', 'webp', 'svg', 'bmp', 'tiff'].includes(fileExtension);
 
   const handleContainerClick = (e: React.MouseEvent) => {
@@ -188,15 +186,7 @@ export const InteractiveFloorPlan = ({
           onClick={handleContainerClick}
         >
           {/* Background Content */}
-          {isPDF && actualFileUrl ? (
-            <PDFRenderer
-              fileUrl={actualFileUrl}
-              pageNumber={floorNumber}
-              scale={1.0}
-              onCanvasReady={setCanvasElement}
-              className="w-full"
-            />
-          ) : isImage && actualFileUrl ? (
+          {isImage && actualFileUrl ? (
             <img
               src={actualFileUrl}
               alt={`Floor ${floorNumber} plan`}

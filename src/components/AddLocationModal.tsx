@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Upload, X, MapPin, Plus, Minus, Building2, Users, Phone, FileText } from "lucide-react";
+import { Upload, X, MapPin, Plus, Minus, Building2, Users, Phone, FileText, FileImage } from "lucide-react";
 import {
   Dialog,
   DialogContent,  
@@ -28,6 +28,7 @@ import { useLocations, type Location } from "@/hooks/useLocations";
 import { useProjects } from "@/hooks/useProjects";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { convertPDFToImages, isPDFFile, isImageFile, type ConversionProgress } from "@/lib/pdf-converter";
 
 interface AddLocationModalProps {
   open: boolean;
@@ -38,6 +39,7 @@ interface AddLocationModalProps {
 export const AddLocationModal = ({ open, onOpenChange, location }: AddLocationModalProps) => {
   const [layoutFiles, setLayoutFiles] = useState<{ [floorNumber: number]: File | null }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [conversionProgress, setConversionProgress] = useState<{ [floorNumber: number]: ConversionProgress | null }>({});
   const { clients } = useClients();
   const { projects } = useProjects();
   const { addLocation, updateLocation } = useLocations();
@@ -91,20 +93,89 @@ export const AddLocationModal = ({ open, onOpenChange, location }: AddLocationMo
       status: "Active",
     });
     setLayoutFiles({});
+    setConversionProgress({});
   };
 
-  const handleFileChange = (floorNumber: number, event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (floorNumber: number, event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
+    if (!file) return;
+
+    // Validate file type
+    if (!isPDFFile(file) && !isImageFile(file)) {
+      toast({
+        title: "Invalid File Type",
+        description: "Please upload PDF or image files only (PDF, PNG, JPG, WEBP).",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // If it's an image, use it directly
+    if (isImageFile(file)) {
       setLayoutFiles(prev => ({
         ...prev,
         [floorNumber]: file
       }));
+      return;
+    }
+
+    // If it's a PDF, convert it to images
+    if (isPDFFile(file)) {
+      try {
+        setConversionProgress(prev => ({
+          ...prev,
+          [floorNumber]: { currentPage: 0, totalPages: 0, progress: 0 }
+        }));
+
+        const convertedPages = await convertPDFToImages(file, (progress) => {
+          setConversionProgress(prev => ({
+            ...prev,
+            [floorNumber]: progress
+          }));
+        });
+
+        // For single page PDFs, use the first page directly
+        // For multi-page PDFs, create a combined file or use first page (for now)
+        if (convertedPages.length > 0) {
+          const firstPage = convertedPages[0];
+          const imageFile = new File([firstPage.blob], `floor_${floorNumber}.png`, {
+            type: 'image/png'
+          });
+          
+          setLayoutFiles(prev => ({
+            ...prev,
+            [floorNumber]: imageFile
+          }));
+
+          toast({
+            title: "PDF Converted",
+            description: `Successfully converted PDF to image (${convertedPages.length} page${convertedPages.length > 1 ? 's' : ''} processed).`,
+          });
+        }
+
+      } catch (error) {
+        console.error('PDF conversion error:', error);
+        toast({
+          title: "Conversion Failed",
+          description: "Failed to convert PDF to image. Please try again or use an image file.",
+          variant: "destructive",
+        });
+      } finally {
+        setConversionProgress(prev => ({
+          ...prev,
+          [floorNumber]: null
+        }));
+      }
     }
   };
 
   const removeFile = (floorNumber: number) => {
     setLayoutFiles(prev => {
+      const updated = { ...prev };
+      delete updated[floorNumber];
+      return updated;
+    });
+    setConversionProgress(prev => {
       const updated = { ...prev };
       delete updated[floorNumber];
       return updated;
@@ -484,28 +555,52 @@ export const AddLocationModal = ({ open, onOpenChange, location }: AddLocationMo
                                 </div>
                               </div>
                               
-                              {file ? (
-                                <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-                                  <div className="flex items-center gap-3">
-                                    <div className="p-3 bg-primary/10 rounded-lg">
-                                      <Upload className="h-5 w-5 text-primary" />
-                                    </div>
-                                    <div>
-                                      <p className="font-medium text-foreground">{file.name}</p>
-                                      <p className="text-sm text-muted-foreground">
-                                        {(file.size / 1024 / 1024).toFixed(2)} MB • Ready for upload
-                                      </p>
-                                    </div>
-                                  </div>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => removeFile(floorNumber)}
-                                    className="text-muted-foreground hover:text-destructive"
-                                  >
-                                    <X className="h-4 w-4" />
-                                  </Button>
-                                </div>
+                               {file ? (
+                                 <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                                   <div className="flex items-center gap-3">
+                                     <div className="p-3 bg-primary/10 rounded-lg">
+                                       {isPDFFile(file) ? (
+                                         <FileImage className="h-5 w-5 text-primary" />
+                                       ) : (
+                                         <Upload className="h-5 w-5 text-primary" />
+                                       )}
+                                     </div>
+                                     <div>
+                                       <p className="font-medium text-foreground">{file.name}</p>
+                                       <p className="text-sm text-muted-foreground">
+                                         {(file.size / 1024 / 1024).toFixed(2)} MB • {isPDFFile(file) ? 'Converted to PNG' : 'Ready for upload'}
+                                       </p>
+                                     </div>
+                                   </div>
+                                   <Button
+                                     variant="ghost"
+                                     size="sm"
+                                     onClick={() => removeFile(floorNumber)}
+                                     className="text-muted-foreground hover:text-destructive"
+                                   >
+                                     <X className="h-4 w-4" />
+                                   </Button>
+                                 </div>
+                               ) : conversionProgress[floorNumber] ? (
+                                 <div className="p-4 bg-muted/50 rounded-lg">
+                                   <div className="flex items-center gap-3 mb-3">
+                                     <div className="p-3 bg-primary/10 rounded-lg">
+                                       <FileImage className="h-5 w-5 text-primary animate-pulse" />
+                                     </div>
+                                     <div>
+                                       <p className="font-medium text-foreground">Converting PDF...</p>
+                                       <p className="text-sm text-muted-foreground">
+                                         Page {conversionProgress[floorNumber]!.currentPage} of {conversionProgress[floorNumber]!.totalPages}
+                                       </p>
+                                     </div>
+                                   </div>
+                                   <div className="w-full bg-muted rounded-full h-2">
+                                     <div 
+                                       className="bg-primary h-2 rounded-full transition-all duration-300"
+                                       style={{ width: `${conversionProgress[floorNumber]!.progress}%` }}
+                                     />
+                                   </div>
+                                 </div>
                               ) : (
                                 <div className="text-center py-8">
                                   <div className="mx-auto w-12 h-12 bg-muted rounded-full flex items-center justify-center mb-3">
@@ -515,12 +610,12 @@ export const AddLocationModal = ({ open, onOpenChange, location }: AddLocationMo
                                     <p className="text-sm font-medium text-foreground">
                                       Upload {formData.floors === 1 ? 'Floor Plan' : `Floor ${floorNumber} Plan`}
                                     </p>
-                                     <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                                       Drop files here or click to browse. Supports images (JPG, PNG, WEBP), PDFs, and technical drawings
-                                     </p>
+                                      <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                                        Drop files here or click to browse. Supports images (JPG, PNG, WEBP) and PDFs (converted to images)
+                                      </p>
                                     <input
                                       type="file"
-                                      accept="image/*,.pdf,.dwg"
+                                      accept="image/*,.pdf"
                                       onChange={(e) => handleFileChange(floorNumber, e)}
                                       className="hidden"
                                       id={`layout-upload-${floorNumber}`}
