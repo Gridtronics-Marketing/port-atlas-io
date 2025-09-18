@@ -50,8 +50,18 @@ export const PDFRenderer = ({
     };
 
     const renderPDF = async () => {
+      // Wait for canvas to be available with retry mechanism
+      let retryCount = 0;
+      while (!canvasRef.current && retryCount < 10) {
+        console.log('[PDFRenderer] Waiting for canvas ref, attempt:', retryCount + 1);
+        await new Promise(resolve => setTimeout(resolve, 100));
+        retryCount++;
+      }
+
       if (!canvasRef.current) {
-        console.log('[PDFRenderer] Canvas ref not available');
+        console.error('[PDFRenderer] Canvas ref not available after 10 retries');
+        setError('Canvas not available for PDF rendering');
+        setLoading(false);
         return;
       }
 
@@ -79,8 +89,8 @@ export const PDFRenderer = ({
         console.log('[PDFRenderer] Loading PDF document...');
         const loadingTask = pdfjsLib.getDocument({
           url: fileUrl,
-          disableAutoFetch: true,
-          disableStream: true
+          disableAutoFetch: false,
+          disableStream: false
         });
 
         // Track loading progress
@@ -98,18 +108,22 @@ export const PDFRenderer = ({
         setLoadingProgress(80);
 
         // Validate page number
+        let validPageNumber = pageNumber;
         if (pageNumber < 1 || pageNumber > pdf.numPages) {
           console.warn(`[PDFRenderer] Invalid page number ${pageNumber}. PDF has ${pdf.numPages} pages. Using page 1.`);
-          pageNumber = 1;
+          validPageNumber = 1;
         }
 
-        console.log('[PDFRenderer] Rendering page:', pageNumber);
-        const page = await pdf.getPage(pageNumber);
+        console.log('[PDFRenderer] Rendering page:', validPageNumber);
+        const page = await pdf.getPage(validPageNumber);
         const viewport = page.getViewport({ scale });
 
         const canvas = canvasRef.current;
-        const context = canvas.getContext('2d');
+        if (!canvas) {
+          throw new Error('Canvas element became unavailable during rendering');
+        }
         
+        const context = canvas.getContext('2d');
         if (!context) {
           throw new Error('Could not get canvas 2D context');
         }
@@ -159,10 +173,14 @@ export const PDFRenderer = ({
       }
     };
 
-    renderPDF();
+    // Small delay to ensure canvas is mounted
+    const initRender = setTimeout(() => {
+      renderPDF();
+    }, 50);
 
     return () => {
       clearTimeout(timeoutId);
+      clearTimeout(initRender);
       abortController.abort();
     };
   }, [fileUrl, pageNumber, scale, onCanvasReady]);
