@@ -11,7 +11,9 @@ import {
   User,
   LogOut,
   FolderOpen,
-  Calendar
+  Calendar,
+  MessageSquare,
+  Phone
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -49,7 +51,9 @@ const navigationItems = [
   { title: "Field Operations", url: "/field-operations", icon: MapPin },
   { title: "Quality Assurance", url: "/quality-assurance", icon: Shield },
   { title: "Advanced Features", url: "/advanced-features", icon: Settings },
+  { title: "Communications", url: "/communications", icon: MessageSquare },
   { title: "Integrations", url: "/integrations", icon: Zap },
+  { title: "Twilio Settings", url: "/twilio-settings", icon: Phone },
   { title: "Locations", url: "/locations", icon: Building },
   { title: "Clients", url: "/clients", icon: Building },
   { title: "Employees", url: "/employees", icon: Users },

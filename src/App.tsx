@@ -17,6 +17,8 @@ import FieldOperations from "./pages/FieldOperations";
 import QualityAssurance from "./pages/QualityAssurance";
 import AdvancedFeatures from "./pages/AdvancedFeatures";
 import Integrations from "./pages/Integrations";
+import Communications from "./pages/Communications";
+import TwilioSettings from "./pages/TwilioSettings";
 import UserManagement from "./pages/UserManagement";
 import Profile from "./pages/Profile";
 import Auth from "./pages/Auth";
@@ -107,6 +109,20 @@ const App = () => (
               <ProtectedRoute>
                 <AppLayout>
                   <Integrations />
+                </AppLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/communications" element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <Communications />
+                </AppLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/twilio-settings" element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <TwilioSettings />
                 </AppLayout>
               </ProtectedRoute>
             } />
