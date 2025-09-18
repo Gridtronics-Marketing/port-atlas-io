@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Search, Filter, Cable, Shield, Wifi, Zap, Eye, Edit, Trash2, MoreHorizontal, Loader2 } from "lucide-react";
+import { DropPointDetailsModal } from "./DropPointDetailsModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -36,6 +37,8 @@ export const DropPointList = ({ locationId }: DropPointListProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [selectedDropPoint, setSelectedDropPoint] = useState<any>(null);
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
 
   const filteredDropPoints = dropPoints.filter((point) => {
     const matchesSearch = point.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -182,11 +185,17 @@ export const DropPointList = ({ locationId }: DropPointListProps) => {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="bg-popover border">
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => {
+                            setSelectedDropPoint(point);
+                            setDetailsModalOpen(true);
+                          }}>
                             <Eye className="mr-2 h-4 w-4" />
                             View Details
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => {
+                            setSelectedDropPoint(point);
+                            setDetailsModalOpen(true);
+                          }}>
                             <Edit className="mr-2 h-4 w-4" />
                             Edit Drop Point
                           </DropdownMenuItem>
@@ -207,6 +216,13 @@ export const DropPointList = ({ locationId }: DropPointListProps) => {
           </div>
         </CardContent>
       </Card>
+
+      <DropPointDetailsModal
+        open={detailsModalOpen}
+        onOpenChange={setDetailsModalOpen}
+        dropPoint={selectedDropPoint}
+        locationId={locationId}
+      />
     </div>
   );
 };

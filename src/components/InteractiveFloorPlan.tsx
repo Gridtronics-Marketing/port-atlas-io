@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { AddDropPointModal } from './AddDropPointModal';
+import { DropPointDetailsModal } from './DropPointDetailsModal';
 import { useDropPoints } from '@/hooks/useDropPoints';
 import { getStorageUrl, repairFloorPlanFiles } from '@/lib/storage-utils';
 import { useToast } from '@/hooks/use-toast';
@@ -32,6 +33,8 @@ export const InteractiveFloorPlan = ({
   const [clickCoordinates, setClickCoordinates] = useState<{ x: number; y: number } | null>(null);
   const [canvasElement, setCanvasElement] = useState<HTMLCanvasElement | null>(null);
   const [isRepairing, setIsRepairing] = useState(false);
+  const [selectedDropPoint, setSelectedDropPoint] = useState<any>(null);
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   
@@ -233,6 +236,11 @@ export const InteractiveFloorPlan = ({
                       left: `${point.x_coordinate || 50}%`,
                       top: `${point.y_coordinate || 50}%`,
                     }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedDropPoint(point);
+                      setDetailsModalOpen(true);
+                    }}
                   >
                     <span className="text-xs">{getDropPointIcon(point.point_type)}</span>
                   </div>
@@ -275,6 +283,14 @@ export const InteractiveFloorPlan = ({
         locationId={locationId}
         coordinates={clickCoordinates || undefined}
         floor={floorNumber}
+      />
+
+      {/* Drop Point Details Modal */}
+      <DropPointDetailsModal
+        open={detailsModalOpen}
+        onOpenChange={setDetailsModalOpen}
+        dropPoint={selectedDropPoint}
+        locationId={locationId}
       />
     </Card>
   );

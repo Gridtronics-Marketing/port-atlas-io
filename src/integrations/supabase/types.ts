@@ -653,6 +653,69 @@ export type Database = {
           },
         ]
       }
+      test_results: {
+        Row: {
+          created_at: string
+          drop_point_id: string | null
+          equipment_used: string | null
+          id: string
+          notes: string | null
+          pass_fail: string | null
+          photos: string[] | null
+          results: Json | null
+          test_date: string
+          test_type: string
+          test_values: Json | null
+          tested_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          drop_point_id?: string | null
+          equipment_used?: string | null
+          id?: string
+          notes?: string | null
+          pass_fail?: string | null
+          photos?: string[] | null
+          results?: Json | null
+          test_date?: string
+          test_type: string
+          test_values?: Json | null
+          tested_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          drop_point_id?: string | null
+          equipment_used?: string | null
+          id?: string
+          notes?: string | null
+          pass_fail?: string | null
+          photos?: string[] | null
+          results?: Json | null
+          test_date?: string
+          test_type?: string
+          test_values?: Json | null
+          tested_by?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "test_results_drop_point_id_fkey"
+            columns: ["drop_point_id"]
+            isOneToOne: false
+            referencedRelation: "drop_points"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "test_results_tested_by_fkey"
+            columns: ["tested_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
