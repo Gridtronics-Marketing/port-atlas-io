@@ -18,6 +18,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { AddEmployeeModal } from "@/components/AddEmployeeModal";
+import { EditEmployeeModal } from "@/components/EditEmployeeModal";
 import { EmployeeDetailsModal } from "@/components/EmployeeDetailsModal";
 import { CrewAssignmentModal } from "@/components/CrewAssignmentModal";
 import { RoleManagementModal } from "@/components/RoleManagementModal";
@@ -25,7 +26,7 @@ import { useEmployees } from "@/hooks/useEmployees";
 import { useUserRoles } from "@/hooks/useUserRoles";
 
 const Employees = () => {
-  const { employees, loading, addEmployee, deleteEmployee } = useEmployees();
+  const { employees, loading, addEmployee, updateEmployee, deleteEmployee } = useEmployees();
   const { canManageEmployees, canViewSensitiveData, hasAnyRole } = useUserRoles();
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
@@ -33,6 +34,7 @@ const Employees = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isCrewModalOpen, setIsCrewModalOpen] = useState(false);
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
   const [roleManagementEmployee, setRoleManagementEmployee] = useState<any>(null);
@@ -286,7 +288,10 @@ const Employees = () => {
                           </DropdownMenuItem>
                           
                           {canManageEmployees() && (
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => {
+                              setSelectedEmployee(employee);
+                              setIsEditModalOpen(true);
+                            }}>
                               <Edit className="mr-2 h-4 w-4" />
                               Edit Employee
                             </DropdownMenuItem>
@@ -316,6 +321,16 @@ const Employees = () => {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onAddEmployee={addEmployee}
+      />
+
+      <EditEmployeeModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setSelectedEmployee(null);
+        }}
+        employee={selectedEmployee}
+        onUpdateEmployee={updateEmployee}
       />
 
       <EmployeeDetailsModal
