@@ -9,9 +9,11 @@ import { Badge } from '@/components/ui/badge';
 import { RackVisualizer } from '@/components/RackVisualizer';
 import { TestResultsManager } from '@/components/TestResultsManager';
 import { SafetyChecklistModal } from '@/components/SafetyChecklistModal';
+import { ChecklistManagementTabs } from '@/components/ChecklistManagementTabs';
 import { useEmployees } from '@/hooks/useEmployees';
 import { useEquipment } from '@/hooks/useEquipment';
 import { useTestResults } from '@/hooks/useTestResults';
+import { useUserRoles } from '@/hooks/useUserRoles';
 
 const QualityAssurance = () => {
   const [selectedTechnician, setSelectedTechnician] = useState('');
@@ -22,6 +24,9 @@ const QualityAssurance = () => {
   const { employees } = useEmployees();
   const { racks } = useEquipment();
   const { qualityChecklists, qualitySubmissions } = useTestResults();
+  const { hasRole } = useUserRoles();
+
+  const isAdmin = hasRole('admin') || hasRole('hr_manager');
 
   const technicians = employees.filter(emp => 
     emp.role === 'technician' || 
@@ -154,10 +159,11 @@ const QualityAssurance = () => {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="checklists" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="checklists">Quality Checklists</TabsTrigger>
             <TabsTrigger value="tests">Test Results</TabsTrigger>
             <TabsTrigger value="equipment">Equipment Stack</TabsTrigger>
+            {isAdmin && <TabsTrigger value="management">Manage Checklists</TabsTrigger>}
           </TabsList>
           
           <TabsContent value="checklists" className="space-y-6">
@@ -239,6 +245,21 @@ const QualityAssurance = () => {
               </Card>
             )}
           </TabsContent>
+
+          {/* Admin Checklist Management */}
+          {isAdmin && (
+            <TabsContent value="management" className="space-y-6">
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-xl font-semibold">Checklist Management</h3>
+                  <p className="text-muted-foreground">
+                    Create and manage safety and quality checklists for your organization
+                  </p>
+                </div>
+                <ChecklistManagementTabs />
+              </div>
+            </TabsContent>
+          )}
         </Tabs>
 
         {/* Quality Checklist Modal */}

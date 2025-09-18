@@ -620,6 +620,136 @@ export type Database = {
           },
         ]
       }
+      quality_checklist_items: {
+        Row: {
+          category: string
+          checklist_id: string
+          created_at: string
+          description: string | null
+          id: string
+          is_required: boolean
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          checklist_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_required?: boolean
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          checklist_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_required?: boolean
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quality_checklist_items_checklist_id_fkey"
+            columns: ["checklist_id"]
+            isOneToOne: false
+            referencedRelation: "quality_checklists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quality_checklist_submissions: {
+        Row: {
+          checklist_id: string
+          created_at: string
+          employee_id: string
+          id: string
+          location_id: string | null
+          notes: string | null
+          overall_status: string
+          project_id: string | null
+          responses: Json
+          submitted_at: string
+          updated_at: string
+          work_order_id: string | null
+        }
+        Insert: {
+          checklist_id: string
+          created_at?: string
+          employee_id: string
+          id?: string
+          location_id?: string | null
+          notes?: string | null
+          overall_status?: string
+          project_id?: string | null
+          responses?: Json
+          submitted_at?: string
+          updated_at?: string
+          work_order_id?: string | null
+        }
+        Update: {
+          checklist_id?: string
+          created_at?: string
+          employee_id?: string
+          id?: string
+          location_id?: string | null
+          notes?: string | null
+          overall_status?: string
+          project_id?: string | null
+          responses?: Json
+          submitted_at?: string
+          updated_at?: string
+          work_order_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quality_checklist_submissions_checklist_id_fkey"
+            columns: ["checklist_id"]
+            isOneToOne: false
+            referencedRelation: "quality_checklists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quality_checklists: {
+        Row: {
+          category: string
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       racks: {
         Row: {
           cooling_required: boolean | null
@@ -675,6 +805,136 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      safety_checklist_items: {
+        Row: {
+          category: string
+          checklist_id: string
+          created_at: string
+          description: string | null
+          id: string
+          is_required: boolean
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          checklist_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_required?: boolean
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          checklist_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_required?: boolean
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safety_checklist_items_checklist_id_fkey"
+            columns: ["checklist_id"]
+            isOneToOne: false
+            referencedRelation: "safety_checklists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      safety_checklist_submissions: {
+        Row: {
+          checklist_id: string
+          created_at: string
+          employee_id: string
+          id: string
+          location_id: string | null
+          notes: string | null
+          overall_status: string
+          project_id: string | null
+          responses: Json
+          submitted_at: string
+          updated_at: string
+          work_order_id: string | null
+        }
+        Insert: {
+          checklist_id: string
+          created_at?: string
+          employee_id: string
+          id?: string
+          location_id?: string | null
+          notes?: string | null
+          overall_status?: string
+          project_id?: string | null
+          responses?: Json
+          submitted_at?: string
+          updated_at?: string
+          work_order_id?: string | null
+        }
+        Update: {
+          checklist_id?: string
+          created_at?: string
+          employee_id?: string
+          id?: string
+          location_id?: string | null
+          notes?: string | null
+          overall_status?: string
+          project_id?: string | null
+          responses?: Json
+          submitted_at?: string
+          updated_at?: string
+          work_order_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safety_checklist_submissions_checklist_id_fkey"
+            columns: ["checklist_id"]
+            isOneToOne: false
+            referencedRelation: "safety_checklists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      safety_checklists: {
+        Row: {
+          category: string
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       safety_incidents: {
         Row: {
