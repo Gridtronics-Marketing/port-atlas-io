@@ -174,17 +174,30 @@ export const AddLocationModal = ({ open, onOpenChange, location }: AddLocationMo
 
       // Update location with floor plan file paths
       if (Object.keys(uploadedFiles).length > 0) {
-        const { error } = await supabase
+        console.log('Updating location with floor plan files:', {
+          locationId: resultLocation.id,
+          uploadedFiles
+        });
+        
+        const { data: updateData, error: updateError } = await supabase
           .from('locations')
           .update({ floor_plan_files: uploadedFiles })
-          .eq('id', resultLocation.id);
+          .eq('id', resultLocation.id)
+          .select();
 
-        if (error) {
-          console.error('Error updating location with floor plans:', error);
+        if (updateError) {
+          console.error('Database update error:', updateError);
+          toast({
+            title: "Database Update Failed",
+            description: `Failed to link floor plans to location: ${updateError.message}`,
+            variant: "destructive",
+          });
+          throw updateError;
         } else {
+          console.log('Database updated successfully:', updateData);
           toast({
             title: "Floor Plans Uploaded",
-            description: `${Object.keys(uploadedFiles).length} floor plan${Object.keys(uploadedFiles).length > 1 ? 's' : ''} uploaded successfully.`,
+            description: `${Object.keys(uploadedFiles).length} floor plan${Object.keys(uploadedFiles).length > 1 ? 's' : ''} uploaded and linked successfully.`,
           });
         }
       }

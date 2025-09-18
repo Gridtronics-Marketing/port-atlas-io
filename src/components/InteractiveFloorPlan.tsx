@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Plus, Minus, RotateCcw, ZoomIn, ZoomOut } from 'lucide-react';
+import { Plus, Minus, RotateCcw, ZoomIn, ZoomOut, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,11 +7,14 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { PDFRenderer } from './PDFRenderer';
 import { AddDropPointModal } from './AddDropPointModal';
 import { useDropPoints } from '@/hooks/useDropPoints';
+import { getStorageUrl, repairFloorPlanFiles } from '@/lib/storage-utils';
+import { useToast } from '@/hooks/use-toast';
 
 interface InteractiveFloorPlanProps {
   locationId: string;
   floorNumber: number;
   fileUrl?: string;
+  filePath?: string; // Raw storage path
   fileName?: string;
   className?: string;
 }
@@ -20,6 +23,7 @@ export const InteractiveFloorPlan = ({
   locationId,
   floorNumber,
   fileUrl,
+  filePath,
   fileName,
   className = ""
 }: InteractiveFloorPlanProps) => {
@@ -28,20 +32,25 @@ export const InteractiveFloorPlan = ({
   const [showAddModal, setShowAddModal] = useState(false);
   const [clickCoordinates, setClickCoordinates] = useState<{ x: number; y: number } | null>(null);
   const [canvasElement, setCanvasElement] = useState<HTMLCanvasElement | null>(null);
+  const [isRepairing, setIsRepairing] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
   
   const { dropPoints, loading: dropPointsLoading } = useDropPoints(locationId);
+  
+  // Generate the actual file URL from path or use provided URL
+  const actualFileUrl = fileUrl || (filePath ? getStorageUrl('floor-plans', filePath) : undefined);
 
   // Filter drop points for current floor
   const floorDropPoints = dropPoints.filter(dp => dp.floor === floorNumber);
 
-  const getFileExtension = (url?: string, name?: string) => {
-    if (!url && !name) return '';
-    const source = name || url || '';
+  const getFileExtension = (url?: string, path?: string, name?: string) => {
+    if (!url && !path && !name) return '';
+    const source = name || path || url || '';
     return source.split('.').pop()?.toLowerCase() || '';
   };
 
-  const fileExtension = getFileExtension(fileUrl, fileName);
+  const fileExtension = getFileExtension(actualFileUrl, filePath, fileName);
   const isPDF = fileExtension === 'pdf';
   const isImage = ['jpg', 'jpeg', 'png', 'webp', 'svg', 'bmp', 'tiff'].includes(fileExtension);
 
@@ -65,6 +74,28 @@ export const InteractiveFloorPlan = ({
   };
 
   const resetScale = () => setScale(1.0);
+
+  const handleRepairFiles = async () => {
+    setIsRepairing(true);
+    try {
+      await repairFloorPlanFiles(locationId);
+      toast({
+        title: "Files Repaired",
+        description: "Floor plan files have been repaired and linked to the location.",
+      });
+      // Refresh the page to see updated data
+      window.location.reload();
+    } catch (error) {
+      console.error('Error repairing files:', error);
+      toast({
+        title: "Repair Failed",
+        description: "Failed to repair floor plan files. Check console for details.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRepairing(false);
+    }
+  };
 
   const getDropPointIcon = (type: string) => {
     const icons = {
@@ -106,10 +137,22 @@ export const InteractiveFloorPlan = ({
               variant={isAddingPoint ? "default" : "outline"}
               size="sm"
               onClick={() => setIsAddingPoint(!isAddingPoint)}
+              disabled={!actualFileUrl}
             >
               <Plus className="h-4 w-4 mr-2" />
               Add Drop Point
             </Button>
+            {!actualFileUrl && filePath && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRepairFiles}
+                disabled={isRepairing}
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${isRepairing ? 'animate-spin' : ''}`} />
+                Repair Files
+              </Button>
+            )}
             <div className="flex items-center gap-1">
               <Button variant="outline" size="sm" onClick={() => adjustScale(false)}>
                 <ZoomOut className="h-4 w-4" />
@@ -145,21 +188,41 @@ export const InteractiveFloorPlan = ({
           onClick={handleContainerClick}
         >
           {/* Background Content */}
-          {isPDF && fileUrl ? (
+          {isPDF && actualFileUrl ? (
             <PDFRenderer
-              fileUrl={fileUrl}
+              fileUrl={actualFileUrl}
               pageNumber={floorNumber}
               scale={1.0}
               onCanvasReady={setCanvasElement}
               className="w-full"
             />
-          ) : isImage && fileUrl ? (
+          ) : isImage && actualFileUrl ? (
             <img
-              src={fileUrl}
+              src={actualFileUrl}
               alt={`Floor ${floorNumber} plan`}
               className="w-full h-auto"
               style={{ display: 'block' }}
+              onError={(e) => {
+                console.error('Image failed to load:', actualFileUrl);
+                e.currentTarget.style.display = 'none';
+              }}
             />
+          ) : filePath ? (
+            <div className="w-full h-96 bg-muted flex items-center justify-center">
+              <div className="text-center text-muted-foreground space-y-2">
+                <p className="text-sm font-medium">Floor plan file found but not accessible</p>
+                <p className="text-xs">File path: {filePath}</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRepairFiles}
+                  disabled={isRepairing}
+                >
+                  <RefreshCw className={`h-4 w-4 mr-2 ${isRepairing ? 'animate-spin' : ''}`} />
+                  Repair File Access
+                </Button>
+              </div>
+            </div>
           ) : (
             <div className="w-full h-96 bg-muted flex items-center justify-center">
               <div className="text-center text-muted-foreground">

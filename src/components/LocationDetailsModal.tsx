@@ -30,6 +30,8 @@ import { FloorPlanEditor } from "@/components/FloorPlanEditor";
 import { FloorPlanDemo } from "@/components/FloorPlanDemo";
 import { FloorPlanViewer } from "@/components/FloorPlanViewer";
 import { InteractiveFloorPlan } from "@/components/InteractiveFloorPlan";
+import { FloorPlanRepairTool } from "@/components/FloorPlanRepairTool";
+import { getFloorPlanUrls } from "@/lib/storage-utils";
 import {
   Select,
   SelectContent,
@@ -62,18 +64,8 @@ export const LocationDetailsModal = ({ location, open, onOpenChange }: LocationD
         return;
       }
 
-      const urls: { [floorNumber: number]: string } = {};
-      
-      for (const [floorStr, filePath] of Object.entries(location.floor_plan_files)) {
-        if (filePath) {
-          const { data } = supabase.storage
-            .from('floor-plans')
-            .getPublicUrl(filePath);
-          
-          urls[parseInt(floorStr)] = data.publicUrl;
-        }
-      }
-      
+      // Use the utility function to generate URLs
+      const urls = getFloorPlanUrls(location.floor_plan_files);
       setFloorPlanUrls(urls);
     };
 
@@ -362,6 +354,17 @@ export const LocationDetailsModal = ({ location, open, onOpenChange }: LocationD
                   </div>
                 </CardHeader>
                 <CardContent>
+                  {/* Floor Plan Repair Tool */}
+                  <div className="mb-4">
+                    <FloorPlanRepairTool 
+                      location={location}
+                      onRepairComplete={() => {
+                        // Refresh the page to reload updated data
+                        window.location.reload();
+                      }}
+                    />
+                  </div>
+                  
                   {location.floors > 1 && (
                     <div className="mb-4">
                       <Badge variant="outline" className="mb-2">
@@ -380,14 +383,15 @@ export const LocationDetailsModal = ({ location, open, onOpenChange }: LocationD
                          setEditMode(false);
                        }}
                      />
-                   ) : hasFloorPlans ? (
-                     <InteractiveFloorPlan
-                       locationId={location.id}
-                       floorNumber={selectedFloor}
-                       fileUrl={currentFloorPlanUrl}
-                       fileName={`floor_${selectedFloor}.${location.floor_plan_files?.[selectedFloor]?.split('.').pop() || 'pdf'}`}
-                     />
-                  ) : (
+                    ) : hasFloorPlans ? (
+                      <InteractiveFloorPlan
+                        locationId={location.id}
+                        floorNumber={selectedFloor}
+                        fileUrl={currentFloorPlanUrl}
+                        filePath={location.floor_plan_files?.[selectedFloor]}
+                        fileName={`floor_${selectedFloor}.${location.floor_plan_files?.[selectedFloor]?.split('.').pop() || 'pdf'}`}
+                      />
+                   ) : (
                     <FloorPlanDemo 
                       floorNumber={selectedFloor}
                       totalFloors={location.floors}
