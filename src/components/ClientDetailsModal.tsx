@@ -7,8 +7,12 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, User, Mail, Phone, MapPin, Calendar, CreditCard } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Building2, User, Mail, Phone, MapPin, Calendar, ExternalLink, Loader2 } from "lucide-react";
 import { Client } from "@/hooks/useClients";
+import { useClientLocations } from "@/hooks/useClientLocations";
+import { LocationMap } from "@/components/LocationMap";
+import { useNavigate } from "react-router-dom";
 
 interface ClientDetailsModalProps {
   client: Client | null;
@@ -17,6 +21,9 @@ interface ClientDetailsModalProps {
 }
 
 export const ClientDetailsModal = ({ client, isOpen, onClose }: ClientDetailsModalProps) => {
+  const navigate = useNavigate();
+  const { locations, loading: locationsLoading } = useClientLocations(client?.id);
+
   if (!client) return null;
 
   const getStatusColor = (status: string) => {
@@ -159,6 +166,76 @@ export const ClientDetailsModal = ({ client, isOpen, onClose }: ClientDetailsMod
                   </p>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Client Locations */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <MapPin className="h-5 w-5 text-primary" />
+                Client Locations
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {locationsLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  <span className="ml-2 text-muted-foreground">Loading locations...</span>
+                </div>
+              ) : locations.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <MapPin className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <p>No locations found for this client</p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {locations.map((location) => (
+                    <div key={location.id} className="border rounded-lg p-4 space-y-4">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h4 className="font-semibold text-lg">{location.name}</h4>
+                            <Badge variant="secondary" className="text-xs">
+                              {location.status}
+                            </Badge>
+                          </div>
+                          <p className="text-muted-foreground text-sm mb-2">
+                            {location.address}
+                          </p>
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                            <span>{location.floors} floor{location.floors !== 1 ? 's' : ''}</span>
+                            {location.total_square_feet && (
+                              <span>{location.total_square_feet.toLocaleString()} sq ft</span>
+                            )}
+                            <span>{location.drop_points_count || 0} drop points</span>
+                          </div>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            navigate(`/locations?locationId=${location.id}`);
+                            onClose();
+                          }}
+                          className="flex items-center gap-2"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                          View Details
+                        </Button>
+                      </div>
+                      
+                      {/* Location Map */}
+                      <LocationMap
+                        address={location.address}
+                        latitude={location.latitude}
+                        longitude={location.longitude}
+                        locationName={location.name}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
