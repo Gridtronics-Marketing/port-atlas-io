@@ -43,6 +43,7 @@ import { DropPoint, useDropPoints } from '@/hooks/useDropPoints';
 import { useDropPointTestResults } from '@/hooks/useDropPointTestResults';
 import { useCurrentEmployee } from '@/hooks/useCurrentEmployee';
 import { usePhotoCapture } from '@/hooks/usePhotoCapture';
+import { useDropPointPhotos } from '@/hooks/useDropPointPhotos';
 import { useToast } from '@/hooks/use-toast';
 import { PhotoCaptureCard } from './PhotoCaptureCard';
 
@@ -74,6 +75,7 @@ export const DropPointDetailsModal = ({
   const { testResults, loading: testResultsLoading, addTestResult, deleteTestResult } = useDropPointTestResults(dropPoint?.id);
   const { employee } = useCurrentEmployee();
   const { capturePhoto, selectFromGallery, loading: photoLoading } = usePhotoCapture();
+  const { photos: dropPointPhotos, loading: photosLoading, refetch: refetchPhotos } = useDropPointPhotos(locationId);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -146,6 +148,8 @@ export const DropPointDetailsModal = ({
           title: "Success",
           description: "Photo captured successfully",
         });
+        // Refresh photos after capturing
+        refetchPhotos();
       }
     } catch (error) {
       console.error('Error capturing photo:', error);
@@ -516,6 +520,55 @@ export const DropPointDetailsModal = ({
                     <p className="text-sm text-muted-foreground mt-2">
                       Employee record required for photo capture
                     </p>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Existing Photos */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Captured Photos</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {photosLoading ? (
+                    <p className="text-sm text-muted-foreground">Loading photos...</p>
+                  ) : dropPointPhotos.length > 0 ? (
+                    <div className="space-y-4">
+                      {dropPointPhotos.map((photoEntry) => (
+                        <div key={photoEntry.id} className="border rounded-lg p-4 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <div className="text-sm text-muted-foreground">
+                              {new Date(photoEntry.created_at).toLocaleString()}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              By {photoEntry.employee ? `${photoEntry.employee.first_name} ${photoEntry.employee.last_name}` : 'Unknown'}
+                            </div>
+                          </div>
+                          {photoEntry.work_description && (
+                            <p className="text-sm font-medium">{photoEntry.work_description}</p>
+                          )}
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                            {photoEntry.photos.map((photoUrl, index) => (
+                              <div key={index} className="relative group">
+                                <img
+                                  src={photoUrl}
+                                  alt={`Drop point photo ${index + 1}`}
+                                  className="w-full h-32 object-cover rounded border cursor-pointer hover:opacity-80 transition-opacity"
+                                  onClick={() => window.open(photoUrl, '_blank')}
+                                />
+                                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all rounded flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                  <span className="text-white text-xs bg-black bg-opacity-50 px-2 py-1 rounded">
+                                    Click to view full size
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground">No photos captured yet for this location.</p>
                   )}
                 </CardContent>
               </Card>
