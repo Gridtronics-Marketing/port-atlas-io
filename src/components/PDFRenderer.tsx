@@ -1,8 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
 
-// Set worker path
-pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
+// Set worker path with fallback
+try {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
+} catch (error) {
+  console.warn('[PDFRenderer] Failed to set PDF worker, using CDN fallback');
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+}
 
 interface PDFRendererProps {
   fileUrl: string;
@@ -23,18 +28,82 @@ export const PDFRenderer = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [totalPages, setTotalPages] = useState(0);
+  const [loadingProgress, setLoadingProgress] = useState(0);
 
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    let abortController = new AbortController();
+
+    const testFileAccessibility = async (url: string): Promise<boolean> => {
+      try {
+        console.log('[PDFRenderer] Testing file accessibility:', url);
+        const response = await fetch(url, { 
+          method: 'HEAD',
+          signal: abortController.signal
+        });
+        console.log('[PDFRenderer] File accessibility test result:', response.status, response.ok);
+        return response.ok;
+      } catch (err) {
+        console.error('[PDFRenderer] File accessibility test failed:', err);
+        return false;
+      }
+    };
+
     const renderPDF = async () => {
-      if (!canvasRef.current) return;
+      if (!canvasRef.current) {
+        console.log('[PDFRenderer] Canvas ref not available');
+        return;
+      }
 
       try {
+        console.log('[PDFRenderer] Starting PDF render for:', fileUrl, 'page:', pageNumber);
         setLoading(true);
         setError(null);
+        setLoadingProgress(10);
 
-        const pdf = await pdfjsLib.getDocument(fileUrl).promise;
+        // Test file accessibility first
+        const isAccessible = await testFileAccessibility(fileUrl);
+        if (!isAccessible) {
+          throw new Error(`PDF file is not accessible at: ${fileUrl}`);
+        }
+        setLoadingProgress(25);
+
+        // Set loading timeout (15 seconds)
+        timeoutId = setTimeout(() => {
+          abortController.abort();
+          setError('PDF loading timed out. The file might be too large or the connection is slow.');
+          setLoading(false);
+          console.error('[PDFRenderer] PDF loading timed out after 15 seconds');
+        }, 15000);
+
+        console.log('[PDFRenderer] Loading PDF document...');
+        const loadingTask = pdfjsLib.getDocument({
+          url: fileUrl,
+          disableAutoFetch: true,
+          disableStream: true
+        });
+
+        // Track loading progress
+        loadingTask.onProgress = (progress) => {
+          if (progress.total > 0) {
+            const percent = Math.round((progress.loaded / progress.total) * 50) + 25; // 25-75%
+            setLoadingProgress(percent);
+            console.log('[PDFRenderer] Loading progress:', percent + '%');
+          }
+        };
+
+        const pdf = await loadingTask.promise;
+        console.log('[PDFRenderer] PDF loaded successfully. Total pages:', pdf.numPages);
         setTotalPages(pdf.numPages);
+        setLoadingProgress(80);
 
+        // Validate page number
+        if (pageNumber < 1 || pageNumber > pdf.numPages) {
+          console.warn(`[PDFRenderer] Invalid page number ${pageNumber}. PDF has ${pdf.numPages} pages. Using page 1.`);
+          pageNumber = 1;
+        }
+
+        console.log('[PDFRenderer] Rendering page:', pageNumber);
         const page = await pdf.getPage(pageNumber);
         const viewport = page.getViewport({ scale });
 
@@ -42,36 +111,77 @@ export const PDFRenderer = ({
         const context = canvas.getContext('2d');
         
         if (!context) {
-          throw new Error('Could not get canvas context');
+          throw new Error('Could not get canvas 2D context');
         }
 
         canvas.height = viewport.height;
         canvas.width = viewport.width;
+        setLoadingProgress(90);
 
+        console.log('[PDFRenderer] Starting page render...');
         await page.render({
           canvasContext: context,
           viewport: viewport,
           canvas: canvas
         }).promise;
 
+        console.log('[PDFRenderer] PDF page rendered successfully');
         onCanvasReady?.(canvas);
+        setLoadingProgress(100);
         setLoading(false);
+        clearTimeout(timeoutId);
       } catch (err) {
-        console.error('Error rendering PDF:', err);
-        setError('Failed to render PDF');
+        clearTimeout(timeoutId);
+        console.error('[PDFRenderer] Error rendering PDF:', {
+          error: err,
+          fileUrl,
+          pageNumber,
+          message: err instanceof Error ? err.message : String(err)
+        });
+        
+        let errorMessage = 'Failed to render PDF';
+        if (err instanceof Error) {
+          if (err.message.includes('not accessible')) {
+            errorMessage = 'PDF file not found or not accessible';
+          } else if (err.message.includes('timeout') || err.message.includes('aborted')) {
+            errorMessage = 'PDF loading timed out';
+          } else if (err.message.includes('Invalid PDF')) {
+            errorMessage = 'Invalid or corrupted PDF file';
+          } else if (err.message.includes('page')) {
+            errorMessage = `Invalid page number (${pageNumber})`;
+          } else {
+            errorMessage = `PDF Error: ${err.message}`;
+          }
+        }
+        
+        setError(errorMessage);
         setLoading(false);
       }
     };
 
     renderPDF();
+
+    return () => {
+      clearTimeout(timeoutId);
+      abortController.abort();
+    };
   }, [fileUrl, pageNumber, scale, onCanvasReady]);
 
   if (loading) {
     return (
       <div className={`flex items-center justify-center p-8 bg-muted rounded-lg ${className}`}>
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2" />
-          <p className="text-sm text-muted-foreground">Loading PDF...</p>
+        <div className="text-center space-y-3">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
+          <div>
+            <p className="text-sm text-muted-foreground">Loading PDF...</p>
+            <div className="w-32 bg-muted-foreground/20 rounded-full h-2 mx-auto mt-2">
+              <div 
+                className="bg-primary h-2 rounded-full transition-all duration-300" 
+                style={{ width: `${loadingProgress}%` }}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">{loadingProgress}%</p>
+          </div>
         </div>
       </div>
     );
@@ -80,9 +190,25 @@ export const PDFRenderer = ({
   if (error) {
     return (
       <div className={`flex items-center justify-center p-8 bg-muted rounded-lg ${className}`}>
-        <div className="text-center">
+        <div className="text-center space-y-3">
           <p className="text-sm text-destructive">{error}</p>
-          <p className="text-xs text-muted-foreground mt-1">Try refreshing or use a different file</p>
+          <p className="text-xs text-muted-foreground">File: {fileUrl}</p>
+          <div className="flex gap-2 justify-center">
+            <button 
+              onClick={() => window.location.reload()} 
+              className="text-xs bg-primary text-primary-foreground px-3 py-1 rounded hover:bg-primary/90"
+            >
+              Retry
+            </button>
+            <a 
+              href={fileUrl} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-xs bg-muted text-muted-foreground px-3 py-1 rounded hover:bg-muted/90"
+            >
+              Download
+            </a>
+          </div>
         </div>
       </div>
     );

@@ -1,4 +1,4 @@
-import { PDFViewer } from "./PDFViewer";
+import { PDFRenderer } from "./PDFRenderer";
 
 interface FloorPlanViewerProps {
   fileUrl: string;
@@ -29,12 +29,17 @@ export const FloorPlanViewer = ({
 
   if (isPDF) {
     return (
-      <PDFViewer
-        pdfUrl={fileUrl}
-        fileName={`Floor ${floorNumber} Plan - ${fileName}`}
-        height="600px"
-        className={className}
-      />
+      <div className={`w-full ${className}`}>
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-sm font-medium">Floor {floorNumber} Plan - {fileName}</span>
+        </div>
+        <PDFRenderer
+          fileUrl={fileUrl}
+          pageNumber={1}
+          scale={1.0}
+          className="w-full"
+        />
+      </div>
     );
   }
 
