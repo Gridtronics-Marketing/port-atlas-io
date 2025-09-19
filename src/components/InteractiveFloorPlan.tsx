@@ -1,12 +1,15 @@
 import { useState, useRef, useEffect } from 'react';
-import { Plus, Minus, RotateCcw, ZoomIn, ZoomOut, RefreshCw } from 'lucide-react';
+import { Plus, Minus, RotateCcw, ZoomIn, ZoomOut, RefreshCw, Camera } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { AddDropPointModal } from './AddDropPointModal';
 import { DropPointDetailsModal } from './DropPointDetailsModal';
+import { AddRoomViewModal } from './AddRoomViewModal';
+import { RoomViewModal } from './RoomViewModal';
 import { useDropPoints } from '@/hooks/useDropPoints';
+import { useRoomViews } from '@/hooks/useRoomViews';
 import { getStorageUrl, repairFloorPlanFiles } from '@/lib/storage-utils';
 import { useToast } from '@/hooks/use-toast';
 
@@ -29,12 +32,16 @@ export const InteractiveFloorPlan = ({
 }: InteractiveFloorPlanProps) => {
   const [scale, setScale] = useState(1.0);
   const [isAddingPoint, setIsAddingPoint] = useState(false);
+  const [isAddingRoomView, setIsAddingRoomView] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showAddRoomViewModal, setShowAddRoomViewModal] = useState(false);
   const [clickCoordinates, setClickCoordinates] = useState<{ x: number; y: number } | null>(null);
   const [canvasElement, setCanvasElement] = useState<HTMLCanvasElement | null>(null);
   const [isRepairing, setIsRepairing] = useState(false);
   const [selectedDropPoint, setSelectedDropPoint] = useState<any>(null);
+  const [selectedRoomView, setSelectedRoomView] = useState<any>(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [roomViewModalOpen, setRoomViewModalOpen] = useState(false);
   const [draggedPoint, setDraggedPoint] = useState<any>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isMouseDown, setIsMouseDown] = useState(false);
@@ -44,12 +51,14 @@ export const InteractiveFloorPlan = ({
   const { toast } = useToast();
   
   const { dropPoints, loading: dropPointsLoading, updateDropPoint } = useDropPoints(locationId);
+  const { roomViews, loading: roomViewsLoading } = useRoomViews(locationId);
   
   // Generate the actual file URL from path or use provided URL
   const actualFileUrl = fileUrl || (filePath ? getStorageUrl('floor-plans', filePath) : undefined);
 
-  // Filter drop points for current floor
+  // Filter drop points and room views for current floor
   const floorDropPoints = dropPoints.filter(dp => dp.floor === floorNumber);
+  const floorRoomViews = roomViews.filter(rv => rv.floor === floorNumber);
 
   const getFileExtension = (url?: string, path?: string, name?: string) => {
     if (!url && !path && !name) return '';
@@ -61,15 +70,21 @@ export const InteractiveFloorPlan = ({
   const isImage = ['jpg', 'jpeg', 'png', 'webp', 'svg', 'bmp', 'tiff'].includes(fileExtension);
 
   const handleContainerClick = (e: React.MouseEvent) => {
-    if (!isAddingPoint || !containerRef.current || isDragging) return;
+    if ((!isAddingPoint && !isAddingRoomView) || !containerRef.current || isDragging) return;
 
     const rect = containerRef.current.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
 
     setClickCoordinates({ x, y });
-    setShowAddModal(true);
-    setIsAddingPoint(false);
+    
+    if (isAddingPoint) {
+      setShowAddModal(true);
+      setIsAddingPoint(false);
+    } else if (isAddingRoomView) {
+      setShowAddRoomViewModal(true);
+      setIsAddingRoomView(false);
+    }
   };
 
   const handleMouseDown = (e: React.MouseEvent, point: any) => {
@@ -302,9 +317,14 @@ export const InteractiveFloorPlan = ({
             </div>
           </div>
         </div>
-        {floorDropPoints.length > 0 && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <span>{floorDropPoints.length} drop points on this floor</span>
+        {(floorDropPoints.length > 0 || floorRoomViews.length > 0) && (
+          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            {floorDropPoints.length > 0 && (
+              <span>{floorDropPoints.length} drop points on this floor</span>
+            )}
+            {floorRoomViews.length > 0 && (
+              <span>{floorRoomViews.length} room views on this floor</span>
+            )}
           </div>
         )}
       </CardHeader>
@@ -402,12 +422,52 @@ export const InteractiveFloorPlan = ({
                 </Tooltip>
               );
             })}
+
+            {/* Room Views Overlay */}
+            {floorRoomViews.map((roomView) => (
+              <Tooltip key={roomView.id}>
+                <TooltipTrigger asChild>
+                  <div
+                    className="absolute transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-blue-600 border-2 border-blue-700 flex items-center justify-center text-white hover:scale-110 transition-transform shadow-lg cursor-pointer"
+                    style={{
+                      left: `${roomView.x_coordinate}%`,
+                      top: `${roomView.y_coordinate}%`,
+                      zIndex: 10,
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedRoomView(roomView);
+                      setRoomViewModalOpen(true);
+                    }}
+                  >
+                    <Camera className="h-4 w-4" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent className="bg-popover border">
+                  <div className="text-sm">
+                    <p className="font-medium">{roomView.room_name || 'Room View'}</p>
+                    {roomView.description && (
+                      <p className="text-muted-foreground">{roomView.description}</p>
+                    )}
+                    <p className="text-xs text-muted-foreground mt-1">
+                      By {roomView.employee?.first_name} {roomView.employee?.last_name}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Click to view photo</p>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            ))}
           </TooltipProvider>
 
-          {/* Add Point Indicator */}
+          {/* Add Point Indicators */}
           {isAddingPoint && (
             <div className="absolute top-4 left-4 bg-primary/90 text-primary-foreground px-3 py-2 rounded-lg text-sm font-medium z-10">
               Click anywhere on the plan to add a drop point
+            </div>
+          )}
+          {isAddingRoomView && (
+            <div className="absolute top-4 left-4 bg-blue-600/90 text-white px-3 py-2 rounded-lg text-sm font-medium z-10">
+              Click anywhere on the plan to add a room view camera
             </div>
           )}
         </div>
@@ -417,9 +477,10 @@ export const InteractiveFloorPlan = ({
           <p className="font-medium mb-1">Interactive Controls:</p>
           <ul className="space-y-1 text-xs">
             <li>• <strong>Add Drop Point:</strong> Click the button above, then click on the plan</li>
+            <li>• <strong>Add Room View:</strong> Click the camera button above, then click on the plan to capture a photo</li>
             <li>• <strong>Move Drop Point:</strong> Click and drag existing points to reposition them</li>
             <li>• <strong>Zoom:</strong> Use the zoom controls or mouse wheel</li>
-            <li>• <strong>View Details:</strong> Click on existing drop points (when not dragging)</li>
+            <li>• <strong>View Details:</strong> Click on existing drop points or room view cameras</li>
             <li>• <strong>Scale:</strong> Adjust view scale with zoom controls</li>
           </ul>
         </div>
@@ -434,12 +495,28 @@ export const InteractiveFloorPlan = ({
         floor={floorNumber}
       />
 
+      {/* Add Room View Modal */}
+      <AddRoomViewModal
+        open={showAddRoomViewModal}
+        onOpenChange={setShowAddRoomViewModal}
+        locationId={locationId}
+        coordinates={clickCoordinates || undefined}
+        floor={floorNumber}
+      />
+
       {/* Drop Point Details Modal */}
       <DropPointDetailsModal
         open={detailsModalOpen}
         onOpenChange={setDetailsModalOpen}
         dropPoint={selectedDropPoint}
         locationId={locationId}
+      />
+
+      {/* Room View Modal */}
+      <RoomViewModal
+        open={roomViewModalOpen}
+        onOpenChange={setRoomViewModalOpen}
+        roomView={selectedRoomView}
       />
     </Card>
   );

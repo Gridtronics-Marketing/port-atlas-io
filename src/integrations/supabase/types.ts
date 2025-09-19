@@ -933,6 +933,63 @@ export type Database = {
           },
         ]
       }
+      room_views: {
+        Row: {
+          created_at: string
+          description: string | null
+          employee_id: string
+          floor: number
+          id: string
+          location_id: string
+          photo_url: string
+          room_name: string | null
+          updated_at: string
+          x_coordinate: number
+          y_coordinate: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          employee_id: string
+          floor?: number
+          id?: string
+          location_id: string
+          photo_url: string
+          room_name?: string | null
+          updated_at?: string
+          x_coordinate: number
+          y_coordinate: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          employee_id?: string
+          floor?: number
+          id?: string
+          location_id?: string
+          photo_url?: string
+          room_name?: string | null
+          updated_at?: string
+          x_coordinate?: number
+          y_coordinate?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_views_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "room_views_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       safety_checklist_items: {
         Row: {
           category: string
