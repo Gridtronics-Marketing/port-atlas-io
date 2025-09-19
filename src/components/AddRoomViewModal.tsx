@@ -29,18 +29,17 @@ export const AddRoomViewModal = ({
   const [description, setDescription] = useState('');
   const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [autoCapturing, setAutoCapturing] = useState(false);
+  const [showPhotoOptions, setShowPhotoOptions] = useState(false);
 
   const { capturePhoto, selectFromGallery, loading: photoLoading } = usePhotoCapture();
   const { addRoomView } = useRoomViews();
   const { employee: currentEmployee } = useCurrentEmployee();
   const { toast } = useToast();
 
-  // Auto-trigger camera when modal opens
+  // Show photo options when modal opens with coordinates
   useEffect(() => {
-    if (open && coordinates && !autoCapturing && !capturedPhoto) {
-      setAutoCapturing(true);
-      handlePhotoCapture();
+    if (open && coordinates && !capturedPhoto) {
+      setShowPhotoOptions(true);
     }
   }, [open, coordinates]);
 
@@ -54,38 +53,33 @@ export const AddRoomViewModal = ({
       return;
     }
 
-        try {
-          const photo = await capturePhoto(
-            'room_view',
-            description || 'Room view photo',
-            undefined,
-            locationId,
-            undefined,
-            currentEmployee.id
-          );
+    setShowPhotoOptions(false);
 
-          if (photo) {
-            setCapturedPhoto(photo.url);
-            setAutoCapturing(false);
-            // Auto-submit if we have coordinates and a photo
-            if (coordinates) {
-              await handleAutoSubmit(photo.url);
-            }
-          } else {
-            console.log('Photo capture returned null - user likely cancelled or permission denied');
-            setAutoCapturing(false);
-            // If user cancels camera, close modal
-            onOpenChange(false);
-          }
-        } catch (error) {
-          console.error('Photo capture error in modal:', error);
-          setAutoCapturing(false);
-          toast({
-            title: "Camera Error", 
-            description: "Unable to access camera. Please check permissions and try again.",
-            variant: "destructive",
-          });
-        }
+    try {
+      const photo = await capturePhoto(
+        'room_view',
+        description || 'Room view photo',
+        undefined,
+        locationId,
+        undefined,
+        currentEmployee.id
+      );
+
+      if (photo) {
+        setCapturedPhoto(photo.url);
+      } else {
+        console.log('Photo capture returned null - user likely cancelled');
+        setShowPhotoOptions(true); // Show options again if cancelled
+      }
+    } catch (error) {
+      console.error('Photo capture error in modal:', error);
+      setShowPhotoOptions(true); // Show options again on error
+      toast({
+        title: "Camera Error", 
+        description: "Unable to access camera. Please check permissions and try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleGallerySelect = async () => {
@@ -98,6 +92,8 @@ export const AddRoomViewModal = ({
       return;
     }
 
+    setShowPhotoOptions(false);
+
     const photo = await selectFromGallery(
       'room_view',
       description || 'Room view photo',
@@ -109,6 +105,8 @@ export const AddRoomViewModal = ({
 
     if (photo) {
       setCapturedPhoto(photo.url);
+    } else {
+      setShowPhotoOptions(true); // Show options again if cancelled
     }
   };
 
@@ -137,6 +135,11 @@ export const AddRoomViewModal = ({
 
       // Reset form and close
       handleClose();
+      
+      toast({
+        title: "Success",
+        description: "Room view added successfully!",
+      });
     } catch (error) {
       console.error('Error adding room view:', error);
       setSubmitting(false);
@@ -160,7 +163,7 @@ export const AddRoomViewModal = ({
     setRoomName('');
     setDescription('');
     setCapturedPhoto(null);
-    setAutoCapturing(false);
+    setShowPhotoOptions(false);
     setSubmitting(false);
     onOpenChange(false);
   };
@@ -169,21 +172,40 @@ export const AddRoomViewModal = ({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>
-            {autoCapturing ? 'Opening Camera...' : 'Room View Captured'}
-          </DialogTitle>
+          <DialogTitle>Add Room View</DialogTitle>
         </DialogHeader>
 
-        {autoCapturing ? (
-          <div className="flex flex-col items-center justify-center py-8 space-y-4">
-            <Camera className="h-16 w-16 text-blue-600 animate-pulse" />
-            <p className="text-center text-muted-foreground">
-              Opening camera to capture room view...
-            </p>
-            <p className="text-xs text-center text-muted-foreground max-w-sm">
-              If camera doesn't open, please check device permissions. Some devices may take a moment to show the camera permission dialog.
-            </p>
-            <Button variant="outline" onClick={handleClose}>
+        {showPhotoOptions ? (
+          <div className="flex flex-col items-center justify-center py-8 space-y-6">
+            <Camera className="h-16 w-16 text-blue-600" />
+            <div className="text-center">
+              <h3 className="text-lg font-semibold mb-2">Choose Photo Source</h3>
+              <p className="text-sm text-muted-foreground">
+                Select how you'd like to add a photo for this room view
+              </p>
+            </div>
+            <div className="grid grid-cols-1 gap-4 w-full max-w-sm">
+              <Button
+                onClick={handlePhotoCapture}
+                disabled={photoLoading}
+                className="h-16 text-lg"
+                size="lg"
+              >
+                <Camera className="h-6 w-6 mr-3" />
+                Take Photo with Camera
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleGallerySelect}
+                disabled={photoLoading}
+                className="h-16 text-lg"
+                size="lg"
+              >
+                <Upload className="h-6 w-6 mr-3" />
+                Upload from Gallery
+              </Button>
+            </div>
+            <Button variant="ghost" onClick={handleClose} className="mt-4">
               Cancel
             </Button>
           </div>
@@ -225,11 +247,14 @@ export const AddRoomViewModal = ({
             )}
 
             <div className="flex gap-3">
-              <Button variant="outline" onClick={() => setCapturedPhoto(null)} className="flex-1">
-                Retake Photo
+              <Button variant="outline" onClick={() => {
+                setCapturedPhoto(null);
+                setShowPhotoOptions(true);
+              }} className="flex-1">
+                Change Photo
               </Button>
               <Button
-                onClick={handleSubmit}
+                onClick={() => handleAutoSubmit(capturedPhoto)}
                 disabled={submitting}
                 className="flex-1"
               >
@@ -240,7 +265,7 @@ export const AddRoomViewModal = ({
         ) : (
           <div className="space-y-4">
             <div className="text-center py-4">
-              <p className="text-muted-foreground">No photo captured</p>
+              <p className="text-muted-foreground">No photo selected</p>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <Button onClick={handlePhotoCapture} disabled={photoLoading} className="flex-col h-20">
