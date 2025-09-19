@@ -168,18 +168,20 @@ export const useChatRooms = () => {
 
       console.log('Room created:', room);
 
-      // Add all participants including the creator
-      const allParticipantIds = [...new Set([...participantIds, user?.id])].filter(Boolean);
-      const participants = allParticipantIds.map(userId => ({
-        room_id: room.id,
-        user_id: userId
-      }));
+      // Only include the current user (auth user) for now
+      // Skip employee IDs that don't correspond to auth users
+      const validParticipants = [
+        {
+          room_id: room.id,
+          user_id: user?.id
+        }
+      ];
 
-      console.log('Adding participants:', participants);
+      console.log('Adding participants:', validParticipants);
 
       const { error: participantError } = await supabase
         .from('chat_participants')
-        .insert(participants);
+        .insert(validParticipants);
 
       if (participantError) {
         console.error('Participant addition error:', participantError);

@@ -58,18 +58,9 @@ const Communications = () => {
       return;
     }
     
-    if (selectedParticipants.length === 0) {
-      toast({
-        title: "Validation Error", 
-        description: "Please select at least one participant",
-        variant: "destructive",
-      });
-      return;
-    }
+    console.log('Creating room with:', { newRoomName, selectedParticipants: [] });
     
-    console.log('Creating room with:', { newRoomName, selectedParticipants });
-    
-    const room = await createChatRoom(newRoomName, selectedParticipants);
+    const room = await createChatRoom(newRoomName, []);
     if (room) {
       setIsCreateRoomOpen(false);
       setNewRoomName('');
@@ -135,28 +126,8 @@ const Communications = () => {
                             onChange={(e) => setNewRoomName(e.target.value)}
                           />
                         </div>
-                        <div>
-                          <Label>Select Participants</Label>
-                          <ScrollArea className="h-40 border rounded p-2">
-                            {employees.map((employee) => (
-                              <div key={employee.id} className="flex items-center space-x-2 p-2">
-                                <Checkbox
-                                  id={employee.id}
-                                  checked={selectedParticipants.includes(employee.id)}
-                                  onCheckedChange={(checked) => {
-                                    if (checked) {
-                                      setSelectedParticipants([...selectedParticipants, employee.id]);
-                                    } else {
-                                      setSelectedParticipants(selectedParticipants.filter(id => id !== employee.id));
-                                    }
-                                  }}
-                                />
-                                <Label htmlFor={employee.id}>
-                                  {employee.first_name} {employee.last_name} ({employee.role})
-                                </Label>
-                              </div>
-                            ))}
-                          </ScrollArea>
+                        <div className="text-sm text-muted-foreground">
+                          Note: Currently creating personal chat rooms. Multi-user support coming soon.
                         </div>
                         <Button onClick={handleCreateRoom} className="w-full">
                           Create Room
