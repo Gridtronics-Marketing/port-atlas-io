@@ -284,11 +284,26 @@ export const InteractiveFloorPlan = ({
             <Button
               variant={isAddingPoint ? "default" : "outline"}
               size="sm"
-              onClick={() => setIsAddingPoint(!isAddingPoint)}
+              onClick={() => {
+                setIsAddingPoint(!isAddingPoint);
+                setIsAddingRoomView(false);
+              }}
               disabled={!actualFileUrl}
             >
               <Plus className="h-4 w-4 mr-2" />
               Add Drop Point
+            </Button>
+            <Button
+              variant={isAddingRoomView ? "default" : "outline"}
+              size="sm"
+              onClick={() => {
+                setIsAddingRoomView(!isAddingRoomView);
+                setIsAddingPoint(false);
+              }}
+              disabled={!actualFileUrl}
+            >
+              <Camera className="h-4 w-4 mr-2" />
+              Add Room View
             </Button>
             {!actualFileUrl && filePath && (
               <Button
