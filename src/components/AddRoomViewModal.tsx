@@ -46,10 +46,10 @@ export const AddRoomViewModal = ({
   }, [open, coordinates]);
 
   const handlePhotoCapture = async () => {
-    if (!user?.id && !currentEmployee?.id) {
+    if (!currentEmployee?.id) {
       toast({
-        title: "Error",
-        description: "Authentication required",
+        title: "Employee Profile Required",
+        description: "You need an employee profile to add room views. Please contact your administrator.",
         variant: "destructive",
       });
       return;
@@ -64,7 +64,7 @@ export const AddRoomViewModal = ({
         undefined,
         locationId,
         undefined,
-        currentEmployee?.id || user?.id
+        currentEmployee.id
       );
 
       if (photo) {
@@ -85,10 +85,10 @@ export const AddRoomViewModal = ({
   };
 
   const handleGallerySelect = async () => {
-    if (!user?.id && !currentEmployee?.id) {
+    if (!currentEmployee?.id) {
       toast({
-        title: "Error",
-        description: "Authentication required",
+        title: "Employee Profile Required",
+        description: "You need an employee profile to add room views. Please contact your administrator.",
         variant: "destructive",
       });
       return;
@@ -102,7 +102,7 @@ export const AddRoomViewModal = ({
       undefined,
       locationId,
       undefined,
-      currentEmployee?.id || user?.id
+      currentEmployee.id
     );
 
     if (photo) {
@@ -113,10 +113,10 @@ export const AddRoomViewModal = ({
   };
 
   const handleAutoSubmit = async (photoUrl: string) => {
-    if (!coordinates || (!currentEmployee?.id && !user?.id)) {
+    if (!coordinates || !currentEmployee?.id) {
       toast({
-        title: "Error",
-        description: "Missing required information",
+        title: "Employee Profile Required",
+        description: "You need an employee profile to add room views. Please contact your administrator.",
         variant: "destructive",
       });
       return;
@@ -132,7 +132,7 @@ export const AddRoomViewModal = ({
         room_name: roomName || undefined,
         description: description || 'Room view',
         photo_url: photoUrl,
-        employee_id: currentEmployee?.id || user?.id,
+        employee_id: currentEmployee.id,
       });
 
       // Reset form and close
@@ -149,10 +149,10 @@ export const AddRoomViewModal = ({
   };
 
   const handleSubmit = async () => {
-    if (!coordinates || !capturedPhoto || (!currentEmployee?.id && !user?.id)) {
+    if (!coordinates || !capturedPhoto || !currentEmployee?.id) {
       toast({
-        title: "Error",
-        description: "All fields are required",
+        title: "Employee Profile Required", 
+        description: "You need an employee profile to add room views. Please contact your administrator.",
         variant: "destructive",
       });
       return;
