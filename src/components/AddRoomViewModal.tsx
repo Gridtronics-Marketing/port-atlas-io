@@ -137,7 +137,7 @@ export const AddRoomViewModal = ({
         room_name: roomName || undefined,
         description: description || 'Room view',
         photo_url: photoUrl,
-        employee_id: currentEmployee?.id || user?.id,
+        employee_id: currentEmployee?.id || null,
       });
 
       // Reset form and close

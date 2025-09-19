@@ -937,7 +937,7 @@ export type Database = {
         Row: {
           created_at: string
           description: string | null
-          employee_id: string
+          employee_id: string | null
           floor: number
           id: string
           location_id: string
@@ -950,7 +950,7 @@ export type Database = {
         Insert: {
           created_at?: string
           description?: string | null
-          employee_id: string
+          employee_id?: string | null
           floor?: number
           id?: string
           location_id: string
@@ -963,7 +963,7 @@ export type Database = {
         Update: {
           created_at?: string
           description?: string | null
-          employee_id?: string
+          employee_id?: string | null
           floor?: number
           id?: string
           location_id?: string
