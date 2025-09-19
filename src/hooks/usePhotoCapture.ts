@@ -224,7 +224,7 @@ export function usePhotoCapture() {
         const { data: logData, error: logError } = await supabase
           .from('daily_logs')
           .insert({
-            employee_id: employeeId,
+            employee_id: employeeId || null, // Allow null for admin users without employee records
             project_id: projectId || undefined,
             location_id: locationId || undefined,
             work_order_id: workOrderId || undefined,

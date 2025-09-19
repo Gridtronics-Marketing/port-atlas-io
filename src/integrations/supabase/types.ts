@@ -148,7 +148,7 @@ export type Database = {
         Row: {
           created_at: string
           crew_members: string[] | null
-          employee_id: string
+          employee_id: string | null
           hours_worked: number | null
           id: string
           issues_encountered: string | null
@@ -166,7 +166,7 @@ export type Database = {
         Insert: {
           created_at?: string
           crew_members?: string[] | null
-          employee_id: string
+          employee_id?: string | null
           hours_worked?: number | null
           id?: string
           issues_encountered?: string | null
@@ -184,7 +184,7 @@ export type Database = {
         Update: {
           created_at?: string
           crew_members?: string[] | null
-          employee_id?: string
+          employee_id?: string | null
           hours_worked?: number | null
           id?: string
           issues_encountered?: string | null
