@@ -5,12 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { MessageSquare, Plus, Send, Bell, Users, Settings } from 'lucide-react';
+import { MessageSquare, Plus, Send, Bell, Users, Settings, Trash2, Edit } from 'lucide-react';
 import { useChatRooms } from '@/hooks/useChatRooms';
 import { useEmployees } from '@/hooks/useEmployees';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { format } from 'date-fns';
@@ -27,12 +28,16 @@ const Communications = () => {
     fetchMessages,
     sendMessage,
     createChatRoom,
+    deleteChatRoom,
+    updateChatRoomParticipants,
     markNotificationAsRead
   } = useChatRooms();
 
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState('');
   const [isCreateRoomOpen, setIsCreateRoomOpen] = useState(false);
+  const [isEditRoomOpen, setIsEditRoomOpen] = useState(false);
+  const [editingRoom, setEditingRoom] = useState<string | null>(null);
   const [newRoomName, setNewRoomName] = useState('');
   const [selectedParticipants, setSelectedParticipants] = useState<string[]>([]);
 
@@ -66,6 +71,33 @@ const Communications = () => {
       setNewRoomName('');
       setSelectedParticipants([]);
     }
+  };
+
+  const handleEditRoom = (roomId: string) => {
+    setEditingRoom(roomId);
+    const room = chatRooms.find(r => r.id === roomId);
+    if (room) {
+      setNewRoomName(room.name);
+      setSelectedParticipants([]);
+      setIsEditRoomOpen(true);
+    }
+  };
+
+  const handleUpdateRoom = async () => {
+    if (!editingRoom) return;
+    
+    await updateChatRoomParticipants(editingRoom, selectedParticipants);
+    setIsEditRoomOpen(false);
+    setEditingRoom(null);
+    setNewRoomName('');
+    setSelectedParticipants([]);
+  };
+
+  const handleDeleteRoom = async (roomId: string) => {
+    if (selectedRoom === roomId) {
+      setSelectedRoom(null);
+    }
+    await deleteChatRoom(roomId);
   };
 
   const unreadNotifications = notifications.filter(n => !n.read_at);
@@ -137,6 +169,43 @@ const Communications = () => {
                   </Dialog>
                 </div>
               </CardHeader>
+
+              {/* Edit Room Dialog */}
+              <Dialog open={isEditRoomOpen} onOpenChange={setIsEditRoomOpen}>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Edit Chat Room Participants</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <Label>Select Participants</Label>
+                      <ScrollArea className="h-40 border rounded p-2">
+                        {employees.map((employee) => (
+                          <div key={employee.id} className="flex items-center space-x-2 p-2">
+                            <Checkbox
+                              id={`edit-${employee.id}`}
+                              checked={selectedParticipants.includes(employee.id)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setSelectedParticipants([...selectedParticipants, employee.id]);
+                                } else {
+                                  setSelectedParticipants(selectedParticipants.filter(id => id !== employee.id));
+                                }
+                              }}
+                            />
+                            <Label htmlFor={`edit-${employee.id}`}>
+                              {employee.first_name} {employee.last_name} ({employee.role})
+                            </Label>
+                          </div>
+                        ))}
+                      </ScrollArea>
+                    </div>
+                    <Button onClick={handleUpdateRoom} className="w-full">
+                      Update Participants
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
               <CardContent>
                 <ScrollArea className="h-[500px]">
                   {isLoading ? (
@@ -161,6 +230,46 @@ const Communications = () => {
                                   <Users className="h-3 w-3 mr-1" />
                                   <span>{room.type === 'group' ? 'Group' : 'Direct'}</span>
                                 </div>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleEditRoom(room.id);
+                                  }}
+                                >
+                                  <Edit className="h-3 w-3" />
+                                </Button>
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <Trash2 className="h-3 w-3" />
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Delete Chat Room</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        Are you sure you want to delete "{room.name}"? This action cannot be undone and all messages will be permanently deleted.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={() => handleDeleteRoom(room.id)}
+                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                      >
+                                        Delete
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
                               </div>
                             </div>
                           </CardContent>

@@ -241,6 +241,87 @@ export const useChatRooms = () => {
     }
   };
 
+  const deleteChatRoom = async (roomId: string) => {
+    try {
+      // Delete participants first
+      const { error: participantError } = await supabase
+        .from('chat_participants')
+        .delete()
+        .eq('room_id', roomId);
+
+      if (participantError) throw participantError;
+
+      // Delete messages
+      const { error: messageError } = await supabase
+        .from('chat_messages')
+        .delete()
+        .eq('room_id', roomId);
+
+      if (messageError) throw messageError;
+
+      // Delete the room
+      const { error: roomError } = await supabase
+        .from('chat_rooms')
+        .delete()
+        .eq('id', roomId);
+
+      if (roomError) throw roomError;
+
+      await fetchChatRooms();
+      
+      toast({
+        title: "Success",
+        description: "Chat room deleted successfully",
+      });
+    } catch (error: any) {
+      console.error('Error deleting chat room:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete chat room",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const updateChatRoomParticipants = async (roomId: string, participantIds: string[]) => {
+    try {
+      // Remove existing participants
+      const { error: deleteError } = await supabase
+        .from('chat_participants')
+        .delete()
+        .eq('room_id', roomId);
+
+      if (deleteError) throw deleteError;
+
+      // Add new participants including creator
+      const allParticipantIds = [...new Set([...participantIds, user?.id])].filter(Boolean);
+      const participants = allParticipantIds.map(userId => ({
+        room_id: roomId,
+        user_id: userId
+      }));
+
+      const { error: insertError } = await supabase
+        .from('chat_participants')
+        .insert(participants);
+
+      if (insertError) throw insertError;
+
+      await fetchChatRooms();
+      
+      toast({
+        title: "Success",
+        description: "Chat room participants updated successfully",
+      });
+    } catch (error: any) {
+      console.error('Error updating chat room participants:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update participants",
+        variant: "destructive",
+      });
+    }
+  };
+
   return {
     chatRooms,
     messages,
@@ -249,6 +330,8 @@ export const useChatRooms = () => {
     fetchMessages,
     sendMessage,
     createChatRoom,
+    deleteChatRoom,
+    updateChatRoomParticipants,
     markNotificationAsRead,
     refreshRooms: fetchChatRooms,
     refreshNotifications: fetchNotifications
