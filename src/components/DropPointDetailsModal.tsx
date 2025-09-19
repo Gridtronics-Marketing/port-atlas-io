@@ -144,9 +144,8 @@ export const DropPointDetailsModal = ({
   const handlePhotoCapture = async (method: 'camera' | 'gallery') => {
     if (!dropPoint) return;
     
-    // Allow admins without employee profiles to capture photos
-    const effectiveEmployeeId = employee?.id || (isAdmin && user ? user.id : null);
-    if (!effectiveEmployeeId) return;
+    // Use employee ID if available, otherwise null for admins
+    const effectiveEmployeeId = employee?.id || null;
 
     try {
       const photo = method === 'camera' 
