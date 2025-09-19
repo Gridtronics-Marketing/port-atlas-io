@@ -27,6 +27,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { InteractiveMap } from "@/components/InteractiveMap";
 import { DropPointList } from "@/components/DropPointList";
 import { ScheduleAssignmentModal } from "@/components/ScheduleAssignmentModal";
+import { AddLocationNoteModal } from "@/components/AddLocationNoteModal";
 import { FloorPlanEditor } from "@/components/FloorPlanEditor";
 import { FloorPlanDemo } from "@/components/FloorPlanDemo";
 import { FloorPlanViewer } from "@/components/FloorPlanViewer";
@@ -34,6 +35,7 @@ import { InteractiveFloorPlan } from "@/components/InteractiveFloorPlan";
 import { FloorPlanRepairTool } from "@/components/FloorPlanRepairTool";
 import { getFloorPlanUrls } from "@/lib/storage-utils";
 import { useLocationTeam } from "@/hooks/useLocationTeam";
+import { useLocationNotes } from "@/hooks/useLocationNotes";
 import {
   Select,
   SelectContent,
@@ -63,6 +65,12 @@ export const LocationDetailsModal = ({ location, open, onOpenChange }: LocationD
 
   // Schedule assignment modal state
   const [showScheduleModal, setShowScheduleModal] = useState(false);
+
+  // Add note modal state
+  const [showAddNoteModal, setShowAddNoteModal] = useState(false);
+
+  // Fetch location notes
+  const { notes, loading: notesLoading, refetch: refetchNotes } = useLocationNotes(location?.id);
 
   // Check if floor plans exist and get their URLs
   useEffect(() => {
@@ -497,8 +505,30 @@ export const LocationDetailsModal = ({ location, open, onOpenChange }: LocationD
                           {location.total_square_feet && ` ${location.total_square_feet.toLocaleString()} sq ft total`}
                         </p>
                       </div>
+
+                      {/* Display existing notes */}
+                      {notesLoading ? (
+                        <div className="text-sm text-muted-foreground">Loading notes...</div>
+                      ) : notes.length > 0 ? (
+                        notes.map((note) => (
+                          <div key={note.id} className="p-3 bg-muted rounded-lg">
+                            <p className="text-foreground">
+                              <strong>{note.title}:</strong> {note.content}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              By {note.employee_name} • {new Date(note.created_at).toLocaleDateString()}
+                            </p>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-sm text-muted-foreground">No project notes yet.</div>
+                      )}
                       
-                      <Button variant="outline" className="w-full">
+                      <Button 
+                        variant="outline" 
+                        className="w-full"
+                        onClick={() => setShowAddNoteModal(true)}
+                      >
                         <Plus className="h-4 w-4 mr-2" />
                         Add Note
                       </Button>
@@ -522,6 +552,17 @@ export const LocationDetailsModal = ({ location, open, onOpenChange }: LocationD
         }
       }}
       selectedDate={new Date()}
+    />
+
+    {/* Add Note Modal */}
+    <AddLocationNoteModal
+      isOpen={showAddNoteModal}
+      onClose={() => setShowAddNoteModal(false)}
+      locationId={location?.id || ''}
+      onNoteAdded={() => {
+        refetchNotes();
+        setShowAddNoteModal(false);
+      }}
     />
   </>
   );
