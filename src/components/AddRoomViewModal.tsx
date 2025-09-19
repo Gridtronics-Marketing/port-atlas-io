@@ -8,6 +8,7 @@ import { Camera, Upload, X } from 'lucide-react';
 import { usePhotoCapture } from '@/hooks/usePhotoCapture';
 import { useRoomViews } from '@/hooks/useRoomViews';
 import { useCurrentEmployee } from '@/hooks/useCurrentEmployee';
+import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 
 interface AddRoomViewModalProps {
@@ -34,6 +35,7 @@ export const AddRoomViewModal = ({
   const { capturePhoto, selectFromGallery, loading: photoLoading } = usePhotoCapture();
   const { addRoomView } = useRoomViews();
   const { employee: currentEmployee } = useCurrentEmployee();
+  const { user } = useAuth();
   const { toast } = useToast();
 
   // Show photo options when modal opens with coordinates
@@ -44,10 +46,10 @@ export const AddRoomViewModal = ({
   }, [open, coordinates]);
 
   const handlePhotoCapture = async () => {
-    if (!currentEmployee?.id) {
+    if (!user?.id && !currentEmployee?.id) {
       toast({
         title: "Error",
-        description: "Employee information required",
+        description: "Authentication required",
         variant: "destructive",
       });
       return;
@@ -62,7 +64,7 @@ export const AddRoomViewModal = ({
         undefined,
         locationId,
         undefined,
-        currentEmployee.id
+        currentEmployee?.id || user?.id
       );
 
       if (photo) {
@@ -83,10 +85,10 @@ export const AddRoomViewModal = ({
   };
 
   const handleGallerySelect = async () => {
-    if (!currentEmployee?.id) {
+    if (!user?.id && !currentEmployee?.id) {
       toast({
         title: "Error",
-        description: "Employee information required",
+        description: "Authentication required",
         variant: "destructive",
       });
       return;
@@ -100,7 +102,7 @@ export const AddRoomViewModal = ({
       undefined,
       locationId,
       undefined,
-      currentEmployee.id
+      currentEmployee?.id || user?.id
     );
 
     if (photo) {
@@ -111,7 +113,7 @@ export const AddRoomViewModal = ({
   };
 
   const handleAutoSubmit = async (photoUrl: string) => {
-    if (!coordinates || !currentEmployee?.id) {
+    if (!coordinates || (!currentEmployee?.id && !user?.id)) {
       toast({
         title: "Error",
         description: "Missing required information",
@@ -130,7 +132,7 @@ export const AddRoomViewModal = ({
         room_name: roomName || undefined,
         description: description || 'Room view',
         photo_url: photoUrl,
-        employee_id: currentEmployee.id,
+        employee_id: currentEmployee?.id || user?.id,
       });
 
       // Reset form and close
@@ -147,7 +149,7 @@ export const AddRoomViewModal = ({
   };
 
   const handleSubmit = async () => {
-    if (!coordinates || !capturedPhoto || !currentEmployee?.id) {
+    if (!coordinates || !capturedPhoto || (!currentEmployee?.id && !user?.id)) {
       toast({
         title: "Error",
         description: "All fields are required",
