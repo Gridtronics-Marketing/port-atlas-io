@@ -32,6 +32,7 @@ import { FloorPlanViewer } from "@/components/FloorPlanViewer";
 import { InteractiveFloorPlan } from "@/components/InteractiveFloorPlan";
 import { FloorPlanRepairTool } from "@/components/FloorPlanRepairTool";
 import { getFloorPlanUrls } from "@/lib/storage-utils";
+import { useLocationTeam } from "@/hooks/useLocationTeam";
 import {
   Select,
   SelectContent,
@@ -55,6 +56,9 @@ export const LocationDetailsModal = ({ location, open, onOpenChange }: LocationD
   const [selectedFloor, setSelectedFloor] = useState(1);
   const [editMode, setEditMode] = useState(false);
   const [floorPlanUrls, setFloorPlanUrls] = useState<{ [floorNumber: number]: string }>({});
+
+  // Fetch team members for this location
+  const { teamMembers, loading: teamLoading } = useLocationTeam(location?.id);
 
   // Check if floor plans exist and get their URLs
   useEffect(() => {
@@ -435,24 +439,25 @@ export const LocationDetailsModal = ({ location, open, onOpenChange }: LocationD
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      <div className="flex items-center gap-3 p-3 border border-border rounded-lg">
-                        <div className="h-10 w-10 bg-primary/10 rounded-full flex items-center justify-center">
-                          <span className="text-sm font-medium text-primary">JD</span>
-                        </div>
-                        <div>
-                          <p className="font-medium text-foreground">John Doe</p>
-                          <p className="text-sm text-muted-foreground">Lead Technician</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3 p-3 border border-border rounded-lg">
-                        <div className="h-10 w-10 bg-success/10 rounded-full flex items-center justify-center">
-                          <span className="text-sm font-medium text-success">SW</span>
-                        </div>
-                        <div>
-                          <p className="font-medium text-foreground">Sarah Wilson</p>
-                          <p className="text-sm text-muted-foreground">Installation Specialist</p>
-                        </div>
-                      </div>
+                      {teamLoading ? (
+                        <div className="text-sm text-muted-foreground">Loading team members...</div>
+                      ) : teamMembers.length > 0 ? (
+                        teamMembers.map((member) => (
+                          <div key={member.id} className="flex items-center gap-3 p-3 border border-border rounded-lg">
+                            <div className="h-10 w-10 bg-primary/10 rounded-full flex items-center justify-center">
+                              <span className="text-sm font-medium text-primary">
+                                {member.first_name.charAt(0)}{member.last_name.charAt(0)}
+                              </span>
+                            </div>
+                            <div>
+                              <p className="font-medium text-foreground">{member.first_name} {member.last_name}</p>
+                              <p className="text-sm text-muted-foreground">{member.role}</p>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-sm text-muted-foreground">No team members currently assigned to this location.</div>
+                      )}
                       <Button variant="outline" className="w-full">
                         <Plus className="h-4 w-4 mr-2" />
                         Assign Team Member
