@@ -26,6 +26,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { InteractiveMap } from "@/components/InteractiveMap";
 import { DropPointList } from "@/components/DropPointList";
+import { ScheduleAssignmentModal } from "@/components/ScheduleAssignmentModal";
 import { FloorPlanEditor } from "@/components/FloorPlanEditor";
 import { FloorPlanDemo } from "@/components/FloorPlanDemo";
 import { FloorPlanViewer } from "@/components/FloorPlanViewer";
@@ -58,7 +59,10 @@ export const LocationDetailsModal = ({ location, open, onOpenChange }: LocationD
   const [floorPlanUrls, setFloorPlanUrls] = useState<{ [floorNumber: number]: string }>({});
 
   // Fetch team members for this location
-  const { teamMembers, loading: teamLoading } = useLocationTeam(location?.id);
+  const { teamMembers, loading: teamLoading, refetch: refetchTeam } = useLocationTeam(location?.id);
+
+  // Schedule assignment modal state
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
 
   // Check if floor plans exist and get their URLs
   useEffect(() => {
@@ -99,7 +103,8 @@ export const LocationDetailsModal = ({ location, open, onOpenChange }: LocationD
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto bg-card border">
         <DialogHeader>
           <div className="flex items-start justify-between">
@@ -458,7 +463,11 @@ export const LocationDetailsModal = ({ location, open, onOpenChange }: LocationD
                       ) : (
                         <div className="text-sm text-muted-foreground">No team members currently assigned to this location.</div>
                       )}
-                      <Button variant="outline" className="w-full">
+                      <Button 
+                        variant="outline" 
+                        className="w-full"
+                        onClick={() => setShowScheduleModal(true)}
+                      >
                         <Plus className="h-4 w-4 mr-2" />
                         Assign Team Member
                       </Button>
@@ -502,5 +511,18 @@ export const LocationDetailsModal = ({ location, open, onOpenChange }: LocationD
         </div>
       </DialogContent>
     </Dialog>
+
+    {/* Schedule Assignment Modal */}
+    <ScheduleAssignmentModal
+      open={showScheduleModal}
+      onOpenChange={(open) => {
+        setShowScheduleModal(open);
+        if (!open) {
+          refetchTeam(); // Refresh team members when modal closes
+        }
+      }}
+      selectedDate={new Date()}
+    />
+  </>
   );
 };
