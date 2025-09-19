@@ -144,6 +144,8 @@ export const useChatRooms = () => {
 
   const createChatRoom = async (name: string, participantIds: string[]) => {
     try {
+      console.log('Creating chat room:', { name, participantIds, currentUser: user?.id });
+      
       // Create the chat room
       const { data: room, error: roomError } = await supabase
         .from('chat_rooms')
@@ -153,27 +155,42 @@ export const useChatRooms = () => {
           created_by: user?.id
         })
         .select()
-        .single();
+        .maybeSingle();
 
-      if (roomError) throw roomError;
+      if (roomError) {
+        console.error('Room creation error:', roomError);
+        throw roomError;
+      }
 
-      // Add participants
-      const participants = participantIds.map(userId => ({
+      if (!room) {
+        throw new Error('Failed to create room - no data returned');
+      }
+
+      console.log('Room created:', room);
+
+      // Add all participants including the creator
+      const allParticipantIds = [...new Set([...participantIds, user?.id])].filter(Boolean);
+      const participants = allParticipantIds.map(userId => ({
         room_id: room.id,
         user_id: userId
       }));
+
+      console.log('Adding participants:', participants);
 
       const { error: participantError } = await supabase
         .from('chat_participants')
         .insert(participants);
 
-      if (participantError) throw participantError;
+      if (participantError) {
+        console.error('Participant addition error:', participantError);
+        throw participantError;
+      }
 
       await fetchChatRooms();
       
       toast({
         title: "Success",
-        description: "Chat room created",
+        description: "Chat room created successfully",
       });
 
       return room;
@@ -181,7 +198,7 @@ export const useChatRooms = () => {
       console.error('Error creating chat room:', error);
       toast({
         title: "Error",
-        description: "Failed to create chat room",
+        description: error.message || "Failed to create chat room",
         variant: "destructive",
       });
       return null;

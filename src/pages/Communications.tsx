@@ -9,6 +9,7 @@ import { MessageSquare, Plus, Send, Bell, Users, Settings } from 'lucide-react';
 import { useChatRooms } from '@/hooks/useChatRooms';
 import { useEmployees } from '@/hooks/useEmployees';
 import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
@@ -16,6 +17,7 @@ import { format } from 'date-fns';
 
 const Communications = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const { employees } = useEmployees();
   const {
     chatRooms,
@@ -47,7 +49,25 @@ const Communications = () => {
   };
 
   const handleCreateRoom = async () => {
-    if (!newRoomName.trim() || selectedParticipants.length === 0) return;
+    if (!newRoomName.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Please enter a room name",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (selectedParticipants.length === 0) {
+      toast({
+        title: "Validation Error", 
+        description: "Please select at least one participant",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    console.log('Creating room with:', { newRoomName, selectedParticipants });
     
     const room = await createChatRoom(newRoomName, selectedParticipants);
     if (room) {
