@@ -37,7 +37,9 @@ export const InteractiveFloorPlan = ({
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [draggedPoint, setDraggedPoint] = useState<any>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [isMouseDown, setIsMouseDown] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [mouseDownPosition, setMouseDownPosition] = useState({ x: 0, y: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   
@@ -79,7 +81,8 @@ export const InteractiveFloorPlan = ({
     const pointY = (point.y_coordinate / 100) * rect.height;
     
     setDraggedPoint(point);
-    setIsDragging(true);
+    setIsMouseDown(true);
+    setMouseDownPosition({ x: e.clientX, y: e.clientY });
     setDragOffset({
       x: e.clientX - rect.left - pointX,
       y: e.clientY - rect.top - pointY
@@ -87,7 +90,20 @@ export const InteractiveFloorPlan = ({
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging || !draggedPoint || !containerRef.current) return;
+    if (!isMouseDown || !draggedPoint || !containerRef.current) return;
+
+    // Calculate distance moved from initial mouse down position
+    const distanceMoved = Math.sqrt(
+      Math.pow(e.clientX - mouseDownPosition.x, 2) + 
+      Math.pow(e.clientY - mouseDownPosition.y, 2)
+    );
+
+    // Only start dragging if mouse has moved more than 5 pixels
+    if (!isDragging && distanceMoved > 5) {
+      setIsDragging(true);
+    }
+
+    if (!isDragging) return;
 
     const rect = containerRef.current.getBoundingClientRect();
     const x = ((e.clientX - rect.left - dragOffset.x) / rect.width) * 100;
@@ -106,36 +122,54 @@ export const InteractiveFloorPlan = ({
   };
 
   const handleMouseUp = async () => {
-    if (!isDragging || !draggedPoint) return;
+    if (!isMouseDown) return;
 
-    try {
-      await updateDropPoint(draggedPoint.id, {
-        x_coordinate: draggedPoint.x_coordinate,
-        y_coordinate: draggedPoint.y_coordinate
-      });
-      toast({
-        title: "Drop Point Moved",
-        description: `${draggedPoint.label} has been repositioned.`,
-      });
-    } catch (error) {
-      console.error('Error updating drop point position:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update drop point position.",
-        variant: "destructive",
-      });
+    // If we were dragging, save the position
+    if (isDragging && draggedPoint) {
+      try {
+        await updateDropPoint(draggedPoint.id, {
+          x_coordinate: draggedPoint.x_coordinate,
+          y_coordinate: draggedPoint.y_coordinate
+        });
+        toast({
+          title: "Drop Point Moved",
+          description: `${draggedPoint.label} has been repositioned.`,
+        });
+      } catch (error) {
+        console.error('Error updating drop point position:', error);
+        toast({
+          title: "Error",
+          description: "Failed to update drop point position.",
+          variant: "destructive",
+        });
+      }
     }
 
+    setIsMouseDown(false);
     setIsDragging(false);
     setDraggedPoint(null);
     setDragOffset({ x: 0, y: 0 });
+    setMouseDownPosition({ x: 0, y: 0 });
   };
 
   // Add mouse event listeners to handle dragging outside the container
   useEffect(() => {
-    if (isDragging) {
+    if (isMouseDown) {
       const handleGlobalMouseMove = (e: MouseEvent) => {
         if (!containerRef.current || !draggedPoint) return;
+        
+        // Calculate distance moved from initial mouse down position
+        const distanceMoved = Math.sqrt(
+          Math.pow(e.clientX - mouseDownPosition.x, 2) + 
+          Math.pow(e.clientY - mouseDownPosition.y, 2)
+        );
+
+        // Only start dragging if mouse has moved more than 5 pixels
+        if (!isDragging && distanceMoved > 5) {
+          setIsDragging(true);
+        }
+
+        if (!isDragging) return;
         
         const rect = containerRef.current.getBoundingClientRect();
         const x = ((e.clientX - rect.left - dragOffset.x) / rect.width) * 100;
@@ -151,30 +185,8 @@ export const InteractiveFloorPlan = ({
         }));
       };
 
-      const handleGlobalMouseUp = async () => {
-        if (!draggedPoint) return;
-
-        try {
-          await updateDropPoint(draggedPoint.id, {
-            x_coordinate: draggedPoint.x_coordinate,
-            y_coordinate: draggedPoint.y_coordinate
-          });
-          toast({
-            title: "Drop Point Moved",
-            description: `${draggedPoint.label} has been repositioned.`,
-          });
-        } catch (error) {
-          console.error('Error updating drop point position:', error);
-          toast({
-            title: "Error",
-            description: "Failed to update drop point position.",
-            variant: "destructive",
-          });
-        }
-
-        setIsDragging(false);
-        setDraggedPoint(null);
-        setDragOffset({ x: 0, y: 0 });
+      const handleGlobalMouseUp = () => {
+        handleMouseUp();
       };
 
       document.addEventListener('mousemove', handleGlobalMouseMove);
@@ -185,7 +197,7 @@ export const InteractiveFloorPlan = ({
         document.removeEventListener('mouseup', handleGlobalMouseUp);
       };
     }
-  }, [isDragging, draggedPoint, dragOffset, updateDropPoint, toast]);
+  }, [isMouseDown, isDragging, draggedPoint, dragOffset, mouseDownPosition]);
 
   const adjustScale = (increment: boolean) => {
     setScale(prev => {
