@@ -121,20 +121,18 @@ export function usePhotoCapture() {
   };
 
   const capturePhoto = async (
+    description: string = '',
     category: string = 'progress',
-    description?: string,
     projectId?: string,
     locationId?: string,
     workOrderId?: string,
     employeeId?: string
   ): Promise<CapturedPhoto | null> => {
+    console.log('🔄 Starting photo capture:', { description, category, employeeId, locationId, projectId, workOrderId });
+    
     if (!employeeId) {
-      toast({
-        title: 'Error',
-        description: 'Employee ID is required',
-        variant: 'destructive',
-      });
-      return null;
+      console.log('❌ No employee ID, allowing admin users to continue');
+      // Allow admins to capture photos without employee ID
     }
 
     console.log('Starting photo capture process...');
@@ -217,32 +215,30 @@ export function usePhotoCapture() {
         captured_at: new Date().toISOString(),
       };
 
-      // If we have context (project, location, work order), create a daily log entry
-      if (projectId || locationId || workOrderId) {
-        console.log('Creating daily log entry...');
-        
-        const { data: logData, error: logError } = await supabase
-          .from('daily_logs')
-          .insert({
-            employee_id: employeeId || null, // Allow null for admin users without employee records
-            project_id: projectId || undefined,
-            location_id: locationId || undefined,
-            work_order_id: workOrderId || undefined,
-            log_date: new Date().toISOString().split('T')[0],
-            work_description: `Photo captured: ${category}${description ? ` - ${description}` : ''}`,
-            photos: [urlData.publicUrl],
-            hours_worked: 0,
-          })
-          .select()
-          .single();
+      // Create a daily log entry to store the photo
+      console.log('💾 Creating daily log entry with photo...');
+      
+      const { data: logData, error: logError } = await supabase
+        .from('daily_logs')
+        .insert({
+          employee_id: employeeId || null, // Allow null for admin users without employee records
+          project_id: projectId || undefined,
+          location_id: locationId || undefined,
+          work_order_id: workOrderId || undefined,
+          log_date: new Date().toISOString().split('T')[0],
+          work_description: `Photo captured: ${category}${description ? ` - ${description}` : ''}`,
+          photos: [urlData.publicUrl],
+          hours_worked: 0,
+        })
+        .select()
+        .single();
 
-        if (logError) {
-          console.error('Daily log creation error:', logError);
-          throw logError;
-        }
-        
-        console.log('Daily log created:', logData);
+      if (logError) {
+        console.error('❌ Daily log creation error:', logError);
+        throw logError;
       }
+      
+      console.log('✅ Daily log created successfully:', logData);
 
       const capturedPhoto: CapturedPhoto = {
         id: uploadData.id || crypto.randomUUID(),
@@ -293,20 +289,18 @@ export function usePhotoCapture() {
   };
 
   const selectFromGallery = async (
+    description: string = '',
     category: string = 'progress',
-    description?: string,
     projectId?: string,
     locationId?: string,
     workOrderId?: string,
     employeeId?: string
   ): Promise<CapturedPhoto | null> => {
+    console.log('🔄 Starting gallery selection:', { description, category, employeeId, locationId, projectId, workOrderId });
+    
     if (!employeeId) {
-      toast({
-        title: 'Error',
-        description: 'Employee ID is required',
-        variant: 'destructive',
-      });
-      return null;
+      console.log('❌ No employee ID, allowing admin users to continue');
+      // Allow admins to select photos without employee ID
     }
 
     setLoading(true);
@@ -346,6 +340,31 @@ export function usePhotoCapture() {
         .from('floor-plans')
         .getPublicUrl(`photos/${filename}`);
 
+      // Create a daily log entry for gallery photos too
+      console.log('💾 Creating daily log entry from gallery...');
+      
+      const { data: logData, error: logError } = await supabase
+        .from('daily_logs')
+        .insert({
+          employee_id: employeeId || null,
+          project_id: projectId || undefined,
+          location_id: locationId || undefined, 
+          work_order_id: workOrderId || undefined,
+          log_date: new Date().toISOString().split('T')[0],
+          work_description: `Photo selected from gallery: ${category}${description ? ` - ${description}` : ''}`,
+          photos: [urlData.publicUrl],
+          hours_worked: 0,
+        })
+        .select()
+        .single();
+
+      if (logError) {
+        console.error('❌ Gallery photo log creation error:', logError);
+        throw logError;
+      }
+      
+      console.log('✅ Gallery photo log created:', logData);
+
       const capturedPhoto: CapturedPhoto = {
         id: uploadData.id || crypto.randomUUID(),
         url: urlData.publicUrl,
@@ -355,7 +374,7 @@ export function usePhotoCapture() {
         project_id: projectId,
         location_id: locationId,
         work_order_id: workOrderId,
-        employee_id: employeeId,
+        employee_id: employeeId || '',
         created_at: new Date().toISOString(),
       };
 
