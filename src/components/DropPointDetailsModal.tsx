@@ -45,6 +45,8 @@ import { useCurrentEmployee } from '@/hooks/useCurrentEmployee';
 import { usePhotoCapture } from '@/hooks/usePhotoCapture';
 import { useDropPointPhotos } from '@/hooks/useDropPointPhotos';
 import { useToast } from '@/hooks/use-toast';
+import { useUserRoles } from '@/hooks/useUserRoles';
+import { useAuth } from '@/hooks/useAuth';
 import { PhotoCaptureCard } from './PhotoCaptureCard';
 
 interface DropPointDetailsModalProps {
@@ -77,6 +79,10 @@ export const DropPointDetailsModal = ({
   const { capturePhoto, selectFromGallery, loading: photoLoading } = usePhotoCapture();
   const { photos: dropPointPhotos, loading: photosLoading, refetch: refetchPhotos } = useDropPointPhotos(locationId);
   const { toast } = useToast();
+  const { hasRole } = useUserRoles();
+  const { user } = useAuth();
+
+  const isAdmin = hasRole('admin');
 
   useEffect(() => {
     if (dropPoint) {
@@ -136,12 +142,16 @@ export const DropPointDetailsModal = ({
   };
 
   const handlePhotoCapture = async (method: 'camera' | 'gallery') => {
-    if (!dropPoint || !employee) return;
+    if (!dropPoint) return;
+    
+    // Allow admins without employee profiles to capture photos
+    const effectiveEmployeeId = employee?.id || (isAdmin && user ? user.id : null);
+    if (!effectiveEmployeeId) return;
 
     try {
       const photo = method === 'camera' 
-        ? await capturePhoto('drop_point', `Drop point ${dropPoint.label}`, undefined, locationId, undefined, employee.id)
-        : await selectFromGallery('drop_point', `Drop point ${dropPoint.label}`, undefined, locationId, undefined, employee.id);
+        ? await capturePhoto('drop_point', `Drop point ${dropPoint.label}`, undefined, locationId, undefined, effectiveEmployeeId)
+        : await selectFromGallery('drop_point', `Drop point ${dropPoint.label}`, undefined, locationId, undefined, effectiveEmployeeId);
 
       if (photo) {
         toast({
@@ -502,7 +512,7 @@ export const DropPointDetailsModal = ({
                   <div className="flex gap-4">
                     <Button
                       onClick={() => handlePhotoCapture('camera')}
-                      disabled={photoLoading || !employee}
+                      disabled={photoLoading || (!employee && !isAdmin)}
                     >
                       <Camera className="h-4 w-4 mr-2" />
                       Take Photo
@@ -510,13 +520,13 @@ export const DropPointDetailsModal = ({
                     <Button
                       variant="outline"
                       onClick={() => handlePhotoCapture('gallery')}
-                      disabled={photoLoading || !employee}
+                      disabled={photoLoading || (!employee && !isAdmin)}
                     >
                       <FileImage className="h-4 w-4 mr-2" />
                       Select from Gallery
                     </Button>
                   </div>
-                  {!employee && (
+                  {!employee && !isAdmin && (
                     <p className="text-sm text-muted-foreground mt-2">
                       Employee record required for photo capture
                     </p>
@@ -574,7 +584,7 @@ export const DropPointDetailsModal = ({
               </Card>
 
               <PhotoCaptureCard 
-                employeeId={employee?.id}
+                employeeId={employee?.id || (isAdmin && user ? user.id : undefined)}
                 locationId={locationId}
               />
             </TabsContent>
