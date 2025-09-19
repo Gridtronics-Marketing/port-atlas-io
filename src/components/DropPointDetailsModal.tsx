@@ -158,11 +158,22 @@ export const DropPointDetailsModal = ({
           title: "Success",
           description: "Photo captured successfully",
         });
-        // Refresh photos after capturing
-        refetchPhotos();
+        
+        // Add a small delay to ensure database transaction is complete
+        setTimeout(() => {
+          refetchPhotos();
+        }, 1000);
       }
     } catch (error) {
       console.error('Error capturing photo:', error);
+      // Only show toast for non-cancellation errors
+      if (error instanceof Error && !error.message.includes('cancelled')) {
+        toast({
+          title: "Error",
+          description: "Failed to capture photo",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -586,6 +597,12 @@ export const DropPointDetailsModal = ({
               <PhotoCaptureCard 
                 employeeId={employee?.id || (isAdmin && user ? user.id : undefined)}
                 locationId={locationId}
+                onPhotoCapture={() => {
+                  // Refresh photos when PhotoCaptureCard captures a photo
+                  setTimeout(() => {
+                    refetchPhotos();
+                  }, 1000);
+                }}
               />
             </TabsContent>
 
