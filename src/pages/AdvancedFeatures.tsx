@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { InventoryManager } from '@/components/InventoryManager';
 import { FinancialDashboard } from '@/components/FinancialDashboard';
 import { DropPointTypesManager } from '@/components/DropPointTypesManager';
+import { CameraPermissionTest } from '@/components/CameraPermissionTest';
 
 const AdvancedFeatures = () => {
   return (
@@ -48,6 +49,20 @@ const AdvancedFeatures = () => {
         
         <TabsContent value="configuration" className="space-y-6">
           <DropPointTypesManager />
+          
+          <div className="grid gap-6 md:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Camera Diagnostics</CardTitle>
+                <CardDescription>
+                  Test camera permissions and functionality
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <CameraPermissionTest />
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
         
         <TabsContent value="communication" className="space-y-6">

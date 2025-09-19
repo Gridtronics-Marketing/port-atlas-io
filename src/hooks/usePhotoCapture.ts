@@ -24,44 +24,91 @@ export function usePhotoCapture() {
     try {
       console.log('Checking camera permissions...');
       
-      const permission = await Camera.checkPermissions();
-      console.log('Current camera permission status:', permission);
+      // Check if we're in a web environment
+      const isWeb = !(window as any).Capacitor || (window as any).Capacitor.getPlatform() === 'web';
       
-      if (permission.camera !== 'granted') {
-        console.log('Camera permission not granted, requesting...');
+      if (isWeb) {
+        console.log('Web environment detected, checking browser camera permissions...');
         
-        toast({
-          title: 'Camera Permission',
-          description: 'Please allow camera access when prompted',
-        });
-        
-        const requested = await Camera.requestPermissions();
-        console.log('Camera permission request result:', requested);
-        
-        if (requested.camera === 'granted') {
-          console.log('Camera permission granted');
-          return true;
-        } else if (requested.camera === 'denied') {
-          console.log('Camera permission denied by user');
+        // Check if we're in a secure context (HTTPS)
+        if (!window.isSecureContext) {
+          console.error('Camera requires HTTPS in web browsers');
           toast({
-            title: 'Permission Denied',
-            description: 'Camera access was denied. Please enable it in your device settings to take photos.',
-            variant: 'destructive',
-          });
-          return false;
-        } else {
-          console.log('Camera permission in unknown state:', requested.camera);
-          toast({
-            title: 'Permission Issue',
-            description: 'Unable to access camera. Please check your device settings.',
+            title: 'Security Error',
+            description: 'Camera access requires a secure connection (HTTPS). Please use HTTPS or try on a mobile device.',
             variant: 'destructive',
           });
           return false;
         }
+        
+        // Check if getUserMedia is available
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          console.error('getUserMedia not available');
+          toast({
+            title: 'Browser Not Supported',
+            description: 'Your browser does not support camera access. Please try a different browser or mobile device.',
+            variant: 'destructive',
+          });
+          return false;
+        }
+        
+        // Test browser camera access
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+          // Stop the stream immediately after testing
+          stream.getTracks().forEach(track => track.stop());
+          console.log('Browser camera access confirmed');
+          return true;
+        } catch (webError) {
+          console.error('Browser camera access denied:', webError);
+          toast({
+            title: 'Camera Permission Denied',
+            description: 'Please allow camera access in your browser settings and refresh the page.',
+            variant: 'destructive',
+          });
+          return false;
+        }
+      } else {
+        // Native environment (iOS/Android)
+        const permission = await Camera.checkPermissions();
+        console.log('Current camera permission status:', permission);
+        
+        if (permission.camera !== 'granted') {
+          console.log('Camera permission not granted, requesting...');
+          
+          toast({
+            title: 'Camera Permission',
+            description: 'Please allow camera access when prompted',
+          });
+          
+          const requested = await Camera.requestPermissions();
+          console.log('Camera permission request result:', requested);
+          
+          if (requested.camera === 'granted') {
+            console.log('Camera permission granted');
+            return true;
+          } else if (requested.camera === 'denied') {
+            console.log('Camera permission denied by user');
+            toast({
+              title: 'Permission Denied',
+              description: 'Camera access was denied. Please enable it in your device settings to take photos.',
+              variant: 'destructive',
+            });
+            return false;
+          } else {
+            console.log('Camera permission in unknown state:', requested.camera);
+            toast({
+              title: 'Permission Issue',
+              description: 'Unable to access camera. Please check your device settings.',
+              variant: 'destructive',
+            });
+            return false;
+          }
+        }
+        
+        console.log('Camera permission already granted');
+        return true;
       }
-      
-      console.log('Camera permission already granted');
-      return true;
     } catch (error) {
       console.error('Error checking camera permission:', error);
       toast({
@@ -102,19 +149,28 @@ export function usePhotoCapture() {
 
       console.log('Camera permission OK, opening camera...');
       
-      // Add timeout for camera operations
-      const cameraPromise = Camera.getPhoto({
-        quality: 90,
-        allowEditing: false,
-        resultType: CameraResultType.DataUrl,
-        source: CameraSource.Camera,
-      });
+      // Check if we're in web environment and use appropriate method
+      const isWeb = !(window as any).Capacitor || (window as any).Capacitor.getPlatform() === 'web';
+      let image: any;
+      
+      if (isWeb) {
+        // Use HTML5 camera for web
+        image = await captureWebPhoto();
+      } else {
+        // Use Capacitor Camera for native
+        const cameraPromise = Camera.getPhoto({
+          quality: 90,
+          allowEditing: false,
+          resultType: CameraResultType.DataUrl,
+          source: CameraSource.Camera,
+        });
 
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Camera operation timed out')), 30000); // 30 second timeout
-      });
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Camera operation timed out')), 30000); // 30 second timeout
+        });
 
-      const image = await Promise.race([cameraPromise, timeoutPromise]) as any;
+        image = await Promise.race([cameraPromise, timeoutPromise]) as any;
+      }
       
       console.log('Photo captured, processing image...');
 
@@ -320,6 +376,104 @@ export function usePhotoCapture() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Web camera capture function
+  const captureWebPhoto = async (): Promise<{ dataUrl: string }> => {
+    return new Promise((resolve, reject) => {
+      // Create video element
+      const video = document.createElement('video');
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      
+      // Create camera modal
+      const modal = document.createElement('div');
+      modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.9);
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-family: system-ui;
+      `;
+      
+      video.style.cssText = `
+        max-width: 90vw;
+        max-height: 70vh;
+        border-radius: 8px;
+      `;
+      
+      const captureBtn = document.createElement('button');
+      captureBtn.textContent = 'Capture Photo';
+      captureBtn.style.cssText = `
+        margin: 20px;
+        padding: 12px 24px;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 16px;
+        cursor: pointer;
+      `;
+      
+      const cancelBtn = document.createElement('button');
+      cancelBtn.textContent = 'Cancel';
+      cancelBtn.style.cssText = `
+        margin: 20px;
+        padding: 12px 24px;
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 16px;
+        cursor: pointer;
+      `;
+      
+      modal.appendChild(video);
+      const btnContainer = document.createElement('div');
+      btnContainer.appendChild(captureBtn);
+      btnContainer.appendChild(cancelBtn);
+      modal.appendChild(btnContainer);
+      document.body.appendChild(modal);
+      
+      // Get camera stream
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+        .then(stream => {
+          video.srcObject = stream;
+          video.play();
+          
+          captureBtn.onclick = () => {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context?.drawImage(video, 0, 0);
+            
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+            
+            // Stop camera stream
+            stream.getTracks().forEach(track => track.stop());
+            document.body.removeChild(modal);
+            
+            resolve({ dataUrl });
+          };
+          
+          cancelBtn.onclick = () => {
+            stream.getTracks().forEach(track => track.stop());
+            document.body.removeChild(modal);
+            reject(new Error('User cancelled photo capture'));
+          };
+        })
+        .catch(error => {
+          document.body.removeChild(modal);
+          reject(error);
+        });
+    });
   };
 
   return {
