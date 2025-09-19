@@ -22,14 +22,53 @@ export function usePhotoCapture() {
 
   const checkCameraPermission = async () => {
     try {
+      console.log('Checking camera permissions...');
+      
       const permission = await Camera.checkPermissions();
+      console.log('Current camera permission status:', permission);
+      
       if (permission.camera !== 'granted') {
+        console.log('Camera permission not granted, requesting...');
+        
+        toast({
+          title: 'Camera Permission',
+          description: 'Please allow camera access when prompted',
+        });
+        
         const requested = await Camera.requestPermissions();
-        return requested.camera === 'granted';
+        console.log('Camera permission request result:', requested);
+        
+        if (requested.camera === 'granted') {
+          console.log('Camera permission granted');
+          return true;
+        } else if (requested.camera === 'denied') {
+          console.log('Camera permission denied by user');
+          toast({
+            title: 'Permission Denied',
+            description: 'Camera access was denied. Please enable it in your device settings to take photos.',
+            variant: 'destructive',
+          });
+          return false;
+        } else {
+          console.log('Camera permission in unknown state:', requested.camera);
+          toast({
+            title: 'Permission Issue',
+            description: 'Unable to access camera. Please check your device settings.',
+            variant: 'destructive',
+          });
+          return false;
+        }
       }
+      
+      console.log('Camera permission already granted');
       return true;
     } catch (error) {
       console.error('Error checking camera permission:', error);
+      toast({
+        title: 'Camera Error',
+        description: 'Unable to access camera. Please check if camera is available on this device.',
+        variant: 'destructive',
+      });
       return false;
     }
   };
@@ -51,33 +90,43 @@ export function usePhotoCapture() {
       return null;
     }
 
-    const hasPermission = await checkCameraPermission();
-    if (!hasPermission) {
-      toast({
-        title: 'Permission Required',
-        description: 'Camera permission is required to take photos',
-        variant: 'destructive',
-      });
-      return null;
-    }
-
+    console.log('Starting photo capture process...');
     setLoading(true);
-    
+
     try {
-      const image = await Camera.getPhoto({
+      const hasPermission = await checkCameraPermission();
+      if (!hasPermission) {
+        console.log('Camera permission not available, aborting photo capture');
+        return null;
+      }
+
+      console.log('Camera permission OK, opening camera...');
+      
+      // Add timeout for camera operations
+      const cameraPromise = Camera.getPhoto({
         quality: 90,
         allowEditing: false,
         resultType: CameraResultType.DataUrl,
         source: CameraSource.Camera,
       });
 
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Camera operation timed out')), 30000); // 30 second timeout
+      });
+
+      const image = await Promise.race([cameraPromise, timeoutPromise]) as any;
+      
+      console.log('Photo captured, processing image...');
+
       if (!image.dataUrl) {
-        throw new Error('No image data received');
+        throw new Error('No image data received from camera');
       }
 
       // Convert dataUrl to blob
       const response = await fetch(image.dataUrl);
       const blob = await response.blob();
+      
+      console.log('Image converted to blob, uploading to storage...');
       
       // Generate filename
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -91,7 +140,12 @@ export function usePhotoCapture() {
           upsert: false,
         });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Storage upload error:', uploadError);
+        throw uploadError;
+      }
+
+      console.log('Photo uploaded successfully:', uploadData);
 
       // Get public URL
       const { data: urlData } = supabase.storage
@@ -109,6 +163,8 @@ export function usePhotoCapture() {
 
       // If we have context (project, location, work order), create a daily log entry
       if (projectId || locationId || workOrderId) {
+        console.log('Creating daily log entry...');
+        
         const { data: logData, error: logError } = await supabase
           .from('daily_logs')
           .insert({
@@ -124,7 +180,12 @@ export function usePhotoCapture() {
           .select()
           .single();
 
-        if (logError) throw logError;
+        if (logError) {
+          console.error('Daily log creation error:', logError);
+          throw logError;
+        }
+        
+        console.log('Daily log created:', logData);
       }
 
       const capturedPhoto: CapturedPhoto = {
@@ -145,12 +206,28 @@ export function usePhotoCapture() {
         description: 'Photo captured and uploaded successfully',
       });
 
+      console.log('Photo capture complete:', capturedPhoto);
       return capturedPhoto;
     } catch (error) {
       console.error('Error capturing photo:', error);
+      
+      // Provide more specific error messages
+      let errorMessage = 'Failed to capture photo';
+      if (error instanceof Error) {
+        if (error.message.includes('timeout')) {
+          errorMessage = 'Camera operation timed out. Please try again.';
+        } else if (error.message.includes('User cancelled')) {
+          errorMessage = 'Photo capture was cancelled';
+        } else if (error.message.includes('permission')) {
+          errorMessage = 'Camera permission is required to take photos';
+        } else if (error.message.includes('No image data')) {
+          errorMessage = 'No photo data received. Please try again.';
+        }
+      }
+      
       toast({
-        title: 'Error',
-        description: 'Failed to capture photo',
+        title: 'Camera Error',
+        description: errorMessage,
         variant: 'destructive',
       });
       return null;

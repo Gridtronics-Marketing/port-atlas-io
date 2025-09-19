@@ -54,32 +54,38 @@ export const AddRoomViewModal = ({
       return;
     }
 
-    try {
-      const photo = await capturePhoto(
-        'room_view',
-        description || 'Room view photo',
-        undefined,
-        locationId,
-        undefined,
-        currentEmployee.id
-      );
+        try {
+          const photo = await capturePhoto(
+            'room_view',
+            description || 'Room view photo',
+            undefined,
+            locationId,
+            undefined,
+            currentEmployee.id
+          );
 
-      if (photo) {
-        setCapturedPhoto(photo.url);
-        setAutoCapturing(false);
-        // Auto-submit if we have coordinates and a photo
-        if (coordinates) {
-          await handleAutoSubmit(photo.url);
+          if (photo) {
+            setCapturedPhoto(photo.url);
+            setAutoCapturing(false);
+            // Auto-submit if we have coordinates and a photo
+            if (coordinates) {
+              await handleAutoSubmit(photo.url);
+            }
+          } else {
+            console.log('Photo capture returned null - user likely cancelled or permission denied');
+            setAutoCapturing(false);
+            // If user cancels camera, close modal
+            onOpenChange(false);
+          }
+        } catch (error) {
+          console.error('Photo capture error in modal:', error);
+          setAutoCapturing(false);
+          toast({
+            title: "Camera Error", 
+            description: "Unable to access camera. Please check permissions and try again.",
+            variant: "destructive",
+          });
         }
-      } else {
-        setAutoCapturing(false);
-        // If user cancels camera, close modal
-        onOpenChange(false);
-      }
-    } catch (error) {
-      setAutoCapturing(false);
-      console.error('Photo capture error:', error);
-    }
   };
 
   const handleGallerySelect = async () => {
@@ -172,7 +178,10 @@ export const AddRoomViewModal = ({
           <div className="flex flex-col items-center justify-center py-8 space-y-4">
             <Camera className="h-16 w-16 text-blue-600 animate-pulse" />
             <p className="text-center text-muted-foreground">
-              Camera is opening to capture room view...
+              Opening camera to capture room view...
+            </p>
+            <p className="text-xs text-center text-muted-foreground max-w-sm">
+              If camera doesn't open, please check device permissions. Some devices may take a moment to show the camera permission dialog.
             </p>
             <Button variant="outline" onClick={handleClose}>
               Cancel
