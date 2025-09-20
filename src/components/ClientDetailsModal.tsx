@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { 
   Dialog, 
   DialogContent, 
@@ -12,7 +13,9 @@ import { Building2, User, Mail, Phone, MapPin, Calendar, ExternalLink, Loader2, 
 import { Client } from "@/hooks/useClients";
 import { useClientLocations } from "@/hooks/useClientLocations";
 import { LocationMap } from "@/components/LocationMap";
+import { LocationDetailsModal } from "@/components/LocationDetailsModal";
 import { useNavigate } from "react-router-dom";
+import { type Location } from "@/hooks/useLocations";
 
 interface ClientDetailsModalProps {
   client: Client | null;
@@ -24,6 +27,7 @@ interface ClientDetailsModalProps {
 export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient }: ClientDetailsModalProps) => {
   const navigate = useNavigate();
   const { locations, loading: locationsLoading } = useClientLocations(client?.id);
+  const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
 
   if (!client) return null;
 
@@ -243,10 +247,7 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient }: Cl
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => {
-                            navigate(`/locations?locationId=${location.id}`);
-                            onClose();
-                          }}
+                          onClick={() => setSelectedLocation(location)}
                           className="flex items-center gap-2"
                         >
                           <ExternalLink className="h-4 w-4" />
@@ -269,6 +270,12 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient }: Cl
           </Card>
         </div>
       </DialogContent>
+      
+      <LocationDetailsModal
+        location={selectedLocation}
+        open={!!selectedLocation}
+        onOpenChange={(open) => !open && setSelectedLocation(null)}
+      />
     </Dialog>
   );
 };
