@@ -53,7 +53,7 @@ interface LocationDetailsModalProps {
   onEditLocation?: (location: Location) => void;
 }
 
-import { FloorPlanDebugger } from "@/components/FloorPlanDebugger";
+
 
 export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocation }: LocationDetailsModalProps) => {
   const [activeTab, setActiveTab] = useState("details");
@@ -151,11 +151,6 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Debug Info - Remove in production */}
-          {location && (
-            <FloorPlanDebugger location={location} />
-          )}
-
           {/* Enhanced Quick Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <Card className="shadow-soft">
