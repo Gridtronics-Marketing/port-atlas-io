@@ -43,6 +43,7 @@ export const InteractiveFloorPlan = ({
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [roomViewModalOpen, setRoomViewModalOpen] = useState(false);
   const [draggedPoint, setDraggedPoint] = useState<any>(null);
+  const [draggedRoomView, setDraggedRoomView] = useState<any>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isMouseDown, setIsMouseDown] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -51,7 +52,7 @@ export const InteractiveFloorPlan = ({
   const { toast } = useToast();
   
   const { dropPoints, loading: dropPointsLoading, updateDropPoint } = useDropPoints(locationId);
-  const { roomViews, loading: roomViewsLoading } = useRoomViews(locationId);
+  const { roomViews, loading: roomViewsLoading, updateRoomView } = useRoomViews(locationId);
   
   // Generate the actual file URL from path or use provided URL
   const actualFileUrl = fileUrl || (filePath ? getStorageUrl('floor-plans', filePath) : undefined);
@@ -87,15 +88,22 @@ export const InteractiveFloorPlan = ({
     }
   };
 
-  const handleMouseDown = (e: React.MouseEvent, point: any) => {
+  const handleMouseDown = (e: React.MouseEvent, item: any, type: 'dropPoint' | 'roomView') => {
     e.stopPropagation();
     if (!containerRef.current) return;
 
     const rect = containerRef.current.getBoundingClientRect();
-    const pointX = (point.x_coordinate / 100) * rect.width;
-    const pointY = (point.y_coordinate / 100) * rect.height;
+    const pointX = (item.x_coordinate / 100) * rect.width;
+    const pointY = (item.y_coordinate / 100) * rect.height;
     
-    setDraggedPoint(point);
+    if (type === 'dropPoint') {
+      setDraggedPoint(item);
+      setDraggedRoomView(null);
+    } else {
+      setDraggedRoomView(item);
+      setDraggedPoint(null);
+    }
+    
     setIsMouseDown(true);
     setMouseDownPosition({ x: e.clientX, y: e.clientY });
     setDragOffset({
@@ -128,12 +136,20 @@ export const InteractiveFloorPlan = ({
     const constrainedX = Math.max(0, Math.min(100, x));
     const constrainedY = Math.max(0, Math.min(100, y));
 
-    // Update the dragged point's position temporarily
-    setDraggedPoint(prev => ({
-      ...prev,
-      x_coordinate: constrainedX,
-      y_coordinate: constrainedY
-    }));
+    // Update the dragged item's position temporarily
+    if (draggedPoint) {
+      setDraggedPoint(prev => ({
+        ...prev,
+        x_coordinate: constrainedX,
+        y_coordinate: constrainedY
+      }));
+    } else if (draggedRoomView) {
+      setDraggedRoomView(prev => ({
+        ...prev,
+        x_coordinate: constrainedX,
+        y_coordinate: constrainedY
+      }));
+    }
   };
 
   const handleMouseUp = async () => {
@@ -158,11 +174,30 @@ export const InteractiveFloorPlan = ({
           variant: "destructive",
         });
       }
+    } else if (isDragging && draggedRoomView) {
+      try {
+        await updateRoomView(draggedRoomView.id, {
+          x_coordinate: draggedRoomView.x_coordinate,
+          y_coordinate: draggedRoomView.y_coordinate
+        });
+        toast({
+          title: "Room View Moved",
+          description: `${draggedRoomView.room_name || 'Room view'} has been repositioned.`,
+        });
+      } catch (error) {
+        console.error('Error updating room view position:', error);
+        toast({
+          title: "Error",
+          description: "Failed to update room view position.",
+          variant: "destructive",
+        });
+      }
     }
 
     setIsMouseDown(false);
     setIsDragging(false);
     setDraggedPoint(null);
+    setDraggedRoomView(null);
     setDragOffset({ x: 0, y: 0 });
     setMouseDownPosition({ x: 0, y: 0 });
   };
@@ -193,11 +228,19 @@ export const InteractiveFloorPlan = ({
         const constrainedX = Math.max(0, Math.min(100, x));
         const constrainedY = Math.max(0, Math.min(100, y));
 
-        setDraggedPoint(prev => ({
-          ...prev,
-          x_coordinate: constrainedX,
-          y_coordinate: constrainedY
-        }));
+        if (draggedPoint) {
+          setDraggedPoint(prev => ({
+            ...prev,
+            x_coordinate: constrainedX,
+            y_coordinate: constrainedY
+          }));
+        } else if (draggedRoomView) {
+          setDraggedRoomView(prev => ({
+            ...prev,
+            x_coordinate: constrainedX,
+            y_coordinate: constrainedY
+          }));
+        }
       };
 
       const handleGlobalMouseUp = () => {
@@ -212,7 +255,7 @@ export const InteractiveFloorPlan = ({
         document.removeEventListener('mouseup', handleGlobalMouseUp);
       };
     }
-  }, [isMouseDown, isDragging, draggedPoint, dragOffset, mouseDownPosition]);
+  }, [isMouseDown, isDragging, draggedPoint, draggedRoomView, dragOffset, mouseDownPosition]);
 
   const adjustScale = (increment: boolean) => {
     setScale(prev => {
@@ -414,7 +457,7 @@ export const InteractiveFloorPlan = ({
                         top: `${displayPoint.y_coordinate || 50}%`,
                         zIndex: draggedPoint && draggedPoint.id === point.id ? 50 : 10,
                       }}
-                      onMouseDown={(e) => handleMouseDown(e, point)}
+                      onMouseDown={(e) => handleMouseDown(e, point, 'dropPoint')}
                       onClick={(e) => {
                         e.stopPropagation();
                         if (!isDragging) {
@@ -439,22 +482,33 @@ export const InteractiveFloorPlan = ({
             })}
 
             {/* Room Views Overlay */}
-            {floorRoomViews.map((roomView) => (
-              <Tooltip key={roomView.id}>
-                <TooltipTrigger asChild>
-                  <div
-                    className="absolute transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-blue-600 border-2 border-blue-700 flex items-center justify-center text-white hover:scale-110 transition-transform shadow-lg cursor-pointer"
-                    style={{
-                      left: `${roomView.x_coordinate}%`,
-                      top: `${roomView.y_coordinate}%`,
-                      zIndex: 10,
-                    }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedRoomView(roomView);
-                      setRoomViewModalOpen(true);
-                    }}
-                  >
+            {floorRoomViews.map((roomView) => {
+              // Use dragged room view coordinates if this room view is being dragged
+              const displayRoomView = draggedRoomView && draggedRoomView.id === roomView.id ? draggedRoomView : roomView;
+              
+              return (
+                <Tooltip key={roomView.id}>
+                  <TooltipTrigger asChild>
+                    <div
+                      className={`absolute transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-blue-600 border-2 border-blue-700 flex items-center justify-center text-white hover:scale-110 transition-transform shadow-lg ${
+                        draggedRoomView && draggedRoomView.id === roomView.id 
+                          ? 'cursor-grabbing scale-110' 
+                          : 'cursor-grab'
+                      }`}
+                      style={{
+                        left: `${displayRoomView.x_coordinate}%`,
+                        top: `${displayRoomView.y_coordinate}%`,
+                        zIndex: draggedRoomView && draggedRoomView.id === roomView.id ? 50 : 10,
+                      }}
+                      onMouseDown={(e) => handleMouseDown(e, roomView, 'roomView')}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!isDragging) {
+                          setSelectedRoomView(roomView);
+                          setRoomViewModalOpen(true);
+                        }
+                      }}
+                    >
                     <Camera className="h-4 w-4" />
                   </div>
                 </TooltipTrigger>
@@ -470,8 +524,9 @@ export const InteractiveFloorPlan = ({
                     <p className="text-xs text-muted-foreground">Click to view photo</p>
                   </div>
                 </TooltipContent>
-              </Tooltip>
-            ))}
+                </Tooltip>
+              );
+            })}
           </TooltipProvider>
 
           {/* Add Point Indicators */}
@@ -528,11 +583,12 @@ export const InteractiveFloorPlan = ({
       />
 
       {/* Room View Modal */}
-      <RoomViewModal
-        open={roomViewModalOpen}
-        onOpenChange={setRoomViewModalOpen}
-        roomView={selectedRoomView}
-      />
+        <RoomViewModal
+          open={roomViewModalOpen}
+          onOpenChange={setRoomViewModalOpen}
+          roomView={selectedRoomView}
+          locationId={locationId}
+        />
     </Card>
   );
 };
