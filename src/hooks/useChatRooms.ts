@@ -168,14 +168,12 @@ export const useChatRooms = () => {
 
       console.log('Room created:', room);
 
-      // Only include the current user (auth user) for now
-      // Skip employee IDs that don't correspond to auth users
-      const validParticipants = [
-        {
-          room_id: room.id,
-          user_id: user?.id
-        }
-      ];
+      // Add all participants including the creator
+      const allParticipantIds = [...new Set([...participantIds, user?.id])].filter(Boolean);
+      const validParticipants = allParticipantIds.map(userId => ({
+        room_id: room.id,
+        user_id: userId
+      }));
 
       console.log('Adding participants:', validParticipants);
 
