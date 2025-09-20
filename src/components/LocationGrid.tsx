@@ -69,7 +69,10 @@ export const LocationGrid = () => {
               
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <h3 className="font-semibold text-foreground truncate">
+                  <h3 
+                    className="font-semibold text-foreground truncate cursor-pointer hover:text-primary transition-colors"
+                    onClick={() => setSelectedLocation(location)}
+                  >
                     {location.name}
                   </h3>
                   <Badge className={getStatusColor(location.status)}>
@@ -101,14 +104,6 @@ export const LocationGrid = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="bg-popover border">
-                <DropdownMenuItem onClick={() => setSelectedLocation(location)}>
-                  <Eye className="mr-2 h-4 w-4" />
-                  View Details
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setEditingLocation(location)}>
-                  <Edit className="mr-2 h-4 w-4" />
-                  Edit Location
-                </DropdownMenuItem>
                 <DropdownMenuItem 
                   className="text-destructive"
                   onClick={() => deleteLocation(location.id)}
@@ -126,6 +121,7 @@ export const LocationGrid = () => {
         location={selectedLocation}
         open={!!selectedLocation}
         onOpenChange={(open) => !open && setSelectedLocation(null)}
+        onEditLocation={setEditingLocation}
       />
       
       <AddLocationModal

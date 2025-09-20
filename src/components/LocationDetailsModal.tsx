@@ -50,11 +50,12 @@ interface LocationDetailsModalProps {
   location: Location | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onEditLocation?: (location: Location) => void;
 }
 
 import { FloorPlanDebugger } from "@/components/FloorPlanDebugger";
 
-export const LocationDetailsModal = ({ location, open, onOpenChange }: LocationDetailsModalProps) => {
+export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocation }: LocationDetailsModalProps) => {
   const [activeTab, setActiveTab] = useState("details");
   const [selectedFloor, setSelectedFloor] = useState(1);
   const [editMode, setEditMode] = useState(false);
@@ -130,10 +131,22 @@ export const LocationDetailsModal = ({ location, open, onOpenChange }: LocationD
                 </span>
               </div>
             </div>
-            <Button className="bg-gradient-primary hover:bg-primary-hover">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Drop Point
-            </Button>
+            <div className="flex items-center gap-2">
+              {onEditLocation && (
+                <Button
+                  variant="outline"
+                  onClick={() => onEditLocation(location)}
+                  className="flex items-center gap-2"
+                >
+                  <MapPin className="h-4 w-4" />
+                  Edit Location
+                </Button>
+              )}
+              <Button className="bg-gradient-primary hover:bg-primary-hover">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Drop Point
+              </Button>
+            </div>
           </div>
         </DialogHeader>
 

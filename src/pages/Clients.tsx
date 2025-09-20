@@ -163,7 +163,13 @@ const Clients = () => {
                       
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-semibold text-foreground truncate">
+                          <h3 
+                            className="font-semibold text-foreground truncate cursor-pointer hover:text-primary transition-colors"
+                            onClick={() => {
+                              setSelectedClient(client);
+                              setIsDetailsModalOpen(true);
+                            }}
+                          >
                             {client.name}
                           </h3>
                           <Badge className={getStatusColor(client.status)}>
@@ -190,19 +196,6 @@ const Clients = () => {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="bg-popover border">
-                        <DropdownMenuItem 
-                          onClick={() => {
-                            setSelectedClient(client);
-                            setIsDetailsModalOpen(true);
-                          }}
-                        >
-                          <Eye className="mr-2 h-4 w-4" />
-                          View Details
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Edit className="mr-2 h-4 w-4" />
-                          Edit Client
-                        </DropdownMenuItem>
                         <DropdownMenuItem 
                           className="text-destructive"
                           onClick={() => deleteClient(client.id)}

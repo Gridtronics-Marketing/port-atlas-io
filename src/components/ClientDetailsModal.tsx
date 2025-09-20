@@ -8,7 +8,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Building2, User, Mail, Phone, MapPin, Calendar, ExternalLink, Loader2 } from "lucide-react";
+import { Building2, User, Mail, Phone, MapPin, Calendar, ExternalLink, Loader2, Edit, Plus } from "lucide-react";
 import { Client } from "@/hooks/useClients";
 import { useClientLocations } from "@/hooks/useClientLocations";
 import { LocationMap } from "@/components/LocationMap";
@@ -18,9 +18,10 @@ interface ClientDetailsModalProps {
   client: Client | null;
   isOpen: boolean;
   onClose: () => void;
+  onEditClient?: (client: Client) => void;
 }
 
-export const ClientDetailsModal = ({ client, isOpen, onClose }: ClientDetailsModalProps) => {
+export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient }: ClientDetailsModalProps) => {
   const navigate = useNavigate();
   const { locations, loading: locationsLoading } = useClientLocations(client?.id);
 
@@ -43,13 +44,27 @@ export const ClientDetailsModal = ({ client, isOpen, onClose }: ClientDetailsMod
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Building2 className="h-5 w-5 text-primary" />
-            Client Details
-          </DialogTitle>
-          <DialogDescription>
-            Complete information for {client.name}
-          </DialogDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <DialogTitle className="flex items-center gap-2">
+                <Building2 className="h-5 w-5 text-primary" />
+                Client Details
+              </DialogTitle>
+              <DialogDescription>
+                Complete information for {client.name}
+              </DialogDescription>
+            </div>
+            {onEditClient && (
+              <Button
+                variant="outline"
+                onClick={() => onEditClient(client)}
+                className="flex items-center gap-2"
+              >
+                <Edit className="h-4 w-4" />
+                Edit Client
+              </Button>
+            )}
+          </div>
         </DialogHeader>
 
         <div className="space-y-6">
@@ -172,10 +187,24 @@ export const ClientDetailsModal = ({ client, isOpen, onClose }: ClientDetailsMod
           {/* Client Locations */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <MapPin className="h-5 w-5 text-primary" />
-                Client Locations
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <MapPin className="h-5 w-5 text-primary" />
+                  Client Locations
+                </CardTitle>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    navigate('/locations');
+                    onClose();
+                  }}
+                  className="flex items-center gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Location
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               {locationsLoading ? (
