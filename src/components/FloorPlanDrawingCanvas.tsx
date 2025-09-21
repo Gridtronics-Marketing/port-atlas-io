@@ -53,9 +53,13 @@ export const FloorPlanDrawingCanvas = forwardRef<DrawingCanvasRef, FloorPlanDraw
       preserveObjectStacking: true,
     });
 
-    // Configure drawing brush
-    canvas.freeDrawingBrush.color = brushColor;
-    canvas.freeDrawingBrush.width = brushSize;
+    // Configure drawing brush - add null checks
+    if (canvas.freeDrawingBrush) {
+      canvas.freeDrawingBrush.color = brushColor;
+      canvas.freeDrawingBrush.width = brushSize;
+    } else {
+      console.warn('freeDrawingBrush not available on canvas');
+    }
 
     setFabricCanvas(canvas);
 
@@ -111,8 +115,10 @@ export const FloorPlanDrawingCanvas = forwardRef<DrawingCanvasRef, FloorPlanDraw
       
       case 'pencil':
         fabricCanvas.isDrawingMode = true;
-        fabricCanvas.freeDrawingBrush.color = brushColor;
-        fabricCanvas.freeDrawingBrush.width = brushSize;
+        if (fabricCanvas.freeDrawingBrush) {
+          fabricCanvas.freeDrawingBrush.color = brushColor;
+          fabricCanvas.freeDrawingBrush.width = brushSize;
+        }
         break;
       
       case 'text':
@@ -121,16 +127,18 @@ export const FloorPlanDrawingCanvas = forwardRef<DrawingCanvasRef, FloorPlanDraw
       
       case 'eraser':
         fabricCanvas.isDrawingMode = true;
-        fabricCanvas.freeDrawingBrush.color = 'transparent';
-        fabricCanvas.freeDrawingBrush.width = brushSize * 2;
-        // Use destination-out composition for erasing
+        if (fabricCanvas.freeDrawingBrush) {
+          fabricCanvas.freeDrawingBrush.color = 'transparent';
+          fabricCanvas.freeDrawingBrush.width = brushSize * 2;
+          // Use destination-out composition for erasing
+        }
         break;
     }
   }, [activeTool, fabricCanvas, brushColor, brushSize]);
 
   // Handle brush property changes
   useEffect(() => {
-    if (!fabricCanvas || activeTool !== 'pencil') return;
+    if (!fabricCanvas || activeTool !== 'pencil' || !fabricCanvas.freeDrawingBrush) return;
     
     fabricCanvas.freeDrawingBrush.color = brushColor;
     fabricCanvas.freeDrawingBrush.width = brushSize;
