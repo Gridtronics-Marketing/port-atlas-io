@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback, forwardRef, useImperativeHandle } from 'react';
-import { Canvas as FabricCanvas, FabricText, Path, FabricObject } from 'fabric';
+import { Canvas as FabricCanvas, FabricText, Path, FabricObject, PencilBrush } from 'fabric';
 import { useToast } from '@/hooks/use-toast';
 import type { DrawingTool } from './FloorPlanDrawingToolbar';
 
@@ -53,9 +53,11 @@ export const FloorPlanDrawingCanvas = forwardRef<DrawingCanvasRef, FloorPlanDraw
       preserveObjectStacking: true,
     });
 
-    // Initialize the freeDrawingBrush immediately after canvas creation (Fabric.js v6)
-    canvas.freeDrawingBrush.color = brushColor;
-    canvas.freeDrawingBrush.width = brushSize;
+    // Initialize the freeDrawingBrush explicitly for Fabric.js v6
+    const brush = new PencilBrush(canvas);
+    brush.color = brushColor;
+    brush.width = brushSize;
+    canvas.freeDrawingBrush = brush;
 
     setFabricCanvas(canvas);
 
