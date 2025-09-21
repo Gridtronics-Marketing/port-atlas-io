@@ -1318,32 +1318,32 @@ export type Database = {
       }
       twilio_settings: {
         Row: {
-          account_sid: string | null
-          auth_token: string | null
           created_at: string
+          credentials_configured: boolean | null
           enabled: boolean | null
           id: string
-          phone_number: string | null
+          last_test_date: string | null
+          last_test_status: string | null
           push_notifications_enabled: boolean | null
           updated_at: string
         }
         Insert: {
-          account_sid?: string | null
-          auth_token?: string | null
           created_at?: string
+          credentials_configured?: boolean | null
           enabled?: boolean | null
           id?: string
-          phone_number?: string | null
+          last_test_date?: string | null
+          last_test_status?: string | null
           push_notifications_enabled?: boolean | null
           updated_at?: string
         }
         Update: {
-          account_sid?: string | null
-          auth_token?: string | null
           created_at?: string
+          credentials_configured?: boolean | null
           enabled?: boolean | null
           id?: string
-          phone_number?: string | null
+          last_test_date?: string | null
+          last_test_status?: string | null
           push_notifications_enabled?: boolean | null
           updated_at?: string
         }
