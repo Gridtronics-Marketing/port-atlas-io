@@ -106,6 +106,11 @@ export const FloorPlanDrawingCanvas = forwardRef<DrawingCanvasRef, FloorPlanDraw
     fabricCanvas.isDrawingMode = false;
     fabricCanvas.selection = false;
     fabricCanvas.defaultCursor = 'default';
+    
+    // Reset composite operation
+    if (fabricCanvas.freeDrawingBrush) {
+      (fabricCanvas.freeDrawingBrush as any).globalCompositeOperation = 'source-over';
+    }
 
     switch (activeTool) {
       case 'select':
@@ -127,8 +132,13 @@ export const FloorPlanDrawingCanvas = forwardRef<DrawingCanvasRef, FloorPlanDraw
       
       case 'eraser':
         fabricCanvas.isDrawingMode = true;
-        fabricCanvas.freeDrawingBrush.color = 'transparent';
+        fabricCanvas.freeDrawingBrush.color = 'white';
         fabricCanvas.freeDrawingBrush.width = brushSize * 2;
+        // Set composite operation to erase
+        if (fabricCanvas.freeDrawingBrush) {
+          (fabricCanvas.freeDrawingBrush as any).globalCompositeOperation = 'destination-out';
+        }
+        fabricCanvas.defaultCursor = 'crosshair';
         break;
     }
     
