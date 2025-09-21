@@ -6,10 +6,20 @@ import {
   DialogHeader, 
   DialogTitle 
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Building2, User, Mail, Phone, MapPin, Calendar, ExternalLink, Loader2, Edit, Plus } from "lucide-react";
+import { Building2, User, Mail, Phone, MapPin, Calendar, ExternalLink, Loader2, Edit, Plus, Trash2 } from "lucide-react";
 import { Client } from "@/hooks/useClients";
 import { useClientLocations } from "@/hooks/useClientLocations";
 import { LocationMap } from "@/components/LocationMap";
@@ -22,12 +32,15 @@ interface ClientDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
   onEditClient?: (client: Client) => void;
+  onDeleteClient?: (clientId: string) => void;
 }
 
-export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient }: ClientDetailsModalProps) => {
+export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onDeleteClient }: ClientDetailsModalProps) => {
   const navigate = useNavigate();
   const { locations, loading: locationsLoading } = useClientLocations(client?.id);
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   if (!client) return null;
 
@@ -58,16 +71,14 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient }: Cl
                 Complete information for {client.name}
               </DialogDescription>
             </div>
-            {onEditClient && (
-              <Button
-                variant="outline"
-                onClick={() => onEditClient(client)}
-                className="flex items-center gap-2"
-              >
-                <Edit className="h-4 w-4" />
-                Edit Client
-              </Button>
-            )}
+            <Button
+              variant="outline"
+              onClick={() => setIsEditMode(!isEditMode)}
+              className="flex items-center gap-2"
+            >
+              <Edit className="h-4 w-4" />
+              {isEditMode ? 'Cancel Edit' : 'Edit'}
+            </Button>
           </div>
         </DialogHeader>
 
@@ -268,6 +279,20 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient }: Cl
               )}
             </CardContent>
           </Card>
+
+          {/* Delete Button - Only show in edit mode */}
+          {isEditMode && onDeleteClient && (
+            <div className="flex justify-center pt-4">
+              <Button
+                variant="destructive"
+                onClick={() => setShowDeleteDialog(true)}
+                className="flex items-center gap-2"
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete Client
+              </Button>
+            </div>
+          )}
         </div>
       </DialogContent>
       
@@ -276,6 +301,33 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient }: Cl
         open={!!selectedLocation}
         onOpenChange={(open) => !open && setSelectedLocation(null)}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you would like to delete this client?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the client "{client.name}" and all associated data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>No</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (onDeleteClient) {
+                  onDeleteClient(client.id);
+                  setShowDeleteDialog(false);
+                  onClose();
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Yes
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 };

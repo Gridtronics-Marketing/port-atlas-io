@@ -154,7 +154,11 @@ const Clients = () => {
                 {clients.map((client) => (
                   <div
                     key={client.id}
-                    className="flex items-center justify-between p-4 border border-border rounded-lg hover:shadow-soft transition-all duration-200 bg-card"
+                    className="flex items-center justify-between p-4 border border-border rounded-lg hover:shadow-soft transition-all duration-200 bg-card cursor-pointer"
+                    onClick={() => {
+                      setSelectedClient(client);
+                      setIsDetailsModalOpen(true);
+                    }}
                   >
                     <div className="flex items-start gap-3 flex-1">
                       <div className="p-2 bg-primary/10 rounded-lg">
@@ -163,13 +167,7 @@ const Clients = () => {
                       
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <h3 
-                            className="font-semibold text-foreground truncate cursor-pointer hover:text-primary transition-colors"
-                            onClick={() => {
-                              setSelectedClient(client);
-                              setIsDetailsModalOpen(true);
-                            }}
-                          >
+                          <h3 className="font-semibold text-foreground truncate">
                             {client.name}
                           </h3>
                           <Badge className={getStatusColor(client.status)}>
@@ -188,23 +186,6 @@ const Clients = () => {
                         </div>
                       </div>
                     </div>
-                    
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="bg-popover border">
-                        <DropdownMenuItem 
-                          className="text-destructive"
-                          onClick={() => deleteClient(client.id)}
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Delete Client
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
                   </div>
                 ))}
               </div>
@@ -226,6 +207,7 @@ const Clients = () => {
           setIsDetailsModalOpen(false);
           setSelectedClient(null);
         }}
+        onDeleteClient={deleteClient}
       />
     </>
   );
