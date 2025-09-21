@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Plus, Minus, RotateCcw, ZoomIn, ZoomOut, RefreshCw, Camera } from 'lucide-react';
+import { Plus, Minus, RotateCcw, ZoomIn, ZoomOut, RefreshCw, Camera, Paintbrush } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,6 +8,8 @@ import { AddDropPointModal } from './AddDropPointModal';
 import { DropPointDetailsModal } from './DropPointDetailsModal';
 import { AddRoomViewModal } from './AddRoomViewModal';
 import { RoomViewModal } from './RoomViewModal';
+import { FloorPlanDrawingToolbar, type DrawingTool } from './FloorPlanDrawingToolbar';
+import { FloorPlanDrawingCanvas, type DrawingCanvasRef } from './FloorPlanDrawingCanvas';
 import { useDropPoints } from '@/hooks/useDropPoints';
 import { useRoomViews } from '@/hooks/useRoomViews';
 import { getStorageUrl, repairFloorPlanFiles } from '@/lib/storage-utils';
@@ -48,7 +50,16 @@ export const InteractiveFloorPlan = ({
   const [isMouseDown, setIsMouseDown] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [mouseDownPosition, setMouseDownPosition] = useState({ x: 0, y: 0 });
+  const [isDrawingMode, setIsDrawingMode] = useState(false);
+  const [activeTool, setActiveTool] = useState<DrawingTool>('select');
+  const [brushColor, setBrushColor] = useState('#000000');
+  const [brushSize, setBrushSize] = useState(2);
+  const [canUndo, setCanUndo] = useState(false);
+  const [canRedo, setCanRedo] = useState(false);
+  const [drawingData, setDrawingData] = useState<string>('');
+  const [containerDimensions, setContainerDimensions] = useState({ width: 0, height: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
+  const drawingCanvasRef = useRef<DrawingCanvasRef>(null);
   const { toast } = useToast();
   
   const { dropPoints, loading: dropPointsLoading, updateDropPoint } = useDropPoints(locationId);
@@ -70,7 +81,23 @@ export const InteractiveFloorPlan = ({
   const fileExtension = getFileExtension(actualFileUrl, filePath, fileName);
   const isImage = ['jpg', 'jpeg', 'png', 'webp', 'svg', 'bmp', 'tiff'].includes(fileExtension);
 
+  // Update container dimensions for drawing canvas
+  useEffect(() => {
+    if (!containerRef.current) return;
+    
+    const updateDimensions = () => {
+      const rect = containerRef.current!.getBoundingClientRect();
+      setContainerDimensions({ width: rect.width, height: rect.height });
+    };
+    
+    updateDimensions();
+    window.addEventListener('resize', updateDimensions);
+    
+    return () => window.removeEventListener('resize', updateDimensions);
+  }, [actualFileUrl]);
+
   const handleContainerClick = (e: React.MouseEvent) => {
+    if (isDrawingMode) return; // Don't handle clicks in drawing mode
     if ((!isAddingPoint && !isAddingRoomView) || !containerRef.current || isDragging) return;
 
     const rect = containerRef.current.getBoundingClientRect();
@@ -266,6 +293,44 @@ export const InteractiveFloorPlan = ({
 
   const resetScale = () => setScale(1.0);
 
+  // Drawing functions
+  const handleDrawingToolChange = (tool: DrawingTool) => {
+    setActiveTool(tool);
+    setIsDrawingMode(tool !== 'select');
+    
+    // When switching to select mode, reset adding states
+    if (tool === 'select') {
+      setIsAddingPoint(false);
+      setIsAddingRoomView(false);
+    }
+  };
+
+  const handleDrawingHistoryChange = (canUndoValue: boolean, canRedoValue: boolean) => {
+    setCanUndo(canUndoValue);
+    setCanRedo(canRedoValue);
+  };
+
+  const handleDrawingSave = (data: string) => {
+    setDrawingData(data);
+    // Here you could save to Supabase or local storage
+    localStorage.setItem(`floor-plan-drawing-${locationId}-${floorNumber}`, data);
+  };
+
+  const handleDrawingLoad = () => {
+    const savedData = localStorage.getItem(`floor-plan-drawing-${locationId}-${floorNumber}`);
+    if (savedData && drawingCanvasRef.current?.drawingActions) {
+      drawingCanvasRef.current.drawingActions.load(savedData);
+    }
+  };
+
+  // Load saved drawing data on mount
+  useEffect(() => {
+    const savedData = localStorage.getItem(`floor-plan-drawing-${locationId}-${floorNumber}`);
+    if (savedData) {
+      setDrawingData(savedData);
+    }
+  }, [locationId, floorNumber]);
+
   const handleRepairFiles = async () => {
     setIsRepairing(true);
     try {
@@ -325,13 +390,24 @@ export const InteractiveFloorPlan = ({
           </CardTitle>
           <div className="flex items-center gap-2">
             <Button
+              variant={isDrawingMode ? "default" : "outline"}
+              size="sm"
+              onClick={() => setIsDrawingMode(!isDrawingMode)}
+              disabled={!actualFileUrl}
+            >
+              <Paintbrush className="h-4 w-4 mr-2" />
+              {isDrawingMode ? 'Exit Draw' : 'Draw Mode'}
+            </Button>
+            <Button
               variant={isAddingPoint ? "default" : "outline"}
               size="sm"
               onClick={() => {
                 setIsAddingPoint(!isAddingPoint);
                 setIsAddingRoomView(false);
+                setIsDrawingMode(false);
+                setActiveTool('select');
               }}
-              disabled={!actualFileUrl}
+              disabled={!actualFileUrl || isDrawingMode}
             >
               <Plus className="h-4 w-4 mr-2" />
               Add Drop Point
@@ -342,8 +418,10 @@ export const InteractiveFloorPlan = ({
               onClick={() => {
                 setIsAddingRoomView(!isAddingRoomView);
                 setIsAddingPoint(false);
+                setIsDrawingMode(false);
+                setActiveTool('select');
               }}
-              disabled={!actualFileUrl}
+              disabled={!actualFileUrl || isDrawingMode}
             >
               <Camera className="h-4 w-4 mr-2" />
               Add Room View
@@ -386,10 +464,31 @@ export const InteractiveFloorPlan = ({
           </div>
         )}
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
+        {/* Drawing Toolbar */}
+        {isDrawingMode && (
+          <FloorPlanDrawingToolbar
+            activeTool={activeTool}
+            onToolChange={handleDrawingToolChange}
+            onUndo={() => drawingCanvasRef.current?.drawingActions?.undo()}
+            onRedo={() => drawingCanvasRef.current?.drawingActions?.redo()}
+            onClear={() => drawingCanvasRef.current?.drawingActions?.clear()}
+            onSave={() => drawingCanvasRef.current?.drawingActions?.save()}
+            onLoad={handleDrawingLoad}
+            canUndo={canUndo}
+            canRedo={canRedo}
+            brushColor={brushColor}
+            onBrushColorChange={setBrushColor}
+            brushSize={brushSize}
+            onBrushSizeChange={setBrushSize}
+          />
+        )}
         <div 
           ref={containerRef}
-          className={`relative bg-muted rounded-lg overflow-hidden ${isDragging ? 'cursor-grabbing' : 'cursor-pointer'}`}
+          className={`relative bg-muted rounded-lg overflow-hidden ${
+            isDragging ? 'cursor-grabbing' : 
+            isDrawingMode ? 'cursor-crosshair' : 'cursor-pointer'
+          }`}
           style={{ 
             transform: `scale(${scale})`,
             transformOrigin: 'top left',
@@ -437,6 +536,22 @@ export const InteractiveFloorPlan = ({
             </div>
           )}
 
+          {/* Drawing Canvas Overlay */}
+          {actualFileUrl && containerDimensions.width > 0 && (
+            <FloorPlanDrawingCanvas
+              ref={drawingCanvasRef}
+              width={containerDimensions.width}
+              height={containerDimensions.height}
+              activeTool={activeTool}
+              brushColor={brushColor}
+              brushSize={brushSize}
+              onHistoryChange={handleDrawingHistoryChange}
+              onSave={handleDrawingSave}
+              savedData={drawingData}
+              className={isDrawingMode ? "pointer-events-auto" : "pointer-events-none"}
+            />
+          )}
+
           {/* Drop Points Overlay */}
           <TooltipProvider>
             {floorDropPoints.map((point) => {
@@ -452,18 +567,21 @@ export const InteractiveFloorPlan = ({
                           ? `cursor-grabbing scale-110 ${getDropPointColor(point.status)}` 
                           : `cursor-grab ${getDropPointColor(point.status)}`
                       }`}
-                      style={{
-                        left: `${displayPoint.x_coordinate || 50}%`,
-                        top: `${displayPoint.y_coordinate || 50}%`,
-                        zIndex: draggedPoint && draggedPoint.id === point.id ? 50 : 10,
-                      }}
-                      onMouseDown={(e) => handleMouseDown(e, point, 'dropPoint')}
+                      onMouseDown={(e) => !isDrawingMode && handleMouseDown(e, point, 'dropPoint')}
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (!isDragging) {
+                        if (!isDragging && !isDrawingMode) {
                           setSelectedDropPoint(point);
                           setDetailsModalOpen(true);
                         }
+                      }}
+                      style={{
+                        ...{
+                          left: `${displayPoint.x_coordinate || 50}%`,
+                          top: `${displayPoint.y_coordinate || 50}%`,
+                          zIndex: draggedPoint && draggedPoint.id === point.id ? 50 : 10,
+                        },
+                        pointerEvents: isDrawingMode ? 'none' : 'auto'
                       }}
                     >
                       <span className="text-xs">{getDropPointIcon(point.point_type)}</span>
@@ -496,14 +614,15 @@ export const InteractiveFloorPlan = ({
                           : 'cursor-grab'
                       }`}
                       style={{
-                        left: `${displayRoomView.x_coordinate}%`,
-                        top: `${displayRoomView.y_coordinate}%`,
-                        zIndex: draggedRoomView && draggedRoomView.id === roomView.id ? 50 : 10,
+                        left: `${displayRoomView.x_coordinate || 50}%`,
+                        top: `${displayRoomView.y_coordinate || 50}%`,
+                        zIndex: draggedRoomView && draggedRoomView.id === roomView.id ? 50 : 15,
+                        pointerEvents: isDrawingMode ? 'none' : 'auto'
                       }}
-                      onMouseDown={(e) => handleMouseDown(e, roomView, 'roomView')}
+                      onMouseDown={(e) => !isDrawingMode && handleMouseDown(e, roomView, 'roomView')}
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (!isDragging) {
+                        if (!isDragging && !isDrawingMode) {
                           setSelectedRoomView(roomView);
                           setRoomViewModalOpen(true);
                         }
