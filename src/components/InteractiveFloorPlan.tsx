@@ -97,8 +97,9 @@ export const InteractiveFloorPlan = ({
   }, [actualFileUrl]);
 
   const handleContainerClick = (e: React.MouseEvent) => {
-    if (isDrawingMode) return; // Don't handle clicks in drawing mode
-    if ((!isAddingPoint && !isAddingRoomView) || !containerRef.current || isDragging) return;
+    // Don't handle clicks in drawing mode or when dragging
+    if (isDrawingMode || isDragging) return;
+    if ((!isAddingPoint && !isAddingRoomView) || !containerRef.current) return;
 
     const rect = containerRef.current.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
@@ -295,11 +296,17 @@ export const InteractiveFloorPlan = ({
 
   // Drawing functions
   const handleDrawingToolChange = (tool: DrawingTool) => {
+    console.log('Tool changed to:', tool); // Debug log
     setActiveTool(tool);
-    setIsDrawingMode(tool !== 'select');
     
-    // When switching to select mode, reset adding states
+    // When switching to select mode, reset adding states and exit drawing mode
     if (tool === 'select') {
+      setIsAddingPoint(false);
+      setIsAddingRoomView(false);
+      setIsDrawingMode(false);
+    } else {
+      // For any drawing tool, ensure drawing mode is enabled
+      setIsDrawingMode(true);
       setIsAddingPoint(false);
       setIsAddingRoomView(false);
     }
@@ -487,13 +494,14 @@ export const InteractiveFloorPlan = ({
           ref={containerRef}
           className={`relative bg-muted rounded-lg overflow-hidden ${
             isDragging ? 'cursor-grabbing' : 
-            isDrawingMode ? 'cursor-crosshair' : 'cursor-pointer'
+            isDrawingMode ? '' : 'cursor-pointer'
           }`}
           style={{ 
             transform: `scale(${scale})`,
             transformOrigin: 'top left',
             height: 'auto',
-            minHeight: '400px'
+            minHeight: '400px',
+            pointerEvents: isDrawingMode ? 'none' : 'auto'
           }}
           onClick={handleContainerClick}
           onMouseMove={handleMouseMove}
@@ -537,18 +545,18 @@ export const InteractiveFloorPlan = ({
           )}
 
           {/* Drawing Canvas Overlay */}
-          {actualFileUrl && containerDimensions.width > 0 && (
+          {actualFileUrl && containerDimensions.width > 0 && isDrawingMode && (
             <FloorPlanDrawingCanvas
               ref={drawingCanvasRef}
-              width={containerDimensions.width}
-              height={containerDimensions.height}
+              width={containerDimensions.width * scale}
+              height={containerDimensions.height * scale}
               activeTool={activeTool}
               brushColor={brushColor}
               brushSize={brushSize}
               onHistoryChange={handleDrawingHistoryChange}
               onSave={handleDrawingSave}
               savedData={drawingData}
-              className={isDrawingMode ? "pointer-events-auto" : "pointer-events-none"}
+              className="pointer-events-auto"
             />
           )}
 

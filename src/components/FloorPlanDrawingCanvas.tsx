@@ -100,6 +100,8 @@ export const FloorPlanDrawingCanvas = forwardRef<DrawingCanvasRef, FloorPlanDraw
   useEffect(() => {
     if (!fabricCanvas) return;
 
+    console.log('Fabric canvas tool change:', activeTool); // Debug log
+
     // Reset selection and drawing modes
     fabricCanvas.isDrawingMode = false;
     fabricCanvas.selection = false;
@@ -115,6 +117,8 @@ export const FloorPlanDrawingCanvas = forwardRef<DrawingCanvasRef, FloorPlanDraw
         fabricCanvas.isDrawingMode = true;
         fabricCanvas.freeDrawingBrush.color = brushColor;
         fabricCanvas.freeDrawingBrush.width = brushSize;
+        fabricCanvas.defaultCursor = 'crosshair';
+        console.log('Pencil mode enabled, drawing mode:', fabricCanvas.isDrawingMode); // Debug
         break;
       
       case 'text':
@@ -125,9 +129,11 @@ export const FloorPlanDrawingCanvas = forwardRef<DrawingCanvasRef, FloorPlanDraw
         fabricCanvas.isDrawingMode = true;
         fabricCanvas.freeDrawingBrush.color = 'transparent';
         fabricCanvas.freeDrawingBrush.width = brushSize * 2;
-        // Use destination-out composition for erasing
         break;
     }
+    
+    // Force render after tool change
+    fabricCanvas.renderAll();
   }, [activeTool, fabricCanvas, brushColor, brushSize]);
 
   // Handle brush property changes
@@ -270,13 +276,13 @@ export const FloorPlanDrawingCanvas = forwardRef<DrawingCanvasRef, FloorPlanDraw
   }), [undo, redo, clear, save, load]);
 
   return (
-    <div className={`absolute inset-0 pointer-events-auto ${className}`}>
+    <div className={`absolute inset-0 ${className}`} style={{ pointerEvents: 'auto' }}>
       <canvas 
         ref={canvasRef}
-        className="absolute inset-0"
+        className="absolute top-0 left-0"
         style={{ 
-          zIndex: activeTool !== 'select' ? 20 : 5,
-          pointerEvents: activeTool !== 'select' ? 'auto' : 'none'
+          zIndex: 30,
+          pointerEvents: 'auto'
         }}
       />
     </div>
