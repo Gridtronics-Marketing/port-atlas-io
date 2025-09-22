@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { Canvas as FabricCanvas, FabricText, Path, FabricObject, PencilBrush } from 'fabric';
 import { useToast } from '@/hooks/use-toast';
+import { TextEditDialog } from './TextEditDialog';
 import type { DrawingTool } from './FloorPlanDrawingToolbar';
 
 interface FloorPlanDrawingCanvasProps {
@@ -40,6 +41,9 @@ export const FloorPlanDrawingCanvas = forwardRef<DrawingCanvasRef, FloorPlanDraw
   const [fabricCanvas, setFabricCanvas] = useState<FabricCanvas | null>(null);
   const [history, setHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
+  const [isTextDialogOpen, setIsTextDialogOpen] = useState(false);
+  const [editingTextObject, setEditingTextObject] = useState<FabricText | null>(null);
+  const [pendingTextPosition, setPendingTextPosition] = useState<{ x: number; y: number } | null>(null);
   const { toast } = useToast();
 
   // Initialize Fabric canvas
@@ -163,19 +167,23 @@ export const FloorPlanDrawingCanvas = forwardRef<DrawingCanvasRef, FloorPlanDraw
         // Check if clicking on an existing text object
         const target = e.target;
         if (!target || target === fabricCanvas) {
-          // Only create new text if not clicking on existing object
+          // Open dialog to create new text
           const pointer = fabricCanvas.getPointer(e.e);
-          const text = new FabricText('Double-click to edit', {
-            left: pointer.x,
-            top: pointer.y,
-            fontSize: Math.max(12, brushSize),
-            fill: brushColor,
-            selectable: true,
-          });
-          
-          fabricCanvas.add(text);
-          fabricCanvas.setActiveObject(text);
-          saveToHistory(fabricCanvas);
+          setPendingTextPosition({ x: pointer.x, y: pointer.y });
+          setEditingTextObject(null);
+          setIsTextDialogOpen(true);
+        }
+      }
+    };
+
+    const handleMouseDoubleClick = (e: any) => {
+      if (activeTool === 'text') {
+        const activeObject = fabricCanvas.getActiveObject();
+        if (activeObject && activeObject.type === 'text') {
+          // Open dialog to edit existing text
+          setEditingTextObject(activeObject as FabricText);
+          setPendingTextPosition(null);
+          setIsTextDialogOpen(true);
         }
       }
     };
@@ -195,12 +203,14 @@ export const FloorPlanDrawingCanvas = forwardRef<DrawingCanvasRef, FloorPlanDraw
     };
 
     fabricCanvas.on('mouse:down', handleMouseDown);
+    fabricCanvas.on('mouse:dblclick', handleMouseDoubleClick);
     fabricCanvas.on('path:created', handlePathCreated);
     fabricCanvas.on('object:modified', handleObjectModified);
     fabricCanvas.on('text:changed', handleTextEdited);
 
     return () => {
       fabricCanvas.off('mouse:down', handleMouseDown);
+      fabricCanvas.off('mouse:dblclick', handleMouseDoubleClick);
       fabricCanvas.off('path:created', handlePathCreated);
       fabricCanvas.off('object:modified', handleObjectModified);
       fabricCanvas.off('text:changed', handleTextEdited);
@@ -284,6 +294,38 @@ export const FloorPlanDrawingCanvas = forwardRef<DrawingCanvasRef, FloorPlanDraw
     }
   }, [fabricCanvas, saveToHistory, toast]);
 
+  // Handle text dialog save
+  const handleTextDialogSave = useCallback((text: string, fontSize: number, color: string) => {
+    if (!fabricCanvas) return;
+
+    if (editingTextObject) {
+      // Update existing text object
+      editingTextObject.set({
+        text: text,
+        fontSize: fontSize,
+        fill: color,
+      });
+      fabricCanvas.renderAll();
+    } else if (pendingTextPosition) {
+      // Create new text object
+      const textObject = new FabricText(text, {
+        left: pendingTextPosition.x,
+        top: pendingTextPosition.y,
+        fontSize: fontSize,
+        fill: color,
+        selectable: true,
+      });
+      
+      fabricCanvas.add(textObject);
+      fabricCanvas.setActiveObject(textObject);
+    }
+    
+    saveToHistory(fabricCanvas);
+    setIsTextDialogOpen(false);
+    setEditingTextObject(null);
+    setPendingTextPosition(null);
+  }, [fabricCanvas, editingTextObject, pendingTextPosition, saveToHistory]);
+
   // Expose functions to parent via ref
   useImperativeHandle(ref, () => ({
     drawingActions: {
@@ -296,15 +338,30 @@ export const FloorPlanDrawingCanvas = forwardRef<DrawingCanvasRef, FloorPlanDraw
   }), [undo, redo, clear, save, load]);
 
   return (
-    <div className={`absolute inset-0 ${className}`} style={{ pointerEvents: 'auto' }}>
-      <canvas 
-        ref={canvasRef}
-        className="absolute top-0 left-0"
-        style={{ 
-          zIndex: 30,
-          pointerEvents: 'auto'
+    <>
+      <div className={`absolute inset-0 ${className}`} style={{ pointerEvents: 'auto' }}>
+        <canvas 
+          ref={canvasRef}
+          className="absolute top-0 left-0"
+          style={{ 
+            zIndex: 30,
+            pointerEvents: 'auto'
+          }}
+        />
+      </div>
+      
+      <TextEditDialog
+        isOpen={isTextDialogOpen}
+        onClose={() => {
+          setIsTextDialogOpen(false);
+          setEditingTextObject(null);
+          setPendingTextPosition(null);
         }}
+        onSave={handleTextDialogSave}
+        initialText={editingTextObject?.text || 'Enter text here'}
+        initialFontSize={editingTextObject?.fontSize || Math.max(12, brushSize)}
+        initialColor={editingTextObject?.fill as string || brushColor}
       />
-    </div>
+    </>
   );
 });
