@@ -34,9 +34,11 @@ interface AddLocationModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   location?: Location | null; // Optional location for editing
+  preSelectedClientId?: string; // Optional client ID to filter projects
+  preSelectedProjectId?: string; // Optional project ID to pre-select
 }
 
-export const AddLocationModal = ({ open, onOpenChange, location }: AddLocationModalProps) => {
+export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClientId, preSelectedProjectId }: AddLocationModalProps) => {
   const [layoutFiles, setLayoutFiles] = useState<{ [floorNumber: number]: File | null }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [conversionProgress, setConversionProgress] = useState<{ [floorNumber: number]: ConversionProgress | null }>({});
@@ -59,7 +61,12 @@ export const AddLocationModal = ({ open, onOpenChange, location }: AddLocationMo
     status: "Active" as "Active" | "In Progress" | "Completed" | "On Hold",
   });
 
-  // Effect to populate form when editing
+  // Filter projects by client if preSelectedClientId is provided
+  const filteredProjects = preSelectedClientId 
+    ? projects.filter(project => project.client_id === preSelectedClientId)
+    : projects;
+
+  // Effect to populate form when editing or when modal opens with pre-selected values
   useEffect(() => {
     if (location && open) {
       setFormData({
@@ -76,8 +83,15 @@ export const AddLocationModal = ({ open, onOpenChange, location }: AddLocationMo
       });
     } else if (!location && open) {
       resetForm();
+      
+      // Auto-select project if pre-selected or if only one project available for client
+      if (preSelectedProjectId) {
+        setFormData(prev => ({ ...prev, project_id: preSelectedProjectId }));
+      } else if (preSelectedClientId && filteredProjects.length === 1) {
+        setFormData(prev => ({ ...prev, project_id: filteredProjects[0].id }));
+      }
     }
-  }, [location, open]);
+  }, [location, open, preSelectedProjectId, preSelectedClientId, filteredProjects]);
 
   const resetForm = () => {
     setFormData({
@@ -327,7 +341,9 @@ export const AddLocationModal = ({ open, onOpenChange, location }: AddLocationMo
           <DialogDescription className="text-muted-foreground">
             {isEditing 
               ? 'Update location details and manage floor plans for your jobsite.'
-              : 'Create a new jobsite location and upload floor plans for comprehensive drop point management.'
+              : preSelectedClientId
+                ? `Adding a new location for the selected client. ${filteredProjects.length} project${filteredProjects.length !== 1 ? 's' : ''} available.`
+                : 'Create a new jobsite location and upload floor plans for comprehensive drop point management.'
             }
           </DialogDescription>
         </DialogHeader>
@@ -436,7 +452,7 @@ export const AddLocationModal = ({ open, onOpenChange, location }: AddLocationMo
                       <SelectValue placeholder="Select project" />
                     </SelectTrigger>
                     <SelectContent className="bg-popover border z-50">
-                      {projects.map((project) => (
+                      {filteredProjects.map((project) => (
                         <SelectItem key={project.id} value={project.id}>
                           {project.name}
                         </SelectItem>

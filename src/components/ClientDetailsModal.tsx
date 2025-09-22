@@ -24,7 +24,7 @@ import { Client } from "@/hooks/useClients";
 import { useClientLocations } from "@/hooks/useClientLocations";
 import { LocationMap } from "@/components/LocationMap";
 import { LocationDetailsModal } from "@/components/LocationDetailsModal";
-import { useNavigate } from "react-router-dom";
+import { AddLocationModal } from "@/components/AddLocationModal";
 import { type Location } from "@/hooks/useLocations";
 
 interface ClientDetailsModalProps {
@@ -36,11 +36,11 @@ interface ClientDetailsModalProps {
 }
 
 export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onDeleteClient }: ClientDetailsModalProps) => {
-  const navigate = useNavigate();
-  const { locations, loading: locationsLoading } = useClientLocations(client?.id);
+  const { locations, loading: locationsLoading, refetch: refetchLocations } = useClientLocations(client?.id);
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isAddLocationModalOpen, setIsAddLocationModalOpen] = useState(false);
 
   if (!client) return null;
 
@@ -210,10 +210,7 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onDe
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => {
-                    navigate('/locations');
-                    onClose();
-                  }}
+                  onClick={() => setIsAddLocationModalOpen(true)}
                   className="flex items-center gap-2"
                 >
                   <Plus className="h-4 w-4" />
@@ -300,6 +297,17 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onDe
         location={selectedLocation}
         open={!!selectedLocation}
         onOpenChange={(open) => !open && setSelectedLocation(null)}
+      />
+
+      <AddLocationModal
+        open={isAddLocationModalOpen}
+        onOpenChange={(open) => {
+          setIsAddLocationModalOpen(open);
+          if (!open) {
+            refetchLocations();
+          }
+        }}
+        preSelectedClientId={client.id}
       />
 
       {/* Delete Confirmation Dialog */}
