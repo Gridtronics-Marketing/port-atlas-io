@@ -160,19 +160,23 @@ export const FloorPlanDrawingCanvas = forwardRef<DrawingCanvasRef, FloorPlanDraw
 
     const handleMouseDown = (e: any) => {
       if (activeTool === 'text') {
-        const pointer = fabricCanvas.getPointer(e.e);
-        const text = new FabricText('Double-click to edit', {
-          left: pointer.x,
-          top: pointer.y,
-          fontSize: Math.max(12, brushSize),
-          fill: brushColor,
-          editable: true,
-        });
-        
-        fabricCanvas.add(text);
-        fabricCanvas.setActiveObject(text);
-        // text.enterEditing(); // This method doesn't exist in Fabric v6
-        saveToHistory(fabricCanvas);
+        // Check if clicking on an existing text object
+        const target = e.target;
+        if (!target || target === fabricCanvas) {
+          // Only create new text if not clicking on existing object
+          const pointer = fabricCanvas.getPointer(e.e);
+          const text = new FabricText('Double-click to edit', {
+            left: pointer.x,
+            top: pointer.y,
+            fontSize: Math.max(12, brushSize),
+            fill: brushColor,
+            selectable: true,
+          });
+          
+          fabricCanvas.add(text);
+          fabricCanvas.setActiveObject(text);
+          saveToHistory(fabricCanvas);
+        }
       }
     };
 
@@ -186,14 +190,20 @@ export const FloorPlanDrawingCanvas = forwardRef<DrawingCanvasRef, FloorPlanDraw
       saveToHistory(fabricCanvas);
     };
 
+    const handleTextEdited = () => {
+      saveToHistory(fabricCanvas);
+    };
+
     fabricCanvas.on('mouse:down', handleMouseDown);
     fabricCanvas.on('path:created', handlePathCreated);
     fabricCanvas.on('object:modified', handleObjectModified);
+    fabricCanvas.on('text:changed', handleTextEdited);
 
     return () => {
       fabricCanvas.off('mouse:down', handleMouseDown);
       fabricCanvas.off('path:created', handlePathCreated);
       fabricCanvas.off('object:modified', handleObjectModified);
+      fabricCanvas.off('text:changed', handleTextEdited);
     };
   }, [fabricCanvas, activeTool, brushColor, brushSize, saveToHistory]);
 
