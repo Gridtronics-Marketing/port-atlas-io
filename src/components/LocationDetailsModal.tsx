@@ -40,14 +40,14 @@ import { InteractiveMap } from "@/components/InteractiveMap";
 import { DropPointList } from "@/components/DropPointList";
 import { ScheduleAssignmentModal } from "@/components/ScheduleAssignmentModal";
 import { AddLocationNoteModal } from "@/components/AddLocationNoteModal";
-import { FloorPlanEditor } from "@/components/FloorPlanEditor";
-import { FloorPlanDemo } from "@/components/FloorPlanDemo";
-import { FloorPlanViewer } from "@/components/FloorPlanViewer";
-import { InteractiveFloorPlan } from "@/components/InteractiveFloorPlan";
-import { FloorPlanRepairTool } from "@/components/FloorPlanRepairTool";
-import { getFloorPlanUrls } from "@/lib/storage-utils";
-import { useLocationTeam } from "@/hooks/useLocationTeam";
-import { useLocationNotes } from "@/hooks/useLocationNotes";
+import { FloorPlanRepairTool } from './FloorPlanRepairTool';
+import { FloorPlanFileManager } from './FloorPlanFileManager';
+import { InteractiveFloorPlan } from './InteractiveFloorPlan';
+import { FloorPlanEditor } from './FloorPlanEditor';
+import { FloorPlanDemo } from './FloorPlanDemo';
+import { DropPointList } from './DropPointList';
+import { ScheduleAssignmentModal } from './ScheduleAssignmentModal';
+import { AddLocationNoteModal } from './AddLocationNoteModal';
 import {
   Select,
   SelectContent,
@@ -55,6 +55,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Label } from '@/components/ui/label';
 import { supabase } from "@/integrations/supabase/client";
 import { type Location } from "@/hooks/useLocations";
 
@@ -390,7 +391,97 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
               </div>
             </TabsContent>
 
-            <TabsContent value="map" className="mt-6">
+                  <TabsContent value="floor-plans" className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <Label htmlFor="floor-select">Floor:</Label>
+                        <Select value={selectedFloor.toString()} onValueChange={(value) => setSelectedFloor(parseInt(value))}>
+                          <SelectTrigger className="w-32">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Array.from({ length: location.floors || 1 }, (_, i) => i + 1).map((floor) => (
+                              <SelectItem key={floor} value={floor.toString()}>
+                                Floor {floor}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setIsEditMode(!isEditMode)}
+                        >
+                          {isEditMode ? 'Exit Edit' : 'Edit Mode'}
+                        </Button>
+                        <Button variant="outline" size="sm">
+                          Demo
+                        </Button>
+                      </div>
+                    </div>
+
+                    {floorPlanUrls[selectedFloor] ? (
+                      <div className="space-y-4">
+                        {isEditMode ? (
+                          <FloorPlanEditor
+                            locationId={location.id}
+                            floorNumber={selectedFloor}
+                            fileUrl={floorPlanUrls[selectedFloor]}
+                            className="min-h-[500px]"
+                          />
+                        ) : (
+                          <InteractiveFloorPlan
+                            locationId={location.id}
+                            floorNumber={selectedFloor}
+                            fileUrl={floorPlanUrls[selectedFloor]}
+                            filePath={location.floor_plan_files?.[selectedFloor] || ''}
+                            fileName={location.floor_plan_files?.[selectedFloor]?.split('/').pop() || ''}
+                            className="min-h-[500px]"
+                          />
+                        )}
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed">
+                          <p className="text-gray-600 mb-4">No floor plan available for Floor {selectedFloor}</p>
+                          <FloorPlanDemo />
+                        </div>
+                      </div>
+                    )}
+                    
+                    <Tabs defaultValue="diagnostics" className="w-full">
+                      <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="diagnostics">Diagnostics</TabsTrigger>
+                        <TabsTrigger value="file-manager">File Manager</TabsTrigger>
+                      </TabsList>
+                      
+                      <TabsContent value="diagnostics" className="mt-4">
+                        <FloorPlanRepairTool 
+                          location={location} 
+                          onRepairComplete={() => {
+                            if (location.floor_plan_files) {
+                              setFloorPlanUrls(getFloorPlanUrls(location.floor_plan_files));
+                            }
+                          }}
+                        />
+                      </TabsContent>
+                      
+                      <TabsContent value="file-manager" className="mt-4">
+                        <FloorPlanFileManager
+                          locationId={location.id}
+                          onFilesChanged={() => {
+                            if (location.floor_plan_files) {
+                              setFloorPlanUrls(getFloorPlanUrls(location.floor_plan_files));
+                            }
+                            window.location.reload();
+                          }}
+                        />
+                      </TabsContent>
+                    </Tabs>
+                  </TabsContent>
               <Card className="shadow-soft">
                 <CardHeader>
                   <div className="flex items-center justify-between">
