@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Upload, X, MapPin, Plus, Minus, Building2, Users, Phone, FileText, FileImage } from "lucide-react";
 import {
   Dialog,
@@ -62,9 +62,12 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
   });
 
   // Filter projects by client if preSelectedClientId is provided
-  const filteredProjects = preSelectedClientId 
-    ? projects.filter(project => project.client_id === preSelectedClientId)
-    : projects;
+  const filteredProjects = useMemo(() => 
+    preSelectedClientId 
+      ? projects.filter(project => project.client_id === preSelectedClientId)
+      : projects,
+    [preSelectedClientId, projects]
+  );
 
   // Effect to populate form when editing or when modal opens with pre-selected values
   useEffect(() => {
@@ -91,7 +94,7 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
         setFormData(prev => ({ ...prev, project_id: filteredProjects[0].id }));
       }
     }
-  }, [location, open, preSelectedProjectId, preSelectedClientId, filteredProjects]);
+  }, [location, open, preSelectedProjectId, preSelectedClientId]);
 
   const resetForm = () => {
     setFormData({
