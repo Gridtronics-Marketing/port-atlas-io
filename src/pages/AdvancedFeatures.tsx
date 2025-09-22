@@ -6,6 +6,7 @@ import { InventoryManager } from '@/components/InventoryManager';
 import { FinancialDashboard } from '@/components/FinancialDashboard';
 import { DropPointTypesManager } from '@/components/DropPointTypesManager';
 import { CameraPermissionTest } from '@/components/CameraPermissionTest';
+import Communications from './Communications';
 
 const AdvancedFeatures = () => {
   return (
@@ -66,15 +67,7 @@ const AdvancedFeatures = () => {
         </TabsContent>
         
         <TabsContent value="communication" className="space-y-6">
-          <Card>
-            <CardContent className="py-12">
-              <div className="text-center text-muted-foreground">
-                <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <h3 className="text-lg font-semibold mb-2">Communication Hub</h3>
-                <p>Real-time messaging and notifications coming soon</p>
-              </div>
-            </CardContent>
-          </Card>
+          <Communications />
         </TabsContent>
       </Tabs>
     </main>
