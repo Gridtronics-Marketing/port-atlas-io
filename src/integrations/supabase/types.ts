@@ -1488,6 +1488,10 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_user_room_ids: {
+        Args: Record<PropertyKey, never>
+        Returns: string[]
+      }
       has_any_role: {
         Args: { _roles: Database["public"]["Enums"]["app_role"][] }
         Returns: boolean
