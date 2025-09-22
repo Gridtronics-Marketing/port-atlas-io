@@ -12,7 +12,8 @@ import {
   Calendar,
   Layers,
   Square,
-  Info
+  Info,
+  Trash2
 } from "lucide-react";
 import {
   Dialog,
@@ -20,6 +21,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -51,11 +63,12 @@ interface LocationDetailsModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onEditLocation?: (location: Location) => void;
+  onDeleteLocation?: (id: string) => void;
 }
 
 
 
-export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocation }: LocationDetailsModalProps) => {
+export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocation, onDeleteLocation }: LocationDetailsModalProps) => {
   const [activeTab, setActiveTab] = useState("details");
   const [selectedFloor, setSelectedFloor] = useState(1);
   const [editMode, setEditMode] = useState(false);
@@ -141,6 +154,39 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
                   <MapPin className="h-4 w-4" />
                   Edit Location
                 </Button>
+              )}
+              {onDeleteLocation && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="flex items-center gap-2 text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Delete
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete Location</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Are you sure you want to delete "{location.name}"? This action cannot be undone and will remove all associated drop points and data.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => {
+                          onDeleteLocation(location.id);
+                          onOpenChange(false);
+                        }}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        Delete Location
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               )}
               <Button className="bg-gradient-primary hover:bg-primary-hover">
                 <Plus className="h-4 w-4 mr-2" />

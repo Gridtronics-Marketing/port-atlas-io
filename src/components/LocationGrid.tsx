@@ -1,13 +1,6 @@
 import { useState } from "react";
-import { MapPin, MoreHorizontal, Eye, Edit, Trash2, Cable, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { MapPin, Cable, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import {
-  DropdownMenu,
-  DropdownMenuContent,  
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { LocationDetailsModal } from "@/components/LocationDetailsModal";
 import { AddLocationModal } from "@/components/AddLocationModal";
 import { useLocations, type Location } from "@/hooks/useLocations";
@@ -60,7 +53,8 @@ export const LocationGrid = () => {
         {locations.map((location) => (
           <div
             key={location.id}
-            className="flex items-center justify-between p-4 border border-border rounded-lg hover:shadow-soft transition-all duration-200 bg-card"
+            className="flex items-center justify-between p-4 border border-border rounded-lg hover:shadow-soft transition-all duration-200 bg-card cursor-pointer hover:border-primary/30"
+            onClick={() => setSelectedLocation(location)}
           >
             <div className="flex items-start gap-3 flex-1">
               <div className="p-2 bg-primary/10 rounded-lg">
@@ -69,10 +63,7 @@ export const LocationGrid = () => {
               
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <h3 
-                    className="font-semibold text-foreground truncate cursor-pointer hover:text-primary transition-colors"
-                    onClick={() => setSelectedLocation(location)}
-                  >
+                  <h3 className="font-semibold text-foreground truncate">
                     {location.name}
                   </h3>
                   <Badge className={getStatusColor(location.status)}>
@@ -96,23 +87,6 @@ export const LocationGrid = () => {
                 </div>
               </div>
             </div>
-            
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-popover border">
-                <DropdownMenuItem 
-                  className="text-destructive"
-                  onClick={() => deleteLocation(location.id)}
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete Location
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
         ))}
       </div>
@@ -122,6 +96,7 @@ export const LocationGrid = () => {
         open={!!selectedLocation}
         onOpenChange={(open) => !open && setSelectedLocation(null)}
         onEditLocation={setEditingLocation}
+        onDeleteLocation={deleteLocation}
       />
       
       <AddLocationModal
