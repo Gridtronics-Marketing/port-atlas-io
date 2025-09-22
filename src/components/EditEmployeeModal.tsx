@@ -392,33 +392,59 @@ export const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdateEmployee 
 
           {/* Skills */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Skills</h3>
-            <div className="flex flex-wrap gap-2 mb-4">
-              {formData.skills.map((skill, index) => (
-                <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                  {skill}
-                  <X 
-                    className="h-3 w-3 cursor-pointer hover:text-destructive" 
-                    onClick={() => removeSkill(skill)}
-                  />
-                </Badge>
-              ))}
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold">Skills & Expertise</h3>
+              <Badge variant="outline" className="text-xs">
+                {formData.skills.length} skill{formData.skills.length !== 1 ? 's' : ''}
+              </Badge>
             </div>
-            <div className="flex gap-2">
-              <Input
-                value={newSkill}
-                onChange={(e) => setNewSkill(e.target.value)}
-                placeholder="Add a skill"
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    addSkill(newSkill);
-                  }
-                }}
-              />
-              <Button type="button" onClick={() => addSkill(newSkill)} size="sm">
-                <Plus className="h-4 w-4" />
-              </Button>
+            
+            <div className="p-4 border rounded-lg bg-muted/10">
+              <div className="flex flex-wrap gap-2 mb-4">
+                {formData.skills.length > 0 ? (
+                  formData.skills.map((skill, index) => (
+                    <Badge key={index} variant="secondary" className="flex items-center gap-1 px-2 py-1">
+                      {skill}
+                      <X 
+                        className="h-3 w-3 cursor-pointer hover:text-destructive transition-colors" 
+                        onClick={() => removeSkill(skill)}
+                      />
+                    </Badge>
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground italic">
+                    No skills added yet. Add skills to help with project assignments.
+                  </p>
+                )}
+              </div>
+              
+              <div className="flex gap-2">
+                <Input
+                  value={newSkill}
+                  onChange={(e) => setNewSkill(e.target.value)}
+                  placeholder="Enter a skill (e.g., Fiber Optics, Network Cabling, WiFi Setup)"
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      addSkill(newSkill.trim());
+                    }
+                  }}
+                  className="flex-1"
+                />
+                <Button 
+                  type="button" 
+                  onClick={() => addSkill(newSkill.trim())} 
+                  size="sm"
+                  disabled={!newSkill.trim()}
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add
+                </Button>
+              </div>
+              
+              <div className="mt-3 text-xs text-muted-foreground">
+                <p>💡 Tip: Press Enter to quickly add skills. Click the X on any skill to remove it.</p>
+              </div>
             </div>
           </div>
 

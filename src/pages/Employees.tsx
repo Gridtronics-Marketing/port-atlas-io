@@ -213,6 +213,21 @@ const Employees = () => {
                             <Badge className={getStatusColor(employee.status)}>
                               {employee.status}
                             </Badge>
+                            {canManageEmployees() && (
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-6 px-2 text-xs ml-auto"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedEmployee(employee);
+                                  setIsEditModalOpen(true);
+                                }}
+                              >
+                                <Edit className="h-3 w-3 mr-1" />
+                                Edit
+                              </Button>
+                            )}
                           </div>
                           
                           <p className="text-sm text-muted-foreground mb-2">
@@ -234,23 +249,27 @@ const Employees = () => {
                             )}
                           </div>
                           
-                          <div className="flex flex-wrap gap-1">
+                          <div className="flex flex-wrap gap-1 mb-2">
+                            <span className="text-xs font-medium text-muted-foreground mr-2">Skills:</span>
                             {employee.skills && employee.skills.length > 0 ? (
                               <>
-                                {employee.skills.slice(0, 3).map((skill, index) => (
+                                {employee.skills.slice(0, 4).map((skill, index) => (
                                   <Badge key={index} variant="outline" className="text-xs">
                                     {skill}
                                   </Badge>
                                 ))}
-                                {employee.skills.length > 3 && (
+                                {employee.skills.length > 4 && (
                                   <Badge variant="outline" className="text-xs">
-                                    +{employee.skills.length - 3} more
+                                    +{employee.skills.length - 4} more
                                   </Badge>
                                 )}
                               </>
                             ) : (
-                              <Badge variant="outline" className="text-xs">
+                              <Badge variant="outline" className="text-xs text-muted-foreground">
                                 No skills listed
+                                {canManageEmployees() && (
+                                  <span className="ml-1">- Click Edit to add</span>
+                                )}
                               </Badge>
                             )}
                           </div>
