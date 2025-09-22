@@ -40,14 +40,14 @@ import { InteractiveMap } from "@/components/InteractiveMap";
 import { DropPointList } from "@/components/DropPointList";
 import { ScheduleAssignmentModal } from "@/components/ScheduleAssignmentModal";
 import { AddLocationNoteModal } from "@/components/AddLocationNoteModal";
-import { FloorPlanRepairTool } from './FloorPlanRepairTool';
-import { FloorPlanFileManager } from './FloorPlanFileManager';
-import { InteractiveFloorPlan } from './InteractiveFloorPlan';
-import { FloorPlanEditor } from './FloorPlanEditor';
-import { FloorPlanDemo } from './FloorPlanDemo';
-import { DropPointList } from './DropPointList';
-import { ScheduleAssignmentModal } from './ScheduleAssignmentModal';
-import { AddLocationNoteModal } from './AddLocationNoteModal';
+import { FloorPlanEditor } from "@/components/FloorPlanEditor";
+import { FloorPlanDemo } from "@/components/FloorPlanDemo";
+import { FloorPlanRepairTool } from "@/components/FloorPlanRepairTool";
+import { FloorPlanFileManager } from "@/components/FloorPlanFileManager";
+import { InteractiveFloorPlan } from "@/components/InteractiveFloorPlan";
+import { getFloorPlanUrls } from "@/lib/storage-utils";
+import { useLocationTeam } from "@/hooks/useLocationTeam";
+import { useLocationNotes } from "@/hooks/useLocationNotes";
 import {
   Select,
   SelectContent,
@@ -55,8 +55,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Label } from '@/components/ui/label';
-import { supabase } from "@/integrations/supabase/client";
+import { Label } from "@/components/ui/label";
 import { type Location } from "@/hooks/useLocations";
 
 interface LocationDetailsModalProps {
@@ -67,12 +66,10 @@ interface LocationDetailsModalProps {
   onDeleteLocation?: (id: string) => void;
 }
 
-
-
 export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocation, onDeleteLocation }: LocationDetailsModalProps) => {
   const [activeTab, setActiveTab] = useState("details");
   const [selectedFloor, setSelectedFloor] = useState(1);
-  const [editMode, setEditMode] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
   const [floorPlanUrls, setFloorPlanUrls] = useState<{ [floorNumber: number]: string }>({});
 
   // Fetch team members for this location
@@ -128,587 +125,508 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto bg-card border">
-        <DialogHeader>
-          <div className="flex items-start justify-between">
-            <div>
-              <DialogTitle className="flex items-center gap-2 text-xl">
-                <MapPin className="h-5 w-5 text-primary" />
-                {location.name}
-              </DialogTitle>
-              <div className="flex items-center gap-2 mt-2">
-                <Badge className={getStatusColor(location.status)}>
-                  {location.status}
-                </Badge>
-                <span className="text-sm text-muted-foreground">
-                  {location.project?.client?.name || 'No Client'} • {location.address}
-                </span>
+        <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto bg-card border">
+          <DialogHeader>
+            <div className="flex items-start justify-between">
+              <div>
+                <DialogTitle className="flex items-center gap-2 text-xl">
+                  <MapPin className="h-5 w-5 text-primary" />
+                  {location.name}
+                </DialogTitle>
+                <div className="flex items-center gap-2 mt-2">
+                  <Badge className={getStatusColor(location.status)}>
+                    {location.status}
+                  </Badge>
+                  <span className="text-sm text-muted-foreground">
+                    {location.project?.client?.name || 'No Client'} • {location.address}
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {onEditLocation && (
+                  <Button
+                    variant="outline"
+                    onClick={() => onEditLocation(location)}
+                    className="flex items-center gap-2"
+                  >
+                    <MapPin className="h-4 w-4" />
+                    Edit Location
+                  </Button>
+                )}
+                {onDeleteLocation && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="flex items-center gap-2 text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Delete
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Location</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to delete "{location.name}"? This action cannot be undone and will remove all associated drop points and data.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => {
+                            onDeleteLocation(location.id);
+                            onOpenChange(false);
+                          }}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Delete Location
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+                <Button className="bg-gradient-primary hover:bg-primary-hover">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Drop Point
+                </Button>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              {onEditLocation && (
-                <Button
-                  variant="outline"
-                  onClick={() => onEditLocation(location)}
-                  className="flex items-center gap-2"
-                >
-                  <MapPin className="h-4 w-4" />
-                  Edit Location
-                </Button>
-              )}
-              {onDeleteLocation && (
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="flex items-center gap-2 text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      Delete
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Delete Location</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Are you sure you want to delete "{location.name}"? This action cannot be undone and will remove all associated drop points and data.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() => {
-                          onDeleteLocation(location.id);
-                          onOpenChange(false);
-                        }}
-                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                      >
-                        Delete Location
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              )}
-              <Button className="bg-gradient-primary hover:bg-primary-hover">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Drop Point
-              </Button>
+          </DialogHeader>
+
+          <div className="space-y-6">
+            {/* Enhanced Quick Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <Card className="shadow-soft">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2">
+                    <Layers className="h-5 w-5 text-primary" />
+                    <div>
+                      <p className="text-2xl font-bold text-foreground">{location.floors}</p>
+                      <p className="text-sm text-muted-foreground">Floor{location.floors > 1 ? 's' : ''}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="shadow-soft">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2">
+                    <Cable className="h-5 w-5 text-primary" />
+                    <div>
+                      <p className="text-2xl font-bold text-foreground">{location.drop_points_count || 0}</p>
+                      <p className="text-sm text-muted-foreground">Drop Points</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card className="shadow-soft">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2">
+                    <Square className="h-5 w-5 text-success" />
+                    <div>
+                      <p className="text-2xl font-bold text-foreground">
+                        {location.total_square_feet ? `${location.total_square_feet.toLocaleString()}` : 'N/A'}
+                      </p>
+                      <p className="text-sm text-muted-foreground">Sq Ft</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card className="shadow-soft">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-warning" />
+                    <div>
+                      <p className="text-2xl font-bold text-foreground">{location.completion_percentage}%</p>
+                      <p className="text-sm text-muted-foreground">Complete</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-          </div>
-        </DialogHeader>
 
-        <div className="space-y-6">
-          {/* Enhanced Quick Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Card className="shadow-soft">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2">
-                  <Layers className="h-5 w-5 text-primary" />
-                  <div>
-                    <p className="text-2xl font-bold text-foreground">{location.floors}</p>
-                    <p className="text-sm text-muted-foreground">Floor{location.floors > 1 ? 's' : ''}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Enhanced Tabs */}
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="grid w-full grid-cols-4 bg-muted">
+                <TabsTrigger value="details" className="flex items-center gap-2">
+                  <Info className="h-4 w-4" />
+                  Details
+                </TabsTrigger>
+                <TabsTrigger value="floor-plans" className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4" />
+                  Floor Plans
+                </TabsTrigger>
+                <TabsTrigger value="drops" className="flex items-center gap-2">
+                  <Cable className="h-4 w-4" />
+                  Drop Points
+                </TabsTrigger>
+                <TabsTrigger value="team" className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  Team & Notes
+                </TabsTrigger>
+              </TabsList>
 
-            <Card className="shadow-soft">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2">
-                  <Cable className="h-5 w-5 text-primary" />
-                  <div>
-                    <p className="text-2xl font-bold text-foreground">{location.drop_points_count || 0}</p>
-                    <p className="text-sm text-muted-foreground">Drop Points</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card className="shadow-soft">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2">
-                  <Square className="h-5 w-5 text-success" />
-                  <div>
-                    <p className="text-2xl font-bold text-foreground">
-                      {location.total_square_feet ? `${location.total_square_feet.toLocaleString()}` : 'N/A'}
-                    </p>
-                    <p className="text-sm text-muted-foreground">Sq Ft</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card className="shadow-soft">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-warning" />
-                  <div>
-                    <p className="text-2xl font-bold text-foreground">{location.completion_percentage}%</p>
-                    <p className="text-sm text-muted-foreground">Complete</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Enhanced Tabs */}
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-4 bg-muted">
-              <TabsTrigger value="details" className="flex items-center gap-2">
-                <Info className="h-4 w-4" />
-                Details
-              </TabsTrigger>
-              <TabsTrigger value="map" className="flex items-center gap-2">
-                <MapPin className="h-4 w-4" />
-                Floor Plans
-              </TabsTrigger>
-              <TabsTrigger value="drops" className="flex items-center gap-2">
-                <Cable className="h-4 w-4" />
-                Drop Points
-              </TabsTrigger>
-              <TabsTrigger value="team" className="flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                Team & Notes
-              </TabsTrigger>
-            </TabsList>
-
-            {/* Details Tab */}
-            <TabsContent value="details" className="mt-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Basic Information */}
-                <Card className="shadow-soft">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Building2 className="h-5 w-5 text-primary" />
-                      Location Information
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <p className="font-medium text-sm text-muted-foreground mb-1">Address</p>
-                      <p className="text-foreground">{location.address}</p>
-                    </div>
-                    
-                    {location.building_type && (
-                      <div>
-                        <p className="font-medium text-sm text-muted-foreground mb-1">Building Type</p>
-                        <p className="text-foreground">{location.building_type}</p>
-                      </div>
-                    )}
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="font-medium text-sm text-muted-foreground mb-1">Floors</p>
-                        <p className="text-foreground">{location.floors}</p>
-                      </div>
-                      
-                      {location.total_square_feet && (
-                        <div>
-                          <p className="font-medium text-sm text-muted-foreground mb-1">Square Feet</p>
-                          <p className="text-foreground">{location.total_square_feet.toLocaleString()}</p>
-                        </div>
-                      )}
-                    </div>
-
-                    <div>
-                      <p className="font-medium text-sm text-muted-foreground mb-1">Status</p>
-                      <Badge className={getStatusColor(location.status)}>
-                        {location.status}
-                      </Badge>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Contact Information */}
-                <Card className="shadow-soft">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <User className="h-5 w-5 text-primary" />
-                      Contact Information
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {location.contact_onsite && (
-                      <div className="flex items-start gap-3">
-                        <User className="h-5 w-5 text-muted-foreground mt-0.5" />
-                        <div>
-                          <p className="font-medium text-sm text-muted-foreground">On-site Contact</p>
-                          <p className="text-foreground">{location.contact_onsite}</p>
-                        </div>
-                      </div>
-                    )}
-
-                    {location.contact_phone && (
-                      <div className="flex items-start gap-3">
-                        <Phone className="h-5 w-5 text-muted-foreground mt-0.5" />
-                        <div>
-                          <p className="font-medium text-sm text-muted-foreground">Phone</p>
-                          <p className="text-foreground">{location.contact_phone}</p>
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="flex items-start gap-3">
-                      <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
-                      <div>
-                        <p className="font-medium text-sm text-muted-foreground">Created</p>
-                        <p className="text-foreground">
-                          {new Date(location.created_at).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-
-                    {location.project?.client?.name && (
-                      <div className="flex items-start gap-3">
-                        <Building2 className="h-5 w-5 text-muted-foreground mt-0.5" />
-                        <div>
-                          <p className="font-medium text-sm text-muted-foreground">Client</p>
-                          <p className="text-foreground">{location.project.client.name}</p>
-                        </div>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-
-                {/* Access Instructions */}
-                {location.access_instructions && (
-                  <Card className="shadow-soft lg:col-span-2">
+              {/* Details Tab */}
+              <TabsContent value="details" className="mt-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Basic Information */}
+                  <Card className="shadow-soft">
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
-                        <FileText className="h-5 w-5 text-primary" />
-                        Access Instructions
+                        <Building2 className="h-5 w-5 text-primary" />
+                        Location Information
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <div className="p-4 bg-muted rounded-lg">
-                        <p className="text-foreground whitespace-pre-wrap">
-                          {location.access_instructions}
-                        </p>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <p className="font-medium text-sm text-muted-foreground mb-1">Address</p>
+                        <p className="text-foreground">{location.address}</p>
+                      </div>
+                      
+                      {location.building_type && (
+                        <div>
+                          <p className="font-medium text-sm text-muted-foreground mb-1">Building Type</p>
+                          <p className="text-foreground">{location.building_type}</p>
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="font-medium text-sm text-muted-foreground mb-1">Floors</p>
+                          <p className="text-foreground">{location.floors}</p>
+                        </div>
+                        
+                        {location.total_square_feet && (
+                          <div>
+                            <p className="font-medium text-sm text-muted-foreground mb-1">Square Feet</p>
+                            <p className="text-foreground">{location.total_square_feet.toLocaleString()}</p>
+                          </div>
+                        )}
+                      </div>
+
+                      <div>
+                        <p className="font-medium text-sm text-muted-foreground mb-1">Status</p>
+                        <Badge className={getStatusColor(location.status)}>
+                          {location.status}
+                        </Badge>
                       </div>
                     </CardContent>
                   </Card>
-                )}
-              </div>
-            </TabsContent>
 
-                  <TabsContent value="floor-plans" className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <Label htmlFor="floor-select">Floor:</Label>
-                        <Select value={selectedFloor.toString()} onValueChange={(value) => setSelectedFloor(parseInt(value))}>
-                          <SelectTrigger className="w-32">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {Array.from({ length: location.floors || 1 }, (_, i) => i + 1).map((floor) => (
-                              <SelectItem key={floor} value={floor.toString()}>
-                                Floor {floor}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setIsEditMode(!isEditMode)}
-                        >
-                          {isEditMode ? 'Exit Edit' : 'Edit Mode'}
-                        </Button>
-                        <Button variant="outline" size="sm">
-                          Demo
-                        </Button>
-                      </div>
-                    </div>
+                  {/* Contact Information */}
+                  <Card className="shadow-soft">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <User className="h-5 w-5 text-primary" />
+                        Contact Information
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {location.contact_onsite && (
+                        <div className="flex items-start gap-3">
+                          <User className="h-5 w-5 text-muted-foreground mt-0.5" />
+                          <div>
+                            <p className="font-medium text-sm text-muted-foreground">On-site Contact</p>
+                            <p className="text-foreground">{location.contact_onsite}</p>
+                          </div>
+                        </div>
+                      )}
 
-                    {floorPlanUrls[selectedFloor] ? (
-                      <div className="space-y-4">
-                        {isEditMode ? (
-                          <FloorPlanEditor
-                            locationId={location.id}
-                            floorNumber={selectedFloor}
-                            fileUrl={floorPlanUrls[selectedFloor]}
-                            className="min-h-[500px]"
-                          />
-                        ) : (
-                          <InteractiveFloorPlan
-                            locationId={location.id}
-                            floorNumber={selectedFloor}
-                            fileUrl={floorPlanUrls[selectedFloor]}
-                            filePath={location.floor_plan_files?.[selectedFloor] || ''}
-                            fileName={location.floor_plan_files?.[selectedFloor]?.split('/').pop() || ''}
-                            className="min-h-[500px]"
-                          />
-                        )}
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed">
-                          <p className="text-gray-600 mb-4">No floor plan available for Floor {selectedFloor}</p>
-                          <FloorPlanDemo />
+                      {location.contact_phone && (
+                        <div className="flex items-start gap-3">
+                          <Phone className="h-5 w-5 text-muted-foreground mt-0.5" />
+                          <div>
+                            <p className="font-medium text-sm text-muted-foreground">Phone</p>
+                            <p className="text-foreground">{location.contact_phone}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="flex items-start gap-3">
+                        <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
+                        <div>
+                          <p className="font-medium text-sm text-muted-foreground">Created</p>
+                          <p className="text-foreground">
+                            {new Date(location.created_at).toLocaleDateString()}
+                          </p>
                         </div>
                       </div>
-                    )}
-                    
-                    <Tabs defaultValue="diagnostics" className="w-full">
-                      <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="diagnostics">Diagnostics</TabsTrigger>
-                        <TabsTrigger value="file-manager">File Manager</TabsTrigger>
-                      </TabsList>
-                      
-                      <TabsContent value="diagnostics" className="mt-4">
-                        <FloorPlanRepairTool 
-                          location={location} 
-                          onRepairComplete={() => {
-                            if (location.floor_plan_files) {
-                              setFloorPlanUrls(getFloorPlanUrls(location.floor_plan_files));
-                            }
-                          }}
-                        />
-                      </TabsContent>
-                      
-                      <TabsContent value="file-manager" className="mt-4">
-                        <FloorPlanFileManager
-                          locationId={location.id}
-                          onFilesChanged={() => {
-                            if (location.floor_plan_files) {
-                              setFloorPlanUrls(getFloorPlanUrls(location.floor_plan_files));
-                            }
-                            window.location.reload();
-                          }}
-                        />
-                      </TabsContent>
-                    </Tabs>
-                  </TabsContent>
-              <Card className="shadow-soft">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle>Floor Plans & Layout Maps</CardTitle>
-                      <CardDescription>
-                        Interactive floor plans for all {location.floors} floor{location.floors > 1 ? 's' : ''}. Click on areas to add drop points or view installations.
-                      </CardDescription>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {location.floors > 1 && (
-                        <Select value={selectedFloor.toString()} onValueChange={(value) => setSelectedFloor(parseInt(value))}>
-                          <SelectTrigger className="w-32">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {Array.from({ length: location.floors }, (_, i) => i + 1).map((floor) => (
-                              <SelectItem key={floor} value={floor.toString()}>
-                                Floor {floor}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+
+                      {location.project?.client?.name && (
+                        <div className="flex items-start gap-3">
+                          <Building2 className="h-5 w-5 text-muted-foreground mt-0.5" />
+                          <div>
+                            <p className="font-medium text-sm text-muted-foreground">Client</p>
+                            <p className="text-foreground">{location.project.client.name}</p>
+                          </div>
+                        </div>
                       )}
-                      <Button 
-                        variant={editMode ? "default" : "outline"} 
-                        onClick={() => setEditMode(!editMode)}
-                      >
-                        {editMode ? "View Mode" : "Edit Mode"}
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  {/* Floor Plan Repair Tool */}
-                  <div className="mb-4">
-                    <FloorPlanRepairTool 
-                      location={location}
-                      onRepairComplete={() => {
-                        // Refresh the page to reload updated data
-                        window.location.reload();
-                      }}
-                    />
-                  </div>
-                  
-                  {location.floors > 1 && (
-                    <div className="mb-4">
-                      <Badge variant="outline" className="mb-2">
-                        Floor {selectedFloor} of {location.floors}
-                      </Badge>
-                    </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Access Instructions */}
+                  {location.access_instructions && (
+                    <Card className="shadow-soft lg:col-span-2">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <FileText className="h-5 w-5 text-primary" />
+                          Access Instructions
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="p-4 bg-muted rounded-lg">
+                          <p className="text-foreground whitespace-pre-wrap">
+                            {location.access_instructions}
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
                   )}
+                </div>
+              </TabsContent>
+
+              {/* Floor Plans Tab */}
+              <TabsContent value="floor-plans" className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <Label htmlFor="floor-select">Floor:</Label>
+                    <Select value={selectedFloor.toString()} onValueChange={(value) => setSelectedFloor(parseInt(value))}>
+                      <SelectTrigger className="w-32">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: location.floors || 1 }, (_, i) => i + 1).map((floor) => (
+                          <SelectItem key={floor} value={floor.toString()}>
+                            Floor {floor}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                   
-                   {editMode ? (
-                     <FloorPlanEditor 
-                       floorNumber={selectedFloor}
-                       locationName={location.name}
-                       backgroundImage={currentFloorPlanUrl || null}
-                       onSave={(canvasData) => {
-                         console.log(`Saving floor ${selectedFloor} plan:`, canvasData);
-                         setEditMode(false);
-                       }}
-                     />
-                    ) : hasFloorPlans ? (
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsEditMode(!isEditMode)}
+                    >
+                      {isEditMode ? 'Exit Edit' : 'Edit Mode'}
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      Demo
+                    </Button>
+                  </div>
+                </div>
+
+                {floorPlanUrls[selectedFloor] ? (
+                  <div className="space-y-4">
+                    {isEditMode ? (
+                      <div className="min-h-[500px]">
+                        <FloorPlanEditor
+                          floorNumber={selectedFloor}
+                          locationName={location.name}
+                          backgroundImage={floorPlanUrls[selectedFloor]}
+                          onSave={(canvasData) => {
+                            console.log('Floor plan saved:', canvasData);
+                            // Handle save logic here
+                          }}
+                        />
+                      </div>
+                    ) : (
                       <InteractiveFloorPlan
                         locationId={location.id}
                         floorNumber={selectedFloor}
-                        fileUrl={currentFloorPlanUrl}
-                        filePath={location.floor_plan_files?.[selectedFloor]}
-                        fileName={`floor_${selectedFloor}.${location.floor_plan_files?.[selectedFloor]?.split('.').pop() || 'pdf'}`}
+                        fileUrl={floorPlanUrls[selectedFloor]}
+                        filePath={location.floor_plan_files?.[selectedFloor] || ''}
+                        fileName={location.floor_plan_files?.[selectedFloor]?.split('/').pop() || ''}
+                        className="min-h-[500px]"
                       />
-                   ) : (
-                    <FloorPlanDemo 
-                      floorNumber={selectedFloor}
-                      totalFloors={location.floors}
-                      onStartEditor={() => setEditMode(true)}
-                    />
-                  )}
-                  
-                  <div className="mt-4 p-3 bg-muted/50 rounded-lg text-sm text-muted-foreground">
-                    <p className="font-medium mb-1">Quick Tips:</p>
-                    <ul className="space-y-1 text-xs">
-                      <li>• <strong>Upload Floor Plans:</strong> Add building layouts when creating locations</li>
-                      <li>• <strong>Edit Mode:</strong> Interactive editor for drawing and placing drop points</li>
-                      <li>• <strong>View Mode:</strong> {hasFloorPlans ? 'See uploaded floor plans with existing drop points' : 'Demo mode - upload floor plans to see actual layouts'}</li>
-                      <li>• {location.floors > 1 ? 'Use the floor selector to switch between floors' : 'Single floor layout'}</li>
-                    </ul>
+                    )}
                   </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed">
+                      <p className="text-gray-600 mb-4">No floor plan available for Floor {selectedFloor}</p>
+                      <FloorPlanDemo 
+                        floorNumber={selectedFloor}
+                        totalFloors={location.floors}
+                        onStartEditor={() => setIsEditMode(true)}
+                      />
+                    </div>
+                  </div>
+                )}
+                
+                <Tabs defaultValue="diagnostics" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="diagnostics">Diagnostics</TabsTrigger>
+                    <TabsTrigger value="file-manager">File Manager</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="diagnostics" className="mt-4">
+                    <FloorPlanRepairTool 
+                      location={location} 
+                      onRepairComplete={() => {
+                        if (location.floor_plan_files) {
+                          setFloorPlanUrls(getFloorPlanUrls(location.floor_plan_files));
+                        }
+                      }}
+                    />
+                  </TabsContent>
+                  
+                  <TabsContent value="file-manager" className="mt-4">
+                    <FloorPlanFileManager
+                      locationId={location.id}
+                      onFilesChanged={() => {
+                        if (location.floor_plan_files) {
+                          setFloorPlanUrls(getFloorPlanUrls(location.floor_plan_files));
+                        }
+                        window.location.reload();
+                      }}
+                    />
+                  </TabsContent>
+                </Tabs>
+              </TabsContent>
 
-            <TabsContent value="drops" className="mt-6">
-              <Card className="shadow-soft">
-                <CardHeader>
-                  <CardTitle>Drop Point Management</CardTitle>
-                  <CardDescription>
-                    Manage all installation points across {location.floors} floor{location.floors > 1 ? 's' : ''}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <DropPointList locationId={location.id} />
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="team" className="mt-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Drop Points Tab */}
+              <TabsContent value="drops" className="mt-6">
                 <Card className="shadow-soft">
                   <CardHeader>
-                    <CardTitle>Assigned Team</CardTitle>
-                    <CardDescription>Personnel assigned to this location</CardDescription>
+                    <CardTitle>Drop Point Management</CardTitle>
+                    <CardDescription>
+                      Manage all installation points across {location.floors} floor{location.floors > 1 ? 's' : ''}
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-3">
-                      {teamLoading ? (
-                        <div className="text-sm text-muted-foreground">Loading team members...</div>
-                      ) : teamMembers.length > 0 ? (
-                        teamMembers.map((member) => (
-                          <div key={member.id} className="flex items-center gap-3 p-3 border border-border rounded-lg">
-                            <div className="h-10 w-10 bg-primary/10 rounded-full flex items-center justify-center">
-                              <span className="text-sm font-medium text-primary">
-                                {member.first_name.charAt(0)}{member.last_name.charAt(0)}
-                              </span>
-                            </div>
-                            <div>
-                              <p className="font-medium text-foreground">{member.first_name} {member.last_name}</p>
-                              <p className="text-sm text-muted-foreground">{member.role}</p>
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="text-sm text-muted-foreground">No team members currently assigned to this location.</div>
-                      )}
-                      <Button 
-                        variant="outline" 
-                        className="w-full"
-                        onClick={() => setShowScheduleModal(true)}
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Assign Team Member
-                      </Button>
-                    </div>
+                    <DropPointList locationId={location.id} />
                   </CardContent>
                 </Card>
+              </TabsContent>
 
-                <Card className="shadow-soft">
-                  <CardHeader>
-                    <CardTitle>Project Notes</CardTitle>
-                    <CardDescription>Important notes and observations</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3 text-sm">
-                      {location.access_instructions && (
+              {/* Team & Notes Tab */}
+              <TabsContent value="team" className="mt-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <Card className="shadow-soft">
+                    <CardHeader>
+                      <CardTitle>Assigned Team</CardTitle>
+                      <CardDescription>Personnel assigned to this location</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        {teamLoading ? (
+                          <div className="text-sm text-muted-foreground">Loading team members...</div>
+                        ) : teamMembers.length > 0 ? (
+                          teamMembers.map((member) => (
+                            <div key={member.id} className="flex items-center gap-3 p-3 border border-border rounded-lg">
+                              <div className="h-10 w-10 bg-primary/10 rounded-full flex items-center justify-center">
+                                <span className="text-sm font-medium text-primary">
+                                  {member.first_name.charAt(0)}{member.last_name.charAt(0)}
+                                </span>
+                              </div>
+                              <div>
+                                <p className="font-medium text-foreground">{member.first_name} {member.last_name}</p>
+                                <p className="text-sm text-muted-foreground">{member.role}</p>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="text-sm text-muted-foreground">No team members currently assigned to this location.</div>
+                        )}
+                        <Button 
+                          variant="outline" 
+                          className="w-full"
+                          onClick={() => setShowScheduleModal(true)}
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Assign Team Member
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="shadow-soft">
+                    <CardHeader>
+                      <CardTitle>Project Notes</CardTitle>
+                      <CardDescription>Important notes and observations</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3 text-sm">
+                        {location.access_instructions && (
+                          <div className="p-3 bg-muted rounded-lg">
+                            <p className="text-foreground">
+                              <strong>Access Requirements:</strong> {location.access_instructions}
+                            </p>
+                          </div>
+                        )}
+                        
                         <div className="p-3 bg-muted rounded-lg">
                           <p className="text-foreground">
-                            <strong>Access Requirements:</strong> {location.access_instructions}
+                            <strong>Building Details:</strong> {location.floors} floor{location.floors > 1 ? 's' : ''}, 
+                            {location.building_type && ` ${location.building_type} building,`}
+                            {location.total_square_feet && ` ${location.total_square_feet.toLocaleString()} sq ft total`}
                           </p>
                         </div>
-                      )}
-                      
-                      <div className="p-3 bg-muted rounded-lg">
-                        <p className="text-foreground">
-                          <strong>Building Details:</strong> {location.floors} floor{location.floors > 1 ? 's' : ''}, 
-                          {location.building_type && ` ${location.building_type} building,`}
-                          {location.total_square_feet && ` ${location.total_square_feet.toLocaleString()} sq ft total`}
-                        </p>
+
+                        {/* Display existing notes */}
+                        {notesLoading ? (
+                          <div className="text-sm text-muted-foreground">Loading notes...</div>
+                        ) : notes.length > 0 ? (
+                          notes.map((note) => (
+                            <div key={note.id} className="p-3 bg-muted rounded-lg">
+                              <p className="text-foreground">
+                                <strong>{note.title}:</strong> {note.content}
+                              </p>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                By {note.employee_name} • {new Date(note.created_at).toLocaleDateString()}
+                              </p>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="text-sm text-muted-foreground">No project notes yet.</div>
+                        )}
+                        
+                        <Button 
+                          variant="outline" 
+                          className="w-full"
+                          onClick={() => setShowAddNoteModal(true)}
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Note
+                        </Button>
                       </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </div>
+        </DialogContent>
+      </Dialog>
 
-                      {/* Display existing notes */}
-                      {notesLoading ? (
-                        <div className="text-sm text-muted-foreground">Loading notes...</div>
-                      ) : notes.length > 0 ? (
-                        notes.map((note) => (
-                          <div key={note.id} className="p-3 bg-muted rounded-lg">
-                            <p className="text-foreground">
-                              <strong>{note.title}:</strong> {note.content}
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              By {note.employee_name} • {new Date(note.created_at).toLocaleDateString()}
-                            </p>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="text-sm text-muted-foreground">No project notes yet.</div>
-                      )}
-                      
-                      <Button 
-                        variant="outline" 
-                        className="w-full"
-                        onClick={() => setShowAddNoteModal(true)}
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Note
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-          </Tabs>
-        </div>
-      </DialogContent>
-    </Dialog>
+      {/* Schedule Assignment Modal */}
+      <ScheduleAssignmentModal
+        open={showScheduleModal}
+        onOpenChange={(open) => {
+          setShowScheduleModal(open);
+          if (!open) {
+            refetchTeam(); // Refresh team members when modal closes
+          }
+        }}
+        selectedDate={new Date()}
+      />
 
-    {/* Schedule Assignment Modal */}
-    <ScheduleAssignmentModal
-      open={showScheduleModal}
-      onOpenChange={(open) => {
-        setShowScheduleModal(open);
-        if (!open) {
-          refetchTeam(); // Refresh team members when modal closes
-        }
-      }}
-      selectedDate={new Date()}
-    />
-
-    {/* Add Note Modal */}
-    <AddLocationNoteModal
-      isOpen={showAddNoteModal}
-      onClose={() => setShowAddNoteModal(false)}
-      locationId={location?.id || ''}
-      onNoteAdded={() => {
-        refetchNotes();
-        setShowAddNoteModal(false);
-      }}
-    />
-  </>
+      {/* Add Note Modal */}
+      <AddLocationNoteModal
+        isOpen={showAddNoteModal}
+        onClose={() => setShowAddNoteModal(false)}
+        locationId={location?.id || ''}
+        onNoteAdded={() => {
+          refetchNotes();
+          setShowAddNoteModal(false);
+        }}
+      />
+    </>
   );
 };
