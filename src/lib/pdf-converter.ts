@@ -1,7 +1,17 @@
 import * as pdfjsLib from 'pdfjs-dist';
 
-// Set worker path - use CDN to ensure version compatibility
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/5.4.149/pdf.worker.min.js`;
+// Set worker path - use multiple fallback options
+const setWorkerSrc = () => {
+  try {
+    // First try CDN
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@5.4.149/build/pdf.worker.min.js`;
+  } catch {
+    // Fallback to alternative CDN
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/5.4.149/pdf.worker.min.js`;
+  }
+};
+
+setWorkerSrc();
 
 export interface ConvertedPage {
   pageNumber: number;
@@ -25,10 +35,37 @@ export const convertPDFToImages = async (
   try {
     console.log('[PDF Converter] Starting conversion for:', file.name);
     
-    // Load the PDF
+    // Validate file
+    if (!file || file.size === 0) {
+      throw new Error('Invalid or empty PDF file');
+    }
+
+    if (file.size > 50 * 1024 * 1024) { // 50MB limit
+      throw new Error('PDF file is too large (maximum 50MB)');
+    }
+    
+    // Load the PDF with timeout
     const arrayBuffer = await file.arrayBuffer();
-    const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
-    const pdf = await loadingTask.promise;
+    
+    if (arrayBuffer.byteLength === 0) {
+      throw new Error('PDF file appears to be empty');
+    }
+
+    console.log('[PDF Converter] File size:', arrayBuffer.byteLength, 'bytes');
+    
+    const loadingTask = pdfjsLib.getDocument({ 
+      data: arrayBuffer,
+      maxImageSize: -1,
+      disableAutoFetch: true,
+      disableStream: true
+    });
+    
+    // Add timeout for loading
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('PDF loading timeout')), 30000)
+    );
+    
+    const pdf = await Promise.race([loadingTask.promise, timeoutPromise]) as any;
     
     console.log('[PDF Converter] PDF loaded, pages:', pdf.numPages);
     

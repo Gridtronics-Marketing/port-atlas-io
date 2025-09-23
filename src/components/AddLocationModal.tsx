@@ -172,9 +172,19 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
 
       } catch (error) {
         console.error('PDF conversion error:', error);
+        
+        // Clear conversion progress for this floor
+        setConversionProgress(prev => {
+          const newState = { ...prev };
+          delete newState[floorNumber];
+          return newState;
+        });
+
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        
         toast({
           title: "Conversion Failed",
-          description: "Failed to convert PDF to image. Please try again or use an image file.",
+          description: `Failed to convert PDF: ${errorMessage}. Please try with a smaller PDF or use an image file (JPG, PNG).`,
           variant: "destructive",
         });
       } finally {
