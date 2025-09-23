@@ -62,7 +62,7 @@ export const InteractiveFloorPlan = ({
   const drawingCanvasRef = useRef<DrawingCanvasRef>(null);
   const { toast } = useToast();
   
-  const { dropPoints, loading: dropPointsLoading, updateDropPoint } = useDropPoints(locationId);
+  const { dropPoints, loading: dropPointsLoading, updateDropPoint, fetchDropPoints } = useDropPoints(locationId);
   const { roomViews, loading: roomViewsLoading, updateRoomView } = useRoomViews(locationId);
   
   // Generate the actual file URL from path or use provided URL
@@ -686,7 +686,13 @@ export const InteractiveFloorPlan = ({
       {/* Add Drop Point Modal */}
       <AddDropPointModal
         open={showAddModal}
-        onOpenChange={setShowAddModal}
+        onOpenChange={(open) => {
+          setShowAddModal(open);
+          if (!open) {
+            setClickCoordinates(null);
+            fetchDropPoints(); // Refresh drop points after adding
+          }
+        }}
         locationId={locationId}
         coordinates={clickCoordinates || undefined}
         floor={floorNumber}

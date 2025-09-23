@@ -6,7 +6,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Trash2, Upload, Eye, RefreshCw, FileX, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Trash2, Upload, Eye, RefreshCw, FileX, CheckCircle, AlertTriangle, Paintbrush } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { getStorageUrl, deleteFloorPlanFile, validateFileAccess } from '@/lib/storage-utils';
 import { toast } from 'sonner';
@@ -255,6 +255,14 @@ export const FloorPlanFileManager: React.FC<FloorPlanFileManagerProps> = ({
                 </span>
               </Button>
             </Label>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => window.open(`/floor-plan-editor/${locationId}`, '_blank')}
+            >
+              <Paintbrush className="h-4 w-4 mr-2" />
+              Draw Plan
+            </Button>
             <Input
               id="file-upload"
               type="file"

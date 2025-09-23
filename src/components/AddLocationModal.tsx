@@ -50,7 +50,11 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
   
   const [formData, setFormData] = useState({
     name: "",
-    address: "",
+    street1: "",
+    street2: "",
+    city: "",
+    state: "",
+    zipCode: "",
     building_type: "",
     floors: 1,
     total_square_feet: "",
@@ -72,9 +76,15 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
   // Effect to populate form when editing or when modal opens with pre-selected values
   useEffect(() => {
     if (location && open) {
+      // Parse existing address into separate fields
+      const addressParts = (location.address || "").split(", ");
       setFormData({
         name: location.name || "",
-        address: location.address || "",
+        street1: addressParts[0] || "",
+        street2: addressParts[1] || "",
+        city: addressParts[2] || "",
+        state: addressParts[3] || "",
+        zipCode: addressParts[4] || "",
         building_type: location.building_type || "",
         floors: location.floors || 1,
         total_square_feet: location.total_square_feet?.toString() || "",
@@ -99,7 +109,11 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
   const resetForm = () => {
     setFormData({
       name: "",
-      address: "",
+      street1: "",
+      street2: "",
+      city: "",
+      state: "",
+      zipCode: "",
       building_type: "",
       floors: 1,
       total_square_feet: "",
@@ -210,10 +224,10 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
   };
 
   const handleSubmit = async () => {
-    if (!formData.name.trim() || !formData.address.trim()) {
+    if (!formData.name.trim() || !formData.street1.trim() || !formData.city.trim() || !formData.state.trim()) {
       toast({
         title: "Validation Error",
-        description: "Please fill in all required fields (Name and Address)",
+        description: "Please fill in all required fields (Name, Street Address, City, and State)",
         variant: "destructive",
       });
       return;
@@ -222,9 +236,18 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
     try {
       setIsSubmitting(true);
       
+      // Combine address fields
+      const addressParts = [
+        formData.street1.trim(),
+        formData.street2.trim(),
+        formData.city.trim(),
+        formData.state.trim(),
+        formData.zipCode.trim()
+      ].filter(part => part); // Remove empty parts
+      
       const locationData = {
         name: formData.name.trim(),
-        address: formData.address.trim(),
+        address: addressParts.join(", "),
         building_type: formData.building_type.trim() || null,
         floors: formData.floors,
         total_square_feet: formData.total_square_feet ? parseInt(formData.total_square_feet) : null,
@@ -396,15 +419,63 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="address" className="text-sm font-medium">Address *</Label>
-                  <Input
-                    id="address"
-                    placeholder="Enter full street address"
-                    value={formData.address}
-                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    className="h-10"
-                  />
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="street1" className="text-sm font-medium">Street Address 1 *</Label>
+                    <Input
+                      id="street1"
+                      placeholder="123 Main Street"
+                      value={formData.street1}
+                      onChange={(e) => setFormData({ ...formData, street1: e.target.value })}
+                      className="h-10"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="street2" className="text-sm font-medium">Street Address 2</Label>
+                    <Input
+                      id="street2"
+                      placeholder="Apt, Suite, Unit, etc. (optional)"
+                      value={formData.street2}
+                      onChange={(e) => setFormData({ ...formData, street2: e.target.value })}
+                      className="h-10"
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="city" className="text-sm font-medium">City *</Label>
+                      <Input
+                        id="city"
+                        placeholder="City"
+                        value={formData.city}
+                        onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                        className="h-10"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="state" className="text-sm font-medium">State *</Label>
+                      <Input
+                        id="state"
+                        placeholder="State"
+                        value={formData.state}
+                        onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                        className="h-10"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="zipCode" className="text-sm font-medium">Zip Code</Label>
+                      <Input
+                        id="zipCode"
+                        placeholder="12345"
+                        value={formData.zipCode}
+                        onChange={(e) => setFormData({ ...formData, zipCode: e.target.value })}
+                        className="h-10"
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

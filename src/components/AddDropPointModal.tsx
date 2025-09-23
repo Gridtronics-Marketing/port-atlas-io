@@ -42,9 +42,8 @@ export const AddDropPointModal = ({
   const [availableTypes, setAvailableTypes] = useState<DropPointType[]>(DEFAULT_TYPES);
   const [formData, setFormData] = useState({
     label: "",
-    room: "",
-    point_type: "data" as const,
-    status: "planned" as const,
+    numberOfCables: "",
+    cableType: "CAT6" as const,
     notes: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -77,13 +76,13 @@ export const AddDropPointModal = ({
 
     setIsSubmitting(true);
     try {
-      await addDropPoint({
+      const dropPointData = {
         location_id: locationId,
         label: formData.label,
-        room: formData.room || null,
-        point_type: formData.point_type,
-        status: formData.status,
-        notes: formData.notes || null,
+        room: null,
+        point_type: "data" as const,
+        status: "planned" as const,
+        notes: `Cables: ${formData.numberOfCables}, Type: ${formData.cableType}${formData.notes ? `, Notes: ${formData.notes}` : ''}`,
         floor,
         x_coordinate: coordinates?.x || null,
         y_coordinate: coordinates?.y || null,
@@ -98,14 +97,15 @@ export const AddDropPointModal = ({
         installed_date: null,
         tested_by: null,
         tested_date: null,
-      });
+      };
+
+      await addDropPoint(dropPointData);
 
       // Reset form and close modal
       setFormData({
         label: "",
-        room: "",
-        point_type: "data",
-        status: "planned",
+        numberOfCables: "",
+        cableType: "CAT6",
         notes: "",
       });
       onOpenChange(false);
@@ -124,67 +124,47 @@ export const AddDropPointModal = ({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="label">Label *</Label>
+            <Input
+              id="label"
+              value={formData.label}
+              onChange={(e) => setFormData(prev => ({ ...prev, label: e.target.value }))}
+              placeholder="DP-001, FP-001, etc."
+              required
+            />
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="label">Label *</Label>
+              <Label htmlFor="numberOfCables">Number of Cables *</Label>
               <Input
-                id="label"
-                value={formData.label}
-                onChange={(e) => setFormData(prev => ({ ...prev, label: e.target.value }))}
-                placeholder="DP-001, FP-001, etc."
+                id="numberOfCables"
+                type="number"
+                min="1"
+                value={formData.numberOfCables}
+                onChange={(e) => setFormData(prev => ({ ...prev, numberOfCables: e.target.value }))}
+                placeholder="1"
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="room">Room/Area</Label>
-              <Input
-                id="room"
-                value={formData.room}
-                onChange={(e) => setFormData(prev => ({ ...prev, room: e.target.value }))}
-                placeholder="Office 101, Conference Room, etc."
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="point_type">Drop Point Type</Label>
+              <Label htmlFor="cableType">Cable Type *</Label>
               <Select 
-                value={formData.point_type} 
-                onValueChange={(value) => setFormData(prev => ({ ...prev, point_type: value as any }))}
+                value={formData.cableType} 
+                onValueChange={(value) => setFormData(prev => ({ ...prev, cableType: value as any }))}
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {availableTypes.map((type) => (
-                    <SelectItem key={type.value} value={type.value}>
-                      <div className="flex items-center gap-2">
-                        <span>{type.icon}</span>
-                        {type.label}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="status">Status</Label>
-              <Select 
-                value={formData.status} 
-                onValueChange={(value) => setFormData(prev => ({ ...prev, status: value as any }))}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="planned">📋 Planned</SelectItem>
-                  <SelectItem value="installed">🔧 Installed</SelectItem>
-                  <SelectItem value="tested">✅ Tested</SelectItem>
-                  <SelectItem value="active">🟢 Active</SelectItem>
-                  <SelectItem value="inactive">🔴 Inactive</SelectItem>
+                  <SelectItem value="CAT5e">CAT5e</SelectItem>
+                  <SelectItem value="CAT6">CAT6</SelectItem>
+                  <SelectItem value="CAT6A">CAT6A</SelectItem>
+                  <SelectItem value="CAT7">CAT7</SelectItem>
+                  <SelectItem value="Fiber">Fiber Optic</SelectItem>
+                  <SelectItem value="Coax">Coaxial</SelectItem>
                 </SelectContent>
               </Select>
             </div>

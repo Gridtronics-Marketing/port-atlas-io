@@ -469,17 +469,23 @@ export function usePhotoCapture() {
           video.play();
           
           captureBtn.onclick = () => {
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            context?.drawImage(video, 0, 0);
-            
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
-            
-            // Stop camera stream
-            stream.getTracks().forEach(track => track.stop());
-            document.body.removeChild(modal);
-            
-            resolve({ dataUrl });
+            // Wait for video to be ready
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+              canvas.width = video.videoWidth;
+              canvas.height = video.videoHeight;
+              context?.drawImage(video, 0, 0);
+              
+              const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+              
+              // Stop camera stream
+              stream.getTracks().forEach(track => track.stop());
+              document.body.removeChild(modal);
+              
+              resolve({ dataUrl });
+            } else {
+              // Video not ready, show error
+              alert('Camera is not ready yet. Please wait a moment and try again.');
+            }
           };
           
           cancelBtn.onclick = () => {
