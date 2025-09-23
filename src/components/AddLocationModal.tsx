@@ -200,10 +200,10 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
   };
 
   const handleSubmit = async () => {
-    if (!formData.name.trim() || !formData.address.trim() || !formData.project_id) {
+    if (!formData.name.trim() || !formData.address.trim()) {
       toast({
         title: "Validation Error",
-        description: "Please fill in all required fields (Name, Address, and Project Assignment)",
+        description: "Please fill in all required fields (Name and Address)",
         variant: "destructive",
       });
       return;
@@ -449,7 +449,7 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="project_id" className="text-sm font-medium">Project Assignment *</Label>
+                  <Label htmlFor="project_id" className="text-sm font-medium">Project Assignment</Label>
                   <Select value={formData.project_id} onValueChange={(value) => setFormData({ ...formData, project_id: value })}>
                     <SelectTrigger className="h-10 bg-background">
                       <SelectValue placeholder="Select project" />
