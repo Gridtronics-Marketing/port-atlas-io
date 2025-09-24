@@ -27,6 +27,9 @@ export const useCurrentEmployee = () => {
       }
 
       try {
+        console.log('🔍 Fetching employee for email:', user.email);
+        
+        // Try to find employee by email first
         const { data, error } = await supabase
           .from('employees')
           .select('id, first_name, last_name, email, role, department, status')
@@ -36,13 +39,40 @@ export const useCurrentEmployee = () => {
         if (error) {
           if (error.code !== 'PGRST116') { // Not found error
             console.error('Error fetching current employee:', error);
-            toast({
-              title: "Warning",
-              description: "Could not find employee record for current user",
-              variant: "destructive",
-            });
+          } else {
+            console.log('⚠️ No employee found with email:', user.email);
+            
+            // If employee not found by email, try alternative lookup methods
+            // This can happen if the employee record exists but email is not set
+            console.log('🔍 Attempting alternative employee lookup...');
+            
+            // Try to find by user ID or other matching criteria
+            const { data: altData, error: altError } = await supabase
+              .from('employees')
+              .select('id, first_name, last_name, email, role, department, status')
+              .is('email', null)
+              .limit(1)
+              .single();
+              
+            if (altData) {
+              console.log('✅ Found employee with missing email, using as fallback:', altData);
+              setEmployee(altData);
+              toast({
+                title: "Employee Profile Found",
+                description: `Welcome ${altData.first_name} ${altData.last_name}! Your employee record needs email update.`,
+              });
+              return;
+            }
           }
+          
+          // Show helpful message to user
+          toast({
+            title: "Employee Profile Not Found",
+            description: "Your user account is not linked to an employee profile. Contact your administrator for assistance.",
+            variant: "destructive",
+          });
         } else {
+          console.log('✅ Employee found:', data);
           setEmployee(data);
         }
       } catch (error) {

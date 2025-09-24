@@ -50,38 +50,48 @@ export const FloorPlanDrawingCanvas = forwardRef<DrawingCanvasRef, FloorPlanDraw
   useEffect(() => {
     if (!canvasRef.current) return;
 
-    const canvas = new FabricCanvas(canvasRef.current, {
-      width,
-      height,
-      backgroundColor: 'transparent',
-      preserveObjectStacking: true,
-    });
+    try {
+      const canvas = new FabricCanvas(canvasRef.current, {
+        width,
+        height,
+        backgroundColor: 'transparent',
+        preserveObjectStacking: true,
+      });
 
-    // Initialize the freeDrawingBrush explicitly for Fabric.js v6
-    const brush = new PencilBrush(canvas);
-    brush.color = brushColor;
-    brush.width = brushSize;
-    canvas.freeDrawingBrush = brush;
+      // Initialize the freeDrawingBrush explicitly for Fabric.js v6
+      const brush = new PencilBrush(canvas);
+      brush.color = brushColor;
+      brush.width = brushSize;
+      canvas.freeDrawingBrush = brush;
 
-    setFabricCanvas(canvas);
+      setFabricCanvas(canvas);
+      console.log('✅ Drawing canvas initialized successfully', { width, height });
 
-    // Load saved data if available
-    if (savedData) {
-      try {
-        canvas.loadFromJSON(savedData, () => {
-          canvas.renderAll();
-          saveToHistory(canvas);
-        });
-      } catch (error) {
-        console.error('Error loading saved drawing data:', error);
+      // Load saved data if available
+      if (savedData) {
+        try {
+          canvas.loadFromJSON(savedData, () => {
+            canvas.renderAll();
+            saveToHistory(canvas);
+          });
+        } catch (error) {
+          console.error('Error loading saved drawing data:', error);
+        }
+      } else {
+        saveToHistory(canvas);
       }
-    } else {
-      saveToHistory(canvas);
-    }
 
-    return () => {
-      canvas.dispose();
-    };
+      return () => {
+        canvas.dispose();
+      };
+    } catch (error) {
+      console.error('❌ Failed to initialize drawing canvas:', error);
+      toast({
+        title: "Drawing Canvas Error",
+        description: "Failed to initialize drawing canvas. Please check your browser compatibility.",
+        variant: "destructive",
+      });
+    }
   }, [width, height]);
 
   // Save current state to history

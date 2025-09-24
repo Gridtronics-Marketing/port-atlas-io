@@ -296,7 +296,7 @@ export const InteractiveFloorPlan = ({
 
   // Drawing functions
   const handleDrawingToolChange = (tool: DrawingTool) => {
-    console.log('Tool changed to:', tool); // Debug log
+    console.log('✅ Drawing tool changed to:', tool);
     setActiveTool(tool);
     
     // When switching to select mode, reset adding states and exit drawing mode
@@ -309,6 +309,18 @@ export const InteractiveFloorPlan = ({
       setIsDrawingMode(true);
       setIsAddingPoint(false);
       setIsAddingRoomView(false);
+      
+      // Validate drawing canvas is ready
+      if (!drawingCanvasRef.current) {
+        console.warn('⚠️ Drawing canvas not ready, waiting...');
+        toast({
+          title: "Drawing Mode",
+          description: "Initializing drawing canvas, please wait a moment...",
+        });
+        return;
+      }
+      
+      console.log('✅ Drawing mode activated successfully');
     }
   };
 

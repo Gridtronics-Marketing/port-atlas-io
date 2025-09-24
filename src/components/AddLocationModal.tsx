@@ -101,12 +101,23 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
       
       // Auto-select project if pre-selected or if only one project available for client
       if (preSelectedProjectId) {
+        console.log('✅ Pre-selecting project:', preSelectedProjectId);
         setFormData(prev => ({ ...prev, project_id: preSelectedProjectId }));
       } else if (preSelectedClientId && filteredProjects.length === 1) {
+        console.log('✅ Auto-selecting single project for client:', filteredProjects[0].name);
         setFormData(prev => ({ ...prev, project_id: filteredProjects[0].id }));
+      } else if (preSelectedClientId && filteredProjects.length === 0) {
+        console.warn('⚠️ No projects found for client:', preSelectedClientId);
+        toast({
+          title: "No Projects Found",
+          description: "This client doesn't have any projects yet. Please create a project first or select a different client.",
+          variant: "destructive",
+        });
+      } else if (preSelectedClientId && filteredProjects.length > 1) {
+        console.log('ℹ️ Multiple projects available for client, user needs to select one');
       }
     }
-  }, [location, open, preSelectedProjectId, preSelectedClientId]);
+  }, [location, open, preSelectedProjectId, preSelectedClientId, filteredProjects, toast]);
 
   const resetForm = () => {
     setFormData({
@@ -383,7 +394,11 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
             {isEditing 
               ? 'Update location details and manage floor plans for your jobsite.'
               : preSelectedClientId
-                ? `Adding a new location for the selected client. ${filteredProjects.length} project${filteredProjects.length !== 1 ? 's' : ''} available.`
+                ? filteredProjects.length === 0
+                  ? 'No projects found for this client. Please create a project first.'
+                  : filteredProjects.length === 1
+                    ? `Adding location to project: ${filteredProjects[0].name}`
+                    : `Select from ${filteredProjects.length} available projects for this client.`
                 : 'Create a new jobsite location and upload floor plans for comprehensive drop point management.'
             }
           </DialogDescription>
