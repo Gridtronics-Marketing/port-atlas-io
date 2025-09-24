@@ -109,8 +109,13 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
       } else if (preSelectedClientId && filteredProjects.length === 0) {
         console.warn('⚠️ No projects found for client:', preSelectedClientId);
         toast({
-          title: "No Projects Found",
-          description: "This client doesn't have any projects yet. Please create a project first or select a different client.",
+          title: "No Projects Available",
+          description: "This client doesn't have any projects yet. Please create a project first before adding locations.",
+          variant: "destructive",
+        });
+        toast({
+          title: "No Projects Available",
+          description: "This client doesn't have any projects yet. Please create a project first before adding locations.",
           variant: "destructive",
         });
       } else if (preSelectedClientId && filteredProjects.length > 1) {

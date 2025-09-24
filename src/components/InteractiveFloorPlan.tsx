@@ -297,6 +297,16 @@ export const InteractiveFloorPlan = ({
   // Drawing functions
   const handleDrawingToolChange = (tool: DrawingTool) => {
     console.log('✅ Drawing tool changed to:', tool);
+    
+    if (!actualFileUrl) {
+      toast({
+        title: "Floor Plan Required",
+        description: "Please upload a floor plan image before using drawing tools.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setActiveTool(tool);
     
     // When switching to select mode, reset adding states and exit drawing mode

@@ -50,48 +50,38 @@ export const FloorPlanDrawingCanvas = forwardRef<DrawingCanvasRef, FloorPlanDraw
   useEffect(() => {
     if (!canvasRef.current) return;
 
-    try {
-      const canvas = new FabricCanvas(canvasRef.current, {
-        width,
-        height,
-        backgroundColor: 'transparent',
-        preserveObjectStacking: true,
-      });
+    const canvas = new FabricCanvas(canvasRef.current, {
+      width,
+      height,
+      backgroundColor: 'transparent',
+      preserveObjectStacking: true,
+    });
 
-      // Initialize the freeDrawingBrush explicitly for Fabric.js v6
-      const brush = new PencilBrush(canvas);
-      brush.color = brushColor;
-      brush.width = brushSize;
-      canvas.freeDrawingBrush = brush;
+    // Initialize the freeDrawingBrush explicitly for Fabric.js v6
+    const brush = new PencilBrush(canvas);
+    brush.color = brushColor;
+    brush.width = brushSize;
+    canvas.freeDrawingBrush = brush;
 
-      setFabricCanvas(canvas);
-      console.log('✅ Drawing canvas initialized successfully', { width, height });
+    setFabricCanvas(canvas);
 
-      // Load saved data if available
-      if (savedData) {
-        try {
-          canvas.loadFromJSON(savedData, () => {
-            canvas.renderAll();
-            saveToHistory(canvas);
-          });
-        } catch (error) {
-          console.error('Error loading saved drawing data:', error);
-        }
-      } else {
-        saveToHistory(canvas);
+    // Load saved data if available
+    if (savedData) {
+      try {
+        canvas.loadFromJSON(savedData, () => {
+          canvas.renderAll();
+          saveToHistory(canvas);
+        });
+      } catch (error) {
+        console.error('Error loading saved drawing data:', error);
       }
-
-      return () => {
-        canvas.dispose();
-      };
-    } catch (error) {
-      console.error('❌ Failed to initialize drawing canvas:', error);
-      toast({
-        title: "Drawing Canvas Error",
-        description: "Failed to initialize drawing canvas. Please check your browser compatibility.",
-        variant: "destructive",
-      });
+    } else {
+      saveToHistory(canvas);
     }
+
+    return () => {
+      canvas.dispose();
+    };
   }, [width, height]);
 
   // Save current state to history
