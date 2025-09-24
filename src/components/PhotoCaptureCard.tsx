@@ -40,11 +40,11 @@ export function PhotoCaptureCard({
   const [lastPhoto, setLastPhoto] = useState<CapturedPhoto | null>(null);
 
   const handleCapture = async () => {
-    if (!employeeId) return;
-
+    console.log('📸 Mobile photo capture initiated:', { employeeId, locationId, projectId, workOrderId });
+    
     const photo = await capturePhoto(
-      category,
-      description,
+      description, // Fixed: description first
+      category,    // Then category
       projectId,
       locationId,
       workOrderId,
@@ -52,18 +52,21 @@ export function PhotoCaptureCard({
     );
 
     if (photo) {
+      console.log('✅ Mobile photo captured successfully:', photo);
       setLastPhoto(photo);
       setDescription('');
       onPhotoCapture?.(photo);
+    } else {
+      console.log('❌ Mobile photo capture failed');
     }
   };
 
   const handleGallerySelect = async () => {
-    if (!employeeId) return;
-
+    console.log('🖼️ Mobile gallery selection initiated:', { employeeId, locationId, projectId, workOrderId });
+    
     const photo = await selectFromGallery(
-      category,
-      description,
+      description, // Fixed: description first
+      category,    // Then category
       projectId,
       locationId,
       workOrderId,
@@ -71,24 +74,17 @@ export function PhotoCaptureCard({
     );
 
     if (photo) {
+      console.log('✅ Mobile gallery photo selected successfully:', photo);
       setLastPhoto(photo);
       setDescription('');
       onPhotoCapture?.(photo);
+    } else {
+      console.log('❌ Mobile gallery selection failed');
     }
   };
 
-  if (!employeeId) {
-    return (
-      <Card className="shadow-soft">
-        <CardContent className="pt-6">
-          <div className="text-center text-muted-foreground">
-            <AlertCircle className="h-8 w-8 mx-auto mb-2" />
-            Employee ID required for photo capture
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+  // Allow photo capture without employee ID (will use current user's auth ID)
+  const showWarning = !employeeId;
 
   return (
     <Card className="shadow-soft">
@@ -100,6 +96,20 @@ export function PhotoCaptureCard({
       </CardHeader>
       
       <CardContent className="space-y-4">
+        {showWarning && (
+          <div className="border border-yellow-200 rounded-lg p-3 bg-yellow-50">
+            <div className="flex items-center gap-2 mb-1">
+              <AlertCircle className="h-4 w-4 text-yellow-600" />
+              <span className="text-sm font-medium text-yellow-800">
+                No Employee Profile
+              </span>
+            </div>
+            <div className="text-xs text-yellow-600">
+              Photos will be saved with your user account instead of an employee profile.
+            </div>
+          </div>
+        )}
+        
         {lastPhoto && (
           <div className="border rounded-lg p-3 bg-green-50">
             <div className="flex items-center gap-2 mb-2">

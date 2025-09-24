@@ -22,10 +22,19 @@ export function usePhotoCapture() {
 
   const checkCameraPermission = async () => {
     try {
-      console.log('Checking camera permissions...');
+      console.log('📱 Checking camera permissions...');
       
-      // Check if we're in a web environment
-      const isWeb = !(window as any).Capacitor || (window as any).Capacitor.getPlatform() === 'web';
+      // Improved mobile/web detection
+      const hasCapacitor = !!(window as any).Capacitor;
+      const capacitorPlatform = hasCapacitor ? (window as any).Capacitor.getPlatform() : null;
+      const isWeb = !hasCapacitor || capacitorPlatform === 'web';
+      
+      console.log('🔍 Platform detection:', { 
+        hasCapacitor, 
+        capacitorPlatform, 
+        isWeb, 
+        userAgent: navigator.userAgent 
+      });
       
       if (isWeb) {
         console.log('Web environment detected, checking browser camera permissions...');
@@ -130,25 +139,40 @@ export function usePhotoCapture() {
   ): Promise<CapturedPhoto | null> => {
     console.log('🔄 Starting photo capture:', { description, category, employeeId, locationId, projectId, workOrderId });
     
-    if (!employeeId) {
-      console.log('❌ No employee ID, allowing admin users to continue');
-      // Allow admins to capture photos without employee ID
+    // Get current user ID as fallback if no employeeId
+    const { data: { user } } = await supabase.auth.getUser();
+    const currentUserId = user?.id;
+    
+    console.log('👤 User info:', { employeeId, currentUserId, hasUser: !!user });
+    
+    if (!employeeId && !currentUserId) {
+      console.error('❌ No employee ID and no authenticated user');
+      toast({
+        title: 'Authentication Required',
+        description: 'Please log in to capture photos',
+        variant: 'destructive',
+      });
+      return null;
     }
-
-    console.log('Starting photo capture process...');
+    
+    console.log('📱 Starting photo capture process...');
     setLoading(true);
 
     try {
       const hasPermission = await checkCameraPermission();
       if (!hasPermission) {
-        console.log('Camera permission not available, aborting photo capture');
+        console.log('❌ Camera permission not available, aborting photo capture');
         return null;
       }
 
-      console.log('Camera permission OK, opening camera...');
+      console.log('✅ Camera permission OK, opening camera...');
       
-      // Check if we're in web environment and use appropriate method
-      const isWeb = !(window as any).Capacitor || (window as any).Capacitor.getPlatform() === 'web';
+      // Improved platform detection
+      const hasCapacitor = !!(window as any).Capacitor;
+      const capacitorPlatform = hasCapacitor ? (window as any).Capacitor.getPlatform() : null;
+      const isWeb = !hasCapacitor || capacitorPlatform === 'web';
+      
+      console.log('🔍 Using platform:', { isWeb, hasCapacitor, capacitorPlatform });
       let image: any;
       
       if (isWeb) {
@@ -218,24 +242,37 @@ export function usePhotoCapture() {
       // Create a daily log entry to store the photo
       console.log('💾 Creating daily log entry with photo...');
       
+      const logEntry = {
+        employee_id: employeeId || null, // Use employee ID if available
+        project_id: projectId || undefined,
+        location_id: locationId || undefined,
+        work_order_id: workOrderId || undefined,
+        log_date: new Date().toISOString().split('T')[0],
+        work_description: `Photo captured: ${category}${description ? ` - ${description}` : ''}`,
+        photos: [urlData.publicUrl],
+        hours_worked: 0,
+      };
+      
+      console.log('📝 Daily log entry data:', logEntry);
+      
       const { data: logData, error: logError } = await supabase
         .from('daily_logs')
-        .insert({
-          employee_id: employeeId || null, // Allow null for admin users without employee records
-          project_id: projectId || undefined,
-          location_id: locationId || undefined,
-          work_order_id: workOrderId || undefined,
-          log_date: new Date().toISOString().split('T')[0],
-          work_description: `Photo captured: ${category}${description ? ` - ${description}` : ''}`,
-          photos: [urlData.publicUrl],
-          hours_worked: 0,
-        })
+        .insert(logEntry)
         .select()
         .single();
 
       if (logError) {
         console.error('❌ Daily log creation error:', logError);
-        throw logError;
+        console.error('❌ Full error details:', JSON.stringify(logError, null, 2));
+        
+        // More specific error handling
+        if (logError.code === '23502') {
+          console.error('❌ Missing required field in daily_logs');
+        } else if (logError.code === '23503') {
+          console.error('❌ Foreign key constraint violation');
+        }
+        
+        throw new Error(`Database error: ${logError.message}`);
       }
       
       console.log('✅ Daily log created successfully:', logData);
@@ -298,9 +335,20 @@ export function usePhotoCapture() {
   ): Promise<CapturedPhoto | null> => {
     console.log('🔄 Starting gallery selection:', { description, category, employeeId, locationId, projectId, workOrderId });
     
-    if (!employeeId) {
-      console.log('❌ No employee ID, allowing admin users to continue');
-      // Allow admins to select photos without employee ID
+    // Get current user ID as fallback if no employeeId
+    const { data: { user } } = await supabase.auth.getUser();
+    const currentUserId = user?.id;
+    
+    console.log('👤 Gallery user info:', { employeeId, currentUserId, hasUser: !!user });
+    
+    if (!employeeId && !currentUserId) {
+      console.error('❌ No employee ID and no authenticated user for gallery');
+      toast({
+        title: 'Authentication Required',
+        description: 'Please log in to select photos',
+        variant: 'destructive',
+      });
+      return null;
     }
 
     setLoading(true);
