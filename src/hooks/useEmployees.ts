@@ -185,11 +185,53 @@ export const useEmployees = () => {
 
       if (error) throw error;
       
-      // Apply filtering to the updated employee data before updating state
-      const filteredEmployee = filterEmployeeData(data as Employee);
-      setEmployees(prev => prev.map(employee => 
-        employee.id === id ? filteredEmployee : employee
-      ).sort((a, b) => a.first_name.localeCompare(b.first_name)));
+      console.log('✅ Employee updated successfully:', data);
+      console.log('🔐 Current user roles for filtering:', { 
+        canViewSensitive: canViewSensitiveData(),
+        hasProjectManager: hasRole('project_manager'),
+        hasAdmin: hasRole('admin'),
+        hasHR: hasRole('hr_manager')
+      });
+      
+      // For update operations, merge the updated fields with existing employee data
+      // to preserve fields the user should be able to see after updating them
+      setEmployees(prev => prev.map(employee => {
+        if (employee.id === id) {
+          const updatedEmployee = data as Employee;
+          
+          // If user can view sensitive data, return full updated data
+          if (canViewSensitiveData()) {
+            return updatedEmployee;
+          }
+          
+          // For other users, merge updated fields they can edit with filtered base data
+          const filteredBase = filterEmployeeData(updatedEmployee);
+          
+          // Preserve fields that were just updated and user should see the result
+          const preservedFields: Partial<Employee> = {};
+          
+          // If skills were updated, user should see them (project managers can view skills)
+          if (updates.skills !== undefined && canViewBasicEmployeeData()) {
+            preservedFields.skills = updatedEmployee.skills;
+          }
+          
+          // If certifications were updated, user should see them (project managers can view certifications)
+          if (updates.certifications !== undefined && canViewBasicEmployeeData()) {
+            preservedFields.certifications = updatedEmployee.certifications;
+          }
+          
+          // If employee_number was updated and user can edit employees, they should see it
+          if (updates.employee_number !== undefined && (canViewSensitiveData() || hasRole('project_manager'))) {
+            preservedFields.employee_number = updatedEmployee.employee_number;
+          }
+          
+          return {
+            ...filteredBase,
+            ...preservedFields
+          };
+        }
+        return employee;
+      }).sort((a, b) => a.first_name.localeCompare(b.first_name)));
       
       toast({
         title: "Success",
