@@ -7,6 +7,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  loggingOut: boolean;
   signUp: (email: string, password: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
@@ -26,6 +27,7 @@ export const useAuthProvider = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loggingOut, setLoggingOut] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -103,18 +105,44 @@ export const useAuthProvider = () => {
   };
 
   const signOut = async () => {
+    // Prevent multiple simultaneous logout attempts
+    if (loggingOut) {
+      console.log('Logout already in progress, ignoring duplicate call');
+      return;
+    }
+
     try {
-      setLoading(true);
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        toast({
-          title: "Sign Out Error",
-          description: error.message,
-          variant: "destructive",
-        });
+      setLoggingOut(true);
+      
+      // Clear local state immediately
+      setUser(null);
+      setSession(null);
+      
+      // Only attempt API logout if we have a session
+      if (session) {
+        const { error } = await supabase.auth.signOut();
+        
+        // Only show error toast for actual failures, not "session not found"
+        if (error && !error.message?.includes('session_not_found') && !error.message?.includes('Session not found')) {
+          toast({
+            title: "Sign Out Error",
+            description: error.message,
+            variant: "destructive",
+          });
+        }
+      } else {
+        console.log('No active session, skipping API logout call');
       }
+      
+      // Force redirect to auth page regardless of API response
+      window.location.href = '/auth';
+      
+    } catch (error) {
+      console.error('Unexpected error during logout:', error);
+      // Still redirect even if there's an unexpected error
+      window.location.href = '/auth';
     } finally {
-      setLoading(false);
+      setLoggingOut(false);
     }
   };
 
@@ -122,6 +150,7 @@ export const useAuthProvider = () => {
     user,
     session,
     loading,
+    loggingOut,
     signUp,
     signIn,
     signOut,
