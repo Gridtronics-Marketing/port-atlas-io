@@ -3,12 +3,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Network, Zap, Cable, Download, Building } from 'lucide-react';
+import { Plus, Network, Zap, Cable, Download, Building, Box } from 'lucide-react';
 import { useBackboneCables } from '@/hooks/useBackboneCables';
 import { useDistributionFrames } from '@/hooks/useDistributionFrames';
+import { useJunctionBoxes } from '@/hooks/useJunctionBoxes';
 import { InteractiveRiserDiagram } from '@/components/InteractiveRiserDiagram';
 import { AddDistributionFrameModal } from '@/components/AddDistributionFrameModal';
 import { AddBackboneCableModal } from '@/components/AddBackboneCableModal';
+import { AddJunctionBoxModal } from '@/components/AddJunctionBoxModal';
 import { AddRiserPathwayModal } from '@/components/AddRiserPathwayModal';
 import { RiserDiagramPDFExporter } from '@/components/RiserDiagramPDFExporter';
 import { RiserFloorPlanToggle } from '@/components/RiserFloorPlanToggle';
@@ -23,11 +25,14 @@ export const RiserDiagramViewer: React.FC<RiserDiagramViewerProps> = ({
   locationId,
   locationName
 }) => {
-  const { cables, loading: cablesLoading } = useBackboneCables(locationId);
-  const { frames, loading: framesLoading } = useDistributionFrames(locationId);
+  const { cables, loading: cablesLoading, fetchCables } = useBackboneCables(locationId);
+  const { frames, loading: framesLoading, fetchFrames } = useDistributionFrames(locationId);
+  const { junctionBoxes, loading: junctionLoading } = useJunctionBoxes(locationId);
   const [selectedFloor, setSelectedFloor] = useState<number | null>(null);
   const [showAddFrame, setShowAddFrame] = useState(false);
   const [showAddCable, setShowAddCable] = useState(false);
+  const [showAddJunction, setShowAddJunction] = useState(false);
+  const [selectedCableForJunction, setSelectedCableForJunction] = useState<string | null>(null);
   const [showAddPathway, setShowAddPathway] = useState(false);
 
   // Get unique floors from frames and cables
@@ -270,12 +275,31 @@ export const RiserDiagramViewer: React.FC<RiserDiagramViewerProps> = ({
         open={showAddFrame}
         onOpenChange={setShowAddFrame}
         locationId={locationId}
+        onSuccess={() => {
+          fetchFrames();
+          fetchCables();
+        }}
       />
       
       <AddBackboneCableModal 
         open={showAddCable}
         onOpenChange={setShowAddCable}
         locationId={locationId}
+        onSuccess={() => {
+          fetchCables();
+          fetchFrames();
+        }}
+      />
+      
+      <AddJunctionBoxModal
+        open={showAddJunction}
+        onOpenChange={setShowAddJunction}
+        locationId={locationId}
+        cableId={selectedCableForJunction || ''}
+        onSuccess={() => {
+          fetchCables();
+          fetchFrames();
+        }}
       />
       
       <AddRiserPathwayModal 

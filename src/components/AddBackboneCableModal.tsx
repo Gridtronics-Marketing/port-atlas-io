@@ -13,6 +13,7 @@ interface AddBackboneCableModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   locationId: string;
+  onSuccess?: () => void;
 }
 
 interface CableFormData {
@@ -34,7 +35,8 @@ interface CableFormData {
 export const AddBackboneCableModal: React.FC<AddBackboneCableModalProps> = ({
   open,
   onOpenChange,
-  locationId
+  locationId,
+  onSuccess
 }) => {
   const { addCable } = useBackboneCables(locationId);
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<CableFormData>();
@@ -54,6 +56,7 @@ export const AddBackboneCableModal: React.FC<AddBackboneCableModalProps> = ({
       toast.success('Backbone cable added successfully');
       reset();
       onOpenChange(false);
+      onSuccess?.();
     } catch (error) {
       console.error('Error adding cable:', error);
       toast.error('Failed to add backbone cable');

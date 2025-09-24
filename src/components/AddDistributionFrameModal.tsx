@@ -13,6 +13,7 @@ interface AddDistributionFrameModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   locationId: string;
+  onSuccess?: () => void;
 }
 
 interface FrameFormData {
@@ -28,7 +29,8 @@ interface FrameFormData {
 export const AddDistributionFrameModal: React.FC<AddDistributionFrameModalProps> = ({
   open,
   onOpenChange,
-  locationId
+  locationId,
+  onSuccess
 }) => {
   const { addFrame } = useDistributionFrames(locationId);
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<FrameFormData>();
@@ -47,6 +49,7 @@ export const AddDistributionFrameModal: React.FC<AddDistributionFrameModalProps>
       toast.success('Distribution frame added successfully');
       reset();
       onOpenChange(false);
+      onSuccess?.();
     } catch (error) {
       console.error('Error adding frame:', error);
       toast.error('Failed to add distribution frame');

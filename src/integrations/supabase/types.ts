@@ -164,6 +164,63 @@ export type Database = {
           },
         ]
       }
+      cable_junction_boxes: {
+        Row: {
+          backbone_cable_id: string | null
+          created_at: string
+          floor: number
+          id: string
+          junction_type: string
+          label: string
+          location_id: string | null
+          notes: string | null
+          updated_at: string
+          x_coordinate: number | null
+          y_coordinate: number | null
+        }
+        Insert: {
+          backbone_cable_id?: string | null
+          created_at?: string
+          floor: number
+          id?: string
+          junction_type?: string
+          label: string
+          location_id?: string | null
+          notes?: string | null
+          updated_at?: string
+          x_coordinate?: number | null
+          y_coordinate?: number | null
+        }
+        Update: {
+          backbone_cable_id?: string | null
+          created_at?: string
+          floor?: number
+          id?: string
+          junction_type?: string
+          label?: string
+          location_id?: string | null
+          notes?: string | null
+          updated_at?: string
+          x_coordinate?: number | null
+          y_coordinate?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cable_junction_boxes_backbone_cable_id_fkey"
+            columns: ["backbone_cable_id"]
+            isOneToOne: false
+            referencedRelation: "backbone_cables"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cable_junction_boxes_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_messages: {
         Row: {
           created_at: string

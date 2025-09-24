@@ -7,6 +7,7 @@ import { Network, Zap, Cable, Router, Box, AlertTriangle } from 'lucide-react';
 import { useBackboneCables } from '@/hooks/useBackboneCables';
 import { useDistributionFrames } from '@/hooks/useDistributionFrames';
 import { useRiserPathways } from '@/hooks/useRiserPathways';
+import { useJunctionBoxes } from '@/hooks/useJunctionBoxes';
 import { useCableConnections } from '@/hooks/useCableConnections';
 
 interface InteractiveRiserDiagramProps {
