@@ -3,9 +3,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Network, Zap, Cable } from 'lucide-react';
+import { Plus, Network, Zap, Cable, Download, Building } from 'lucide-react';
 import { useBackboneCables } from '@/hooks/useBackboneCables';
 import { useDistributionFrames } from '@/hooks/useDistributionFrames';
+import { InteractiveRiserDiagram } from '@/components/InteractiveRiserDiagram';
+import { AddDistributionFrameModal } from '@/components/AddDistributionFrameModal';
+import { AddBackboneCableModal } from '@/components/AddBackboneCableModal';
+import { AddRiserPathwayModal } from '@/components/AddRiserPathwayModal';
+import { RiserDiagramPDFExporter } from '@/components/RiserDiagramPDFExporter';
+import { RiserFloorPlanToggle } from '@/components/RiserFloorPlanToggle';
+import { RiserWorkOrderIntegration } from '@/components/RiserWorkOrderIntegration';
 
 interface RiserDiagramViewerProps {
   locationId: string;
@@ -19,6 +26,9 @@ export const RiserDiagramViewer: React.FC<RiserDiagramViewerProps> = ({
   const { cables, loading: cablesLoading } = useBackboneCables(locationId);
   const { frames, loading: framesLoading } = useDistributionFrames(locationId);
   const [selectedFloor, setSelectedFloor] = useState<number | null>(null);
+  const [showAddFrame, setShowAddFrame] = useState(false);
+  const [showAddCable, setShowAddCable] = useState(false);
+  const [showAddPathway, setShowAddPathway] = useState(false);
 
   // Get unique floors from frames and cables
   const floors = Array.from(
@@ -71,23 +81,25 @@ export const RiserDiagramViewer: React.FC<RiserDiagramViewerProps> = ({
           Riser Diagram - {locationName}
         </CardTitle>
         <div className="flex gap-2">
-          <Button size="sm" className="gap-2">
+          <Button size="sm" className="gap-2" onClick={() => setShowAddFrame(true)}>
             <Plus className="h-4 w-4" />
             Add Equipment
           </Button>
-          <Button size="sm" variant="outline" className="gap-2">
+          <Button size="sm" variant="outline" className="gap-2" onClick={() => setShowAddCable(true)}>
             <Plus className="h-4 w-4" />
             Add Cable Run
           </Button>
         </div>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="overview" className="w-full">
+        <Tabs defaultValue="diagram" className="w-full">
           <TabsList>
+            <TabsTrigger value="diagram">Interactive Diagram</TabsTrigger>
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="cables">Backbone Cables</TabsTrigger>
             <TabsTrigger value="equipment">Distribution Frames</TabsTrigger>
-            <TabsTrigger value="diagram">Interactive Diagram</TabsTrigger>
+            <TabsTrigger value="integration">Work Orders</TabsTrigger>
+            <TabsTrigger value="export">Export & Reports</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-4">
@@ -238,23 +250,33 @@ export const RiserDiagramViewer: React.FC<RiserDiagramViewerProps> = ({
           </TabsContent>
 
           <TabsContent value="diagram" className="space-y-4">
-            <div className="border rounded-lg p-8 bg-muted/50 min-h-[400px]">
-              <div className="text-center text-muted-foreground">
-                <Network className="h-12 w-12 mx-auto mb-4" />
-                <h3 className="text-lg font-medium mb-2">Interactive Riser Diagram</h3>
-                <p>Visual riser diagram editor coming soon. This will include:</p>
-                <ul className="mt-4 space-y-1 text-sm max-w-md mx-auto">
-                  <li>• Interactive equipment placement</li>
-                  <li>• Cable run visualization</li>
-                  <li>• Pathway mapping</li>
-                  <li>• Port-to-port connections</li>
-                  <li>• Capacity utilization display</li>
-                </ul>
-              </div>
-            </div>
+            <RiserFloorPlanToggle 
+              locationId={locationId}
+              locationName={locationName}
+              onAddEquipment={() => setShowAddFrame(true)}
+              onAddCable={() => setShowAddCable(true)}
+            />
+          </TabsContent>
+
+          <TabsContent value="integration" className="space-y-4">
+            <RiserWorkOrderIntegration 
+              locationId={locationId}
+            />
           </TabsContent>
         </Tabs>
       </CardContent>
+      
+      <AddDistributionFrameModal 
+        open={showAddFrame}
+        onOpenChange={setShowAddFrame}
+        locationId={locationId}
+      />
+      
+      <AddRiserPathwayModal 
+        open={showAddPathway}
+        onOpenChange={setShowAddPathway}
+        locationId={locationId}
+      />
     </Card>
   );
 };
