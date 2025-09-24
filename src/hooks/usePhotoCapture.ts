@@ -584,8 +584,7 @@ export function usePhotoCapture() {
         }
       };
 
-      // Countdown timer (30 seconds)
-      let countdownSeconds = 30;
+      // Remove the countdown - it was causing premature timeouts
       const countdownElement = document.createElement('div');
       countdownElement.style.cssText = `
         position: absolute;
@@ -598,26 +597,15 @@ export function usePhotoCapture() {
         font-size: 14px;
         backdrop-filter: blur(4px);
       `;
-      countdownElement.textContent = `${countdownSeconds}s`;
-      
-      countdownInterval = setInterval(() => {
-        countdownSeconds--;
-        countdownElement.textContent = `${countdownSeconds}s`;
-        if (countdownSeconds <= 10) {
-          countdownElement.style.color = '#ff6b6b';
-        }
-        if (countdownSeconds <= 0) {
-          clearInterval(countdownInterval);
-        }
-      }, 1000);
+      countdownElement.textContent = 'Ready';
 
-      // Force cleanup timeout (reduced to 30 seconds)
-      const forceCloseTimeout = setTimeout(() => {
-        console.log('⏰ Force closing camera modal after 30 seconds');
+      // Force cleanup timeout (extended to 5 minutes - only for emergency)
+      let forceCloseTimeout = setTimeout(() => {
+        console.log('⏰ Force closing camera modal after 5 minutes (emergency timeout)');
         clearInterval(countdownInterval);
         cleanup();
-        reject(new Error('Camera modal timed out'));
-      }, 30000); // 30 seconds
+        reject(new Error('Camera modal emergency timeout'));
+      }, 300000); // 5 minutes
 
       // Add escape listener immediately
       document.addEventListener('keydown', escapeHandler);
@@ -886,7 +874,11 @@ export function usePhotoCapture() {
             }
             
             console.log('📸 Processing capture...');
-            clearInterval(countdownInterval);
+            // Clear the emergency timeout since user is actively using the camera
+            clearTimeout(forceCloseTimeout);
+            if (countdownInterval) {
+              clearInterval(countdownInterval);
+            }
             
             // Visual feedback
             captureBtn.style.background = '#28a745';
@@ -914,7 +906,11 @@ export function usePhotoCapture() {
             e.preventDefault();
             e.stopPropagation();
             console.log('❌ Cancel button clicked/touched');
-            clearInterval(countdownInterval);
+            // Clear timeouts on cancel
+            clearTimeout(forceCloseTimeout);
+            if (countdownInterval) {
+              clearInterval(countdownInterval);
+            }
             cleanup();
             reject(new Error('User cancelled photo capture'));
           };

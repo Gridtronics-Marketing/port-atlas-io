@@ -56,6 +56,17 @@ export const AddRoomViewModal = ({
     }
   }, [open, coordinates, capturedPhoto, showPhotoOptions]);
 
+  // Auto-submit when photo is captured for coordinates-based flow
+  useEffect(() => {
+    if (capturedPhoto && coordinates && coordinates.x >= 0 && coordinates.y >= 0 && !submitting) {
+      console.log('📍 Auto-submitting room view with coordinates:', coordinates);
+      // Small delay to ensure state is properly set
+      setTimeout(() => {
+        handleAutoSubmit(capturedPhoto);
+      }, 100);
+    }
+  }, [capturedPhoto, coordinates, submitting]);
+
   const handlePhotoCapture = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
