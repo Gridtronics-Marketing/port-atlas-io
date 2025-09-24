@@ -32,6 +32,7 @@ interface FloorPlanEditorProps {
   locationName: string;
   backgroundImage?: string | null;
   onSave?: (canvasData: string) => void;
+  mode?: 'draw' | 'riser';
 }
 
 type ToolType = "select" | "draw" | "rectangle" | "circle" | "text" | "eraser";
@@ -40,7 +41,8 @@ export const FloorPlanEditor = ({
   floorNumber, 
   locationName, 
   backgroundImage,
-  onSave 
+  onSave,
+  mode = 'draw'
 }: FloorPlanEditorProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [fabricCanvas, setFabricCanvas] = useState<FabricCanvas | null>(null);

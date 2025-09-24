@@ -11,6 +11,7 @@ export default function FloorPlanEditorPage() {
   
   const mode = searchParams.get('mode') || 'draw';
   const floor = searchParams.get('floor') || '1';
+  const riserName = searchParams.get('name') || 'Riser Diagram';
   
   useEffect(() => {
     // Force re-render of editor when params change
@@ -52,9 +53,10 @@ export default function FloorPlanEditorPage() {
       <div className="container mx-auto p-4">
         <FloorPlanEditor
           key={editorKey}
-          floorNumber={parseInt(floor)}
-          locationName={`Floor ${floor} Editor`}
+          floorNumber={mode === 'riser' ? 0 : parseInt(floor)}
+          locationName={mode === 'riser' ? riserName : `Floor ${floor} Editor`}
           onSave={handleSave}
+          mode={mode as 'draw' | 'riser'}
         />
       </div>
     </div>

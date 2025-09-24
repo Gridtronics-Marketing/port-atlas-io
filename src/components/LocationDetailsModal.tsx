@@ -40,6 +40,7 @@ import { InteractiveMap } from "@/components/InteractiveMap";
 import { DropPointList } from "@/components/DropPointList";
 import { FloorPlanViewer } from "@/components/FloorPlanViewer";
 import { RiserDiagramViewer } from "@/components/RiserDiagramViewer";
+import { RiserDiagramLibrary } from "@/components/RiserDiagramLibrary";
 import { ScheduleAssignmentModal } from "@/components/ScheduleAssignmentModal";
 import { AddLocationNoteModal } from "@/components/AddLocationNoteModal";
 import { FloorPlanEditor } from "@/components/FloorPlanEditor";
@@ -612,50 +613,11 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
               </TabsContent>
 
               {/* Riser Diagrams Tab */}
-              <TabsContent value="riser-diagrams" className="mt-6">
-                <Card className="shadow-soft">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Building2 className="h-5 w-5 text-primary" />
-                      Riser Diagram Management
-                    </CardTitle>
-                    <CardDescription>
-                      Manage vertical infrastructure and backbone cabling for {location.name}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm text-muted-foreground">
-                          Interactive riser diagram showing backbone cables, distribution frames, and vertical pathways.
-                        </p>
-                        <Button variant="outline" size="sm" onClick={handleAddRiser}>
-                          <Plus className="h-4 w-4 mr-2" />
-                          Add Riser Plan
-                        </Button>
-                      </div>
-                      
-                      {riserDiagramUrl ? (
-                        <RiserDiagramViewer 
-                          locationId={location.id}
-                          locationName={location.name}
-                        />
-                      ) : (
-                        <div className="text-center py-12 bg-muted/50 rounded-lg border-2 border-dashed">
-                          <Building2 className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                          <h3 className="text-lg font-medium mb-2">No Riser Diagrams Available</h3>
-                          <p className="text-muted-foreground mb-4">
-                            Create your first riser diagram to visualize vertical infrastructure.
-                          </p>
-                          <Button onClick={handleAddRiser}>
-                            <Plus className="h-4 w-4 mr-2" />
-                            Create Riser Diagram
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
+               <TabsContent value="riser-diagrams" className="mt-6">
+                <RiserDiagramLibrary 
+                  locationId={location.id}
+                  locationName={location.name}
+                />
               </TabsContent>
             </Tabs>
           </div>
