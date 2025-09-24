@@ -718,33 +718,55 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
                                    </div>
                                  </div>
                               ) : (
-                                <div className="text-center py-8">
-                                  <div className="mx-auto w-12 h-12 bg-muted rounded-full flex items-center justify-center mb-3">
-                                    <Upload className="h-6 w-6 text-muted-foreground" />
-                                  </div>
-                                  <div className="space-y-2">
-                                    <p className="text-sm font-medium text-foreground">
-                                      Upload {formData.floors === 1 ? 'Floor Plan' : `Floor ${floorNumber} Plan`}
-                                    </p>
-                                      <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                                        Drop files here or click to browse. Supports images (JPG, PNG, WEBP) and PDFs (converted to images)
-                                      </p>
-                                    <input
-                                      type="file"
-                                      accept="image/*,.pdf"
-                                      onChange={(e) => handleFileChange(floorNumber, e)}
-                                      className="hidden"
-                                      id={`layout-upload-${floorNumber}`}
-                                    />
-                                    <Label htmlFor={`layout-upload-${floorNumber}`} className="cursor-pointer">
-                                      <Button variant="outline" size="sm" className="mt-2" asChild>
-                                        <span className="bg-background hover:bg-muted">
-                                          Choose File
-                                        </span>
-                                      </Button>
-                                    </Label>
-                                  </div>
-                                </div>
+                                 <div className="text-center py-8">
+                                   <div className="mx-auto w-12 h-12 bg-muted rounded-full flex items-center justify-center mb-3">
+                                     <Upload className="h-6 w-6 text-muted-foreground" />
+                                   </div>
+                                   <div className="space-y-2">
+                                     <p className="text-sm font-medium text-foreground">
+                                       Upload {formData.floors === 1 ? 'Floor Plan' : `Floor ${floorNumber} Plan`}
+                                     </p>
+                                       <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                                         Drop files here or click to browse. Supports images (JPG, PNG, WEBP) and PDFs (converted to images)
+                                       </p>
+                                     <div className="flex items-center gap-3 justify-center mt-4">
+                                       <input
+                                         type="file"
+                                         accept="image/*,.pdf"
+                                         onChange={(e) => handleFileChange(floorNumber, e)}
+                                         className="hidden"
+                                         id={`layout-upload-${floorNumber}`}
+                                       />
+                                       <Label htmlFor={`layout-upload-${floorNumber}`} className="cursor-pointer">
+                                         <Button variant="outline" size="sm" asChild>
+                                           <span className="bg-background hover:bg-muted">
+                                             <Upload className="h-4 w-4 mr-2" />
+                                             Choose File
+                                           </span>
+                                         </Button>
+                                       </Label>
+                                       
+                                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                         <div className="h-px bg-border flex-1"></div>
+                                         <span>or</span>
+                                         <div className="h-px bg-border flex-1"></div>
+                                       </div>
+                                       
+                                       <Button 
+                                         variant="outline" 
+                                         size="sm"
+                                         onClick={() => {
+                                           const editorUrl = `/floor-plan-editor?mode=draw&floor=${floorNumber}`;
+                                           window.open(editorUrl, '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
+                                         }}
+                                         className="bg-background hover:bg-muted"
+                                       >
+                                         <FileImage className="h-4 w-4 mr-2" />
+                                         Draw Map
+                                       </Button>
+                                     </div>
+                                   </div>
+                                 </div>
                               )}
                             </CardContent>
                           </Card>
