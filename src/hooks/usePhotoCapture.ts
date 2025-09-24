@@ -374,7 +374,7 @@ export function usePhotoCapture() {
         project_id: projectId,
         location_id: locationId,
         work_order_id: workOrderId,
-        employee_id: employeeId || '',
+        employee_id: employeeId || null,
         created_at: new Date().toISOString(),
       };
 
