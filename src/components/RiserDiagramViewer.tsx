@@ -272,6 +272,12 @@ export const RiserDiagramViewer: React.FC<RiserDiagramViewerProps> = ({
         locationId={locationId}
       />
       
+      <AddBackboneCableModal 
+        open={showAddCable}
+        onOpenChange={setShowAddCable}
+        locationId={locationId}
+      />
+      
       <AddRiserPathwayModal 
         open={showAddPathway}
         onOpenChange={setShowAddPathway}
