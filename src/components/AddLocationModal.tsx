@@ -106,19 +106,10 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
       } else if (preSelectedClientId && filteredProjects.length === 1) {
         console.log('✅ Auto-selecting single project for client:', filteredProjects[0].name);
         setFormData(prev => ({ ...prev, project_id: filteredProjects[0].id }));
-      } else if (preSelectedClientId && filteredProjects.length === 0) {
-        console.warn('⚠️ No projects found for client:', preSelectedClientId);
-        toast({
-          title: "No Projects Available",
-          description: "This client doesn't have any projects yet. Please create a project first before adding locations.",
-          variant: "destructive",
-        });
-        toast({
-          title: "No Projects Available",
-          description: "This client doesn't have any projects yet. Please create a project first before adding locations.",
-          variant: "destructive",
-        });
-      } else if (preSelectedClientId && filteredProjects.length > 1) {
+       } else if (preSelectedClientId && filteredProjects.length === 0) {
+         console.warn('⚠️ No projects found for client:', preSelectedClientId);
+         // Don't show error - locations can be created without projects
+       } else if (preSelectedClientId && filteredProjects.length > 1) {
         console.log('ℹ️ Multiple projects available for client, user needs to select one');
       }
     }
@@ -397,14 +388,14 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
           </DialogTitle>
           <DialogDescription className="text-muted-foreground">
             {isEditing 
-              ? 'Update location details and manage floor plans for your jobsite.'
-              : preSelectedClientId
-                ? filteredProjects.length === 0
-                  ? 'No projects found for this client. Please create a project first.'
-                  : filteredProjects.length === 1
-                    ? `Adding location to project: ${filteredProjects[0].name}`
-                    : `Select from ${filteredProjects.length} available projects for this client.`
-                : 'Create a new jobsite location and upload floor plans for comprehensive drop point management.'
+                 ? 'Update location details and manage floor plans for your jobsite.'
+                 : preSelectedClientId
+                   ? filteredProjects.length === 0
+                     ? 'No projects found for this client. You can still create a standalone location.'
+                     : filteredProjects.length === 1
+                       ? `Adding location to project: ${filteredProjects[0].name}`
+                       : `Select from ${filteredProjects.length} available projects or create a standalone location.`
+                   : 'Create a new jobsite location and optionally assign to a project. Upload floor plans for comprehensive drop point management.'
             }
           </DialogDescription>
         </DialogHeader>
@@ -555,21 +546,22 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="project_id" className="text-sm font-medium">
-                    Project Assignment
-                  </Label>
-                  <Select value={formData.project_id} onValueChange={(value) => setFormData({ ...formData, project_id: value })}>
-                    <SelectTrigger className="h-10 bg-background">
-                      <SelectValue placeholder="Select project" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-popover border z-50">
-                      {filteredProjects.map((project) => (
-                        <SelectItem key={project.id} value={project.id}>
-                          {project.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                   <Label htmlFor="project_id" className="text-sm font-medium">
+                     Project Assignment (Optional)
+                   </Label>
+                   <Select value={formData.project_id} onValueChange={(value) => setFormData({ ...formData, project_id: value })}>
+                     <SelectTrigger className="h-10 bg-background">
+                       <SelectValue placeholder="Select project (optional)" />
+                     </SelectTrigger>
+                     <SelectContent className="bg-popover border z-50">
+                       <SelectItem value="">No Project (Standalone Location)</SelectItem>
+                       {filteredProjects.map((project) => (
+                         <SelectItem key={project.id} value={project.id}>
+                           {project.name}
+                         </SelectItem>
+                       ))}
+                     </SelectContent>
+                   </Select>
                 </div>
 
                 <div className="space-y-2">
