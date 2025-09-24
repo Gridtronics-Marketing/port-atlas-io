@@ -461,6 +461,7 @@ export function usePhotoCapture() {
       const context = canvas.getContext('2d');
       let isVideoReady = false;
       let stream: MediaStream | null = null;
+      let countdownInterval: NodeJS.Timeout;
       
       // Create camera modal with high z-index to appear above dialogs
       const modal = document.createElement('div');
@@ -574,6 +575,10 @@ export function usePhotoCapture() {
         } catch (error) {
           console.error('Error during cleanup:', error);
         }
+        // Clear countdown if it exists
+        if (countdownInterval) {
+          clearInterval(countdownInterval);
+        }
       };
 
       // Escape key handler for emergency exit
@@ -585,12 +590,40 @@ export function usePhotoCapture() {
         }
       };
 
-      // Force cleanup timeout (safety net)
+      // Countdown timer (30 seconds)
+      let countdownSeconds = 30;
+      const countdownElement = document.createElement('div');
+      countdownElement.style.cssText = `
+        position: absolute;
+        top: 70px;
+        right: 20px;
+        background: rgba(255,255,255,0.1);
+        color: white;
+        padding: 8px 12px;
+        border-radius: 4px;
+        font-size: 14px;
+        backdrop-filter: blur(4px);
+      `;
+      countdownElement.textContent = `${countdownSeconds}s`;
+      
+      countdownInterval = setInterval(() => {
+        countdownSeconds--;
+        countdownElement.textContent = `${countdownSeconds}s`;
+        if (countdownSeconds <= 10) {
+          countdownElement.style.color = '#ff6b6b';
+        }
+        if (countdownSeconds <= 0) {
+          clearInterval(countdownInterval);
+        }
+      }, 1000);
+
+      // Force cleanup timeout (reduced to 30 seconds)
       const forceCloseTimeout = setTimeout(() => {
-        console.log('Force closing camera modal after 2 minutes');
+        console.log('⏰ Force closing camera modal after 30 seconds');
+        clearInterval(countdownInterval);
         cleanup();
         reject(new Error('Camera modal timed out'));
-      }, 120000); // 2 minutes
+      }, 30000); // 30 seconds
 
       // Add escape listener immediately
       document.addEventListener('keydown', escapeHandler);
@@ -618,7 +651,21 @@ export function usePhotoCapture() {
           font-size: 16px;
           cursor: pointer;
           opacity: 1;
+          pointer-events: auto;
+          touch-action: manipulation;
+          user-select: none;
+          transition: all 0.2s ease;
         `;
+        
+        // Add hover effect
+        captureBtn.addEventListener('mouseenter', () => {
+          captureBtn.style.background = '#0056b3';
+          captureBtn.style.transform = 'scale(1.05)';
+        });
+        captureBtn.addEventListener('mouseleave', () => {
+          captureBtn.style.background = '#007bff';
+          captureBtn.style.transform = 'scale(1)';
+        });
         
         cancelBtn.disabled = false;
         cancelBtn.style.cssText = `
@@ -631,7 +678,21 @@ export function usePhotoCapture() {
           font-size: 16px;
           cursor: pointer;
           opacity: 1;
+          pointer-events: auto;
+          touch-action: manipulation;
+          user-select: none;
+          transition: all 0.2s ease;
         `;
+        
+        // Add hover effect
+        cancelBtn.addEventListener('mouseenter', () => {
+          cancelBtn.style.background = '#c82333';
+          cancelBtn.style.transform = 'scale(1.05)';
+        });
+        cancelBtn.addEventListener('mouseleave', () => {
+          cancelBtn.style.background = '#dc3545';
+          cancelBtn.style.transform = 'scale(1)';
+        });
       };
       
       // Process the captured photo
@@ -774,10 +835,16 @@ export function usePhotoCapture() {
       // Build modal structure
       modal.appendChild(header);
       modal.appendChild(instructions);
+      modal.appendChild(countdownElement);
       modal.appendChild(video);
       modal.appendChild(statusMsg);
       modal.appendChild(spinner);
       const btnContainer = document.createElement('div');
+      btnContainer.style.cssText = `
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+      `;
       btnContainer.appendChild(captureBtn);
       btnContainer.appendChild(cancelBtn);
       modal.appendChild(btnContainer);
@@ -813,10 +880,24 @@ export function usePhotoCapture() {
             }
           }, 500);
           
-          captureBtn.onclick = () => {
+          // Enhanced capture button event handling
+          const handleCapture = (e: Event) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('📸 Capture button clicked/touched');
+            
             if (!isVideoReady || video.readyState < video.HAVE_CURRENT_DATA) {
+              console.log('📸 Video not ready, ignoring capture');
               return;
             }
+            
+            console.log('📸 Processing capture...');
+            clearInterval(countdownInterval);
+            
+            // Visual feedback
+            captureBtn.style.background = '#28a745';
+            captureBtn.textContent = 'Capturing...';
+            captureBtn.disabled = true;
             
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
@@ -834,10 +915,28 @@ export function usePhotoCapture() {
             processPhoto(dataUrl);
           };
           
-          cancelBtn.onclick = () => {
+          // Enhanced cancel button event handling
+          const handleCancel = (e: Event) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('❌ Cancel button clicked/touched');
+            clearInterval(countdownInterval);
             cleanup();
             reject(new Error('User cancelled photo capture'));
           };
+          
+          // Add multiple event listeners for cross-platform support
+          captureBtn.addEventListener('click', handleCapture);
+          captureBtn.addEventListener('touchstart', handleCapture, { passive: false });
+          captureBtn.addEventListener('touchend', (e) => e.preventDefault());
+          
+          cancelBtn.addEventListener('click', handleCancel);
+          cancelBtn.addEventListener('touchstart', handleCancel, { passive: false });
+          cancelBtn.addEventListener('touchend', (e) => e.preventDefault());
+          
+          // Also keep onclick as fallback
+          captureBtn.onclick = handleCapture;
+          cancelBtn.onclick = handleCancel;
         })
         .catch(error => {
           console.error('Camera stream error:', error);
