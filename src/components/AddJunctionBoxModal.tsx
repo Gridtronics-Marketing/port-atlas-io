@@ -7,13 +7,14 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useJunctionBoxes } from '@/hooks/useJunctionBoxes';
+import { useBackboneCables } from '@/hooks/useBackboneCables';
 import { useToast } from '@/hooks/use-toast';
 
 interface AddJunctionBoxModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   locationId: string;
-  cableId: string;
+  cableId: string | null;
   onSuccess?: () => void;
 }
 
@@ -21,6 +22,7 @@ interface JunctionFormData {
   junction_type: 'splice' | 'patch_panel' | 'junction_box';
   floor: number;
   label: string;
+  backbone_cable_id?: string;
   notes?: string;
 }
 
@@ -32,6 +34,7 @@ export const AddJunctionBoxModal = ({
   onSuccess 
 }: AddJunctionBoxModalProps) => {
   const { addJunctionBox } = useJunctionBoxes();
+  const { cables } = useBackboneCables(locationId);
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -40,6 +43,7 @@ export const AddJunctionBoxModal = ({
       junction_type: 'junction_box',
       floor: 1,
       label: '',
+      backbone_cable_id: cableId || undefined,
       notes: ''
     }
   });
@@ -47,11 +51,12 @@ export const AddJunctionBoxModal = ({
   const onSubmit = async (data: JunctionFormData) => {
     try {
       setIsSubmitting(true);
-      await addJunctionBox({
+      const junctionData = {
         ...data,
         location_id: locationId,
-        backbone_cable_id: cableId
-      });
+        ...(data.backbone_cable_id && { backbone_cable_id: data.backbone_cable_id })
+      };
+      await addJunctionBox(junctionData);
       
       toast({
         title: "Success",
@@ -117,6 +122,32 @@ export const AddJunctionBoxModal = ({
               {...register('label', { required: true })}
               placeholder="JB-01, SP-01, etc."
             />
+          </div>
+
+          <div>
+            <Label htmlFor="backbone_cable_id">Associated Cable (Optional)</Label>
+            <Select 
+              onValueChange={(value) => setValue('backbone_cable_id', value === 'none' ? undefined : value)}
+              defaultValue={cableId || 'none'}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a cable or leave unassociated" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">No cable association</SelectItem>
+                {cables.map(cable => (
+                  <SelectItem key={cable.id} value={cable.id}>
+                    {cable.cable_label} - {cable.cable_type.toUpperCase()} 
+                    {cable.origin_equipment && cable.destination_equipment && 
+                      ` (${cable.origin_equipment} → ${cable.destination_equipment})`
+                    }
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-sm text-muted-foreground mt-1">
+              Junction boxes can be created independently or associated with a specific cable run.
+            </p>
           </div>
 
           <div>

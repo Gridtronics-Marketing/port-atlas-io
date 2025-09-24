@@ -296,7 +296,7 @@ export const RiserDiagramViewer: React.FC<RiserDiagramViewerProps> = ({
         open={showAddJunction}
         onOpenChange={setShowAddJunction}
         locationId={locationId}
-        cableId={selectedCableForJunction || ''}
+        cableId={selectedCableForJunction || null}
         onSuccess={() => {
           fetchCables();
           fetchFrames();

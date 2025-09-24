@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 export interface JunctionBox {
   id: string;
   location_id: string;
-  backbone_cable_id: string;
+  backbone_cable_id?: string;
   junction_type: 'splice' | 'patch_panel' | 'junction_box';
   floor: number;
   x_coordinate?: number;
