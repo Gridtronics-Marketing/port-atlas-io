@@ -69,7 +69,6 @@ interface LocationDetailsModalProps {
 export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocation, onDeleteLocation }: LocationDetailsModalProps) => {
   const [activeTab, setActiveTab] = useState("details");
   const [selectedFloor, setSelectedFloor] = useState(1);
-  const [isEditMode, setIsEditMode] = useState(false);
   const [floorPlanUrls, setFloorPlanUrls] = useState<{ [floorNumber: number]: string }>({});
 
   // Fetch team members for this location
@@ -408,13 +407,6 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
                   </div>
                   
                   <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setIsEditMode(!isEditMode)}
-                    >
-                      {isEditMode ? 'Exit Edit' : 'Edit Mode'}
-                    </Button>
                     <Button variant="outline" size="sm">
                       Demo
                     </Button>
@@ -423,28 +415,14 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
 
                 {floorPlanUrls[selectedFloor] ? (
                   <div className="space-y-4">
-                    {isEditMode ? (
-                      <div className="min-h-[500px]">
-                        <FloorPlanEditor
-                          floorNumber={selectedFloor}
-                          locationName={location.name}
-                          backgroundImage={floorPlanUrls[selectedFloor]}
-                          onSave={(canvasData) => {
-                            console.log('Floor plan saved:', canvasData);
-                            // Handle save logic here
-                          }}
-                        />
-                      </div>
-                    ) : (
-                      <InteractiveFloorPlan
-                        locationId={location.id}
-                        floorNumber={selectedFloor}
-                        fileUrl={floorPlanUrls[selectedFloor]}
-                        filePath={location.floor_plan_files?.[selectedFloor] || ''}
-                        fileName={location.floor_plan_files?.[selectedFloor]?.split('/').pop() || ''}
-                        className="min-h-[500px]"
-                      />
-                    )}
+                    <InteractiveFloorPlan
+                      locationId={location.id}
+                      floorNumber={selectedFloor}
+                      fileUrl={floorPlanUrls[selectedFloor]}
+                      filePath={location.floor_plan_files?.[selectedFloor] || ''}
+                      fileName={location.floor_plan_files?.[selectedFloor]?.split('/').pop() || ''}
+                      className="min-h-[500px]"
+                    />
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -453,7 +431,7 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
                       <FloorPlanDemo 
                         floorNumber={selectedFloor}
                         totalFloors={location.floors}
-                        onStartEditor={() => setIsEditMode(true)}
+                        onStartEditor={() => {}}
                       />
                     </div>
                   </div>
