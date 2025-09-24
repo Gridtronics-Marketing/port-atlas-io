@@ -260,6 +260,7 @@ export const RiserDiagramViewer: React.FC<RiserDiagramViewerProps> = ({
               locationName={locationName}
               onAddEquipment={() => setShowAddFrame(true)}
               onAddCable={() => setShowAddCable(true)}
+              onAddJunctionBox={() => setShowAddJunction(true)}
             />
           </TabsContent>
 

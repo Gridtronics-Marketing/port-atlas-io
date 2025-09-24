@@ -15,13 +15,15 @@ interface InteractiveRiserDiagramProps {
   locationName: string;
   onAddEquipment?: () => void;
   onAddCable?: () => void;
+  onAddJunctionBox?: () => void;
 }
 
 export const InteractiveRiserDiagram: React.FC<InteractiveRiserDiagramProps> = ({
   locationId,
   locationName,
   onAddEquipment,
-  onAddCable
+  onAddCable,
+  onAddJunctionBox
 }) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const [selectedFloor, setSelectedFloor] = useState<string>('all');
@@ -30,19 +32,22 @@ export const InteractiveRiserDiagram: React.FC<InteractiveRiserDiagramProps> = (
   // Drag state
   const [isDragging, setIsDragging] = useState(false);
   const [draggedFrame, setDraggedFrame] = useState<string | null>(null);
+  const [draggedJunctionBox, setDraggedJunctionBox] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   
   const { cables } = useBackboneCables(locationId);
   const { frames, updateFrame } = useDistributionFrames(locationId);
   const { pathways } = useRiserPathways(locationId);
   const { connections } = useCableConnections(locationId);
+  const { junctionBoxes, updateJunctionBox } = useJunctionBoxes(locationId);
 
   // Calculate diagram dimensions and layout
   const floors = Array.from(
     new Set([
       ...frames.map(f => f.floor),
       ...cables.flatMap(c => [c.origin_floor, c.destination_floor].filter(Boolean)),
-      ...pathways.flatMap(p => p.floors_served)
+      ...pathways.flatMap(p => p.floors_served),
+      ...junctionBoxes.map(j => j.floor)
     ])
   ).sort((a, b) => (b || 0) - (a || 0));
 
@@ -68,6 +73,16 @@ export const InteractiveRiserDiagram: React.FC<InteractiveRiserDiagramProps> = (
     }
   };
 
+  // Get junction box icon based on type
+  const getJunctionBoxIcon = (type: string) => {
+    switch (type) {
+      case 'splice': return '🔗'; // Link symbol for splice
+      case 'patch_panel': return '📋'; // Clipboard for patch panel
+      case 'junction_box': return '📦'; // Box for junction box
+      default: return '📦';
+    }
+  };
+
   // Calculate equipment positions
   const getEquipmentPosition = (frame: any, floor: number, index: number) => {
     // Use stored coordinates if available, otherwise calculate based on index
@@ -83,6 +98,24 @@ export const InteractiveRiserDiagram: React.FC<InteractiveRiserDiagramProps> = (
     const floorIndex = floors.indexOf(floor);
     const y = 50 + floorIndex * floorHeight + 30;
     const x = 100 + index * (equipmentWidth + 20);
+    return { x, y };
+  };
+
+  // Calculate junction box positions
+  const getJunctionBoxPosition = (junctionBox: any, floor: number, index: number) => {
+    // Use stored coordinates if available, otherwise calculate based on index
+    if (junctionBox.x_coordinate !== null && junctionBox.y_coordinate !== null) {
+      // Convert percentage coordinates to SVG coordinates
+      return {
+        x: (junctionBox.x_coordinate / 100) * diagramWidth,
+        y: (junctionBox.y_coordinate / 100) * diagramHeight
+      };
+    }
+    
+    // Fallback to calculated position (offset from equipment)
+    const floorIndex = floors.indexOf(floor);
+    const y = 50 + floorIndex * floorHeight + 60; // Below equipment
+    const x = 150 + index * 30; // Smaller spacing for junction boxes
     return { x, y };
   };
 
@@ -102,6 +135,10 @@ export const InteractiveRiserDiagram: React.FC<InteractiveRiserDiagramProps> = (
         c.origin_floor === parseInt(selectedFloor) || 
         c.destination_floor === parseInt(selectedFloor)
       );
+
+  const filteredJunctionBoxes = selectedFloor === 'all'
+    ? junctionBoxes
+    : junctionBoxes.filter(j => j.floor === parseInt(selectedFloor));
 
   // Mouse event handlers for dragging
   const handleMouseDown = (e: React.MouseEvent, frame: any) => {
@@ -130,8 +167,35 @@ export const InteractiveRiserDiagram: React.FC<InteractiveRiserDiagramProps> = (
     document.body.style.userSelect = 'none';
   };
 
+  // Junction box mouse event handlers
+  const handleJunctionBoxMouseDown = (e: React.MouseEvent, junctionBox: any) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const svgElement = svgRef.current;
+    if (!svgElement) return;
+    
+    const rect = svgElement.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    
+    const floorJunctionBoxes = junctionBoxes.filter(j => j.floor === junctionBox.floor);
+    const junctionBoxIndex = floorJunctionBoxes.indexOf(junctionBox);
+    const { x, y } = getJunctionBoxPosition(junctionBox, junctionBox.floor, junctionBoxIndex);
+    
+    setIsDragging(true);
+    setDraggedJunctionBox(junctionBox.id);
+    setDragOffset({
+      x: mouseX - x,
+      y: mouseY - y
+    });
+    
+    // Prevent text selection
+    document.body.style.userSelect = 'none';
+  };
+
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging || !draggedFrame) return;
+    if (!isDragging || (!draggedFrame && !draggedJunctionBox)) return;
     
     const svgElement = svgRef.current;
     if (!svgElement) return;
@@ -144,31 +208,55 @@ export const InteractiveRiserDiagram: React.FC<InteractiveRiserDiagramProps> = (
     const x = Math.max(0, Math.min(100, ((mouseX - dragOffset.x) / diagramWidth) * 100));
     const y = Math.max(0, Math.min(100, ((mouseY - dragOffset.y) / diagramHeight) * 100));
     
-    // Update frame position temporarily (this will be saved on mouse up)
-    const frameToUpdate = frames.find(f => f.id === draggedFrame);
-    if (frameToUpdate) {
-      frameToUpdate.x_coordinate = x;
-      frameToUpdate.y_coordinate = y;
+    if (draggedFrame) {
+      // Update frame position temporarily (this will be saved on mouse up)
+      const frameToUpdate = frames.find(f => f.id === draggedFrame);
+      if (frameToUpdate) {
+        frameToUpdate.x_coordinate = x;
+        frameToUpdate.y_coordinate = y;
+      }
+    } else if (draggedJunctionBox) {
+      // Update junction box position temporarily
+      const junctionBoxToUpdate = junctionBoxes.find(j => j.id === draggedJunctionBox);
+      if (junctionBoxToUpdate) {
+        junctionBoxToUpdate.x_coordinate = x;
+        junctionBoxToUpdate.y_coordinate = y;
+      }
     }
   };
 
   const handleMouseUp = async () => {
-    if (!isDragging || !draggedFrame) return;
+    if (!isDragging || (!draggedFrame && !draggedJunctionBox)) return;
     
-    const frameToUpdate = frames.find(f => f.id === draggedFrame);
-    if (frameToUpdate && frameToUpdate.x_coordinate !== null && frameToUpdate.y_coordinate !== null) {
-      try {
-        await updateFrame(draggedFrame, {
-          x_coordinate: frameToUpdate.x_coordinate,
-          y_coordinate: frameToUpdate.y_coordinate
-        });
-      } catch (error) {
-        console.error('Failed to update frame position:', error);
+    if (draggedFrame) {
+      const frameToUpdate = frames.find(f => f.id === draggedFrame);
+      if (frameToUpdate && frameToUpdate.x_coordinate !== null && frameToUpdate.y_coordinate !== null) {
+        try {
+          await updateFrame(draggedFrame, {
+            x_coordinate: frameToUpdate.x_coordinate,
+            y_coordinate: frameToUpdate.y_coordinate
+          });
+        } catch (error) {
+          console.error('Failed to update frame position:', error);
+        }
+      }
+    } else if (draggedJunctionBox) {
+      const junctionBoxToUpdate = junctionBoxes.find(j => j.id === draggedJunctionBox);
+      if (junctionBoxToUpdate && junctionBoxToUpdate.x_coordinate !== null && junctionBoxToUpdate.y_coordinate !== null) {
+        try {
+          await updateJunctionBox(draggedJunctionBox, {
+            x_coordinate: junctionBoxToUpdate.x_coordinate,
+            y_coordinate: junctionBoxToUpdate.y_coordinate
+          });
+        } catch (error) {
+          console.error('Failed to update junction box position:', error);
+        }
       }
     }
     
     setIsDragging(false);
     setDraggedFrame(null);
+    setDraggedJunctionBox(null);
     setDragOffset({ x: 0, y: 0 });
     
     // Re-enable text selection
@@ -217,6 +305,7 @@ export const InteractiveRiserDiagram: React.FC<InteractiveRiserDiagramProps> = (
           <div className="flex gap-2">
             <Button size="sm" onClick={onAddEquipment}>Add Equipment</Button>
             <Button size="sm" variant="outline" onClick={onAddCable}>Add Cable</Button>
+            <Button size="sm" variant="secondary" onClick={onAddJunctionBox}>Add Junction Box</Button>
           </div>
         </div>
 
@@ -233,6 +322,10 @@ export const InteractiveRiserDiagram: React.FC<InteractiveRiserDiagramProps> = (
           <div className="flex items-center gap-1">
             <div className="w-3 h-3 bg-success rounded-full"></div>
             <span>Coax</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Box className="w-3 h-3 text-muted-foreground" />
+            <span>Junction Box</span>
           </div>
         </div>
       </div>
@@ -374,6 +467,53 @@ export const InteractiveRiserDiagram: React.FC<InteractiveRiserDiagramProps> = (
                 );
               })}
 
+              {/* Junction boxes */}
+              {filteredJunctionBoxes.map((junctionBox, index) => {
+                const floorJunctionBoxes = junctionBoxes.filter(j => j.floor === junctionBox.floor);
+                const junctionBoxIndex = floorJunctionBoxes.indexOf(junctionBox);
+                const { x, y } = getJunctionBoxPosition(junctionBox, junctionBox.floor, junctionBoxIndex);
+                const isBeingDragged = junctionBox.id === draggedJunctionBox;
+                
+                return (
+                  <g key={junctionBox.id}>
+                    <rect
+                      x={x}
+                      y={y}
+                      width="24"
+                      height="24"
+                      fill="hsl(var(--accent))"
+                      stroke="hsl(var(--border))"
+                      strokeWidth="1"
+                      rx="3"
+                      className={`cursor-move hover:stroke-primary ${isBeingDragged ? 'opacity-80' : ''}`}
+                      style={{ cursor: isBeingDragged ? 'grabbing' : 'grab' }}
+                      onClick={() => setShowDetails(junctionBox.id)}
+                      onMouseDown={(e) => handleJunctionBoxMouseDown(e, junctionBox)}
+                    />
+                    <text
+                      x={x + 12}
+                      y={y + 16}
+                      fontSize="10"
+                      fill="hsl(var(--accent-foreground))"
+                      textAnchor="middle"
+                      className="pointer-events-none"
+                    >
+                      J
+                    </text>
+                    <text
+                      x={x + 12}
+                      y={y + 35}
+                      fontSize="8"
+                      fill="hsl(var(--foreground))"
+                      textAnchor="middle"
+                      className="pointer-events-none"
+                    >
+                      {junctionBox.label}
+                    </text>
+                  </g>
+                );
+              })}
+
               {/* Backbone cables */}
               {filteredCables.map((cable) => {
                 const originFrames = frames.filter(f => f.floor === cable.origin_floor);
@@ -451,7 +591,7 @@ export const InteractiveRiserDiagram: React.FC<InteractiveRiserDiagramProps> = (
       </Card>
 
       {/* Summary statistics */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
@@ -476,8 +616,19 @@ export const InteractiveRiserDiagram: React.FC<InteractiveRiserDiagramProps> = (
         </Card>
         <Card>
           <CardContent className="p-4">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">  
               <Box className="h-4 w-4 text-muted-foreground" />
+              <div>
+                <div className="text-sm text-muted-foreground">Junction Boxes</div>
+                <div className="text-lg font-semibold">{junctionBoxes.length}</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <Router className="h-4 w-4 text-muted-foreground" />
               <div>
                 <div className="text-sm text-muted-foreground">Pathways</div>
                 <div className="text-lg font-semibold">{pathways.length}</div>

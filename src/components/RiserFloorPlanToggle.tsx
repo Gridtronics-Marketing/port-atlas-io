@@ -13,6 +13,7 @@ interface RiserFloorPlanToggleProps {
   floorPlanUrls?: Record<string, string>;
   onAddEquipment?: () => void;
   onAddCable?: () => void;
+  onAddJunctionBox?: () => void;
 }
 
 export const RiserFloorPlanToggle: React.FC<RiserFloorPlanToggleProps> = ({
@@ -20,7 +21,8 @@ export const RiserFloorPlanToggle: React.FC<RiserFloorPlanToggleProps> = ({
   locationName,
   floorPlanUrls = {},
   onAddEquipment,
-  onAddCable
+  onAddCable,
+  onAddJunctionBox
 }) => {
   const [viewMode, setViewMode] = useState<'horizontal' | 'vertical'>('vertical');
   const [selectedFloor, setSelectedFloor] = useState<number>(1);
@@ -98,6 +100,7 @@ export const RiserFloorPlanToggle: React.FC<RiserFloorPlanToggleProps> = ({
               locationName={locationName}
               onAddEquipment={onAddEquipment}
               onAddCable={onAddCable}
+              onAddJunctionBox={onAddJunctionBox}
             />
           ) : (
             <div className="space-y-4">
