@@ -14,6 +14,156 @@ export type Database = {
   }
   public: {
     Tables: {
+      backbone_cables: {
+        Row: {
+          cable_label: string
+          cable_subtype: string | null
+          cable_type: string
+          capacity_spare: number | null
+          capacity_total: number | null
+          capacity_used: number | null
+          created_at: string
+          destination_equipment: string | null
+          destination_floor: number | null
+          id: string
+          installation_date: string | null
+          jacket_rating: string | null
+          labeling_standard: string | null
+          location_id: string | null
+          notes: string | null
+          origin_equipment: string | null
+          origin_floor: number | null
+          pair_count: number | null
+          strand_count: number | null
+          test_results: Json | null
+          unique_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          cable_label: string
+          cable_subtype?: string | null
+          cable_type: string
+          capacity_spare?: number | null
+          capacity_total?: number | null
+          capacity_used?: number | null
+          created_at?: string
+          destination_equipment?: string | null
+          destination_floor?: number | null
+          id?: string
+          installation_date?: string | null
+          jacket_rating?: string | null
+          labeling_standard?: string | null
+          location_id?: string | null
+          notes?: string | null
+          origin_equipment?: string | null
+          origin_floor?: number | null
+          pair_count?: number | null
+          strand_count?: number | null
+          test_results?: Json | null
+          unique_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cable_label?: string
+          cable_subtype?: string | null
+          cable_type?: string
+          capacity_spare?: number | null
+          capacity_total?: number | null
+          capacity_used?: number | null
+          created_at?: string
+          destination_equipment?: string | null
+          destination_floor?: number | null
+          id?: string
+          installation_date?: string | null
+          jacket_rating?: string | null
+          labeling_standard?: string | null
+          location_id?: string | null
+          notes?: string | null
+          origin_equipment?: string | null
+          origin_floor?: number | null
+          pair_count?: number | null
+          strand_count?: number | null
+          test_results?: Json | null
+          unique_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "backbone_cables_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cable_connections: {
+        Row: {
+          backbone_cable_id: string | null
+          connection_type: string | null
+          created_at: string
+          from_frame_id: string | null
+          from_port: string | null
+          id: string
+          is_active: boolean | null
+          notes: string | null
+          redundancy_group: string | null
+          to_frame_id: string | null
+          to_port: string | null
+          updated_at: string
+        }
+        Insert: {
+          backbone_cable_id?: string | null
+          connection_type?: string | null
+          created_at?: string
+          from_frame_id?: string | null
+          from_port?: string | null
+          id?: string
+          is_active?: boolean | null
+          notes?: string | null
+          redundancy_group?: string | null
+          to_frame_id?: string | null
+          to_port?: string | null
+          updated_at?: string
+        }
+        Update: {
+          backbone_cable_id?: string | null
+          connection_type?: string | null
+          created_at?: string
+          from_frame_id?: string | null
+          from_port?: string | null
+          id?: string
+          is_active?: boolean | null
+          notes?: string | null
+          redundancy_group?: string | null
+          to_frame_id?: string | null
+          to_port?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cable_connections_backbone_cable_id_fkey"
+            columns: ["backbone_cable_id"]
+            isOneToOne: false
+            referencedRelation: "backbone_cables"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cable_connections_from_frame_id_fkey"
+            columns: ["from_frame_id"]
+            isOneToOne: false
+            referencedRelation: "distribution_frames"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cable_connections_to_frame_id_fkey"
+            columns: ["to_frame_id"]
+            isOneToOne: false
+            referencedRelation: "distribution_frames"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_messages: {
         Row: {
           created_at: string
@@ -226,6 +376,68 @@ export type Database = {
             columns: ["work_order_id"]
             isOneToOne: false
             referencedRelation: "work_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      distribution_frames: {
+        Row: {
+          capacity: number | null
+          created_at: string
+          equipment_details: Json | null
+          floor: number
+          frame_type: string
+          id: string
+          location_id: string | null
+          notes: string | null
+          patch_panels: Json | null
+          port_count: number | null
+          rack_position: number | null
+          room: string | null
+          updated_at: string
+          x_coordinate: number | null
+          y_coordinate: number | null
+        }
+        Insert: {
+          capacity?: number | null
+          created_at?: string
+          equipment_details?: Json | null
+          floor: number
+          frame_type: string
+          id?: string
+          location_id?: string | null
+          notes?: string | null
+          patch_panels?: Json | null
+          port_count?: number | null
+          rack_position?: number | null
+          room?: string | null
+          updated_at?: string
+          x_coordinate?: number | null
+          y_coordinate?: number | null
+        }
+        Update: {
+          capacity?: number | null
+          created_at?: string
+          equipment_details?: Json | null
+          floor?: number
+          frame_type?: string
+          id?: string
+          location_id?: string | null
+          notes?: string | null
+          patch_panels?: Json | null
+          port_count?: number | null
+          rack_position?: number | null
+          room?: string | null
+          updated_at?: string
+          x_coordinate?: number | null
+          y_coordinate?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "distribution_frames_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
             referencedColumns: ["id"]
           },
         ]
@@ -926,6 +1138,62 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "racks_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      riser_pathways: {
+        Row: {
+          created_at: string
+          fire_stops: Json | null
+          floors_served: number[] | null
+          id: string
+          location_id: string | null
+          notes: string | null
+          pathway_capacity: number | null
+          pathway_name: string
+          pathway_type: string
+          updated_at: string
+          utilization_percentage: number | null
+          x_coordinate: number | null
+          y_coordinate: number | null
+        }
+        Insert: {
+          created_at?: string
+          fire_stops?: Json | null
+          floors_served?: number[] | null
+          id?: string
+          location_id?: string | null
+          notes?: string | null
+          pathway_capacity?: number | null
+          pathway_name: string
+          pathway_type: string
+          updated_at?: string
+          utilization_percentage?: number | null
+          x_coordinate?: number | null
+          y_coordinate?: number | null
+        }
+        Update: {
+          created_at?: string
+          fire_stops?: Json | null
+          floors_served?: number[] | null
+          id?: string
+          location_id?: string | null
+          notes?: string | null
+          pathway_capacity?: number | null
+          pathway_name?: string
+          pathway_type?: string
+          updated_at?: string
+          utilization_percentage?: number | null
+          x_coordinate?: number | null
+          y_coordinate?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "riser_pathways_location_id_fkey"
             columns: ["location_id"]
             isOneToOne: false
             referencedRelation: "locations"

@@ -38,6 +38,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { InteractiveMap } from "@/components/InteractiveMap";
 import { DropPointList } from "@/components/DropPointList";
+import { FloorPlanViewer } from "@/components/FloorPlanViewer";
+import { RiserDiagramViewer } from "@/components/RiserDiagramViewer";
 import { ScheduleAssignmentModal } from "@/components/ScheduleAssignmentModal";
 import { AddLocationNoteModal } from "@/components/AddLocationNoteModal";
 import { FloorPlanEditor } from "@/components/FloorPlanEditor";
@@ -451,17 +453,22 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
                   </div>
                 </div>
 
-                {currentFloorPlanUrl ? (
+                {selectedFloor === 'riser' ? (
+                  <RiserDiagramViewer 
+                    locationId={location.id}
+                    locationName={location.name}
+                  />
+                ) : currentFloorPlanUrl ? (
                   <div className="space-y-4">
                     <InteractiveFloorPlan
                       locationId={location.id}
-                      floorNumber={selectedFloor === 'riser' ? 0 : selectedFloor as number}
+                      floorNumber={typeof selectedFloor === 'string' ? 0 : selectedFloor}
                       fileUrl={currentFloorPlanUrl}
-                      filePath={selectedFloor === 'riser' 
+                      filePath={typeof selectedFloor === 'string' && selectedFloor === 'riser'
                         ? (location.floor_plan_files?.['riser'] || location.floor_plan_files?.['riser_diagram'] || '')
                         : (location.floor_plan_files?.[selectedFloor as number] || '')
                       }
-                      fileName={selectedFloor === 'riser' 
+                      fileName={typeof selectedFloor === 'string' && selectedFloor === 'riser'
                         ? (location.floor_plan_files?.['riser'] || location.floor_plan_files?.['riser_diagram'] || '').split('/').pop() || 'riser_diagram'
                         : (location.floor_plan_files?.[selectedFloor as number] || '').split('/').pop() || ''
                       }
@@ -472,12 +479,12 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
                   <div className="space-y-4">
                     <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed">
                       <p className="text-gray-600 mb-4">
-                        {selectedFloor === 'riser' 
+                        {typeof selectedFloor === 'string' && selectedFloor === 'riser'
                           ? 'No riser diagram available' 
                           : `No floor plan available for Floor ${selectedFloor}`
                         }
                       </p>
-                      {selectedFloor !== 'riser' && (
+                      {typeof selectedFloor === 'number' && (
                         <FloorPlanDemo 
                           floorNumber={selectedFloor as number}
                           totalFloors={location.floors}
@@ -487,7 +494,6 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
                     </div>
                   </div>
                 )}
-                
                 <Tabs defaultValue="diagnostics" className="w-full">
                   <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="diagnostics">Diagnostics</TabsTrigger>
