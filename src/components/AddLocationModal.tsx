@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { Upload, X, MapPin, Plus, Minus, Building2, Users, Phone, FileText, FileImage } from "lucide-react";
+import { InteractiveFloorPlan } from "@/components/InteractiveFloorPlan";
 import {
   Dialog,
   DialogContent,  
@@ -42,6 +43,7 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
   const [layoutFiles, setLayoutFiles] = useState<{ [floorNumber: number]: File | null }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [conversionProgress, setConversionProgress] = useState<{ [floorNumber: number]: ConversionProgress | null }>({});
+  const [drawingMode, setDrawingMode] = useState<{ [floorNumber: number]: boolean }>({});
   const { clients } = useClients();
   const { projects } = useProjects();
   const { addLocation, updateLocation } = useLocations();
@@ -741,24 +743,45 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
                                          <div className="h-px bg-border flex-1"></div>
                                        </div>
                                        
-                                       <Button 
-                                         variant="outline" 
-                                         size="sm"
-                                         onClick={() => {
-                                           const editorUrl = `/floor-plan-editor?mode=draw&floor=${floorNumber}`;
-                                           window.open(editorUrl, '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
-                                         }}
-                                         className="bg-background hover:bg-muted"
-                                       >
-                                         <FileImage className="h-4 w-4 mr-2" />
-                                         Draw Map
-                                       </Button>
+                                        <Button 
+                                          variant="outline" 
+                                          size="sm"
+                                          onClick={() => setDrawingMode(prev => ({ ...prev, [floorNumber]: !prev[floorNumber] }))}
+                                          className="bg-background hover:bg-muted"
+                                        >
+                                          <FileImage className="h-4 w-4 mr-2" />
+                                          {drawingMode[floorNumber] ? 'Exit Draw Mode' : 'Draw Map'}
+                                        </Button>
                                      </div>
                                    </div>
+                                  </div>
+                               )}
+                               
+                               {drawingMode[floorNumber] && (
+                                 <div className="mt-4 border-t pt-4">
+                                   <div className="min-h-[500px] border rounded-lg overflow-hidden bg-background">
+                                     <InteractiveFloorPlan
+                                       locationId="temp" // Temporary ID for drawing mode
+                                       floorNumber={floorNumber}
+                                       fileUrl=""
+                                       filePath=""
+                                       fileName={`Floor ${floorNumber} Drawing`}
+                                       className="w-full h-[500px]"
+                                     />
+                                   </div>
+                                   <div className="flex justify-end mt-2">
+                                     <Button
+                                       variant="outline"
+                                       size="sm"
+                                       onClick={() => setDrawingMode(prev => ({ ...prev, [floorNumber]: false }))}
+                                     >
+                                       Done Drawing
+                                     </Button>
+                                   </div>
                                  </div>
-                              )}
-                            </CardContent>
-                          </Card>
+                               )}
+                             </CardContent>
+                           </Card>
                         </div>
                       );
                     })}
