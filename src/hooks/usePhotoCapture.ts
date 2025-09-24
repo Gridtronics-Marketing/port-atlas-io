@@ -152,8 +152,8 @@ export function usePhotoCapture() {
       let image: any;
       
       if (isWeb) {
-        // Use HTML5 camera for web
-        image = await captureWebPhoto();
+        // Use enhanced HTML5 camera for web that handles the entire process
+        return await captureWebPhotoWithProcessing(description, category, projectId, locationId, workOrderId, employeeId);
       } else {
         // Use Capacitor Camera for native
         const cameraPromise = Camera.getPhoto({
@@ -397,7 +397,333 @@ export function usePhotoCapture() {
     }
   };
 
-  // Web camera capture function
+  // Enhanced web camera capture function that handles the entire process
+  const captureWebPhotoWithProcessing = async (
+    description: string = '',
+    category: string = 'progress',
+    projectId?: string,
+    locationId?: string,
+    workOrderId?: string,
+    employeeId?: string
+  ): Promise<CapturedPhoto | null> => {
+    return new Promise((resolve, reject) => {
+      // Create video element
+      const video = document.createElement('video');
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      let isVideoReady = false;
+      let stream: MediaStream | null = null;
+      
+      // Create camera modal
+      const modal = document.createElement('div');
+      modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.9);
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-family: system-ui;
+      `;
+      
+      video.style.cssText = `
+        max-width: 90vw;
+        max-height: 70vh;
+        border-radius: 8px;
+      `;
+      
+      // Status message
+      const statusMsg = document.createElement('div');
+      statusMsg.textContent = 'Initializing camera...';
+      statusMsg.style.cssText = `
+        margin: 20px;
+        font-size: 16px;
+        color: #ccc;
+        text-align: center;
+      `;
+      
+      // Loading spinner
+      const spinner = document.createElement('div');
+      spinner.style.cssText = `
+        width: 20px;
+        height: 20px;
+        border: 2px solid #333;
+        border-top: 2px solid #007bff;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 10px auto;
+        display: none;
+      `;
+      
+      // Add CSS animation for spinner
+      const style = document.createElement('style');
+      style.textContent = `
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `;
+      document.head.appendChild(style);
+      
+      // Buttons (initially disabled)
+      const captureBtn = document.createElement('button');
+      captureBtn.textContent = 'Capture Photo';
+      captureBtn.disabled = true;
+      captureBtn.style.cssText = `
+        margin: 10px;
+        padding: 12px 24px;
+        background: #6c757d;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 16px;
+        cursor: not-allowed;
+        opacity: 0.6;
+      `;
+      
+      const cancelBtn = document.createElement('button');
+      cancelBtn.textContent = 'Cancel';
+      cancelBtn.disabled = true;
+      cancelBtn.style.cssText = `
+        margin: 10px;
+        padding: 12px 24px;
+        background: #6c757d;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 16px;
+        cursor: not-allowed;
+        opacity: 0.6;
+      `;
+      
+      // Cleanup function
+      const cleanup = () => {
+        if (stream) {
+          stream.getTracks().forEach(track => track.stop());
+        }
+        if (modal.parentNode) {
+          document.body.removeChild(modal);
+        }
+        if (style.parentNode) {
+          document.head.removeChild(style);
+        }
+      };
+      
+      // Update status and show processing
+      const updateStatus = (message: string, showSpinner: boolean = false) => {
+        statusMsg.textContent = message;
+        spinner.style.display = showSpinner ? 'block' : 'none';
+      };
+      
+      // Enable buttons when camera is ready
+      const enableButtons = () => {
+        isVideoReady = true;
+        updateStatus('Camera ready - You can now capture or cancel');
+        statusMsg.style.color = '#28a745';
+        
+        captureBtn.disabled = false;
+        captureBtn.style.cssText = `
+          margin: 10px;
+          padding: 12px 24px;
+          background: #007bff;
+          color: white;
+          border: none;
+          border-radius: 6px;
+          font-size: 16px;
+          cursor: pointer;
+          opacity: 1;
+        `;
+        
+        cancelBtn.disabled = false;
+        cancelBtn.style.cssText = `
+          margin: 10px;
+          padding: 12px 24px;
+          background: #dc3545;
+          color: white;
+          border: none;
+          border-radius: 6px;
+          font-size: 16px;
+          cursor: pointer;
+          opacity: 1;
+        `;
+      };
+      
+      // Process the captured photo
+      const processPhoto = async (dataUrl: string) => {
+        try {
+          // Disable buttons during processing
+          captureBtn.disabled = true;
+          cancelBtn.disabled = true;
+          
+          updateStatus('Processing image...', true);
+          
+          // Convert dataUrl to blob
+          const response = await fetch(dataUrl);
+          const blob = await response.blob();
+          
+          updateStatus('Uploading to storage...', true);
+          
+          // Generate filename
+          const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+          const filename = `${category}-${timestamp}.jpg`;
+          
+          // Upload to Supabase Storage
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('floor-plans')
+            .upload(`photos/${filename}`, blob, {
+              contentType: 'image/jpeg',
+              upsert: false,
+            });
+
+          if (uploadError) {
+            throw uploadError;
+          }
+
+          // Get public URL
+          const { data: urlData } = supabase.storage
+            .from('floor-plans')
+            .getPublicUrl(`photos/${filename}`);
+
+          updateStatus('Saving photo record...', true);
+
+          // Create daily log entry
+          const { data: logData, error: logError } = await supabase
+            .from('daily_logs')
+            .insert({
+              employee_id: employeeId || null,
+              project_id: projectId || undefined,
+              location_id: locationId || undefined,
+              work_order_id: workOrderId || undefined,
+              log_date: new Date().toISOString().split('T')[0],
+              work_description: `Photo captured: ${category}${description ? ` - ${description}` : ''}`,
+              photos: [urlData.publicUrl],
+              hours_worked: 0,
+            })
+            .select()
+            .single();
+
+          if (logError) {
+            throw logError;
+          }
+
+          updateStatus('Photo saved successfully!', false);
+          statusMsg.style.color = '#28a745';
+
+          const capturedPhoto: CapturedPhoto = {
+            id: uploadData.id || crypto.randomUUID(),
+            url: urlData.publicUrl,
+            filename,
+            category,
+            description,
+            project_id: projectId,
+            location_id: locationId,
+            work_order_id: workOrderId,
+            employee_id: employeeId || null,
+            created_at: new Date().toISOString(),
+          };
+
+          // Show success message briefly then close
+          setTimeout(() => {
+            cleanup();
+            resolve(capturedPhoto);
+          }, 1500);
+
+        } catch (error) {
+          console.error('Photo processing error:', error);
+          updateStatus(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`, false);
+          statusMsg.style.color = '#dc3545';
+          
+          // Re-enable cancel button for retry/exit
+          cancelBtn.disabled = false;
+          cancelBtn.textContent = 'Close';
+          cancelBtn.onclick = () => {
+            cleanup();
+            reject(error);
+          };
+        }
+      };
+      
+      // Build modal structure
+      modal.appendChild(video);
+      modal.appendChild(statusMsg);
+      modal.appendChild(spinner);
+      const btnContainer = document.createElement('div');
+      btnContainer.appendChild(captureBtn);
+      btnContainer.appendChild(cancelBtn);
+      modal.appendChild(btnContainer);
+      document.body.appendChild(modal);
+      
+      // Set up timeout for camera initialization
+      const initTimeout = setTimeout(() => {
+        if (!isVideoReady) {
+          cleanup();
+          reject(new Error('Camera initialization timed out. Please try again.'));
+        }
+      }, 10000);
+      
+      // Get camera stream
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+        .then(mediaStream => {
+          stream = mediaStream;
+          video.srcObject = stream;
+          video.play();
+          
+          // Listen for video ready events
+          video.addEventListener('loadeddata', () => {
+            clearTimeout(initTimeout);
+            enableButtons();
+          });
+          
+          // Fallback: check readiness periodically
+          const readyCheck = setInterval(() => {
+            if (video.readyState >= video.HAVE_CURRENT_DATA) {
+              clearInterval(readyCheck);
+              clearTimeout(initTimeout);
+              enableButtons();
+            }
+          }, 500);
+          
+          captureBtn.onclick = () => {
+            if (!isVideoReady || video.readyState < video.HAVE_CURRENT_DATA) {
+              return;
+            }
+            
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context?.drawImage(video, 0, 0);
+            
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+            
+            // Stop camera stream but keep modal open for processing
+            if (stream) {
+              stream.getTracks().forEach(track => track.stop());
+            }
+            video.style.display = 'none'; // Hide video preview
+            
+            // Start processing
+            processPhoto(dataUrl);
+          };
+          
+          cancelBtn.onclick = () => {
+            cleanup();
+            reject(new Error('User cancelled photo capture'));
+          };
+        })
+        .catch(error => {
+          clearTimeout(initTimeout);
+          cleanup();
+          reject(error);
+        });
+    });
+  };
+
+  // Legacy web camera capture function (kept for compatibility)
   const captureWebPhoto = async (): Promise<{ dataUrl: string }> => {
     return new Promise((resolve, reject) => {
       // Create video element
