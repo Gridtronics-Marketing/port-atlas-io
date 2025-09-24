@@ -462,7 +462,7 @@ export function usePhotoCapture() {
       let isVideoReady = false;
       let stream: MediaStream | null = null;
       
-      // Create camera modal with reduced z-index
+      // Create camera modal with high z-index to appear above dialogs
       const modal = document.createElement('div');
       modal.style.cssText = `
         position: fixed;
@@ -471,7 +471,7 @@ export function usePhotoCapture() {
         right: 0;
         bottom: 0;
         background: rgba(0,0,0,0.9);
-        z-index: 50;
+        z-index: 9999;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -480,6 +480,12 @@ export function usePhotoCapture() {
         font-family: system-ui;
       `;
       modal.setAttribute('data-camera-modal', 'true');
+      
+      // Prevent modal from closing parent dialogs
+      modal.addEventListener('click', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+      });
       
       video.style.cssText = `
         max-width: 90vw;

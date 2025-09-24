@@ -54,7 +54,12 @@ export const AddRoomViewModal = ({
     }
   }, [open, coordinates, capturedPhoto, showPhotoOptions]);
 
-  const handlePhotoCapture = async () => {
+  const handlePhotoCapture = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    console.log('📸 Photo capture button clicked');
+    
     if (!canAddRoomView) {
       toast({
         title: "Employee Profile Required",
@@ -67,6 +72,7 @@ export const AddRoomViewModal = ({
     setShowPhotoOptions(false);
 
     try {
+      console.log('📸 Starting photo capture...');
       const photo = await capturePhoto(
         'room_view',
         description || 'Room view photo',
@@ -77,13 +83,14 @@ export const AddRoomViewModal = ({
       );
 
       if (photo) {
+        console.log('📸 Photo captured successfully:', photo.url);
         setCapturedPhoto(photo.url);
       } else {
-        console.log('Photo capture returned null - user likely cancelled');
+        console.log('📸 Photo capture returned null - user likely cancelled');
         setShowPhotoOptions(true); // Show options again if cancelled
       }
     } catch (error) {
-      console.error('Photo capture error in modal:', error);
+      console.error('📸 Photo capture error in modal:', error);
       setShowPhotoOptions(true); // Show options again on error
       toast({
         title: "Camera Error", 
@@ -93,7 +100,12 @@ export const AddRoomViewModal = ({
     }
   };
 
-  const handleGallerySelect = async () => {
+  const handleGallerySelect = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    console.log('🖼️ Gallery select button clicked');
+    
     if (!canAddRoomView) {
       toast({
         title: "Employee Profile Required",
@@ -105,19 +117,32 @@ export const AddRoomViewModal = ({
 
     setShowPhotoOptions(false);
 
-    const photo = await selectFromGallery(
-      'room_view',
-      description || 'Room view photo',
-      undefined,
-      locationId,
-      undefined,
-      currentEmployee?.id || user?.id
-    );
+    try {
+      console.log('🖼️ Starting gallery selection...');
+      const photo = await selectFromGallery(
+        'room_view',
+        description || 'Room view photo',
+        undefined,
+        locationId,
+        undefined,
+        currentEmployee?.id || user?.id
+      );
 
-    if (photo) {
-      setCapturedPhoto(photo.url);
-    } else {
-      setShowPhotoOptions(true); // Show options again if cancelled
+      if (photo) {
+        console.log('🖼️ Photo selected successfully:', photo.url);
+        setCapturedPhoto(photo.url);
+      } else {
+        console.log('🖼️ Gallery selection cancelled or failed');
+        setShowPhotoOptions(true); // Show options again if cancelled
+      }
+    } catch (error) {
+      console.error('🖼️ Gallery selection error:', error);
+      setShowPhotoOptions(true);
+      toast({
+        title: "Gallery Error",
+        description: "Unable to access gallery. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
