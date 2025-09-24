@@ -109,12 +109,13 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = ({
                 </p>
               )}
               <div className="flex items-center justify-between">
-                {photo.employee && (
-                  <Badge variant="secondary" className="text-xs">
-                    <User className="w-3 h-3 mr-1" />
-                    {photo.employee.first_name} {photo.employee.last_name}
-                  </Badge>
-                )}
+                <Badge variant="secondary" className="text-xs">
+                  <User className="w-3 h-3 mr-1" />
+                  {photo.employee 
+                    ? `${photo.employee.first_name} ${photo.employee.last_name}` 
+                    : 'Unknown User'
+                  }
+                </Badge>
                 <Badge variant="outline" className="text-xs text-white border-white/50">
                   <Calendar className="w-3 h-3 mr-1" />
                   {new Date(photo.created_at).toLocaleDateString()}

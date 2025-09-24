@@ -53,7 +53,7 @@ export const useRoomViewPhotos = (roomViewId?: string) => {
     }
   };
 
-  const addPhoto = async (photoData: Omit<RoomViewPhoto, 'id' | 'created_at' | 'updated_at' | 'employee'>) => {
+  const addPhoto = async (photoData: Omit<RoomViewPhoto, 'id' | 'created_at' | 'updated_at' | 'employee'> & { employee_id?: string | null }) => {
     try {
       const { data, error } = await supabase
         .from('room_view_photos')

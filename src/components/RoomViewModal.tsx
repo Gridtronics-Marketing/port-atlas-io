@@ -90,7 +90,7 @@ export const RoomViewModal: React.FC<RoomViewModalProps> = ({
   };
 
   const handlePhotoCapture = async () => {
-    if (!roomView || !employee) return;
+    if (!roomView) return;
 
     try {
       const result = await capturePhoto();
@@ -98,7 +98,7 @@ export const RoomViewModal: React.FC<RoomViewModalProps> = ({
         await addPhoto({
           room_view_id: roomView.id,
           photo_url: result.url,
-          employee_id: employee.id,
+          employee_id: employee?.id || null,
         });
       }
     } catch (error) {
@@ -107,7 +107,7 @@ export const RoomViewModal: React.FC<RoomViewModalProps> = ({
   };
 
   const handleGallerySelect = async () => {
-    if (!roomView || !employee) return;
+    if (!roomView) return;
 
     try {
       const result = await selectFromGallery();
@@ -115,7 +115,7 @@ export const RoomViewModal: React.FC<RoomViewModalProps> = ({
         await addPhoto({
           room_view_id: roomView.id,
           photo_url: result.url,
-          employee_id: employee.id,
+          employee_id: employee?.id || null,
         });
       }
     } catch (error) {

@@ -65,12 +65,10 @@ export const useCurrentEmployee = () => {
             }
           }
           
-          // Show helpful message to user
-          toast({
-            title: "Employee Profile Not Found",
-            description: "Your user account is not linked to an employee profile. Contact your administrator for assistance.",
-            variant: "destructive",
-          });
+          // Show helpful message to user only once
+          if (!employee) {
+            console.log("ℹ️ No employee profile found, but operations can continue");
+          }
         } else {
           console.log('✅ Employee found:', data);
           setEmployee(data);
