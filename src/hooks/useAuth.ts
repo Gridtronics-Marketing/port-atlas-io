@@ -134,13 +134,8 @@ export const useAuthProvider = () => {
         console.log('No active session, skipping API logout call');
       }
       
-      // Force redirect to auth page regardless of API response
-      window.location.href = '/auth';
-      
     } catch (error) {
       console.error('Unexpected error during logout:', error);
-      // Still redirect even if there's an unexpected error
-      window.location.href = '/auth';
     } finally {
       setLoggingOut(false);
     }
