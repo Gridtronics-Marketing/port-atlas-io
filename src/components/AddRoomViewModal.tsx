@@ -43,12 +43,16 @@ export const AddRoomViewModal = ({
   const isAdmin = hasRole('admin');
   const canAddRoomView = currentEmployee?.id || isAdmin;
 
-  // Show photo options when modal opens with coordinates
+  // Show photo options when modal opens with coordinates - but only if no photo yet
   useEffect(() => {
-    if (open && coordinates && !capturedPhoto) {
-      setShowPhotoOptions(true);
+    if (open && coordinates && !capturedPhoto && !showPhotoOptions) {
+      // Add a small delay to prevent conflicts with other modal operations
+      const timer = setTimeout(() => {
+        setShowPhotoOptions(true);
+      }, 100);
+      return () => clearTimeout(timer);
     }
-  }, [open, coordinates]);
+  }, [open, coordinates, capturedPhoto, showPhotoOptions]);
 
   const handlePhotoCapture = async () => {
     if (!canAddRoomView) {
@@ -167,6 +171,12 @@ export const AddRoomViewModal = ({
   };
 
   const handleClose = () => {
+    // Force cleanup of any stuck camera modals
+    const existingModal = document.querySelector('[data-camera-modal="true"]');
+    if (existingModal) {
+      existingModal.remove();
+    }
+    
     setRoomName('');
     setDescription('');
     setCapturedPhoto(null);

@@ -414,7 +414,7 @@ export function usePhotoCapture() {
       let isVideoReady = false;
       let stream: MediaStream | null = null;
       
-      // Create camera modal
+      // Create camera modal with reduced z-index
       const modal = document.createElement('div');
       modal.style.cssText = `
         position: fixed;
@@ -423,7 +423,7 @@ export function usePhotoCapture() {
         right: 0;
         bottom: 0;
         background: rgba(0,0,0,0.9);
-        z-index: 9999;
+        z-index: 50;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -431,6 +431,7 @@ export function usePhotoCapture() {
         color: white;
         font-family: system-ui;
       `;
+      modal.setAttribute('data-camera-modal', 'true');
       
       video.style.cssText = `
         max-width: 90vw;
@@ -502,18 +503,43 @@ export function usePhotoCapture() {
         opacity: 0.6;
       `;
       
-      // Cleanup function
+      // Enhanced cleanup function
       const cleanup = () => {
-        if (stream) {
-          stream.getTracks().forEach(track => track.stop());
-        }
-        if (modal.parentNode) {
-          document.body.removeChild(modal);
-        }
-        if (style.parentNode) {
-          document.head.removeChild(style);
+        try {
+          if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+          }
+          if (modal.parentNode) {
+            document.body.removeChild(modal);
+          }
+          if (style.parentNode) {
+            document.head.removeChild(style);
+          }
+          document.removeEventListener('keydown', escapeHandler);
+          clearTimeout(forceCloseTimeout);
+        } catch (error) {
+          console.error('Error during cleanup:', error);
         }
       };
+
+      // Escape key handler for emergency exit
+      const escapeHandler = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          console.log('Escape pressed, force closing camera modal');
+          cleanup();
+          reject(new Error('User cancelled photo capture with Escape key'));
+        }
+      };
+
+      // Force cleanup timeout (safety net)
+      const forceCloseTimeout = setTimeout(() => {
+        console.log('Force closing camera modal after 2 minutes');
+        cleanup();
+        reject(new Error('Camera modal timed out'));
+      }, 120000); // 2 minutes
+
+      // Add escape listener immediately
+      document.addEventListener('keydown', escapeHandler);
       
       // Update status and show processing
       const updateStatus = (message: string, showSpinner: boolean = false) => {
@@ -649,7 +675,51 @@ export function usePhotoCapture() {
         }
       };
       
+      // Create header with close button
+      const header = document.createElement('div');
+      header.style.cssText = `
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        z-index: 10;
+      `;
+      
+      const closeBtn = document.createElement('button');
+      closeBtn.innerHTML = '✕';
+      closeBtn.style.cssText = `
+        background: rgba(255,255,255,0.2);
+        border: 1px solid rgba(255,255,255,0.3);
+        color: white;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        font-size: 18px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      `;
+      closeBtn.onclick = () => {
+        cleanup();
+        reject(new Error('User closed camera modal'));
+      };
+      header.appendChild(closeBtn);
+
+      // Instructions
+      const instructions = document.createElement('div');
+      instructions.textContent = 'Press ESC to close';
+      instructions.style.cssText = `
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        font-size: 12px;
+        color: #ccc;
+        opacity: 0.7;
+      `;
+
       // Build modal structure
+      modal.appendChild(header);
+      modal.appendChild(instructions);
       modal.appendChild(video);
       modal.appendChild(statusMsg);
       modal.appendChild(spinner);
@@ -716,9 +786,10 @@ export function usePhotoCapture() {
           };
         })
         .catch(error => {
+          console.error('Camera stream error:', error);
           clearTimeout(initTimeout);
           cleanup();
-          reject(error);
+          reject(new Error(`Camera access failed: ${error.message}`));
         });
     });
   };
