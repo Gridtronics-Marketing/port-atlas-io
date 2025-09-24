@@ -224,24 +224,13 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
   };
 
   const handleSubmit = async () => {
-    // Check required fields
+    // Check required fields (project is now optional)
     const requiredFieldsError = !formData.name.trim() || !formData.street1.trim() || !formData.city.trim() || !formData.state.trim();
-    const projectRequiredError = preSelectedClientId && !formData.project_id;
     
-    if (requiredFieldsError || projectRequiredError) {
-      let description = "Please fill in all required fields";
-      
-      if (requiredFieldsError) {
-        description += " (Name, Street Address, City, and State)";
-      }
-      
-      if (projectRequiredError) {
-        description += requiredFieldsError ? " and select a project" : " (Project selection is required)";
-      }
-      
+    if (requiredFieldsError) {
       toast({
         title: "Validation Error",
-        description,
+        description: "Please fill in all required fields (Name, Street Address, City, and State)",
         variant: "destructive",
       });
       return;
@@ -545,7 +534,7 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
 
                 <div className="space-y-2">
                   <Label htmlFor="project_id" className="text-sm font-medium">
-                    Project Assignment{preSelectedClientId ? ' *' : ''}
+                    Project Assignment
                   </Label>
                   <Select value={formData.project_id} onValueChange={(value) => setFormData({ ...formData, project_id: value })}>
                     <SelectTrigger className="h-10 bg-background">

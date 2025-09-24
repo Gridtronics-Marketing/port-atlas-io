@@ -23,6 +23,7 @@ import UserManagement from "./pages/UserManagement";
 import Profile from "./pages/Profile";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import FloorPlanEditor from "./pages/FloorPlanEditor";
 
 const queryClient = new QueryClient();
 
@@ -138,6 +139,11 @@ const App = () => (
                 <AppLayout>
                   <Profile />
                 </AppLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/floor-plan-editor" element={
+              <ProtectedRoute>
+                <FloorPlanEditor />
               </ProtectedRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
