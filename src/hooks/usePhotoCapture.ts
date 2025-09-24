@@ -404,6 +404,7 @@ export function usePhotoCapture() {
       const video = document.createElement('video');
       const canvas = document.createElement('canvas');
       const context = canvas.getContext('2d');
+      let isVideoReady = false;
       
       // Create camera modal
       const modal = document.createElement('div');
@@ -429,38 +430,100 @@ export function usePhotoCapture() {
         border-radius: 8px;
       `;
       
+      // Loading message
+      const loadingMsg = document.createElement('div');
+      loadingMsg.textContent = 'Initializing camera...';
+      loadingMsg.style.cssText = `
+        margin: 20px;
+        font-size: 16px;
+        color: #ccc;
+      `;
+      
+      // Buttons (initially disabled)
       const captureBtn = document.createElement('button');
       captureBtn.textContent = 'Capture Photo';
+      captureBtn.disabled = true;
       captureBtn.style.cssText = `
         margin: 20px;
         padding: 12px 24px;
-        background: #007bff;
+        background: #6c757d;
         color: white;
         border: none;
         border-radius: 6px;
         font-size: 16px;
-        cursor: pointer;
+        cursor: not-allowed;
+        opacity: 0.6;
       `;
       
       const cancelBtn = document.createElement('button');
       cancelBtn.textContent = 'Cancel';
+      cancelBtn.disabled = true;
       cancelBtn.style.cssText = `
         margin: 20px;
         padding: 12px 24px;
-        background: #dc3545;
+        background: #6c757d;
         color: white;
         border: none;
         border-radius: 6px;
         font-size: 16px;
-        cursor: pointer;
+        cursor: not-allowed;
+        opacity: 0.6;
       `;
       
+      // Function to enable buttons when camera is ready
+      const enableButtons = () => {
+        isVideoReady = true;
+        loadingMsg.textContent = 'Camera ready - You can now capture or cancel';
+        loadingMsg.style.color = '#28a745';
+        
+        captureBtn.disabled = false;
+        captureBtn.style.cssText = `
+          margin: 20px;
+          padding: 12px 24px;
+          background: #007bff;
+          color: white;
+          border: none;
+          border-radius: 6px;
+          font-size: 16px;
+          cursor: pointer;
+          opacity: 1;
+        `;
+        
+        cancelBtn.disabled = false;
+        cancelBtn.style.cssText = `
+          margin: 20px;
+          padding: 12px 24px;
+          background: #dc3545;
+          color: white;
+          border: none;
+          border-radius: 6px;
+          font-size: 16px;
+          cursor: pointer;
+          opacity: 1;
+        `;
+      };
+      
+      // Build modal structure
       modal.appendChild(video);
+      modal.appendChild(loadingMsg);
       const btnContainer = document.createElement('div');
       btnContainer.appendChild(captureBtn);
       btnContainer.appendChild(cancelBtn);
       modal.appendChild(btnContainer);
       document.body.appendChild(modal);
+      
+      // Set up timeout for camera initialization
+      const initTimeout = setTimeout(() => {
+        if (!isVideoReady) {
+          // Cleanup and reject
+          if (video.srcObject) {
+            const stream = video.srcObject as MediaStream;
+            stream.getTracks().forEach(track => track.stop());
+          }
+          document.body.removeChild(modal);
+          reject(new Error('Camera initialization timed out. Please try again.'));
+        }
+      }, 10000); // 10 second timeout
       
       // Get camera stream
       navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
@@ -468,33 +531,48 @@ export function usePhotoCapture() {
           video.srcObject = stream;
           video.play();
           
-          captureBtn.onclick = () => {
-            // Wait for video to be ready
-            if (video.readyState === video.HAVE_ENOUGH_DATA) {
-              canvas.width = video.videoWidth;
-              canvas.height = video.videoHeight;
-              context?.drawImage(video, 0, 0);
-              
-              const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
-              
-              // Stop camera stream
-              stream.getTracks().forEach(track => track.stop());
-              document.body.removeChild(modal);
-              
-              resolve({ dataUrl });
-            } else {
-              // Video not ready, show error
-              alert('Camera is not ready yet. Please wait a moment and try again.');
+          // Listen for video ready events
+          video.addEventListener('loadeddata', () => {
+            clearTimeout(initTimeout);
+            enableButtons();
+          });
+          
+          // Fallback: check readiness periodically
+          const readyCheck = setInterval(() => {
+            if (video.readyState >= video.HAVE_CURRENT_DATA) {
+              clearInterval(readyCheck);
+              clearTimeout(initTimeout);
+              enableButtons();
             }
+          }, 500);
+          
+          captureBtn.onclick = () => {
+            if (!isVideoReady || video.readyState < video.HAVE_CURRENT_DATA) {
+              return; // Button should be disabled, but extra safety check
+            }
+            
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context?.drawImage(video, 0, 0);
+            
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+            
+            // Stop camera stream
+            stream.getTracks().forEach(track => track.stop());
+            document.body.removeChild(modal);
+            
+            resolve({ dataUrl });
           };
           
           cancelBtn.onclick = () => {
             stream.getTracks().forEach(track => track.stop());
             document.body.removeChild(modal);
+            clearTimeout(initTimeout);
             reject(new Error('User cancelled photo capture'));
           };
         })
         .catch(error => {
+          clearTimeout(initTimeout);
           document.body.removeChild(modal);
           reject(error);
         });
