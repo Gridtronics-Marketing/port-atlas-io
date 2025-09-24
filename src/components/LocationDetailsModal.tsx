@@ -68,8 +68,11 @@ interface LocationDetailsModalProps {
 
 export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocation, onDeleteLocation }: LocationDetailsModalProps) => {
   const [activeTab, setActiveTab] = useState("details");
-  const [selectedFloor, setSelectedFloor] = useState(1);
+  const [selectedFloor, setSelectedFloor] = useState<number | 'riser'>(1);
   const [floorPlanUrls, setFloorPlanUrls] = useState<{ [floorNumber: number]: string }>({});
+  const [riserDiagramUrl, setRiserDiagramUrl] = useState<string | null>(null);
+  const [showAddFloorPlanModal, setShowAddFloorPlanModal] = useState(false);
+  const [showAddRiserModal, setShowAddRiserModal] = useState(false);
 
   // Fetch team members for this location
   const { teamMembers, loading: teamLoading, refetch: refetchTeam } = useLocationTeam(location?.id);
@@ -88,12 +91,22 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
     const loadFloorPlans = async () => {
       if (!location?.floor_plan_files) {
         setFloorPlanUrls({});
+        setRiserDiagramUrl(null);
         return;
       }
 
       // Use the utility function to generate URLs
       const urls = getFloorPlanUrls(location.floor_plan_files);
       setFloorPlanUrls(urls);
+      
+      // Check for riser diagram (stored with key 'riser' or 'riser_diagram')
+      const riserFile = location.floor_plan_files['riser'] || location.floor_plan_files['riser_diagram'];
+      if (riserFile) {
+        const riserUrl = `https://mhrekppksiekhstnteyu.supabase.co/storage/v1/object/public/floor-plans/${riserFile}`;
+        setRiserDiagramUrl(riserUrl);
+      } else {
+        setRiserDiagramUrl(null);
+      }
     };
 
     if (open && location) {
@@ -102,7 +115,23 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
   }, [location, open]);
 
   const hasFloorPlans = location?.floor_plan_files && Object.keys(location.floor_plan_files).length > 0;
-  const currentFloorPlanUrl = floorPlanUrls[selectedFloor];
+  const currentFloorPlanUrl = selectedFloor === 'riser' ? riserDiagramUrl : floorPlanUrls[selectedFloor as number];
+
+  const handleAddFloorPlan = () => {
+    setShowAddFloorPlanModal(true);
+  };
+
+  const handleAddRiser = () => {
+    setShowAddRiserModal(true);
+  };
+
+  const handleFloorSelectionChange = (value: string) => {
+    if (value === 'riser') {
+      setSelectedFloor('riser');
+    } else {
+      setSelectedFloor(parseInt(value));
+    }
+  };
 
   if (!location) return null;
 
@@ -402,37 +431,59 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
                             Floor {floor}
                           </SelectItem>
                         ))}
+                        <SelectItem value="riser">Riser Diagram</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   
                   <div className="flex gap-2">
                     <Button variant="outline" size="sm">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Floor Plan
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Riser
+                    </Button>
+                    <Button variant="outline" size="sm">
                       Demo
                     </Button>
                   </div>
                 </div>
 
-                {floorPlanUrls[selectedFloor] ? (
+                {currentFloorPlanUrl ? (
                   <div className="space-y-4">
                     <InteractiveFloorPlan
                       locationId={location.id}
-                      floorNumber={selectedFloor}
-                      fileUrl={floorPlanUrls[selectedFloor]}
-                      filePath={location.floor_plan_files?.[selectedFloor] || ''}
-                      fileName={location.floor_plan_files?.[selectedFloor]?.split('/').pop() || ''}
+                      floorNumber={selectedFloor === 'riser' ? 0 : selectedFloor as number}
+                      fileUrl={currentFloorPlanUrl}
+                      filePath={selectedFloor === 'riser' 
+                        ? (location.floor_plan_files?.['riser'] || location.floor_plan_files?.['riser_diagram'] || '')
+                        : (location.floor_plan_files?.[selectedFloor as number] || '')
+                      }
+                      fileName={selectedFloor === 'riser' 
+                        ? (location.floor_plan_files?.['riser'] || location.floor_plan_files?.['riser_diagram'] || '').split('/').pop() || 'riser_diagram'
+                        : (location.floor_plan_files?.[selectedFloor as number] || '').split('/').pop() || ''
+                      }
                       className="min-h-[500px]"
                     />
                   </div>
                 ) : (
                   <div className="space-y-4">
                     <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed">
-                      <p className="text-gray-600 mb-4">No floor plan available for Floor {selectedFloor}</p>
-                      <FloorPlanDemo 
-                        floorNumber={selectedFloor}
-                        totalFloors={location.floors}
-                        onStartEditor={() => {}}
-                      />
+                      <p className="text-gray-600 mb-4">
+                        {selectedFloor === 'riser' 
+                          ? 'No riser diagram available' 
+                          : `No floor plan available for Floor ${selectedFloor}`
+                        }
+                      </p>
+                      {selectedFloor !== 'riser' && (
+                        <FloorPlanDemo 
+                          floorNumber={selectedFloor as number}
+                          totalFloors={location.floors}
+                          onStartEditor={() => {}}
+                        />
+                      )}
                     </div>
                   </div>
                 )}
@@ -605,6 +656,52 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
           setShowAddNoteModal(false);
         }}
       />
+
+      {/* Add Floor Plan Modal */}
+      <Dialog open={showAddFloorPlanModal} onOpenChange={setShowAddFloorPlanModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add Floor Plan</DialogTitle>
+            <p className="text-sm text-muted-foreground">
+             Upload a floor plan for Floor {selectedFloor === 'riser' ? '1' : selectedFloor}
+            </p>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="text-center py-8">
+              <p className="text-muted-foreground mb-4">Use the Floor Plan File Manager above to upload and manage floor plans.</p>
+              <Button variant="outline" onClick={() => {
+                setShowAddFloorPlanModal(false);
+                setActiveTab('floor-plans');
+              }}>
+                Go to File Manager
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Riser Modal */}
+      <Dialog open={showAddRiserModal} onOpenChange={setShowAddRiserModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add Riser Diagram</DialogTitle>
+            <p className="text-sm text-muted-foreground">
+              Upload a riser diagram showing the network backbone infrastructure
+            </p>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="text-center py-8">
+              <p className="text-muted-foreground mb-4">Use the Floor Plan File Manager above to upload riser diagrams. Name the file "riser.png".  </p>
+              <Button variant="outline" onClick={() => {
+                setShowAddRiserModal(false);
+                setActiveTab('floor-plans');
+              }}>
+                Go to File Manager
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

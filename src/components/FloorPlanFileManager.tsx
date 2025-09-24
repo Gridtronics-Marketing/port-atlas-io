@@ -14,7 +14,7 @@ import { toast } from 'sonner';
 interface FloorPlanFile {
   name: string;
   path: string;
-  floor: number;
+  floor: number | 'riser';
   size: number;
   lastModified: string;
   type: string;
@@ -67,7 +67,8 @@ export const FloorPlanFileManager: React.FC<FloorPlanFileManagerProps> = ({
         
         // Extract floor number from filename
         const floorMatch = file.name.match(/^floor_(\d+)\./);
-        const floor = floorMatch ? parseInt(floorMatch[1]) : 0;
+        const riserMatch = file.name.match(/^riser/i);
+        const floor: number | 'riser' = floorMatch ? parseInt(floorMatch[1]) : riserMatch ? 'riser' : 0;
         
         // Validate file accessibility
         const isAccessible = await validateFileAccess(url);
@@ -85,7 +86,13 @@ export const FloorPlanFileManager: React.FC<FloorPlanFileManagerProps> = ({
       });
 
       const processedFiles = await Promise.all(filePromises);
-      processedFiles.sort((a, b) => a.floor - b.floor);
+      // Sort files: riser diagrams first, then by floor number
+      processedFiles.sort((a, b) => {
+        if (a.floor === 'riser' && b.floor !== 'riser') return -1;
+        if (b.floor === 'riser' && a.floor !== 'riser') return 1;
+        if (a.floor === 'riser' && b.floor === 'riser') return 0;
+        return (a.floor as number) - (b.floor as number);
+      });
       setFiles(processedFiles);
     } catch (error) {
       console.error('Error in fetchFiles:', error);
@@ -121,8 +128,10 @@ export const FloorPlanFileManager: React.FC<FloorPlanFileManagerProps> = ({
       for (const file of Array.from(selectedFiles)) {
         // Validate file name format
         const floorMatch = file.name.match(/^floor_(\d+)\./);
-        if (!floorMatch) {
-          toast.error(`Invalid filename: ${file.name}. Use format: floor_1.png, floor_2.pdf, etc.`);
+        const riserMatch = file.name.match(/^riser/i);
+        
+        if (!floorMatch && !riserMatch) {
+          toast.error(`Invalid filename: ${file.name}. Use format: floor_1.png, floor_2.pdf, or riser.png`);
           continue;
         }
 
@@ -279,7 +288,7 @@ export const FloorPlanFileManager: React.FC<FloorPlanFileManagerProps> = ({
           <div className="text-center py-8 text-muted-foreground">
             <FileX className="h-12 w-12 mx-auto mb-4 opacity-50" />
             <p>No floor plan files found</p>
-            <p className="text-sm">Upload files using the format: floor_1.png, floor_2.pdf, etc.</p>
+            <p className="text-sm">Upload files using the format: floor_1.png, floor_2.pdf, or riser.png for riser diagrams</p>
           </div>
         ) : (
           <>
@@ -337,7 +346,9 @@ export const FloorPlanFileManager: React.FC<FloorPlanFileManagerProps> = ({
                     <div className="flex items-center gap-2 mb-1">
                       {getStatusIcon(file)}
                       <span className="font-medium truncate">{file.name}</span>
-                      <Badge variant="outline">Floor {file.floor}</Badge>
+                      <Badge variant="outline">
+                        {file.floor === 'riser' ? 'Riser' : `Floor ${file.floor}`}
+                      </Badge>
                       <Badge variant="secondary">{file.type}</Badge>
                     </div>
                     

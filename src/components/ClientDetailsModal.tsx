@@ -232,44 +232,35 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onDe
               ) : (
                 <div className="space-y-6">
                   {locations.map((location) => (
-                    <div key={location.id} className="border rounded-lg p-4 space-y-4">
-                      <div className="flex items-start justify-between">
+                    <div 
+                      key={location.id} 
+                      className="border rounded-lg p-4 space-y-2 cursor-pointer hover:shadow-soft transition-all duration-200 hover:border-primary/30"
+                      onClick={() => setSelectedLocation(location)}
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="p-2 bg-primary/10 rounded-lg">
+                          <MapPin className="h-4 w-4 text-primary" />
+                        </div>
                         <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <h4 className="font-semibold text-lg">{location.name}</h4>
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-semibold text-base">{location.name}</h4>
                             <Badge variant="secondary" className="text-xs">
                               {location.status}
                             </Badge>
                           </div>
-                          <p className="text-muted-foreground text-sm mb-2">
+                          <p className="text-muted-foreground text-sm">
                             {location.address}
                           </p>
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                            <span>{location.floors} floor{location.floors !== 1 ? 's' : ''}</span>
-                            {location.total_square_feet && (
-                              <span>{location.total_square_feet.toLocaleString()} sq ft</span>
-                            )}
-                            <span>{location.drop_points_count || 0} drop points</span>
-                          </div>
                         </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setSelectedLocation(location)}
-                          className="flex items-center gap-2"
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                          View Details
-                        </Button>
                       </div>
-                      
-                      {/* Location Map */}
-                      <LocationMap
-                        address={location.address}
-                        latitude={location.latitude}
-                        longitude={location.longitude}
-                        locationName={location.name}
-                      />
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground ml-12">
+                        <span>{location.floors} floor{location.floors !== 1 ? 's' : ''}</span>
+                        {location.total_square_feet && (
+                          <span>{location.total_square_feet.toLocaleString()} sq ft</span>
+                        )}
+                        <span>{location.drop_points_count || 0} drop points</span>
+                        <span className="text-xs">• Click to view details</span>
+                      </div>
                     </div>
                   ))}
                 </div>
