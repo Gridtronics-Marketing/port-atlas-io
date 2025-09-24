@@ -26,8 +26,13 @@ export const InteractiveRiserDiagram: React.FC<InteractiveRiserDiagramProps> = (
   const [selectedFloor, setSelectedFloor] = useState<string>('all');
   const [showDetails, setShowDetails] = useState<string | null>(null);
   
+  // Drag state
+  const [isDragging, setIsDragging] = useState(false);
+  const [draggedFrame, setDraggedFrame] = useState<string | null>(null);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  
   const { cables } = useBackboneCables(locationId);
-  const { frames } = useDistributionFrames(locationId);
+  const { frames, updateFrame } = useDistributionFrames(locationId);
   const { pathways } = useRiserPathways(locationId);
   const { connections } = useCableConnections(locationId);
 
@@ -63,7 +68,17 @@ export const InteractiveRiserDiagram: React.FC<InteractiveRiserDiagramProps> = (
   };
 
   // Calculate equipment positions
-  const getEquipmentPosition = (floor: number, index: number) => {
+  const getEquipmentPosition = (frame: any, floor: number, index: number) => {
+    // Use stored coordinates if available, otherwise calculate based on index
+    if (frame.x_coordinate !== null && frame.y_coordinate !== null) {
+      // Convert percentage coordinates to SVG coordinates
+      return {
+        x: (frame.x_coordinate / 100) * diagramWidth,
+        y: (frame.y_coordinate / 100) * diagramHeight
+      };
+    }
+    
+    // Fallback to calculated position
     const floorIndex = floors.indexOf(floor);
     const y = 50 + floorIndex * floorHeight + 30;
     const x = 100 + index * (equipmentWidth + 20);
@@ -86,6 +101,98 @@ export const InteractiveRiserDiagram: React.FC<InteractiveRiserDiagramProps> = (
         c.origin_floor === parseInt(selectedFloor) || 
         c.destination_floor === parseInt(selectedFloor)
       );
+
+  // Mouse event handlers for dragging
+  const handleMouseDown = (e: React.MouseEvent, frame: any) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const svgElement = svgRef.current;
+    if (!svgElement) return;
+    
+    const rect = svgElement.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    
+    const floorFrames = frames.filter(f => f.floor === frame.floor);
+    const frameIndex = floorFrames.indexOf(frame);
+    const { x, y } = getEquipmentPosition(frame, frame.floor, frameIndex);
+    
+    setIsDragging(true);
+    setDraggedFrame(frame.id);
+    setDragOffset({
+      x: mouseX - x,
+      y: mouseY - y
+    });
+    
+    // Prevent text selection
+    document.body.style.userSelect = 'none';
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !draggedFrame) return;
+    
+    const svgElement = svgRef.current;
+    if (!svgElement) return;
+    
+    const rect = svgElement.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    
+    // Convert to percentage coordinates for storage
+    const x = Math.max(0, Math.min(100, ((mouseX - dragOffset.x) / diagramWidth) * 100));
+    const y = Math.max(0, Math.min(100, ((mouseY - dragOffset.y) / diagramHeight) * 100));
+    
+    // Update frame position temporarily (this will be saved on mouse up)
+    const frameToUpdate = frames.find(f => f.id === draggedFrame);
+    if (frameToUpdate) {
+      frameToUpdate.x_coordinate = x;
+      frameToUpdate.y_coordinate = y;
+    }
+  };
+
+  const handleMouseUp = async () => {
+    if (!isDragging || !draggedFrame) return;
+    
+    const frameToUpdate = frames.find(f => f.id === draggedFrame);
+    if (frameToUpdate && frameToUpdate.x_coordinate !== null && frameToUpdate.y_coordinate !== null) {
+      try {
+        await updateFrame(draggedFrame, {
+          x_coordinate: frameToUpdate.x_coordinate,
+          y_coordinate: frameToUpdate.y_coordinate
+        });
+      } catch (error) {
+        console.error('Failed to update frame position:', error);
+      }
+    }
+    
+    setIsDragging(false);
+    setDraggedFrame(null);
+    setDragOffset({ x: 0, y: 0 });
+    
+    // Re-enable text selection
+    document.body.style.userSelect = '';
+  };
+
+  // Add global mouse event listeners
+  useEffect(() => {
+    if (isDragging) {
+      const handleGlobalMouseUp = () => handleMouseUp();
+      
+      document.addEventListener('mouseup', handleGlobalMouseUp);
+      
+      return () => {
+        document.removeEventListener('mouseup', handleGlobalMouseUp);
+      };
+    }
+  }, [isDragging]);
+
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      document.body.style.userSelect = '';
+    };
+  }, []);
 
   return (
     <div className="space-y-4">
@@ -138,6 +245,8 @@ export const InteractiveRiserDiagram: React.FC<InteractiveRiserDiagramProps> = (
               width={diagramWidth}
               height={diagramHeight}
               className="bg-background"
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
             >
               {/* Grid background */}
               <defs>
@@ -220,7 +329,8 @@ export const InteractiveRiserDiagram: React.FC<InteractiveRiserDiagramProps> = (
               {filteredFrames.map((frame, index) => {
                 const floorFrames = frames.filter(f => f.floor === frame.floor);
                 const frameIndex = floorFrames.indexOf(frame);
-                const { x, y } = getEquipmentPosition(frame.floor, frameIndex);
+                const { x, y } = getEquipmentPosition(frame, frame.floor, frameIndex);
+                const isBeingDragged = frame.id === draggedFrame;
                 
                 return (
                   <g key={frame.id}>
@@ -233,8 +343,10 @@ export const InteractiveRiserDiagram: React.FC<InteractiveRiserDiagramProps> = (
                       stroke="hsl(var(--border))"
                       strokeWidth="1"
                       rx="4"
-                      className="cursor-pointer hover:stroke-primary"
+                      className={`cursor-move hover:stroke-primary ${isBeingDragged ? 'opacity-80' : ''}`}
+                      style={{ cursor: isBeingDragged ? 'grabbing' : 'grab' }}
                       onClick={() => setShowDetails(frame.id)}
+                      onMouseDown={(e) => handleMouseDown(e, frame)}
                     />
                     <text
                       x={x + equipmentWidth / 2}
@@ -243,6 +355,7 @@ export const InteractiveRiserDiagram: React.FC<InteractiveRiserDiagramProps> = (
                       fill={frame.frame_type === 'MDF' ? 'hsl(var(--primary-foreground))' : 'hsl(var(--secondary-foreground))'}
                       textAnchor="middle"
                       fontWeight="500"
+                      className="pointer-events-none"
                     >
                       {frame.frame_type}
                     </text>
@@ -252,6 +365,7 @@ export const InteractiveRiserDiagram: React.FC<InteractiveRiserDiagramProps> = (
                       fontSize="8"
                       fill={frame.frame_type === 'MDF' ? 'hsl(var(--primary-foreground))' : 'hsl(var(--secondary-foreground))'}
                       textAnchor="middle"
+                      className="pointer-events-none"
                     >
                       {frame.port_count}p
                     </text>
@@ -269,9 +383,9 @@ export const InteractiveRiserDiagram: React.FC<InteractiveRiserDiagramProps> = (
                 const originFrame = originFrames[0];
                 const destFrame = destFrames[0];
                 
-                const originPos = getEquipmentPosition(cable.origin_floor!, 
+                const originPos = getEquipmentPosition(originFrame, cable.origin_floor!, 
                   frames.filter(f => f.floor === cable.origin_floor).indexOf(originFrame));
-                const destPos = getEquipmentPosition(cable.destination_floor!, 
+                const destPos = getEquipmentPosition(destFrame, cable.destination_floor!, 
                   frames.filter(f => f.floor === cable.destination_floor).indexOf(destFrame));
 
                 const cableColor = getCableColor(cable.cable_type);
