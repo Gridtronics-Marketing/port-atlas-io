@@ -70,7 +70,7 @@ interface LocationDetailsModalProps {
 
 export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocation, onDeleteLocation }: LocationDetailsModalProps) => {
   const [activeTab, setActiveTab] = useState("details");
-  const [selectedFloor, setSelectedFloor] = useState<number | 'riser'>(1);
+  const [selectedFloor, setSelectedFloor] = useState<number>(1);
   const [floorPlanUrls, setFloorPlanUrls] = useState<{ [floorNumber: number]: string }>({});
   const [riserDiagramUrl, setRiserDiagramUrl] = useState<string | null>(null);
   const [showAddFloorPlanModal, setShowAddFloorPlanModal] = useState(false);
@@ -117,7 +117,7 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
   }, [location, open]);
 
   const hasFloorPlans = location?.floor_plan_files && Object.keys(location.floor_plan_files).length > 0;
-  const currentFloorPlanUrl = selectedFloor === 'riser' ? riserDiagramUrl : floorPlanUrls[selectedFloor as number];
+  const currentFloorPlanUrl = floorPlanUrls[selectedFloor];
 
   const handleAddFloorPlan = () => {
     setShowAddFloorPlanModal(true);
@@ -125,14 +125,6 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
 
   const handleAddRiser = () => {
     setShowAddRiserModal(true);
-  };
-
-  const handleFloorSelectionChange = (value: string) => {
-    if (value === 'riser') {
-      setSelectedFloor('riser');
-    } else {
-      setSelectedFloor(parseInt(value));
-    }
   };
 
   if (!location) return null;
@@ -280,7 +272,7 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
 
             {/* Enhanced Tabs */}
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-4 bg-muted">
+              <TabsList className="grid w-full grid-cols-5 bg-muted">
                 <TabsTrigger value="details" className="flex items-center gap-2">
                   <Info className="h-4 w-4" />
                   Details
@@ -296,6 +288,10 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
                 <TabsTrigger value="team" className="flex items-center gap-2">
                   <Users className="h-4 w-4" />
                   Team & Notes
+                </TabsTrigger>
+                <TabsTrigger value="riser-diagrams" className="flex items-center gap-2">
+                  <Building2 className="h-4 w-4" />
+                  Riser Diagrams
                 </TabsTrigger>
               </TabsList>
 
@@ -433,7 +429,6 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
                             Floor {floor}
                           </SelectItem>
                         ))}
-                        <SelectItem value="riser">Riser Diagram</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -444,34 +439,19 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
                       Add Floor Plan
                     </Button>
                     <Button variant="outline" size="sm">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Riser
-                    </Button>
-                    <Button variant="outline" size="sm">
                       Demo
                     </Button>
                   </div>
                 </div>
 
-                {selectedFloor === 'riser' ? (
-                  <RiserDiagramViewer 
-                    locationId={location.id}
-                    locationName={location.name}
-                  />
-                ) : currentFloorPlanUrl ? (
+                {currentFloorPlanUrl ? (
                   <div className="space-y-4">
                     <InteractiveFloorPlan
                       locationId={location.id}
-                      floorNumber={typeof selectedFloor === 'string' ? 0 : selectedFloor}
+                      floorNumber={selectedFloor}
                       fileUrl={currentFloorPlanUrl}
-                      filePath={typeof selectedFloor === 'string' && selectedFloor === 'riser'
-                        ? (location.floor_plan_files?.['riser'] || location.floor_plan_files?.['riser_diagram'] || '')
-                        : (location.floor_plan_files?.[selectedFloor as number] || '')
-                      }
-                      fileName={typeof selectedFloor === 'string' && selectedFloor === 'riser'
-                        ? (location.floor_plan_files?.['riser'] || location.floor_plan_files?.['riser_diagram'] || '').split('/').pop() || 'riser_diagram'
-                        : (location.floor_plan_files?.[selectedFloor as number] || '').split('/').pop() || ''
-                      }
+                      filePath={location.floor_plan_files?.[selectedFloor] || ''}
+                      fileName={location.floor_plan_files?.[selectedFloor]?.split('/').pop() || ''}
                       className="min-h-[500px]"
                     />
                   </div>
@@ -479,18 +459,13 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
                   <div className="space-y-4">
                     <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed">
                       <p className="text-gray-600 mb-4">
-                        {typeof selectedFloor === 'string' && selectedFloor === 'riser'
-                          ? 'No riser diagram available' 
-                          : `No floor plan available for Floor ${selectedFloor}`
-                        }
+                        No floor plan available for Floor {selectedFloor}
                       </p>
-                      {typeof selectedFloor === 'number' && (
-                        <FloorPlanDemo 
-                          floorNumber={selectedFloor as number}
-                          totalFloors={location.floors}
-                          onStartEditor={() => {}}
-                        />
-                      )}
+                      <FloorPlanDemo 
+                        floorNumber={selectedFloor}
+                        totalFloors={location.floors}
+                        onStartEditor={() => {}}
+                      />
                     </div>
                   </div>
                 )}
@@ -635,6 +610,53 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
                   </Card>
                 </div>
               </TabsContent>
+
+              {/* Riser Diagrams Tab */}
+              <TabsContent value="riser-diagrams" className="mt-6">
+                <Card className="shadow-soft">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Building2 className="h-5 w-5 text-primary" />
+                      Riser Diagram Management
+                    </CardTitle>
+                    <CardDescription>
+                      Manage vertical infrastructure and backbone cabling for {location.name}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm text-muted-foreground">
+                          Interactive riser diagram showing backbone cables, distribution frames, and vertical pathways.
+                        </p>
+                        <Button variant="outline" size="sm" onClick={handleAddRiser}>
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Riser Plan
+                        </Button>
+                      </div>
+                      
+                      {riserDiagramUrl ? (
+                        <RiserDiagramViewer 
+                          locationId={location.id}
+                          locationName={location.name}
+                        />
+                      ) : (
+                        <div className="text-center py-12 bg-muted/50 rounded-lg border-2 border-dashed">
+                          <Building2 className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                          <h3 className="text-lg font-medium mb-2">No Riser Diagrams Available</h3>
+                          <p className="text-muted-foreground mb-4">
+                            Create your first riser diagram to visualize vertical infrastructure.
+                          </p>
+                          <Button onClick={handleAddRiser}>
+                            <Plus className="h-4 w-4 mr-2" />
+                            Create Riser Diagram
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
             </Tabs>
           </div>
         </DialogContent>
@@ -666,12 +688,12 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
       {/* Add Floor Plan Modal */}
       <Dialog open={showAddFloorPlanModal} onOpenChange={setShowAddFloorPlanModal}>
         <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Add Floor Plan</DialogTitle>
-            <p className="text-sm text-muted-foreground">
-             Upload a floor plan for Floor {selectedFloor === 'riser' ? '1' : selectedFloor}
-            </p>
-          </DialogHeader>
+           <DialogHeader>
+             <DialogTitle>Add Floor Plan</DialogTitle>
+             <p className="text-sm text-muted-foreground">
+              Upload a floor plan for Floor {selectedFloor}
+             </p>
+           </DialogHeader>
           <div className="space-y-4">
             <div className="text-center py-8">
               <p className="text-muted-foreground mb-4">Use the Floor Plan File Manager above to upload and manage floor plans.</p>
@@ -698,12 +720,12 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
           <div className="space-y-4">
             <div className="text-center py-8">
               <p className="text-muted-foreground mb-4">Use the Floor Plan File Manager above to upload riser diagrams. Name the file "riser.png".  </p>
-              <Button variant="outline" onClick={() => {
-                setShowAddRiserModal(false);
-                setActiveTab('floor-plans');
-              }}>
-                Go to File Manager
-              </Button>
+               <Button variant="outline" onClick={() => {
+                 setShowAddRiserModal(false);
+                 setActiveTab('riser-diagrams');
+               }}>
+                 Go to Riser Diagrams
+               </Button>
             </div>
           </div>
         </DialogContent>
