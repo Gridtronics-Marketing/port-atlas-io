@@ -3,12 +3,29 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Network, Zap, Cable, Router, Box, AlertTriangle } from 'lucide-react';
+import { Network, Zap, Cable, Router, Box, AlertTriangle, Trash2, MoreVertical } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useBackboneCables } from '@/hooks/useBackboneCables';
 import { useDistributionFrames } from '@/hooks/useDistributionFrames';
 import { useRiserPathways } from '@/hooks/useRiserPathways';
 import { useJunctionBoxes } from '@/hooks/useJunctionBoxes';
 import { useCableConnections } from '@/hooks/useCableConnections';
+import { useToast } from '@/hooks/use-toast';
 
 interface InteractiveRiserDiagramProps {
   locationId: string;
@@ -28,6 +45,8 @@ export const InteractiveRiserDiagram: React.FC<InteractiveRiserDiagramProps> = (
   const svgRef = useRef<SVGSVGElement>(null);
   const [selectedFloor, setSelectedFloor] = useState<string>('all');
   const [showDetails, setShowDetails] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<{id: string, type: 'frame' | 'junction', label: string} | null>(null);
   
   // Drag state
   const [isDragging, setIsDragging] = useState(false);
@@ -36,10 +55,11 @@ export const InteractiveRiserDiagram: React.FC<InteractiveRiserDiagramProps> = (
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   
   const { cables } = useBackboneCables(locationId);
-  const { frames, updateFrame } = useDistributionFrames(locationId);
+  const { frames, updateFrame, deleteFrame } = useDistributionFrames(locationId);
   const { pathways } = useRiserPathways(locationId);
   const { connections } = useCableConnections(locationId);
-  const { junctionBoxes, updateJunctionBox } = useJunctionBoxes(locationId);
+  const { junctionBoxes, updateJunctionBox, deleteJunctionBox } = useJunctionBoxes(locationId);
+  const { toast } = useToast();
 
   // Calculate diagram dimensions and layout
   const floors = Array.from(
@@ -123,6 +143,45 @@ export const InteractiveRiserDiagram: React.FC<InteractiveRiserDiagramProps> = (
   const getPathwayPosition = (pathwayIndex: number) => {
     const x = 50 + pathwayIndex * (pathwayWidth + 10);
     return { x, y: 50, height: diagramHeight - 100 };
+  };
+
+  // Handle delete operations
+  const handleDeleteConfirm = async () => {
+    if (!itemToDelete) return;
+    
+    try {
+      switch (itemToDelete.type) {
+        case 'frame':
+          await deleteFrame(itemToDelete.id);
+          toast({
+            title: "Success",
+            description: "Distribution frame deleted successfully",
+          });
+          break;
+        case 'junction':
+          await deleteJunctionBox(itemToDelete.id);
+          toast({
+            title: "Success", 
+            description: "Junction box deleted successfully",
+          });
+          break;
+      }
+    } catch (error) {
+      console.error('Error deleting item:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete item",
+        variant: "destructive",
+      });
+    } finally {
+      setDeleteDialogOpen(false);
+      setItemToDelete(null);
+    }
+  };
+
+  const handleDeleteClick = (id: string, type: 'frame' | 'junction', label: string) => {
+    setItemToDelete({ id, type, label });
+    setDeleteDialogOpen(true);
   };
 
   const filteredFrames = selectedFloor === 'all' 
@@ -442,30 +501,45 @@ export const InteractiveRiserDiagram: React.FC<InteractiveRiserDiagramProps> = (
                       onClick={() => setShowDetails(frame.id)}
                       onMouseDown={(e) => handleMouseDown(e, frame)}
                     />
-                    <text
-                      x={x + equipmentWidth / 2}
-                      y={y + 20}
-                      fontSize="10"
-                      fill={frame.frame_type === 'MDF' ? 'hsl(var(--primary-foreground))' : 'hsl(var(--secondary-foreground))'}
-                      textAnchor="middle"
-                      fontWeight="500"
-                      className="pointer-events-none"
-                    >
-                      {frame.frame_type}
-                    </text>
-                    <text
-                      x={x + equipmentWidth / 2}
-                      y={y + 32}
-                      fontSize="8"
-                      fill={frame.frame_type === 'MDF' ? 'hsl(var(--primary-foreground))' : 'hsl(var(--secondary-foreground))'}
-                      textAnchor="middle"
-                      className="pointer-events-none"
-                    >
-                      {frame.port_count}p
-                    </text>
-                  </g>
-                );
-              })}
+                     <text
+                       x={x + equipmentWidth / 2}
+                       y={y + 20}
+                       fontSize="10"
+                       fill={frame.frame_type === 'MDF' ? 'hsl(var(--primary-foreground))' : 'hsl(var(--secondary-foreground))'}
+                       textAnchor="middle"
+                       fontWeight="500"
+                       className="pointer-events-none"
+                     >
+                       {frame.frame_type}
+                     </text>
+                     <text
+                       x={x + equipmentWidth / 2}
+                       y={y + 32}
+                       fontSize="8"
+                       fill={frame.frame_type === 'MDF' ? 'hsl(var(--primary-foreground))' : 'hsl(var(--secondary-foreground))'}
+                       textAnchor="middle"
+                       className="pointer-events-none"
+                     >
+                       {frame.port_count}p
+                     </text>
+                     
+                     {/* Delete button */}
+                     <foreignObject x={x + equipmentWidth - 16} y={y - 2} width="18" height="18">
+                       <Button
+                         size="sm"
+                         variant="outline"
+                         onClick={(e) => {
+                           e.stopPropagation();
+                           handleDeleteClick(frame.id, 'frame', `${frame.frame_type} - Floor ${frame.floor}`);
+                         }}
+                         className="h-4 w-4 p-0 opacity-70 hover:opacity-100 bg-background"
+                       >
+                         <Trash2 className="h-3 w-3" />
+                       </Button>
+                     </foreignObject>
+                   </g>
+                 );
+               })}
 
               {/* Junction boxes */}
               {filteredJunctionBoxes.map((junctionBox, index) => {
@@ -507,10 +581,25 @@ export const InteractiveRiserDiagram: React.FC<InteractiveRiserDiagramProps> = (
                       fill="hsl(var(--foreground))"
                       textAnchor="middle"
                       className="pointer-events-none"
-                    >
-                      {junctionBox.label}
-                    </text>
-                  </g>
+                     >
+                       {junctionBox.label}
+                     </text>
+                     
+                     {/* Delete button */}
+                     <foreignObject x={x + 20} y={y - 2} width="18" height="18">
+                       <Button
+                         size="sm"
+                         variant="outline"
+                         onClick={(e) => {
+                           e.stopPropagation();
+                           handleDeleteClick(junctionBox.id, 'junction', junctionBox.label);
+                         }}
+                         className="h-4 w-4 p-0 opacity-70 hover:opacity-100 bg-background"
+                       >
+                         <Trash2 className="h-3 w-3" />
+                       </Button>
+                     </foreignObject>
+                   </g>
                 );
               })}
 
@@ -637,6 +726,23 @@ export const InteractiveRiserDiagram: React.FC<InteractiveRiserDiagramProps> = (
           </CardContent>
         </Card>
       </div>
+      
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{itemToDelete?.label}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm}>
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

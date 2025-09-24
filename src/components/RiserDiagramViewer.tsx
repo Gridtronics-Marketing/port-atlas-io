@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Network, Zap, Cable, Download, Building, Box } from 'lucide-react';
+import { Plus, Network, Zap, Cable, Download, Building, Box, Trash2 } from 'lucide-react';
 import { useBackboneCables } from '@/hooks/useBackboneCables';
 import { useDistributionFrames } from '@/hooks/useDistributionFrames';
 import { useJunctionBoxes } from '@/hooks/useJunctionBoxes';
@@ -15,6 +15,16 @@ import { AddRiserPathwayModal } from '@/components/AddRiserPathwayModal';
 import { RiserDiagramPDFExporter } from '@/components/RiserDiagramPDFExporter';
 import { RiserFloorPlanToggle } from '@/components/RiserFloorPlanToggle';
 import { RiserWorkOrderIntegration } from '@/components/RiserWorkOrderIntegration';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface RiserDiagramViewerProps {
   locationId: string;
@@ -25,15 +35,17 @@ export const RiserDiagramViewer: React.FC<RiserDiagramViewerProps> = ({
   locationId,
   locationName
 }) => {
-  const { cables, loading: cablesLoading, fetchCables } = useBackboneCables(locationId);
-  const { frames, loading: framesLoading, fetchFrames } = useDistributionFrames(locationId);
-  const { junctionBoxes, loading: junctionLoading } = useJunctionBoxes(locationId);
+  const { cables, loading: cablesLoading, fetchCables, deleteCable } = useBackboneCables(locationId);
+  const { frames, loading: framesLoading, fetchFrames, deleteFrame } = useDistributionFrames(locationId);
+  const { junctionBoxes, loading: junctionLoading, deleteJunctionBox } = useJunctionBoxes(locationId);
   const [selectedFloor, setSelectedFloor] = useState<number | null>(null);
   const [showAddFrame, setShowAddFrame] = useState(false);
   const [showAddCable, setShowAddCable] = useState(false);
   const [showAddJunction, setShowAddJunction] = useState(false);
   const [selectedCableForJunction, setSelectedCableForJunction] = useState<string | null>(null);
   const [showAddPathway, setShowAddPathway] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<{id: string, type: 'cable' | 'frame' | 'junction', label: string} | null>(null);
 
   // Get unique floors from frames and cables
   const floors = Array.from(
@@ -42,6 +54,36 @@ export const RiserDiagramViewer: React.FC<RiserDiagramViewerProps> = ({
       ...cables.flatMap(c => [c.origin_floor, c.destination_floor].filter(Boolean))
     ])
   ).sort((a, b) => (b || 0) - (a || 0));
+
+  const handleDeleteConfirm = async () => {
+    if (!itemToDelete) return;
+    
+    try {
+      switch (itemToDelete.type) {
+        case 'cable':
+          await deleteCable(itemToDelete.id);
+          break;
+        case 'frame':
+          await deleteFrame(itemToDelete.id);
+          break;
+        case 'junction':
+          await deleteJunctionBox(itemToDelete.id);
+          break;
+      }
+      await fetchCables();
+      await fetchFrames();
+    } catch (error) {
+      console.error('Error deleting item:', error);
+    } finally {
+      setDeleteDialogOpen(false);
+      setItemToDelete(null);
+    }
+  };
+
+  const handleDeleteClick = (id: string, type: 'cable' | 'frame' | 'junction', label: string) => {
+    setItemToDelete({ id, type, label });
+    setDeleteDialogOpen(true);
+  };
 
   const getCableTypeIcon = (type: string) => {
     switch (type) {
@@ -172,13 +214,21 @@ export const RiserDiagramViewer: React.FC<RiserDiagramViewerProps> = ({
                         </div>
                       </div>
                     </div>
-                    <div className="flex gap-2">
+                     <div className="flex gap-2">
                       <Badge className={getCableTypeColor(cable.cable_type)}>
                         {cable.cable_type.toUpperCase()}
                       </Badge>
                       {cable.jacket_rating && (
                         <Badge variant="outline">{cable.jacket_rating}</Badge>
                       )}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleDeleteClick(cable.id, 'cable', cable.cable_label)}
+                        className="h-8 w-8 p-0 ml-2"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
                   
@@ -225,9 +275,19 @@ export const RiserDiagramViewer: React.FC<RiserDiagramViewerProps> = ({
                         )}
                       </div>
                     </div>
-                    <Badge variant={frame.frame_type === 'MDF' ? 'default' : 'secondary'}>
-                      {frame.frame_type}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant={frame.frame_type === 'MDF' ? 'default' : 'secondary'}>
+                        {frame.frame_type}
+                      </Badge>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleDeleteClick(frame.id, 'frame', `${frame.frame_type} - Floor ${frame.floor}`)}
+                        className="h-8 w-8 p-0"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                   
                   <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
@@ -308,6 +368,23 @@ export const RiserDiagramViewer: React.FC<RiserDiagramViewerProps> = ({
         onOpenChange={setShowAddPathway}
         locationId={locationId}
       />
+      
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{itemToDelete?.label}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm}>
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 };
