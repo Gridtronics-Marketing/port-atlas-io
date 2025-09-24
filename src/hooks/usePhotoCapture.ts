@@ -139,21 +139,18 @@ export function usePhotoCapture() {
   ): Promise<CapturedPhoto | null> => {
     console.log('🔄 Starting photo capture:', { description, category, employeeId, locationId, projectId, workOrderId });
     
-    // Get current user ID as fallback if no employeeId
-    const { data: { user } } = await supabase.auth.getUser();
-    const currentUserId = user?.id;
-    
-    console.log('👤 User info:', { employeeId, currentUserId, hasUser: !!user });
-    
-    if (!employeeId && !currentUserId) {
-      console.error('❌ No employee ID and no authenticated user');
+    // Validate employee ID - must be provided and not use auth user ID as fallback
+    if (!employeeId) {
+      console.error('❌ Employee ID is required for photo capture');
       toast({
-        title: 'Authentication Required',
-        description: 'Please log in to capture photos',
+        title: 'Employee Required',
+        description: 'Valid employee record is required to capture photos',
         variant: 'destructive',
       });
       return null;
     }
+    
+    console.log('👤 Using employee ID:', employeeId);
     
     console.log('📱 Starting photo capture process...');
     setLoading(true);
@@ -243,7 +240,7 @@ export function usePhotoCapture() {
       console.log('💾 Creating daily log entry with photo...');
       
       const logEntry = {
-        employee_id: employeeId || null, // Use employee ID if available
+        employee_id: employeeId, // Now guaranteed to be valid
         project_id: projectId || undefined,
         location_id: locationId || undefined,
         work_order_id: workOrderId || undefined,
@@ -335,21 +332,18 @@ export function usePhotoCapture() {
   ): Promise<CapturedPhoto | null> => {
     console.log('🔄 Starting gallery selection:', { description, category, employeeId, locationId, projectId, workOrderId });
     
-    // Get current user ID as fallback if no employeeId
-    const { data: { user } } = await supabase.auth.getUser();
-    const currentUserId = user?.id;
-    
-    console.log('👤 Gallery user info:', { employeeId, currentUserId, hasUser: !!user });
-    
-    if (!employeeId && !currentUserId) {
-      console.error('❌ No employee ID and no authenticated user for gallery');
+    // Validate employee ID - must be provided and not use auth user ID as fallback
+    if (!employeeId) {
+      console.error('❌ Employee ID is required for gallery selection');
       toast({
-        title: 'Authentication Required',
-        description: 'Please log in to select photos',
+        title: 'Employee Required',
+        description: 'Valid employee record is required to select photos',
         variant: 'destructive',
       });
       return null;
     }
+    
+    console.log('👤 Using employee ID for gallery:', employeeId);
 
     setLoading(true);
     
@@ -394,7 +388,7 @@ export function usePhotoCapture() {
       const { data: logData, error: logError } = await supabase
         .from('daily_logs')
         .insert({
-          employee_id: employeeId || null,
+          employee_id: employeeId, // Now guaranteed to be valid
           project_id: projectId || undefined,
           location_id: locationId || undefined, 
           work_order_id: workOrderId || undefined,
@@ -422,7 +416,7 @@ export function usePhotoCapture() {
         project_id: projectId,
         location_id: locationId,
         work_order_id: workOrderId,
-        employee_id: employeeId || null,
+        employee_id: employeeId, // Now guaranteed to be valid
         created_at: new Date().toISOString(),
       };
 
@@ -737,7 +731,7 @@ export function usePhotoCapture() {
           const { data: logData, error: logError } = await supabase
             .from('daily_logs')
             .insert({
-              employee_id: employeeId || null,
+              employee_id: employeeId, // Now guaranteed to be valid
               project_id: projectId || undefined,
               location_id: locationId || undefined,
               work_order_id: workOrderId || undefined,
@@ -765,7 +759,7 @@ export function usePhotoCapture() {
             project_id: projectId,
             location_id: locationId,
             work_order_id: workOrderId,
-            employee_id: employeeId || null,
+            employee_id: employeeId, // Now guaranteed to be valid
             created_at: new Date().toISOString(),
           };
 

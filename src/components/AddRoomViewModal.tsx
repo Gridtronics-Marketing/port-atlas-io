@@ -79,7 +79,7 @@ export const AddRoomViewModal = ({
         undefined,
         locationId,
         undefined,
-        currentEmployee?.id || user?.id
+        currentEmployee?.id
       );
 
       if (photo) {
@@ -125,7 +125,7 @@ export const AddRoomViewModal = ({
         undefined,
         locationId,
         undefined,
-        currentEmployee?.id || user?.id
+        currentEmployee?.id
       );
 
       if (photo) {
