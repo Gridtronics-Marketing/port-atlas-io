@@ -146,6 +146,18 @@ export const useChatRooms = () => {
     try {
       console.log('Creating chat room:', { name, participantIds, currentUser: user?.id });
       
+      // Check if user is admin for adding other participants
+      const { data: userRoles } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user?.id);
+      
+      const isAdmin = userRoles?.some(ur => ur.role === 'admin');
+      
+      if (participantIds.length > 0 && !isAdmin) {
+        throw new Error('Only admins can add other users to chat rooms. Create a personal room first.');
+      }
+      
       // Create the chat room
       const { data: room, error: roomError } = await supabase
         .from('chat_rooms')
@@ -168,22 +180,41 @@ export const useChatRooms = () => {
 
       console.log('Room created:', room);
 
-      // Add all participants including the creator
-      const allParticipantIds = [...new Set([...participantIds, user?.id])].filter(Boolean);
-      const validParticipants = allParticipantIds.map(userId => ({
-        room_id: room.id,
-        user_id: userId
-      }));
-
-      console.log('Adding participants:', validParticipants);
-
-      const { error: participantError } = await supabase
+      // Add creator first (this should always work due to RLS)
+      const { error: creatorError } = await supabase
         .from('chat_participants')
-        .insert(validParticipants);
+        .insert({
+          room_id: room.id,
+          user_id: user?.id
+        });
 
-      if (participantError) {
-        console.error('Participant addition error:', participantError);
-        throw participantError;
+      if (creatorError) {
+        console.error('Creator addition error:', creatorError);
+        throw creatorError;
+      }
+
+      // Add other participants only if admin and there are participants to add
+      if (isAdmin && participantIds.length > 0) {
+        const otherParticipants = participantIds.map(userId => ({
+          room_id: room.id,
+          user_id: userId
+        }));
+
+        console.log('Adding other participants:', otherParticipants);
+
+        const { error: participantError } = await supabase
+          .from('chat_participants')
+          .insert(otherParticipants);
+
+        if (participantError) {
+          console.error('Other participants addition error:', participantError);
+          // Don't fail the entire operation if adding others fails
+          toast({
+            title: "Warning",
+            description: "Room created but some participants couldn't be added",
+            variant: "destructive",
+          });
+        }
       }
 
       await fetchChatRooms();
@@ -196,9 +227,19 @@ export const useChatRooms = () => {
       return room;
     } catch (error: any) {
       console.error('Error creating chat room:', error);
+      let errorMessage = "Failed to create chat room";
+      
+      if (error.message?.includes('row-level security')) {
+        errorMessage = "Permission denied. Only admins can create rooms with multiple participants.";
+      } else if (error.message?.includes('foreign key')) {
+        errorMessage = "Invalid participant selected. Please try again.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Error",
-        description: error.message || "Failed to create chat room",
+        description: errorMessage,
         variant: "destructive",
       });
       return null;
@@ -283,26 +324,88 @@ export const useChatRooms = () => {
 
   const updateChatRoomParticipants = async (roomId: string, participantIds: string[]) => {
     try {
-      // Remove existing participants
-      const { error: deleteError } = await supabase
+      console.log('Updating chat room participants:', { roomId, participantIds, currentUser: user?.id });
+      
+      // Check if user is admin or room creator
+      const { data: userRoles } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user?.id);
+      
+      const isAdmin = userRoles?.some(ur => ur.role === 'admin');
+      
+      const { data: room } = await supabase
+        .from('chat_rooms')
+        .select('created_by')
+        .eq('id', roomId)
+        .maybeSingle();
+      
+      const isCreator = room?.created_by === user?.id;
+      
+      if (!isAdmin && !isCreator) {
+        throw new Error('Only room creators and admins can manage participants');
+      }
+
+      // Get current participants
+      const { data: currentParticipants } = await supabase
         .from('chat_participants')
-        .delete()
+        .select('user_id')
         .eq('room_id', roomId);
-
-      if (deleteError) throw deleteError;
-
-      // Add new participants including creator
+      
+      const currentUserIds = currentParticipants?.map(p => p.user_id) || [];
       const allParticipantIds = [...new Set([...participantIds, user?.id])].filter(Boolean);
-      const participants = allParticipantIds.map(userId => ({
-        room_id: roomId,
-        user_id: userId
-      }));
-
-      const { error: insertError } = await supabase
-        .from('chat_participants')
-        .insert(participants);
-
-      if (insertError) throw insertError;
+      
+      // Find participants to add and remove
+      const toAdd = allParticipantIds.filter(id => !currentUserIds.includes(id));
+      const toRemove = currentUserIds.filter(id => !allParticipantIds.includes(id));
+      
+      console.log('Participant changes:', { toAdd, toRemove, current: currentUserIds, target: allParticipantIds });
+      
+      // Remove participants (only if admin or removing self)
+      if (toRemove.length > 0) {
+        if (isAdmin) {
+          const { error: deleteError } = await supabase
+            .from('chat_participants')
+            .delete()
+            .eq('room_id', roomId)
+            .in('user_id', toRemove);
+          
+          if (deleteError) throw deleteError;
+        } else {
+          // Non-admin can only remove themselves
+          const selfRemoval = toRemove.filter(id => id === user?.id);
+          if (selfRemoval.length > 0) {
+            const { error: deleteError } = await supabase
+              .from('chat_participants')
+              .delete()
+              .eq('room_id', roomId)
+              .eq('user_id', user?.id);
+            
+            if (deleteError) throw deleteError;
+          }
+        }
+      }
+      
+      // Add new participants (only if admin)
+      if (toAdd.length > 0) {
+        if (!isAdmin) {
+          throw new Error('Only admins can add other users to chat rooms');
+        }
+        
+        const newParticipants = toAdd.map(userId => ({
+          room_id: roomId,
+          user_id: userId
+        }));
+        
+        const { error: insertError } = await supabase
+          .from('chat_participants')
+          .insert(newParticipants);
+        
+        if (insertError) {
+          console.error('Insert error:', insertError);
+          throw insertError;
+        }
+      }
 
       await fetchChatRooms();
       
@@ -312,9 +415,19 @@ export const useChatRooms = () => {
       });
     } catch (error: any) {
       console.error('Error updating chat room participants:', error);
+      let errorMessage = "Failed to update participants";
+      
+      if (error.message?.includes('row-level security')) {
+        errorMessage = "Permission denied. Only admins can manage chat room participants.";
+      } else if (error.message?.includes('foreign key')) {
+        errorMessage = "Invalid participant selected. Please try again.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Error",
-        description: error.message || "Failed to update participants",
+        description: errorMessage,
         variant: "destructive",
       });
     }
