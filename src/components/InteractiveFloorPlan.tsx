@@ -63,7 +63,7 @@ export const InteractiveFloorPlan = ({
   const { toast } = useToast();
   
   const { dropPoints, loading: dropPointsLoading, updateDropPoint, fetchDropPoints } = useDropPoints(locationId);
-  const { roomViews, loading: roomViewsLoading, updateRoomView } = useRoomViews(locationId);
+  const { roomViews, loading: roomViewsLoading, updateRoomView, fetchRoomViews } = useRoomViews(locationId);
   
   // Generate the actual file URL from path or use provided URL
   const actualFileUrl = fileUrl || (filePath ? getStorageUrl('floor-plans', filePath) : undefined);
@@ -723,10 +723,19 @@ export const InteractiveFloorPlan = ({
       {/* Add Room View Modal */}
       <AddRoomViewModal
         open={showAddRoomViewModal}
-        onOpenChange={setShowAddRoomViewModal}
+        onOpenChange={(open) => {
+          setShowAddRoomViewModal(open);
+          if (!open) {
+            setClickCoordinates(null);
+          }
+        }}
         locationId={locationId}
         coordinates={clickCoordinates || undefined}
         floor={floorNumber}
+        onSuccess={() => {
+          // Refresh room views after successful addition
+          fetchRoomViews();
+        }}
       />
 
       {/* Drop Point Details Modal */}

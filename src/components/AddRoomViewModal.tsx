@@ -18,6 +18,7 @@ interface AddRoomViewModalProps {
   locationId: string;
   coordinates?: { x: number; y: number };
   floor: number;
+  onSuccess?: () => void;
 }
 
 export const AddRoomViewModal = ({
@@ -26,6 +27,7 @@ export const AddRoomViewModal = ({
   locationId,
   coordinates,
   floor,
+  onSuccess,
 }: AddRoomViewModalProps) => {
   const [roomName, setRoomName] = useState('');
   const [description, setDescription] = useState('');
@@ -169,13 +171,21 @@ export const AddRoomViewModal = ({
         employee_id: currentEmployee?.id || null,
       });
 
-      // Reset form and close
-      handleClose();
-      
       toast({
         title: "Success",
         description: "Room view added successfully!",
       });
+
+      // Call success callback to refresh parent component
+      if (onSuccess) {
+        onSuccess();
+      }
+
+      // Add a brief delay before closing to ensure the room view icon appears
+      setTimeout(() => {
+        handleClose();
+      }, 500);
+      
     } catch (error) {
       console.error('Error adding room view:', error);
       setSubmitting(false);
@@ -292,7 +302,7 @@ export const AddRoomViewModal = ({
               <Button variant="outline" onClick={() => {
                 setCapturedPhoto(null);
                 setShowPhotoOptions(true);
-              }} className="flex-1">
+              }} className="flex-1" disabled={submitting}>
                 Change Photo
               </Button>
               <Button
@@ -300,7 +310,7 @@ export const AddRoomViewModal = ({
                 disabled={submitting}
                 className="flex-1"
               >
-                {submitting ? 'Adding...' : 'Add Room View'}
+                {submitting ? 'Adding Room View...' : 'Add Room View'}
               </Button>
             </div>
           </div>
