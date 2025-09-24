@@ -1,15 +1,20 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Edit, Trash2, Save, X } from 'lucide-react';
-import { RoomView, useRoomViews } from '@/hooks/useRoomViews';
+import { Pencil, Trash2, User, Calendar, MapPin, Hash, Camera, Upload } from 'lucide-react';
+import { RoomView } from '@/hooks/useRoomViews';
+import { useRoomViews } from '@/hooks/useRoomViews';
+import { useRoomViewPhotos } from '@/hooks/useRoomViewPhotos';
+import { usePhotoCapture } from '@/hooks/usePhotoCapture';
+import { useCurrentEmployee } from '@/hooks/useCurrentEmployee';
 import { useToast } from '@/hooks/use-toast';
-import { format } from 'date-fns';
+import { PhotoGallery } from '@/components/PhotoGallery';
 
 interface RoomViewModalProps {
   open: boolean;
@@ -18,14 +23,19 @@ interface RoomViewModalProps {
   locationId: string;
 }
 
-export const RoomViewModal = ({ open, onOpenChange, roomView, locationId }: RoomViewModalProps) => {
+export const RoomViewModal: React.FC<RoomViewModalProps> = ({
+  open,
+  onOpenChange,
+  roomView,
+  locationId,
+}) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [editData, setEditData] = useState({
-    room_name: '',
-    description: ''
-  });
-  
+  const [editData, setEditData] = useState<Partial<RoomView>>({});
+  const [activeTab, setActiveTab] = useState('details');
   const { updateRoomView, deleteRoomView } = useRoomViews(locationId);
+  const { photos, loading: photosLoading, addPhoto, deletePhoto } = useRoomViewPhotos(roomView?.id);
+  const { capturePhoto, selectFromGallery } = usePhotoCapture();
+  const { employee } = useCurrentEmployee();
   const { toast } = useToast();
 
   if (!roomView) return null;
@@ -76,29 +86,73 @@ export const RoomViewModal = ({ open, onOpenChange, roomView, locationId }: Room
 
   const handleCancel = () => {
     setIsEditing(false);
-    setEditData({
-      room_name: roomView.room_name || '',
-      description: roomView.description || ''
-    });
+    setEditData({});
+  };
+
+  const handlePhotoCapture = async () => {
+    if (!roomView || !employee) return;
+
+    try {
+      const result = await capturePhoto();
+      if (result && typeof result === 'object' && 'url' in result) {
+        await addPhoto({
+          room_view_id: roomView.id,
+          photo_url: result.url,
+          employee_id: employee.id,
+        });
+      }
+    } catch (error) {
+      console.error('Error capturing photo:', error);
+    }
+  };
+
+  const handleGallerySelect = async () => {
+    if (!roomView || !employee) return;
+
+    try {
+      const result = await selectFromGallery();
+      if (result && typeof result === 'object' && 'url' in result) {
+        await addPhoto({
+          room_view_id: roomView.id,
+          photo_url: result.url,
+          employee_id: employee.id,
+        });
+      }
+    } catch (error) {
+      console.error('Error selecting photo:', error);
+    }
+  };
+
+  const handleDeletePhoto = async (photoId: string, photoUrl: string) => {
+    try {
+      await deletePhoto(photoId, photoUrl);
+    } catch (error) {
+      console.error('Error deleting photo:', error);
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
-            <span>{roomView.room_name || 'Room View'}</span>
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary">Floor {roomView.floor}</Badge>
+            <span>Room View Details</span>
+            <div className="flex gap-2">
               {!isEditing ? (
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={handleEdit}>
-                    <Edit className="h-4 w-4" />
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleEdit}
+                  >
+                    <Pencil className="w-4 h-4 mr-1" />
+                    Edit
                   </Button>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="outline" size="sm">
-                        <Trash2 className="h-4 w-4" />
+                      <Button variant="destructive" size="sm">
+                        <Trash2 className="w-4 h-4 mr-1" />
+                        Delete
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
@@ -110,108 +164,186 @@ export const RoomViewModal = ({ open, onOpenChange, roomView, locationId }: Room
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+                        <AlertDialogAction
+                          onClick={handleDelete}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Delete
+                        </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
-                </div>
+                </>
               ) : (
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={handleSave}>
-                    <Save className="h-4 w-4" />
-                  </Button>
+                <>
                   <Button variant="outline" size="sm" onClick={handleCancel}>
-                    <X className="h-4 w-4" />
+                    Cancel
                   </Button>
-                </div>
+                  <Button size="sm" onClick={handleSave}>
+                    Save
+                  </Button>
+                </>
               )}
             </div>
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
-          {/* Photo Display */}
-          <div className="relative">
-            <img
-              src={roomView.photo_url}
-              alt={roomView.room_name || 'Room view'}
-              className="w-full max-h-96 object-contain rounded-lg border bg-muted"
-              onError={(e) => {
-                e.currentTarget.src = '/placeholder.svg';
-              }}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="details">Details</TabsTrigger>
+            <TabsTrigger value="photos">Photos ({photos.length})</TabsTrigger>
+            <TabsTrigger value="history">History</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="details" className="space-y-6">
+            {/* Room Name */}
+            <div>
+              <Label htmlFor="room_name" className="text-sm font-medium">
+                Room Name
+              </Label>
+              {isEditing ? (
+                <Input
+                  id="room_name"
+                  value={editData.room_name || ''}
+                  onChange={(e) => setEditData({ ...editData, room_name: e.target.value })}
+                  placeholder="Enter room name"
+                  className="mt-1"
+                />
+              ) : (
+                <p className="mt-1 text-sm">
+                  {roomView?.room_name || 'Not specified'}
+                </p>
+              )}
+            </div>
+
+            {/* Description */}
+            <div>
+              <Label htmlFor="description" className="text-sm font-medium">
+                Description
+              </Label>
+              {isEditing ? (
+                <Textarea
+                  id="description"
+                  value={editData.description || ''}
+                  onChange={(e) => setEditData({ ...editData, description: e.target.value })}
+                  placeholder="Enter description"
+                  className="mt-1"
+                  rows={3}
+                />
+              ) : (
+                <p className="mt-1 text-sm">
+                  {roomView?.description || 'No description'}
+                </p>
+              )}
+            </div>
+
+            {/* Original Photo */}
+            <div>
+              <Label className="text-sm font-medium">Original Photo</Label>
+              <div className="mt-2">
+                <img
+                  src={roomView?.photo_url}
+                  alt="Room view"
+                  className="w-full max-w-md h-48 object-cover rounded-lg border"
+                />
+              </div>
+            </div>
+
+            {/* Metadata */}
+            <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+              <div className="flex items-center gap-2">
+                <User className="w-4 h-4 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium">Captured by</p>
+                  <p className="text-sm text-muted-foreground">
+                    {roomView?.employee 
+                      ? `${roomView.employee.first_name} ${roomView.employee.last_name}`
+                      : 'Unknown'
+                    }
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium">Date captured</p>
+                  <p className="text-sm text-muted-foreground">
+                    {roomView?.created_at 
+                      ? new Date(roomView.created_at).toLocaleDateString()
+                      : 'Unknown'
+                    }
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium">Position</p>
+                  <p className="text-sm text-muted-foreground">
+                    X: {roomView?.x_coordinate || 0}, Y: {roomView?.y_coordinate || 0}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Hash className="w-4 h-4 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium">Floor</p>
+                  <p className="text-sm text-muted-foreground">
+                    Floor {roomView?.floor || 1}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="photos" className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-semibold">Room Photos</h3>
+              <div className="flex gap-2">
+                <Button onClick={handlePhotoCapture} size="sm">
+                  <Camera className="w-4 h-4 mr-2" />
+                  Take Photo
+                </Button>
+                <Button onClick={handleGallerySelect} variant="outline" size="sm">
+                  <Upload className="w-4 h-4 mr-2" />
+                  Upload Photo
+                </Button>
+              </div>
+            </div>
+
+            <PhotoGallery
+              photos={photos}
+              onDeletePhoto={handleDeletePhoto}
+              loading={photosLoading}
+              emptyMessage="No additional photos for this room view. Take or upload photos to document the space."
             />
-          </div>
+          </TabsContent>
 
-          {/* Details */}
-          <div className="space-y-3">
-            {isEditing ? (
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="room_name">Room Name</Label>
-                  <Input
-                    id="room_name"
-                    value={editData.room_name}
-                    onChange={(e) => setEditData(prev => ({ ...prev, room_name: e.target.value }))}
-                    placeholder="Enter room name"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    value={editData.description}
-                    onChange={(e) => setEditData(prev => ({ ...prev, description: e.target.value }))}
-                    placeholder="Enter description"
-                    rows={3}
-                  />
+          <TabsContent value="history" className="space-y-4">
+            <div className="space-y-4">
+              <div className="border rounded-lg p-4">
+                <h4 className="font-medium mb-2">Room View Created</h4>
+                <div className="text-sm text-muted-foreground space-y-1">
+                  <p>Created by: {roomView?.employee ? `${roomView.employee.first_name} ${roomView.employee.last_name}` : 'Unknown'}</p>
+                  <p>Date: {roomView?.created_at ? new Date(roomView.created_at).toLocaleString() : 'Unknown'}</p>
+                  <p>Location: Floor {roomView?.floor}, Position ({roomView?.x_coordinate}, {roomView?.y_coordinate})</p>
                 </div>
               </div>
-            ) : (
-              <>
-                {roomView.room_name && (
-                  <div>
-                    <h4 className="text-sm font-medium text-muted-foreground mb-1">Room Name</h4>
-                    <p className="text-sm">{roomView.room_name}</p>
+              
+              {roomView?.updated_at && roomView.updated_at !== roomView.created_at && (
+                <div className="border rounded-lg p-4">
+                  <h4 className="font-medium mb-2">Last Updated</h4>
+                  <div className="text-sm text-muted-foreground">
+                    <p>Date: {new Date(roomView.updated_at).toLocaleString()}</p>
                   </div>
-                )}
-                {roomView.description && (
-                  <div>
-                    <h4 className="text-sm font-medium text-muted-foreground mb-1">Description</h4>
-                    <p className="text-sm">{roomView.description}</p>
-                  </div>
-                )}
-              </>
-            )}
-
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <h4 className="font-medium text-muted-foreground mb-1">Captured By</h4>
-                <p>
-                  {roomView.employee?.first_name} {roomView.employee?.last_name}
-                </p>
-              </div>
-
-              <div>
-                <h4 className="font-medium text-muted-foreground mb-1">Date Captured</h4>
-                <p>{format(new Date(roomView.created_at), 'MMM d, yyyy h:mm a')}</p>
-              </div>
+                </div>
+              )}
             </div>
-
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <h4 className="font-medium text-muted-foreground mb-1">Position</h4>
-                <p>
-                  X: {roomView.x_coordinate.toFixed(1)}%, Y: {roomView.y_coordinate.toFixed(1)}%
-                </p>
-              </div>
-
-              <div>
-                <h4 className="font-medium text-muted-foreground mb-1">Floor</h4>
-                <p>Floor {roomView.floor}</p>
-              </div>
-            </div>
-          </div>
-        </div>
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );

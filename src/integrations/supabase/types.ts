@@ -1201,6 +1201,51 @@ export type Database = {
           },
         ]
       }
+      room_view_photos: {
+        Row: {
+          created_at: string
+          description: string | null
+          employee_id: string | null
+          id: string
+          photo_url: string
+          room_view_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          employee_id?: string | null
+          id?: string
+          photo_url: string
+          room_view_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          employee_id?: string | null
+          id?: string
+          photo_url?: string
+          room_view_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_view_photos_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "room_view_photos_room_view_id_fkey"
+            columns: ["room_view_id"]
+            isOneToOne: false
+            referencedRelation: "room_views"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       room_views: {
         Row: {
           created_at: string

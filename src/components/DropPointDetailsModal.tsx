@@ -13,6 +13,17 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -78,7 +89,7 @@ export const DropPointDetailsModal = ({
   const { testResults, loading: testResultsLoading, addTestResult, deleteTestResult } = useDropPointTestResults(dropPoint?.id);
   const { employee } = useCurrentEmployee();
   const { capturePhoto, selectFromGallery, loading: photoLoading } = usePhotoCapture();
-  const { photos: dropPointPhotos, loading: photosLoading, refetch: refetchPhotos } = useDropPointPhotos(locationId);
+  const { photos: dropPointPhotos, loading: photosLoading, refetch: refetchPhotos, deletePhoto: deleteDropPointPhoto } = useDropPointPhotos(locationId);
   const { toast } = useToast();
   const { hasRole } = useUserRoles();
   const { user } = useAuth();
@@ -673,21 +684,37 @@ export const DropPointDetailsModal = ({
                                    onClick={() => window.open(photoUrl, '_blank')}
                                  />
                                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                   <Button
-                                     size="sm"
-                                     variant="destructive"
-                                     onClick={(e) => {
-                                       e.stopPropagation();
-                                       // TODO: Implement photo deletion
-                                       toast({
-                                         title: "Feature Coming Soon",
-                                         description: "Photo deletion will be available in the next update",
-                                       });
-                                     }}
-                                     className="h-8 w-8 p-0"
-                                   >
-                                     <Trash2 className="h-4 w-4" />
-                                   </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="destructive"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                      }}
+                                      className="h-8 w-8 p-0"
+                                    >
+                                      <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                          <Trash2 className="h-4 w-4" />
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                          <AlertDialogHeader>
+                                            <AlertDialogTitle>Delete Photo</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                              Are you sure you want to delete this photo? This action cannot be undone.
+                                            </AlertDialogDescription>
+                                          </AlertDialogHeader>
+                                          <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                             <AlertDialogAction
+                                               onClick={() => deleteDropPointPhoto(photoEntry.id, index)}
+                                               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                             >
+                                              Delete
+                                            </AlertDialogAction>
+                                          </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                      </AlertDialog>
+                                    </Button>
                                  </div>
                                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all rounded flex items-center justify-center opacity-0 group-hover:opacity-100">
                                    <span className="text-white text-xs bg-black bg-opacity-50 px-2 py-1 rounded">

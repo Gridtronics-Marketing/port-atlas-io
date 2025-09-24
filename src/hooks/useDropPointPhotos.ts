@@ -75,9 +75,59 @@ export const useDropPointPhotos = (locationId?: string) => {
     fetchPhotos();
   }, [locationId]);
 
+  const deletePhoto = async (logId: string, photoIndex: number) => {
+    try {
+      const log = photos.find(p => p.id === logId);
+      if (!log || !log.photos || photoIndex >= log.photos.length) {
+        throw new Error('Photo not found');
+      }
+
+      const photoUrl = log.photos[photoIndex];
+      const updatedPhotos = log.photos.filter((_, index) => index !== photoIndex);
+
+      const { error } = await supabase
+        .from('daily_logs')
+        .update({ photos: updatedPhotos })
+        .eq('id', logId);
+
+      if (error) throw error;
+
+      // Delete from storage if it's a Supabase storage URL
+      if (photoUrl.includes('supabase')) {
+        const fileName = photoUrl.split('/').pop();
+        if (fileName) {
+          const { error: storageError } = await supabase.storage
+            .from('room-views')
+            .remove([fileName]);
+          
+          if (storageError) {
+            console.warn('Error deleting from storage:', storageError);
+          }
+        }
+      }
+
+      // Refresh the photos list
+      await fetchPhotos();
+      
+      toast({
+        title: "Photo Deleted",
+        description: "Photo has been deleted successfully.",
+      });
+    } catch (error) {
+      console.error('Error deleting drop point photo:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete photo",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
   return {
     photos,
     loading,
     refetch: fetchPhotos,
+    deletePhoto,
   };
 };
