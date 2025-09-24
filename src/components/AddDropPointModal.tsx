@@ -65,24 +65,16 @@ export const AddDropPointModal = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.label.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter a label for the drop point",
-        variant: "destructive",
-      });
-      return;
-    }
 
     setIsSubmitting(true);
     try {
       const dropPointData = {
         location_id: locationId,
-        label: formData.label,
+        label: formData.label.trim() || `DP-TBD-${Date.now().toString().slice(-6)}`,
         room: null,
         point_type: "data" as const,
         status: "planned" as const,
-        notes: `Cables: ${formData.numberOfCables}, Type: ${formData.cableType}${formData.notes ? `, Notes: ${formData.notes}` : ''}`,
+        notes: `${formData.numberOfCables ? `Cables: ${formData.numberOfCables}` : 'Cables: TBD'}, Type: ${formData.cableType}${formData.notes ? `, Notes: ${formData.notes}` : ''}`,
         floor,
         x_coordinate: coordinates?.x || null,
         y_coordinate: coordinates?.y || null,
@@ -125,27 +117,25 @@ export const AddDropPointModal = ({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="label">Label *</Label>
+            <Label htmlFor="label">Label (Optional)</Label>
             <Input
               id="label"
               value={formData.label}
               onChange={(e) => setFormData(prev => ({ ...prev, label: e.target.value }))}
-              placeholder="DP-001, FP-001, etc."
-              required
+              placeholder="Auto-generated if left blank"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="numberOfCables">Number of Cables *</Label>
+              <Label htmlFor="numberOfCables">Number of Cables (Optional)</Label>
               <Input
                 id="numberOfCables"
                 type="number"
                 min="1"
                 value={formData.numberOfCables}
                 onChange={(e) => setFormData(prev => ({ ...prev, numberOfCables: e.target.value }))}
-                placeholder="1"
-                required
+                placeholder="To be determined"
               />
             </div>
 

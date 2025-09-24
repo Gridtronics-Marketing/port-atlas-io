@@ -37,7 +37,8 @@ import {
   XCircle, 
   Clock,
   TestTube,
-  Image as ImageIcon
+  Image as ImageIcon,
+  FileText
 } from 'lucide-react';
 import { DropPoint, useDropPoints } from '@/hooks/useDropPoints';
 import { useDropPointTestResults } from '@/hooks/useDropPointTestResults';
@@ -62,7 +63,7 @@ export const DropPointDetailsModal = ({
   dropPoint,
   locationId,
 }: DropPointDetailsModalProps) => {
-  const [activeTab, setActiveTab] = useState('details');
+  const [activeTab, setActiveTab] = useState('photos');
   const [editMode, setEditMode] = useState(false);
   const [formData, setFormData] = useState<Partial<DropPoint>>({});
   const [newTestResult, setNewTestResult] = useState({
@@ -178,14 +179,14 @@ export const DropPointDetailsModal = ({
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "active":
-        return "bg-success text-success-foreground";
-      case "tested":
-        return "bg-primary text-primary-foreground";
-      case "installed":
-        return "bg-warning text-warning-foreground";
       case "planned":
         return "bg-muted text-muted-foreground";
+      case "roughed":
+        return "bg-warning text-warning-foreground";
+      case "terminated":
+        return "bg-primary text-primary-foreground"; 
+      case "tested":
+        return "bg-success text-success-foreground";
       default:
         return "bg-secondary text-secondary-foreground";
     }
@@ -304,13 +305,14 @@ export const DropPointDetailsModal = ({
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="planned">Planned</SelectItem>
-                        <SelectItem value="installed">Installed</SelectItem>
-                        <SelectItem value="tested">Tested</SelectItem>
-                        <SelectItem value="active">Active</SelectItem>
-                        <SelectItem value="inactive">Inactive</SelectItem>
-                      </SelectContent>
+                        <SelectContent>
+                          <SelectItem value="planned">📋 Planned</SelectItem>
+                          <SelectItem value="roughed">🔧 Roughed In</SelectItem>
+                          <SelectItem value="terminated">🔌 Terminated</SelectItem>
+                          <SelectItem value="tested">✅ Tested</SelectItem>
+                          <SelectItem value="active">Active</SelectItem>
+                          <SelectItem value="inactive">Inactive</SelectItem>
+                        </SelectContent>
                     </Select>
                   </div>
                   <div>
@@ -380,6 +382,42 @@ export const DropPointDetailsModal = ({
             </TabsContent>
 
             <TabsContent value="tests" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <TestTube className="h-5 w-5" />
+                    Upload Test Results PDF
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center">
+                    <input
+                      type="file"
+                      accept=".pdf"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          // TODO: Implement PDF upload
+                          toast({
+                            title: "Feature Coming Soon",
+                            description: "PDF test results upload will be available soon",
+                          });
+                        }
+                      }}
+                      className="hidden"
+                      id="pdf-upload"
+                    />
+                    <label htmlFor="pdf-upload" className="cursor-pointer">
+                      <div className="space-y-2">
+                        <FileText className="h-8 w-8 mx-auto text-muted-foreground" />
+                        <p className="text-sm font-medium">Upload Test Results PDF</p>
+                        <p className="text-xs text-muted-foreground">Click to select a PDF file from your tester</p>
+                      </div>
+                    </label>
+                  </div>
+                </CardContent>
+              </Card>
+
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -511,6 +549,64 @@ export const DropPointDetailsModal = ({
             </TabsContent>
 
             <TabsContent value="photos" className="space-y-4">
+              {/* Status Management */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CheckCircle className="h-5 w-5" />
+                    Quick Status Update
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    <Button
+                      variant={formData.status === 'planned' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => {
+                        setFormData(prev => ({ ...prev, status: 'planned' }));
+                        if (dropPoint) updateDropPoint(dropPoint.id, { status: 'planned' });
+                      }}
+                      className="text-xs"
+                    >
+                      📋 Planned
+                    </Button>
+                    <Button
+                      variant={formData.status === 'roughed' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => {
+                        setFormData(prev => ({ ...prev, status: 'roughed' }));
+                        if (dropPoint) updateDropPoint(dropPoint.id, { status: 'roughed' });
+                      }}
+                      className="text-xs"
+                    >
+                      🔧 Roughed In
+                    </Button>
+                    <Button
+                      variant={formData.status === 'terminated' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => {
+                        setFormData(prev => ({ ...prev, status: 'terminated' }));
+                        if (dropPoint) updateDropPoint(dropPoint.id, { status: 'terminated' });
+                      }}
+                      className="text-xs"
+                    >
+                      🔌 Terminated
+                    </Button>
+                    <Button
+                      variant={formData.status === 'tested' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => {
+                        setFormData(prev => ({ ...prev, status: 'tested' }));
+                        if (dropPoint) updateDropPoint(dropPoint.id, { status: 'tested' });
+                      }}
+                      className="text-xs"
+                    >
+                      ✅ Tested
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -567,23 +663,40 @@ export const DropPointDetailsModal = ({
                           {photoEntry.work_description && (
                             <p className="text-sm font-medium">{photoEntry.work_description}</p>
                           )}
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                            {photoEntry.photos.map((photoUrl, index) => (
-                              <div key={index} className="relative group">
-                                <img
-                                  src={photoUrl}
-                                  alt={`Drop point photo ${index + 1}`}
-                                  className="w-full h-32 object-cover rounded border cursor-pointer hover:opacity-80 transition-opacity"
-                                  onClick={() => window.open(photoUrl, '_blank')}
-                                />
-                                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all rounded flex items-center justify-center opacity-0 group-hover:opacity-100">
-                                  <span className="text-white text-xs bg-black bg-opacity-50 px-2 py-1 rounded">
-                                    Click to view full size
-                                  </span>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
+                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                             {photoEntry.photos.map((photoUrl, index) => (
+                               <div key={index} className="relative group">
+                                 <img
+                                   src={photoUrl}
+                                   alt={`Drop point photo ${index + 1}`}
+                                   className="w-full h-32 object-cover rounded border cursor-pointer hover:opacity-80 transition-opacity"
+                                   onClick={() => window.open(photoUrl, '_blank')}
+                                 />
+                                 <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                   <Button
+                                     size="sm"
+                                     variant="destructive"
+                                     onClick={(e) => {
+                                       e.stopPropagation();
+                                       // TODO: Implement photo deletion
+                                       toast({
+                                         title: "Feature Coming Soon",
+                                         description: "Photo deletion will be available in the next update",
+                                       });
+                                     }}
+                                     className="h-8 w-8 p-0"
+                                   >
+                                     <Trash2 className="h-4 w-4" />
+                                   </Button>
+                                 </div>
+                                 <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all rounded flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                   <span className="text-white text-xs bg-black bg-opacity-50 px-2 py-1 rounded">
+                                     Click to view full size
+                                   </span>
+                                 </div>
+                               </div>
+                             ))}
+                           </div>
                         </div>
                       ))}
                     </div>

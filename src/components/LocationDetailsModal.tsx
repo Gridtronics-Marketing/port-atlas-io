@@ -41,6 +41,7 @@ import { DropPointList } from "@/components/DropPointList";
 import { FloorPlanViewer } from "@/components/FloorPlanViewer";
 import { RiserDiagramViewer } from "@/components/RiserDiagramViewer";
 import { RiserDiagramLibrary } from "@/components/RiserDiagramLibrary";
+import { CreateRiserDiagramModal } from "@/components/CreateRiserDiagramModal";
 import { ScheduleAssignmentModal } from "@/components/ScheduleAssignmentModal";
 import { AddLocationNoteModal } from "@/components/AddLocationNoteModal";
 import { FloorPlanEditor } from "@/components/FloorPlanEditor";
@@ -121,7 +122,8 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
   const currentFloorPlanUrl = floorPlanUrls[selectedFloor];
 
   const handleAddFloorPlan = () => {
-    setShowAddFloorPlanModal(true);
+    // Navigate to Floor Plan Editor for this location
+    window.open(`/floor-plan-editor?locationId=${location?.id}&mode=floor`, '_blank');
   };
 
   const handleAddRiser = () => {
@@ -692,6 +694,20 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Create Riser Diagram Modal */}
+      <CreateRiserDiagramModal
+        open={showAddRiserModal}
+        onOpenChange={setShowAddRiserModal}
+        locationId={location?.id || ''}
+        locationName={location?.name || ''}
+        onRiserCreated={() => {
+          // Refresh riser diagrams when a new one is created
+          if (location) {
+            // This would trigger a refresh of the riser diagram library
+          }
+        }}
+      />
     </>
   );
 };
