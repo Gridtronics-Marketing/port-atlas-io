@@ -20,6 +20,9 @@ import { RiserWorkOrderIntegration } from '@/components/RiserWorkOrderIntegratio
 import { OverviewDetailsModal } from '@/components/OverviewDetailsModal';
 import { BackboneCableDetailsModal } from '@/components/BackboneCableDetailsModal';
 import { DistributionFrameDetailsModal } from '@/components/DistributionFrameDetailsModal';
+import { DevicesEndpointsTab } from '@/components/DevicesEndpointsTab';
+import { VLANsTab } from '@/components/VLANsTab';
+import { ChangeLogTab } from '@/components/ChangeLogTab';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -171,8 +174,11 @@ export const RiserDiagramViewer: React.FC<RiserDiagramViewerProps> = ({
           <TabsList>
             <TabsTrigger value="diagram">Interactive Diagram</TabsTrigger>
             <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="devices">Devices/Endpoints</TabsTrigger>
+            <TabsTrigger value="vlans">VLANs</TabsTrigger>
             <TabsTrigger value="cables">Backbone Cables</TabsTrigger>
             <TabsTrigger value="equipment">Distribution Frames</TabsTrigger>
+            <TabsTrigger value="changes">Change Log</TabsTrigger>
             <TabsTrigger value="integration">Work Orders</TabsTrigger>
             <TabsTrigger value="export">Export & Reports</TabsTrigger>
           </TabsList>
@@ -226,6 +232,18 @@ export const RiserDiagramViewer: React.FC<RiserDiagramViewerProps> = ({
                 );
               })}
             </div>
+          </TabsContent>
+
+          <TabsContent value="devices" className="space-y-4">
+            <DevicesEndpointsTab locationId={locationId} />
+          </TabsContent>
+
+          <TabsContent value="vlans" className="space-y-4">
+            <VLANsTab locationId={locationId} />
+          </TabsContent>
+
+          <TabsContent value="changes" className="space-y-4">
+            <ChangeLogTab locationId={locationId} />
           </TabsContent>
 
           <TabsContent value="cables" className="space-y-4">
