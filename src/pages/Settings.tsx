@@ -11,7 +11,8 @@ import { RiserDiagramSettingsManager } from '@/components/RiserDiagramSettingsMa
 import { NetworkInfrastructureSettingsManager } from '@/components/NetworkInfrastructureSettingsManager';
 import { CapacityManagementSettings } from '@/components/CapacityManagementSettings';
 import { ComplianceStandardsSettings } from '@/components/ComplianceStandardsSettings';
-import { WorkOrderIntegrationSettings } from '@/components/WorkOrderIntegrationSettings';
+import { GranularPermissionsManager } from '@/components/GranularPermissionsManager';
+import { AuditTrailViewer } from '@/components/AuditTrailViewer';
 
 const Settings = () => {
   return (
@@ -26,7 +27,7 @@ const Settings = () => {
       </div>
 
       <Tabs defaultValue="dropdown-options" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8 gap-1">
+        <TabsList className="grid w-full grid-cols-4 lg:grid-cols-11 gap-1">
           <TabsTrigger value="dropdown-options" className="text-xs">
             <Database className="h-4 w-4 mr-1" />
             <span className="hidden sm:inline">Dropdown</span>
@@ -55,9 +56,17 @@ const Settings = () => {
             <QrCode className="h-4 w-4 mr-1" />
             <span className="hidden sm:inline">Work Orders</span>
           </TabsTrigger>
-          <TabsTrigger value="workflows" className="text-xs">
-            <Workflow className="h-4 w-4 mr-1" />
-            <span className="hidden sm:inline">Workflows</span>
+          <TabsTrigger value="permissions" className="text-xs">
+            <Shield className="h-4 w-4 mr-1" />
+            <span className="hidden sm:inline">Permissions</span>
+          </TabsTrigger>
+          <TabsTrigger value="notifications" className="text-xs">
+            <Bell className="h-4 w-4 mr-1" />
+            <span className="hidden sm:inline">Notifications</span>
+          </TabsTrigger>
+          <TabsTrigger value="diagnostics" className="text-xs">
+            <Shield className="h-4 w-4 mr-1" />
+            <span className="hidden sm:inline">Diagnostics</span>
           </TabsTrigger>
         </TabsList>
         
@@ -173,17 +182,17 @@ const Settings = () => {
           </div>
         </TabsContent>
 
-        <TabsContent value="work-orders" className="space-y-6">
+        <TabsContent value="workflows" className="space-y-6">
           <div className="grid gap-6">
             <Card>
               <CardHeader>
-                <CardTitle>Work Order Integration Settings</CardTitle>
+                <CardTitle>Workflow Configuration</CardTitle>
                 <CardDescription>
-                  Configure QR code generation, auto-linking, and MAC tracking
+                  Configure business processes and approval workflows
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <WorkOrderIntegrationSettings />
+                <WorkflowConfigurationManager />
               </CardContent>
             </Card>
           </div>
