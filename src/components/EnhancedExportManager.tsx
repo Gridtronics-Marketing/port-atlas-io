@@ -99,18 +99,27 @@ export const EnhancedExportManager: React.FC<EnhancedExportManagerProps> = ({
   const handleExport = async (exportType: string) => {
     setExporting(true);
     try {
-      // Create real file content based on export type
-      const exportData = generateExportData(exportType);
-      
-      // Create and download file
-      const blob = new Blob([exportData], { 
-        type: getContentType(exportOptions.format) 
-      });
+      let blob: Blob;
+      let fileExtension: string;
+
+      if (exportOptions.format === 'pdf') {
+        // Generate actual PDF document
+        const pdfBlob = await generatePDFDocument(exportType);
+        blob = pdfBlob;
+        fileExtension = 'pdf';
+      } else {
+        // Create text-based file content
+        const exportData = generateExportData(exportType);
+        blob = new Blob([exportData], { 
+          type: getContentType(exportOptions.format) 
+        });
+        fileExtension = exportOptions.format;
+      }
       
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `${locationName.replace(/[^a-z0-9]/gi, '_')}-${exportType}-${new Date().toISOString().split('T')[0]}.${exportOptions.format}`;
+      link.download = `${locationName.replace(/[^a-z0-9]/gi, '_')}-${exportType}-${new Date().toISOString().split('T')[0]}.${fileExtension}`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -123,13 +132,142 @@ export const EnhancedExportManager: React.FC<EnhancedExportManagerProps> = ({
     } catch (error) {
       console.error('Export error:', error);
       toast({
-        title: "Export Failed",
+        title: "Export Failed", 
         description: "There was an error exporting the data. Please try again.",
         variant: "destructive"
       });
     } finally {
       setExporting(false);
     }
+  };
+
+  const generatePDFDocument = async (exportType: string): Promise<Blob> => {
+    // Import jsPDF dynamically
+    const { jsPDF } = await import('jspdf');
+    const pdf = new jsPDF();
+    
+    const timestamp = new Date().toISOString();
+    const date = new Date().toLocaleDateString();
+    
+    // Header
+    pdf.setFontSize(20);
+    pdf.text(`${exportType.replace(/_/g, ' ').toUpperCase()} REPORT`, 20, 20);
+    
+    pdf.setFontSize(12);
+    pdf.text(`Location: ${locationName}`, 20, 35);
+    pdf.text(`Generated: ${date}`, 20, 45);
+    pdf.text(`Compliance: ${exportOptions.compliance}`, 20, 55);
+    
+    let yPosition = 75;
+    
+    // Summary Section
+    pdf.setFontSize(16);
+    pdf.text('SUMMARY', 20, yPosition);
+    yPosition += 15;
+    
+    pdf.setFontSize(10);
+    pdf.text(`Total Cables: ${cables.length}`, 20, yPosition);
+    yPosition += 8;
+    pdf.text(`Total Distribution Frames: ${frames.length}`, 20, yPosition);
+    yPosition += 8;
+    pdf.text(`Total Connections: ${connections.length}`, 20, yPosition);
+    yPosition += 8;
+    pdf.text(`Documentation Files: ${files.length}`, 20, yPosition);
+    yPosition += 20;
+    
+    // Backbone Cables Section
+    if (cables.length > 0) {
+      pdf.setFontSize(14);
+      pdf.text('BACKBONE CABLES', 20, yPosition);
+      yPosition += 15;
+      
+      pdf.setFontSize(8);
+      const headers = ['Label', 'Type', 'Origin', 'Destination', 'Capacity', 'Used', 'Utilization'];
+      const colWidths = [25, 20, 30, 30, 20, 15, 25];
+      let xPosition = 20;
+      
+      // Table headers
+      headers.forEach((header, index) => {
+        pdf.text(header, xPosition, yPosition);
+        xPosition += colWidths[index];
+      });
+      yPosition += 10;
+      
+      // Table data
+      cables.forEach(cable => {
+        if (yPosition > 270) {
+          pdf.addPage();
+          yPosition = 20;
+        }
+        
+        xPosition = 20;
+        const utilization = cable.capacity_total ? 
+          `${Math.round((cable.capacity_used / cable.capacity_total) * 100)}%` : 'N/A';
+          
+        const row = [
+          cable.cable_label || 'N/A',
+          cable.cable_type.toUpperCase(),
+          cable.origin_equipment || 'N/A',
+          cable.destination_equipment || 'N/A',
+          cable.capacity_total?.toString() || 'N/A',
+          cable.capacity_used.toString(),
+          utilization
+        ];
+        
+        row.forEach((cell, index) => {
+          pdf.text(cell, xPosition, yPosition);
+          xPosition += colWidths[index];
+        });
+        yPosition += 6;
+      });
+      yPosition += 15;
+    }
+    
+    // Distribution Frames Section
+    if (frames.length > 0) {
+      if (yPosition > 200) {
+        pdf.addPage();
+        yPosition = 20;
+      }
+      
+      pdf.setFontSize(14);
+      pdf.text('DISTRIBUTION FRAMES', 20, yPosition);
+      yPosition += 15;
+      
+      frames.forEach(frame => {
+        if (yPosition > 260) {
+          pdf.addPage();
+          yPosition = 20;
+        }
+        
+        pdf.setFontSize(10);
+        pdf.text(`${frame.frame_type} - Floor ${frame.floor}`, 20, yPosition);
+        yPosition += 8;
+        
+        pdf.setFontSize(8);
+        pdf.text(`  Location: ${frame.room || 'Not specified'}`, 25, yPosition);
+        yPosition += 6;
+        pdf.text(`  Ports: ${frame.port_count} | Capacity: ${frame.capacity}`, 25, yPosition);
+        yPosition += 6;
+        
+        if (frame.rack_position) {
+          pdf.text(`  Rack Position: ${frame.rack_position}`, 25, yPosition);
+          yPosition += 6;
+        }
+        yPosition += 5;
+      });
+    }
+    
+    // Add footer to all pages
+    const pageCount = pdf.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      pdf.setPage(i);
+      pdf.setFontSize(8);
+      pdf.text(`Page ${i} of ${pageCount}`, 180, 285);
+      pdf.text('Generated by Port Atlas', 20, 285);
+    }
+    
+    return new Blob([pdf.output('blob')], { type: 'application/pdf' });
   };
 
   const generateExportData = (exportType: string): string => {
