@@ -97,6 +97,48 @@ export type Database = {
           },
         ]
       }
+      business_rules: {
+        Row: {
+          actions: Json
+          conditions: Json
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          priority: number | null
+          rule_name: string
+          rule_type: string
+          updated_at: string
+        }
+        Insert: {
+          actions?: Json
+          conditions?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          priority?: number | null
+          rule_name: string
+          rule_type: string
+          updated_at?: string
+        }
+        Update: {
+          actions?: Json
+          conditions?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          priority?: number | null
+          rule_name?: string
+          rule_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       cable_connections: {
         Row: {
           backbone_cable_id: string | null
@@ -599,6 +641,48 @@ export type Database = {
           },
         ]
       }
+      dropdown_options: {
+        Row: {
+          category: string
+          created_at: string
+          created_by: string | null
+          display_name: string
+          id: string
+          is_active: boolean
+          metadata: Json | null
+          option_key: string
+          option_value: string
+          sort_order: number | null
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          created_by?: string | null
+          display_name: string
+          id?: string
+          is_active?: boolean
+          metadata?: Json | null
+          option_key: string
+          option_value: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          display_name?: string
+          id?: string
+          is_active?: boolean
+          metadata?: Json | null
+          option_key?: string
+          option_value?: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       employee_availability: {
         Row: {
           approved_at: string | null
@@ -923,6 +1007,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      notification_templates: {
+        Row: {
+          body_template: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          subject_template: string | null
+          template_name: string
+          template_type: string
+          updated_at: string
+          variables: Json | null
+        }
+        Insert: {
+          body_template: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          subject_template?: string | null
+          template_name: string
+          template_type: string
+          updated_at?: string
+          variables?: Json | null
+        }
+        Update: {
+          body_template?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          subject_template?: string | null
+          template_name?: string
+          template_type?: string
+          updated_at?: string
+          variables?: Json | null
+        }
+        Relationships: []
       }
       notifications: {
         Row: {
@@ -1623,6 +1746,45 @@ export type Database = {
         }
         Relationships: []
       }
+      system_configurations: {
+        Row: {
+          category: string
+          created_at: string
+          created_by: string | null
+          data_type: string
+          description: string | null
+          id: string
+          is_active: boolean
+          key: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          created_by?: string | null
+          data_type?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          key: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          data_type?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          key?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: []
+      }
       test_results: {
         Row: {
           created_at: string
@@ -1831,6 +1993,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      workflow_configurations: {
+        Row: {
+          approval_rules: Json | null
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          steps: Json
+          updated_at: string
+          workflow_name: string
+          workflow_type: string
+        }
+        Insert: {
+          approval_rules?: Json | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          steps?: Json
+          updated_at?: string
+          workflow_name: string
+          workflow_type: string
+        }
+        Update: {
+          approval_rules?: Json | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          steps?: Json
+          updated_at?: string
+          workflow_name?: string
+          workflow_type?: string
+        }
+        Relationships: []
       }
     }
     Views: {

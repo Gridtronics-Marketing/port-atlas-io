@@ -51,6 +51,7 @@ const navigationItems = [
   { title: "Field Operations", url: "/field-operations", icon: MapPin },
   { title: "Quality Assurance", url: "/quality-assurance", icon: Shield },
   { title: "Advanced Features", url: "/advanced-features", icon: Settings },
+  { title: "System Settings", url: "/settings", icon: Settings },
   { title: "Communications", url: "/communications", icon: MessageSquare },
   { title: "Integrations", url: "/integrations", icon: Zap },
   { title: "Twilio Settings", url: "/twilio-settings", icon: Phone },
@@ -165,9 +166,11 @@ export function AppSidebar() {
                 <span>Profile</span>
               </NavLink>
             </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Settings className="mr-2 h-4 w-4" />
-              <span>Settings</span>
+            <DropdownMenuItem asChild>
+              <NavLink to="/settings" className="flex items-center">
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Settings</span>
+              </NavLink>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={signOut}>

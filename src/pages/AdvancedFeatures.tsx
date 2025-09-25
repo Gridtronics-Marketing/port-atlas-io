@@ -21,7 +21,7 @@ const AdvancedFeatures = () => {
       </div>
 
       <Tabs defaultValue="inventory" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="inventory">
             <Package className="h-4 w-4 mr-2" />
             Inventory
@@ -29,10 +29,6 @@ const AdvancedFeatures = () => {
           <TabsTrigger value="financial">
             <DollarSign className="h-4 w-4 mr-2" />
             Financial
-          </TabsTrigger>
-          <TabsTrigger value="configuration">
-            <Settings className="h-4 w-4 mr-2" />
-            Configuration
           </TabsTrigger>
           <TabsTrigger value="communication">
             <MessageSquare className="h-4 w-4 mr-2" />
@@ -46,24 +42,6 @@ const AdvancedFeatures = () => {
         
         <TabsContent value="financial" className="space-y-6">
           <FinancialDashboard />
-        </TabsContent>
-        
-        <TabsContent value="configuration" className="space-y-6">
-          <DropPointTypesManager />
-          
-          <div className="grid gap-6 md:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Camera Diagnostics</CardTitle>
-                <CardDescription>
-                  Test camera permissions and functionality
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <CameraPermissionTest />
-              </CardContent>
-            </Card>
-          </div>
         </TabsContent>
         
         <TabsContent value="communication" className="space-y-6">

@@ -15,6 +15,7 @@ import WorkOrders from "./pages/WorkOrders";
 import Scheduling from "./pages/Scheduling";
 import FieldOperations from "./pages/FieldOperations";
 import QualityAssurance from "./pages/QualityAssurance";
+import Settings from "./pages/Settings";
 import AdvancedFeatures from "./pages/AdvancedFeatures";
 import Integrations from "./pages/Integrations";
 import Communications from "./pages/Communications";
@@ -103,6 +104,13 @@ const App = () => (
               <ProtectedRoute>
                 <AppLayout>
                   <AdvancedFeatures />
+                </AppLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/settings" element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <Settings />
                 </AppLayout>
               </ProtectedRoute>
             } />
