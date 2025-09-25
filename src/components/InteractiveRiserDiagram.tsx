@@ -107,11 +107,17 @@ export const InteractiveRiserDiagram: React.FC<InteractiveRiserDiagramProps> = (
 
   // Find equipment or junction box position by label
   const findEquipmentPosition = (label: string, floor?: number) => {
-    // Try to find as distribution frame first
-    const frame = frames.find(f => 
-      f.id === label || 
-      (f.frame_type && floor && f.floor === floor)
-    );
+    // Extract equipment name from labels like "MDF-01 (Floor 1)" -> "MDF-01"
+    const equipmentName = label.split(' (')[0].trim();
+    
+    // Try to find as distribution frame first - match by ID or generated label
+    const frame = frames.find(f => {
+      const frameLabel = `${f.frame_type}-${f.id.split('-')[1] || f.id}`;
+      return f.id === equipmentName || 
+             f.id === label ||
+             frameLabel === equipmentName ||
+             (f.frame_type && f.frame_type.includes(equipmentName.split('-')[0])) && f.floor === floor;
+    });
     
     if (frame) {
       const floorFrames = frames.filter(f => f.floor === frame.floor);
@@ -119,10 +125,14 @@ export const InteractiveRiserDiagram: React.FC<InteractiveRiserDiagramProps> = (
       return getEquipmentPosition(frame, frame.floor, frameIndex);
     }
 
-    // Try to find as junction box
+    // Try to find as junction box - match by label or ID
     const junctionBox = junctionBoxes.find(j => 
-      j.label === label || j.id === label ||
-      (floor && j.floor === floor && (j.label.includes(label) || label.includes(j.label)))
+      j.label === equipmentName || 
+      j.label === label ||
+      j.id === equipmentName || 
+      j.id === label ||
+      (j.label && j.label.includes(equipmentName)) ||
+      (equipmentName && equipmentName.includes(j.label))
     );
     
     if (junctionBox) {
