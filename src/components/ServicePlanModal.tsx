@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { useContracts } from '@/hooks/useContracts';
 import { useLocations } from '@/hooks/useLocations';
+import { useConfigurableDropdown } from '@/hooks/useConfigurableDropdown';
 
 interface ServicePlanModalProps {
   open: boolean;
@@ -20,6 +21,7 @@ export const ServicePlanModal: React.FC<ServicePlanModalProps> = ({
 }) => {
   const { contracts, createServicePlan } = useContracts();
   const { locations } = useLocations();
+  const { options: serviceFrequencies } = useConfigurableDropdown('service_frequency');
   const [loading, setLoading] = useState(false);
   
   const [formData, setFormData] = useState({
@@ -126,12 +128,11 @@ export const ServicePlanModal: React.FC<ServicePlanModalProps> = ({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="weekly">Weekly</SelectItem>
-                  <SelectItem value="bi-weekly">Bi-weekly</SelectItem>
-                  <SelectItem value="monthly">Monthly</SelectItem>
-                  <SelectItem value="quarterly">Quarterly</SelectItem>
-                  <SelectItem value="semi-annually">Semi-annually</SelectItem>
-                  <SelectItem value="annually">Annually</SelectItem>
+                  {serviceFrequencies.map((freq) => (
+                    <SelectItem key={freq.key} value={freq.value}>
+                      {freq.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

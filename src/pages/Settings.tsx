@@ -1,5 +1,5 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Cog, Database, Workflow, Bell, Shield, Network, Activity, FileCheck, QrCode } from 'lucide-react';
+import { Cog, Database, Workflow, Bell, Shield, Network, Activity, FileCheck, QrCode, FileText, Wrench } from 'lucide-react';
 import { DropPointTypesManager } from '@/components/DropPointTypesManager';
 import { CameraPermissionTest } from '@/components/CameraPermissionTest';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -27,10 +27,18 @@ const Settings = () => {
       </div>
 
       <Tabs defaultValue="dropdown-options" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 lg:grid-cols-11 gap-1">
+        <TabsList className="grid w-full grid-cols-4 lg:grid-cols-13 gap-1">
           <TabsTrigger value="dropdown-options" className="text-xs">
             <Database className="h-4 w-4 mr-1" />
             <span className="hidden sm:inline">Dropdown</span>
+          </TabsTrigger>
+          <TabsTrigger value="contracts-settings" className="text-xs">
+            <FileText className="h-4 w-4 mr-1" />
+            <span className="hidden sm:inline">Contracts</span>
+          </TabsTrigger>
+          <TabsTrigger value="maintenance-settings" className="text-xs">
+            <Wrench className="h-4 w-4 mr-1" />
+            <span className="hidden sm:inline">Maintenance</span>
           </TabsTrigger>
           <TabsTrigger value="system-config" className="text-xs">
             <Cog className="h-4 w-4 mr-1" />
@@ -83,6 +91,53 @@ const Settings = () => {
                 <DropdownOptionsManager />
               </CardContent>
             </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="contracts-settings" className="space-y-6">
+          <div className="grid gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Contract Settings</CardTitle>
+                <CardDescription>
+                  Configure dropdown options for contract types and billing frequencies used in contract management.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <DropdownOptionsManager />
+              </CardContent>
+            </Card>
+            <div className="mt-4 p-4 bg-muted rounded-lg">
+              <h4 className="text-sm font-medium mb-2">Available Categories:</h4>
+              <ul className="text-sm text-muted-foreground space-y-1">
+                <li>• <strong>contract_type</strong> - Types of contracts (maintenance, installation, etc.)</li>
+                <li>• <strong>billing_frequency</strong> - How often billing occurs (monthly, quarterly, etc.)</li>
+              </ul>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="maintenance-settings" className="space-y-6">
+          <div className="grid gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Maintenance Settings</CardTitle>
+                <CardDescription>
+                  Configure dropdown options for service frequencies and maintenance types used in service planning.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <DropdownOptionsManager />
+              </CardContent>
+            </Card>
+            <div className="mt-4 p-4 bg-muted rounded-lg">
+              <h4 className="text-sm font-medium mb-2">Available Categories:</h4>
+              <ul className="text-sm text-muted-foreground space-y-1">
+                <li>• <strong>service_frequency</strong> - How often services are performed (weekly, monthly, etc.)</li>
+                <li>• <strong>maintenance_type</strong> - Types of maintenance services available</li>
+                <li>• <strong>equipment_category</strong> - Categories for equipment covered in service plans</li>
+              </ul>
+            </div>
           </div>
         </TabsContent>
         

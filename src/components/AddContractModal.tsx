@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useContracts } from '@/hooks/useContracts';
 import { useClients } from '@/hooks/useClients';
+import { useConfigurableDropdown } from '@/hooks/useConfigurableDropdown';
 
 interface AddContractModalProps {
   open: boolean;
@@ -19,6 +20,8 @@ export const AddContractModal: React.FC<AddContractModalProps> = ({
 }) => {
   const { createContract } = useContracts();
   const { clients } = useClients();
+  const { options: contractTypes } = useConfigurableDropdown('contract_type');
+  const { options: billingFrequencies } = useConfigurableDropdown('billing_frequency');
   const [loading, setLoading] = useState(false);
   
   const [formData, setFormData] = useState({
@@ -134,10 +137,11 @@ export const AddContractModal: React.FC<AddContractModalProps> = ({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="maintenance">Maintenance</SelectItem>
-                  <SelectItem value="installation">Installation</SelectItem>
-                  <SelectItem value="support">Support</SelectItem>
-                  <SelectItem value="consulting">Consulting</SelectItem>
+                  {contractTypes.map((type) => (
+                    <SelectItem key={type.key} value={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -149,10 +153,11 @@ export const AddContractModal: React.FC<AddContractModalProps> = ({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="monthly">Monthly</SelectItem>
-                  <SelectItem value="quarterly">Quarterly</SelectItem>
-                  <SelectItem value="annually">Annually</SelectItem>
-                  <SelectItem value="one-time">One Time</SelectItem>
+                  {billingFrequencies.map((freq) => (
+                    <SelectItem key={freq.key} value={freq.value}>
+                      {freq.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
