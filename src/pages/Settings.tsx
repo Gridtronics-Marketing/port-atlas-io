@@ -1,5 +1,5 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Cog, Database, Workflow, Bell, Shield } from 'lucide-react';
+import { Cog, Database, Workflow, Bell, Shield, Network, Activity, FileCheck, QrCode } from 'lucide-react';
 import { DropPointTypesManager } from '@/components/DropPointTypesManager';
 import { CameraPermissionTest } from '@/components/CameraPermissionTest';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,6 +7,11 @@ import { SystemConfigurationManager } from '@/components/SystemConfigurationMana
 import { DropdownOptionsManager } from '@/components/DropdownOptionsManager';
 import { WorkflowConfigurationManager } from '@/components/WorkflowConfigurationManager';
 import { NotificationTemplatesManager } from '@/components/NotificationTemplatesManager';
+import { RiserDiagramSettingsManager } from '@/components/RiserDiagramSettingsManager';
+import { NetworkInfrastructureSettingsManager } from '@/components/NetworkInfrastructureSettingsManager';
+import { CapacityManagementSettings } from '@/components/CapacityManagementSettings';
+import { ComplianceStandardsSettings } from '@/components/ComplianceStandardsSettings';
+import { WorkOrderIntegrationSettings } from '@/components/WorkOrderIntegrationSettings';
 
 const Settings = () => {
   return (
@@ -21,26 +26,38 @@ const Settings = () => {
       </div>
 
       <Tabs defaultValue="dropdown-options" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="dropdown-options">
-            <Database className="h-4 w-4 mr-2" />
-            Dropdown Options
+        <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8 gap-1">
+          <TabsTrigger value="dropdown-options" className="text-xs">
+            <Database className="h-4 w-4 mr-1" />
+            <span className="hidden sm:inline">Dropdown</span>
           </TabsTrigger>
-          <TabsTrigger value="system-config">
-            <Cog className="h-4 w-4 mr-2" />
-            System Config
+          <TabsTrigger value="system-config" className="text-xs">
+            <Cog className="h-4 w-4 mr-1" />
+            <span className="hidden sm:inline">System</span>
           </TabsTrigger>
-          <TabsTrigger value="workflows">
-            <Workflow className="h-4 w-4 mr-2" />
-            Workflows
+          <TabsTrigger value="riser-diagrams" className="text-xs">
+            <Network className="h-4 w-4 mr-1" />
+            <span className="hidden sm:inline">Riser</span>
           </TabsTrigger>
-          <TabsTrigger value="notifications">
-            <Bell className="h-4 w-4 mr-2" />
-            Notifications
+          <TabsTrigger value="network-infrastructure" className="text-xs">
+            <Activity className="h-4 w-4 mr-1" />
+            <span className="hidden sm:inline">Network</span>
           </TabsTrigger>
-          <TabsTrigger value="diagnostics">
-            <Shield className="h-4 w-4 mr-2" />
-            Diagnostics
+          <TabsTrigger value="capacity-management" className="text-xs">
+            <Shield className="h-4 w-4 mr-1" />
+            <span className="hidden sm:inline">Capacity</span>
+          </TabsTrigger>
+          <TabsTrigger value="compliance" className="text-xs">
+            <FileCheck className="h-4 w-4 mr-1" />
+            <span className="hidden sm:inline">Compliance</span>
+          </TabsTrigger>
+          <TabsTrigger value="work-orders" className="text-xs">
+            <QrCode className="h-4 w-4 mr-1" />
+            <span className="hidden sm:inline">Work Orders</span>
+          </TabsTrigger>
+          <TabsTrigger value="workflows" className="text-xs">
+            <Workflow className="h-4 w-4 mr-1" />
+            <span className="hidden sm:inline">Workflows</span>
           </TabsTrigger>
         </TabsList>
         
@@ -92,35 +109,81 @@ const Settings = () => {
           </div>
         </TabsContent>
         
-        <TabsContent value="notifications" className="space-y-6">
+        <TabsContent value="riser-diagrams" className="space-y-6">
           <div className="grid gap-6">
             <Card>
               <CardHeader>
-                <CardTitle>Notification Templates</CardTitle>
+                <CardTitle>Riser Diagram Settings</CardTitle>
                 <CardDescription>
-                  Configure notification messages and templates
+                  Configure visual preferences, refresh intervals, and cable labeling formats
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <NotificationTemplatesManager />
+                <RiserDiagramSettingsManager />
               </CardContent>
             </Card>
           </div>
         </TabsContent>
-        
-        <TabsContent value="diagnostics" className="space-y-6">
-          <DropPointTypesManager />
-          
-          <div className="grid gap-6 md:grid-cols-2">
+
+        <TabsContent value="network-infrastructure" className="space-y-6">
+          <div className="grid gap-6">
             <Card>
               <CardHeader>
-                <CardTitle>Camera Diagnostics</CardTitle>
+                <CardTitle>Network Infrastructure Settings</CardTitle>
                 <CardDescription>
-                  Test camera permissions and functionality
+                  Configure device discovery, monitoring intervals, and PoE management
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <CameraPermissionTest />
+                <NetworkInfrastructureSettingsManager />
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="capacity-management" className="space-y-6">
+          <div className="grid gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Capacity Management Settings</CardTitle>
+                <CardDescription>
+                  Configure alert thresholds and utilization monitoring
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <CapacityManagementSettings />
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="compliance" className="space-y-6">
+          <div className="grid gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Compliance Standards Settings</CardTitle>
+                <CardDescription>
+                  Configure BICSI, TIA, ISO standards and documentation requirements
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ComplianceStandardsSettings />
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="work-orders" className="space-y-6">
+          <div className="grid gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Work Order Integration Settings</CardTitle>
+                <CardDescription>
+                  Configure QR code generation, auto-linking, and MAC tracking
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <WorkOrderIntegrationSettings />
               </CardContent>
             </Card>
           </div>
