@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Network, Zap, Cable, Download, Building, Box, Trash2 } from 'lucide-react';
 import { useBackboneCables } from '@/hooks/useBackboneCables';
+import { useCableSegments } from '@/hooks/useCableSegments';
 import { useDistributionFrames } from '@/hooks/useDistributionFrames';
 import { useJunctionBoxes } from '@/hooks/useJunctionBoxes';
 import { InteractiveRiserDiagram } from '@/components/InteractiveRiserDiagram';
@@ -12,6 +13,7 @@ import { AddDistributionFrameModal } from '@/components/AddDistributionFrameModa
 import { AddBackboneCableModal } from '@/components/AddBackboneCableModal';
 import { AddJunctionBoxModal } from '@/components/AddJunctionBoxModal';
 import { AddRiserPathwayModal } from '@/components/AddRiserPathwayModal';
+import { MultiSegmentCableCard } from '@/components/MultiSegmentCableCard';
 import { RiserDiagramPDFExporter } from '@/components/RiserDiagramPDFExporter';
 import { RiserFloorPlanToggle } from '@/components/RiserFloorPlanToggle';
 import { RiserWorkOrderIntegration } from '@/components/RiserWorkOrderIntegration';
@@ -36,6 +38,7 @@ export const RiserDiagramViewer: React.FC<RiserDiagramViewerProps> = ({
   locationName
 }) => {
   const { cables, loading: cablesLoading, fetchCables, deleteCable } = useBackboneCables(locationId);
+  const { segments, loading: segmentsLoading, deleteSegment } = useCableSegments();
   const { frames, loading: framesLoading, fetchFrames, deleteFrame } = useDistributionFrames(locationId);
   const { junctionBoxes, loading: junctionLoading, deleteJunctionBox } = useJunctionBoxes(locationId);
   const [selectedFloor, setSelectedFloor] = useState<number | null>(null);
@@ -201,8 +204,23 @@ export const RiserDiagramViewer: React.FC<RiserDiagramViewerProps> = ({
           </TabsContent>
 
           <TabsContent value="cables" className="space-y-4">
-            <div className="space-y-3">
-              {cables.map(cable => (
+            <div className="space-y-4">
+              {/* Multi-segment cables */}
+              {cables.filter(cable => cable.is_multi_segment).map(cable => {
+                const cableSegments = segments.filter(segment => segment.cable_run_id === cable.id);
+                return (
+                  <MultiSegmentCableCard
+                    key={cable.id}
+                    cable={cable}
+                    segments={cableSegments}
+                    onDelete={deleteCable}
+                    onDeleteSegment={deleteSegment}
+                  />
+                );
+              })}
+
+              {/* Simple cables */}
+              {cables.filter(cable => !cable.is_multi_segment).map(cable => (
                 <div key={cable.id} className="border rounded-lg p-4">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
@@ -214,7 +232,7 @@ export const RiserDiagramViewer: React.FC<RiserDiagramViewerProps> = ({
                         </div>
                       </div>
                     </div>
-                     <div className="flex gap-2">
+                    <div className="flex gap-2">
                       <Badge className={getCableTypeColor(cable.cable_type)}>
                         {cable.cable_type.toUpperCase()}
                       </Badge>

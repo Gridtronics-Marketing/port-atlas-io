@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,10 +8,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle, ArrowRight } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { AlertCircle, ArrowRight, Building2, Zap, Route } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { useBackboneCables } from '@/hooks/useBackboneCables';
+import { useCableSegments } from '@/hooks/useCableSegments';
 import { useEquipmentList } from '@/hooks/useEquipmentList';
+import { PathBuilderStep } from './PathBuilderStep';
 import { toast } from 'sonner';
 
 interface AddBackboneCableModalProps {
@@ -35,6 +38,14 @@ interface CableFormData {
   unique_id?: string;
   capacity_total?: number;
   notes?: string;
+  is_multi_segment?: boolean;
+}
+
+interface PathStep {
+  id: string;
+  equipment: string;
+  floor?: number;
+  equipmentType?: string;
 }
 
 export const AddBackboneCableModal: React.FC<AddBackboneCableModalProps> = ({
@@ -44,16 +55,22 @@ export const AddBackboneCableModal: React.FC<AddBackboneCableModalProps> = ({
   onSuccess
 }) => {
   const { addCable } = useBackboneCables(locationId);
+  const { addMultipleSegments } = useCableSegments();
   const { equipment, loading: equipmentLoading, getEquipmentByFloor, findPathSuggestions, generateCableLabel } = useEquipmentList(locationId);
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<CableFormData>();
+  
+  const [isMultiSegment, setIsMultiSegment] = useState(false);
+  const [pathSteps, setPathSteps] = useState<PathStep[]>([]);
 
   const cableType = watch('cable_type');
   const originFloor = watch('origin_floor');
   const destinationFloor = watch('destination_floor');
+  const originEquipmentName = watch('origin_equipment');
+  const destinationEquipmentName = watch('destination_equipment');
   const cableLabel = watch('cable_label');
 
-  const originEquipment = getEquipmentByFloor(originFloor);
-  const destinationEquipment = getEquipmentByFloor(destinationFloor);
+  const originEquipmentOptions = getEquipmentByFloor(originFloor);
+  const destinationEquipmentOptions = getEquipmentByFloor(destinationFloor);
   const pathSuggestions = findPathSuggestions(originFloor, destinationFloor);
 
   // Auto-generate cable label when floors or type change
@@ -66,16 +83,77 @@ export const AddBackboneCableModal: React.FC<AddBackboneCableModalProps> = ({
 
   const onSubmit = async (data: CableFormData) => {
     try {
-      await addCable({
-        ...data,
-        location_id: locationId,
-        labeling_standard: 'TIA-606',
-        capacity_used: 0,
-        test_results: {}
-      });
+      if (isMultiSegment && pathSteps.length > 0) {
+        // Create multi-segment cable
+        const cableData = {
+          ...data,
+          location_id: locationId,
+          labeling_standard: 'TIA-606',
+          capacity_used: 0,
+          test_results: {},
+          is_multi_segment: true,
+          total_segments: pathSteps.length + 1,
+        };
+
+        const cable = await addCable(cableData);
+        
+        // Create segments for the multi-hop path
+        const segments = [];
+        
+        // First segment: Origin to first intermediate
+        segments.push({
+          cable_run_id: cable.id,
+          segment_order: 1,
+          origin_equipment: data.origin_equipment || '',
+          destination_equipment: pathSteps[0]?.equipment || '',
+          origin_floor: data.origin_floor,
+          destination_floor: pathSteps[0]?.floor,
+          segment_label: `${data.cable_label}-A`,
+        });
+
+        // Intermediate segments
+        for (let i = 0; i < pathSteps.length - 1; i++) {
+          segments.push({
+            cable_run_id: cable.id,
+            segment_order: i + 2,
+            origin_equipment: pathSteps[i].equipment,
+            destination_equipment: pathSteps[i + 1].equipment,
+            origin_floor: pathSteps[i].floor,
+            destination_floor: pathSteps[i + 1].floor,
+            segment_label: `${data.cable_label}-${String.fromCharCode(66 + i)}`, // B, C, D, etc.
+          });
+        }
+
+        // Final segment: Last intermediate to destination
+        segments.push({
+          cable_run_id: cable.id,
+          segment_order: pathSteps.length + 1,
+          origin_equipment: pathSteps[pathSteps.length - 1]?.equipment || '',
+          destination_equipment: data.destination_equipment || '',
+          origin_floor: pathSteps[pathSteps.length - 1]?.floor,
+          destination_floor: data.destination_floor,
+          segment_label: `${data.cable_label}-${String.fromCharCode(65 + pathSteps.length)}`,
+        });
+
+        await addMultipleSegments(segments);
+        toast.success(`Multi-segment cable with ${segments.length} segments added successfully`);
+      } else {
+        // Create simple cable
+        await addCable({
+          ...data,
+          location_id: locationId,
+          labeling_standard: 'TIA-606',
+          capacity_used: 0,
+          test_results: {},
+          is_multi_segment: false,
+          total_segments: 1,
+        });
+        toast.success('Backbone cable added successfully');
+      }
       
-      toast.success('Backbone cable added successfully');
       reset();
+      setPathSteps([]);
+      setIsMultiSegment(false);
       onOpenChange(false);
       onSuccess?.();
     } catch (error) {
@@ -92,6 +170,20 @@ export const AddBackboneCableModal: React.FC<AddBackboneCableModalProps> = ({
         </DialogHeader>
         
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div className="flex items-center justify-between p-3 border rounded-lg">
+            <div className="flex items-center gap-2">
+              <Route className="h-4 w-4" />
+              <Label htmlFor="multi_segment_toggle" className="font-medium">
+                Multi-Segment Cable Routing
+              </Label>
+            </div>
+            <Switch
+              id="multi_segment_toggle"
+              checked={isMultiSegment}
+              onCheckedChange={setIsMultiSegment}
+            />
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="cable_type">Cable Type</Label>
@@ -195,7 +287,7 @@ export const AddBackboneCableModal: React.FC<AddBackboneCableModalProps> = ({
                   } />
                 </SelectTrigger>
                 <SelectContent className="bg-background border border-border shadow-md">
-                  {originEquipment.map((item) => (
+                  {originEquipmentOptions.map((item) => (
                     <SelectItem key={item.id} value={item.label}>
                       <div className="flex items-center gap-2">
                         <Badge variant={item.type === 'distribution_frame' ? 'default' : 'secondary'} className="text-xs">
@@ -223,7 +315,7 @@ export const AddBackboneCableModal: React.FC<AddBackboneCableModalProps> = ({
                   } />
                 </SelectTrigger>
                 <SelectContent className="bg-background border border-border shadow-md">
-                  {destinationEquipment.map((item) => (
+                  {destinationEquipmentOptions.map((item) => (
                     <SelectItem key={item.id} value={item.label}>
                       <div className="flex items-center gap-2">
                         <Badge variant={item.type === 'distribution_frame' ? 'default' : 'secondary'} className="text-xs">
@@ -238,7 +330,16 @@ export const AddBackboneCableModal: React.FC<AddBackboneCableModalProps> = ({
             </div>
           </div>
 
-          {pathSuggestions.length > 0 && (
+          {isMultiSegment && (
+            <PathBuilderStep
+              steps={pathSteps}
+              onStepsChange={setPathSteps}
+              availableEquipment={equipment}
+              disabled={equipmentLoading}
+            />
+          )}
+
+          {!isMultiSegment && pathSuggestions.length > 0 && (
             <Card className="border-accent">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">

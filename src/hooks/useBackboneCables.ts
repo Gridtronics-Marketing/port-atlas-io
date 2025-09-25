@@ -22,6 +22,8 @@ export interface BackboneCable {
   capacity_used: number;
   capacity_spare?: number;
   notes?: string;
+  is_multi_segment: boolean;
+  total_segments?: number;
   created_at: string;
   updated_at: string;
 }
@@ -87,6 +89,13 @@ export const useBackboneCables = (locationId?: string) => {
 
   const deleteCable = async (id: string) => {
     try {
+      // First delete any associated cable segments
+      await supabase
+        .from('cable_segments')
+        .delete()
+        .eq('cable_run_id', id);
+
+      // Then delete the main cable record
       const { error } = await supabase
         .from('backbone_cables')
         .delete()

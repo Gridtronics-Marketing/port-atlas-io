@@ -27,6 +27,7 @@ export type Database = {
           destination_floor: number | null
           id: string
           installation_date: string | null
+          is_multi_segment: boolean
           jacket_rating: string | null
           labeling_standard: string | null
           location_id: string | null
@@ -36,6 +37,7 @@ export type Database = {
           pair_count: number | null
           strand_count: number | null
           test_results: Json | null
+          total_segments: number | null
           unique_id: string | null
           updated_at: string
         }
@@ -51,6 +53,7 @@ export type Database = {
           destination_floor?: number | null
           id?: string
           installation_date?: string | null
+          is_multi_segment?: boolean
           jacket_rating?: string | null
           labeling_standard?: string | null
           location_id?: string | null
@@ -60,6 +63,7 @@ export type Database = {
           pair_count?: number | null
           strand_count?: number | null
           test_results?: Json | null
+          total_segments?: number | null
           unique_id?: string | null
           updated_at?: string
         }
@@ -75,6 +79,7 @@ export type Database = {
           destination_floor?: number | null
           id?: string
           installation_date?: string | null
+          is_multi_segment?: boolean
           jacket_rating?: string | null
           labeling_standard?: string | null
           location_id?: string | null
@@ -84,6 +89,7 @@ export type Database = {
           pair_count?: number | null
           strand_count?: number | null
           test_results?: Json | null
+          total_segments?: number | null
           unique_id?: string | null
           updated_at?: string
         }
@@ -262,6 +268,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      cable_segments: {
+        Row: {
+          cable_run_id: string
+          created_at: string
+          destination_equipment: string
+          destination_floor: number | null
+          id: string
+          notes: string | null
+          origin_equipment: string
+          origin_floor: number | null
+          segment_label: string
+          segment_order: number
+          updated_at: string
+        }
+        Insert: {
+          cable_run_id: string
+          created_at?: string
+          destination_equipment: string
+          destination_floor?: number | null
+          id?: string
+          notes?: string | null
+          origin_equipment: string
+          origin_floor?: number | null
+          segment_label: string
+          segment_order: number
+          updated_at?: string
+        }
+        Update: {
+          cable_run_id?: string
+          created_at?: string
+          destination_equipment?: string
+          destination_floor?: number | null
+          id?: string
+          notes?: string | null
+          origin_equipment?: string
+          origin_floor?: number | null
+          segment_label?: string
+          segment_order?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       chat_messages: {
         Row: {
