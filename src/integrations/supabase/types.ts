@@ -311,6 +311,139 @@ export type Database = {
         }
         Relationships: []
       }
+      capacity_alerts: {
+        Row: {
+          alert_message: string | null
+          alert_type: string
+          component_id: string | null
+          component_type: string
+          created_at: string | null
+          current_utilization: number | null
+          id: string
+          is_resolved: boolean | null
+          location_id: string | null
+          max_capacity: number | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string | null
+          threshold_percentage: number | null
+        }
+        Insert: {
+          alert_message?: string | null
+          alert_type: string
+          component_id?: string | null
+          component_type: string
+          created_at?: string | null
+          current_utilization?: number | null
+          id?: string
+          is_resolved?: boolean | null
+          location_id?: string | null
+          max_capacity?: number | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string | null
+          threshold_percentage?: number | null
+        }
+        Update: {
+          alert_message?: string | null
+          alert_type?: string
+          component_id?: string | null
+          component_type?: string
+          created_at?: string | null
+          current_utilization?: number | null
+          id?: string
+          is_resolved?: boolean | null
+          location_id?: string | null
+          max_capacity?: number | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string | null
+          threshold_percentage?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "capacity_alerts_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "capacity_alerts_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      change_logs: {
+        Row: {
+          change_description: string | null
+          change_type: string
+          component_id: string | null
+          component_type: string
+          id: string
+          location_id: string | null
+          new_values: Json | null
+          old_values: Json | null
+          status: string | null
+          technician_id: string | null
+          timestamp: string | null
+          work_order_id: string | null
+        }
+        Insert: {
+          change_description?: string | null
+          change_type: string
+          component_id?: string | null
+          component_type: string
+          id?: string
+          location_id?: string | null
+          new_values?: Json | null
+          old_values?: Json | null
+          status?: string | null
+          technician_id?: string | null
+          timestamp?: string | null
+          work_order_id?: string | null
+        }
+        Update: {
+          change_description?: string | null
+          change_type?: string
+          component_id?: string | null
+          component_type?: string
+          id?: string
+          location_id?: string | null
+          new_values?: Json | null
+          old_values?: Json | null
+          status?: string | null
+          technician_id?: string | null
+          timestamp?: string | null
+          work_order_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "change_logs_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "change_logs_technician_id_fkey"
+            columns: ["technician_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "change_logs_work_order_id_fkey"
+            columns: ["work_order_id"]
+            isOneToOne: false
+            referencedRelation: "work_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_messages: {
         Row: {
           created_at: string
@@ -527,6 +660,69 @@ export type Database = {
           },
         ]
       }
+      device_ports: {
+        Row: {
+          connected_device_id: string | null
+          connected_port_number: number | null
+          created_at: string | null
+          description: string | null
+          device_id: string | null
+          id: string
+          mac_address: string | null
+          port_name: string | null
+          port_number: number
+          port_speed: string | null
+          port_status: string | null
+          port_type: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          connected_device_id?: string | null
+          connected_port_number?: number | null
+          created_at?: string | null
+          description?: string | null
+          device_id?: string | null
+          id?: string
+          mac_address?: string | null
+          port_name?: string | null
+          port_number: number
+          port_speed?: string | null
+          port_status?: string | null
+          port_type?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          connected_device_id?: string | null
+          connected_port_number?: number | null
+          created_at?: string | null
+          description?: string | null
+          device_id?: string | null
+          id?: string
+          mac_address?: string | null
+          port_name?: string | null
+          port_number?: number
+          port_speed?: string | null
+          port_status?: string | null
+          port_type?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "device_ports_connected_device_id_fkey"
+            columns: ["connected_device_id"]
+            isOneToOne: false
+            referencedRelation: "network_devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "device_ports_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "network_devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       distribution_frames: {
         Row: {
           capacity: number | null
@@ -582,6 +778,72 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "distribution_frames_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      documentation_files: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          document_category: string | null
+          file_name: string
+          file_path: string
+          file_size: number | null
+          file_type: string
+          id: string
+          location_id: string | null
+          standards_reference: string | null
+          tags: string[] | null
+          updated_at: string | null
+          version: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          document_category?: string | null
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          file_type: string
+          id?: string
+          location_id?: string | null
+          standards_reference?: string | null
+          tags?: string[] | null
+          updated_at?: string | null
+          version?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          document_category?: string | null
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          file_type?: string
+          id?: string
+          location_id?: string | null
+          standards_reference?: string | null
+          tags?: string[] | null
+          updated_at?: string | null
+          version?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documentation_files_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documentation_files_location_id_fkey"
             columns: ["location_id"]
             isOneToOne: false
             referencedRelation: "locations"
@@ -1056,6 +1318,87 @@ export type Database = {
           },
         ]
       }
+      network_devices: {
+        Row: {
+          created_at: string | null
+          device_details: Json | null
+          device_name: string
+          device_type: string
+          firmware_version: string | null
+          id: string
+          ip_address: unknown | null
+          location_id: string | null
+          mac_address: string | null
+          management_url: string | null
+          manufacturer: string | null
+          model: string | null
+          poe_status: string | null
+          port_count: number | null
+          rack_id: string | null
+          rack_position: number | null
+          serial_number: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          device_details?: Json | null
+          device_name: string
+          device_type: string
+          firmware_version?: string | null
+          id?: string
+          ip_address?: unknown | null
+          location_id?: string | null
+          mac_address?: string | null
+          management_url?: string | null
+          manufacturer?: string | null
+          model?: string | null
+          poe_status?: string | null
+          port_count?: number | null
+          rack_id?: string | null
+          rack_position?: number | null
+          serial_number?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          device_details?: Json | null
+          device_name?: string
+          device_type?: string
+          firmware_version?: string | null
+          id?: string
+          ip_address?: unknown | null
+          location_id?: string | null
+          mac_address?: string | null
+          management_url?: string | null
+          manufacturer?: string | null
+          model?: string | null
+          poe_status?: string | null
+          port_count?: number | null
+          rack_id?: string | null
+          rack_position?: number | null
+          serial_number?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "network_devices_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "network_devices_rack_id_fkey"
+            columns: ["rack_id"]
+            isOneToOne: false
+            referencedRelation: "racks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_templates: {
         Row: {
           body_template: string
@@ -1130,6 +1473,117 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      patch_connections: {
+        Row: {
+          cable_type: string | null
+          connection_status: string | null
+          created_at: string | null
+          from_frame_id: string | null
+          from_port: number
+          id: string
+          notes: string | null
+          patch_cable_id: string | null
+          signal_strength: number | null
+          test_results: Json | null
+          to_frame_id: string | null
+          to_port: number
+          updated_at: string | null
+        }
+        Insert: {
+          cable_type?: string | null
+          connection_status?: string | null
+          created_at?: string | null
+          from_frame_id?: string | null
+          from_port: number
+          id?: string
+          notes?: string | null
+          patch_cable_id?: string | null
+          signal_strength?: number | null
+          test_results?: Json | null
+          to_frame_id?: string | null
+          to_port: number
+          updated_at?: string | null
+        }
+        Update: {
+          cable_type?: string | null
+          connection_status?: string | null
+          created_at?: string | null
+          from_frame_id?: string | null
+          from_port?: number
+          id?: string
+          notes?: string | null
+          patch_cable_id?: string | null
+          signal_strength?: number | null
+          test_results?: Json | null
+          to_frame_id?: string | null
+          to_port?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patch_connections_from_frame_id_fkey"
+            columns: ["from_frame_id"]
+            isOneToOne: false
+            referencedRelation: "distribution_frames"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patch_connections_to_frame_id_fkey"
+            columns: ["to_frame_id"]
+            isOneToOne: false
+            referencedRelation: "distribution_frames"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      port_vlan_assignments: {
+        Row: {
+          assignment_type: string | null
+          created_at: string | null
+          device_id: string | null
+          id: string
+          native_vlan: boolean | null
+          port_number: number
+          updated_at: string | null
+          vlan_id: string | null
+        }
+        Insert: {
+          assignment_type?: string | null
+          created_at?: string | null
+          device_id?: string | null
+          id?: string
+          native_vlan?: boolean | null
+          port_number: number
+          updated_at?: string | null
+          vlan_id?: string | null
+        }
+        Update: {
+          assignment_type?: string | null
+          created_at?: string | null
+          device_id?: string | null
+          id?: string
+          native_vlan?: boolean | null
+          port_number?: number
+          updated_at?: string | null
+          vlan_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "port_vlan_assignments_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "network_devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "port_vlan_assignments_vlan_id_fkey"
+            columns: ["vlan_id"]
+            isOneToOne: false
+            referencedRelation: "vlans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       projects: {
         Row: {
@@ -1952,6 +2406,53 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      vlans: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          location_id: string | null
+          security_zone: string | null
+          subnet: unknown | null
+          updated_at: string | null
+          vlan_id: number
+          vlan_name: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          location_id?: string | null
+          security_zone?: string | null
+          subnet?: unknown | null
+          updated_at?: string | null
+          vlan_id: number
+          vlan_name: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          location_id?: string | null
+          security_zone?: string | null
+          subnet?: unknown | null
+          updated_at?: string | null
+          vlan_id?: number
+          vlan_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vlans_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       work_orders: {
         Row: {
