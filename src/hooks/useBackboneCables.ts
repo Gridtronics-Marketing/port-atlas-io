@@ -97,6 +97,13 @@ export const useBackboneCables = (locationId?: string) => {
         .delete()
         .eq('cable_run_id', id);
 
+      // Handle junction boxes that reference this cable
+      // Set backbone_cable_id to NULL to unlink them instead of deleting
+      await supabase
+        .from('cable_junction_boxes')
+        .update({ backbone_cable_id: null })
+        .eq('backbone_cable_id', id);
+
       // Then delete the main cable record
       const { error } = await supabase
         .from('backbone_cables')
@@ -107,6 +114,11 @@ export const useBackboneCables = (locationId?: string) => {
       await fetchCables();
     } catch (error) {
       console.error('Error deleting backbone cable:', error);
+      // Enhanced error logging for foreign key constraints
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      if (errorMessage.includes('foreign key') || errorMessage.includes('violates')) {
+        console.error('Foreign key constraint violation - there may be dependencies that need to be handled');
+      }
       throw error;
     }
   };
