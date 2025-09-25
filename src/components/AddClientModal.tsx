@@ -19,6 +19,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { ConfigurableSelect } from "@/components/ui/configurable-select";
 
 interface AddClientModalProps {
   isOpen: boolean;
@@ -115,16 +116,12 @@ export const AddClientModal = ({ isOpen, onClose, onAddClient }: AddClientModalP
 
               <div className="space-y-2">
                 <Label htmlFor="status">Status</Label>
-                <Select value={formData.status} onValueChange={(value) => handleInputChange("status", value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Active">Active</SelectItem>
-                    <SelectItem value="Pending">Pending</SelectItem>
-                    <SelectItem value="Inactive">Inactive</SelectItem>
-                  </SelectContent>
-                </Select>
+                <ConfigurableSelect
+                  category="client_statuses"
+                  value={formData.status}
+                  onValueChange={(value) => handleInputChange("status", value)}
+                  placeholder="Select status"
+                />
               </div>
             </div>
           </div>

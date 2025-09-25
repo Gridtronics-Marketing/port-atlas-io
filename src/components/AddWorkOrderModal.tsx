@@ -9,6 +9,7 @@ import { useWorkOrders } from '@/hooks/useWorkOrders';
 import { useProjects } from '@/hooks/useProjects';
 import { useLocations } from '@/hooks/useLocations';
 import { useEmployees } from '@/hooks/useEmployees';
+import { ConfigurableSelect } from '@/components/ui/configurable-select';
 
 interface AddWorkOrderModalProps {
   open: boolean;
@@ -108,33 +109,22 @@ export function AddWorkOrderModal({ open, onOpenChange }: AddWorkOrderModalProps
 
             <div>
               <Label>Work Type</Label>
-              <Select value={formData.work_type} onValueChange={(value) => handleInputChange('work_type', value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Installation">Installation</SelectItem>
-                  <SelectItem value="Maintenance">Maintenance</SelectItem>
-                  <SelectItem value="Repair">Repair</SelectItem>
-                  <SelectItem value="Testing">Testing</SelectItem>
-                  <SelectItem value="Documentation">Documentation</SelectItem>
-                </SelectContent>
-              </Select>
+              <ConfigurableSelect
+                category="work_order_types"
+                value={formData.work_type}
+                onValueChange={(value) => handleInputChange('work_type', value)}
+                placeholder="Select work type"
+              />
             </div>
 
             <div>
               <Label>Priority</Label>
-              <Select value={formData.priority} onValueChange={(value) => handleInputChange('priority', value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Low">Low</SelectItem>
-                  <SelectItem value="Medium">Medium</SelectItem>
-                  <SelectItem value="High">High</SelectItem>
-                  <SelectItem value="Critical">Critical</SelectItem>
-                </SelectContent>
-              </Select>
+              <ConfigurableSelect
+                category="project_priorities"
+                value={formData.priority}
+                onValueChange={(value) => handleInputChange('priority', value)}
+                placeholder="Select priority"
+              />
             </div>
 
             <div>

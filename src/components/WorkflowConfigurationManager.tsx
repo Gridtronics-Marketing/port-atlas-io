@@ -174,7 +174,7 @@ export const WorkflowConfigurationManager = () => {
                         <Badge variant="outline" className="text-xs">
                           {step.name || `Step ${index + 1}`}
                         </Badge>
-                        {index < workflow.steps.length - 1 && (
+                        {index < (Array.isArray(workflow.steps) ? workflow.steps.length : 0) - 1 && (
                           <ArrowRight className="h-3 w-3 mx-1 text-muted-foreground" />
                         )}
                       </div>
