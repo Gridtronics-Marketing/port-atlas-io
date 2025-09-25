@@ -22,7 +22,10 @@ import { BackboneCableDetailsModal } from '@/components/BackboneCableDetailsModa
 import { DistributionFrameDetailsModal } from '@/components/DistributionFrameDetailsModal';
 import { DevicesEndpointsTab } from '@/components/DevicesEndpointsTab';
 import { VLANsTab } from '@/components/VLANsTab';
-import { ChangeLogTab } from '@/components/ChangeLogTab';
+import { PatchPanelsTab } from '@/components/PatchPanelsTab';
+import { CapacityTab } from '@/components/CapacityTab';
+import { DocumentationTab } from '@/components/DocumentationTab';
+import { EnhancedExportManager } from '@/components/EnhancedExportManager';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -176,6 +179,9 @@ export const RiserDiagramViewer: React.FC<RiserDiagramViewerProps> = ({
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="devices">Devices/Endpoints</TabsTrigger>
             <TabsTrigger value="vlans">VLANs</TabsTrigger>
+            <TabsTrigger value="patches">Patch Panels</TabsTrigger>
+            <TabsTrigger value="capacity">Capacity</TabsTrigger>
+            <TabsTrigger value="documentation">Documentation</TabsTrigger>
             <TabsTrigger value="cables">Backbone Cables</TabsTrigger>
             <TabsTrigger value="equipment">Distribution Frames</TabsTrigger>
             <TabsTrigger value="changes">Change Log</TabsTrigger>
@@ -242,8 +248,20 @@ export const RiserDiagramViewer: React.FC<RiserDiagramViewerProps> = ({
             <VLANsTab locationId={locationId} />
           </TabsContent>
 
-          <TabsContent value="changes" className="space-y-4">
-            <ChangeLogTab locationId={locationId} />
+          <TabsContent value="patches" className="space-y-4">
+            <PatchPanelsTab locationId={locationId} />
+          </TabsContent>
+
+          <TabsContent value="capacity" className="space-y-4">
+            <CapacityTab locationId={locationId} />
+          </TabsContent>
+
+          <TabsContent value="documentation" className="space-y-4">
+            <DocumentationTab locationId={locationId} />
+          </TabsContent>
+
+          <TabsContent value="export" className="space-y-4">
+            <EnhancedExportManager locationId={locationId} locationName={locationName} />
           </TabsContent>
 
           <TabsContent value="cables" className="space-y-4">
