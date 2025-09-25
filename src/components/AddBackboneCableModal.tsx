@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,8 +6,12 @@ import { Label } from '@/components/ui/label';
 import { ConfigurableSelect } from '@/components/ui/configurable-select';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { AlertCircle, ArrowRight } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { useBackboneCables } from '@/hooks/useBackboneCables';
+import { useEquipmentList } from '@/hooks/useEquipmentList';
 import { toast } from 'sonner';
 
 interface AddBackboneCableModalProps {
@@ -40,9 +44,25 @@ export const AddBackboneCableModal: React.FC<AddBackboneCableModalProps> = ({
   onSuccess
 }) => {
   const { addCable } = useBackboneCables(locationId);
+  const { equipment, loading: equipmentLoading, getEquipmentByFloor, findPathSuggestions, generateCableLabel } = useEquipmentList(locationId);
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<CableFormData>();
 
   const cableType = watch('cable_type');
+  const originFloor = watch('origin_floor');
+  const destinationFloor = watch('destination_floor');
+  const cableLabel = watch('cable_label');
+
+  const originEquipment = getEquipmentByFloor(originFloor);
+  const destinationEquipment = getEquipmentByFloor(destinationFloor);
+  const pathSuggestions = findPathSuggestions(originFloor, destinationFloor);
+
+  // Auto-generate cable label when floors or type change
+  useEffect(() => {
+    if (originFloor && destinationFloor && cableType && !cableLabel) {
+      const autoLabel = generateCableLabel(originFloor, destinationFloor, cableType);
+      setValue('cable_label', autoLabel);
+    }
+  }, [originFloor, destinationFloor, cableType, cableLabel, setValue, generateCableLabel]);
 
   const onSubmit = async (data: CableFormData) => {
     try {
@@ -163,22 +183,92 @@ export const AddBackboneCableModal: React.FC<AddBackboneCableModalProps> = ({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="origin_equipment">Origin Equipment</Label>
-              <Input
-                id="origin_equipment"
-                {...register('origin_equipment')}
-                placeholder="e.g. MDF-01"
-              />
+              <Select 
+                onValueChange={(value) => setValue('origin_equipment', value)}
+                disabled={!originFloor || equipmentLoading}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={
+                    !originFloor ? "Select origin floor first" : 
+                    equipmentLoading ? "Loading equipment..." :
+                    "Select origin equipment"
+                  } />
+                </SelectTrigger>
+                <SelectContent className="bg-background border border-border shadow-md">
+                  {originEquipment.map((item) => (
+                    <SelectItem key={item.id} value={item.label}>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={item.type === 'distribution_frame' ? 'default' : 'secondary'} className="text-xs">
+                          {item.equipment_type || item.junction_type}
+                        </Badge>
+                        {item.label}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div>
               <Label htmlFor="destination_equipment">Destination Equipment</Label>
-              <Input
-                id="destination_equipment"
-                {...register('destination_equipment')}
-                placeholder="e.g. IDF-05"
-              />
+              <Select 
+                onValueChange={(value) => setValue('destination_equipment', value)}
+                disabled={!destinationFloor || equipmentLoading}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={
+                    !destinationFloor ? "Select destination floor first" : 
+                    equipmentLoading ? "Loading equipment..." :
+                    "Select destination equipment"
+                  } />
+                </SelectTrigger>
+                <SelectContent className="bg-background border border-border shadow-md">
+                  {destinationEquipment.map((item) => (
+                    <SelectItem key={item.id} value={item.label}>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={item.type === 'distribution_frame' ? 'default' : 'secondary'} className="text-xs">
+                          {item.equipment_type || item.junction_type}
+                        </Badge>
+                        {item.label}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
+
+          {pathSuggestions.length > 0 && (
+            <Card className="border-accent">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <ArrowRight className="h-4 w-4" />
+                  Suggested Path Route
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <span>Floor {originFloor}</span>
+                  {pathSuggestions.map((suggestion, index) => (
+                    <React.Fragment key={suggestion.id}>
+                      <ArrowRight className="h-3 w-3" />
+                      <Badge variant="outline" className="text-xs">
+                        {suggestion.label}
+                      </Badge>
+                    </React.Fragment>
+                  ))}
+                  <ArrowRight className="h-3 w-3" />
+                  <span>Floor {destinationFloor}</span>
+                </div>
+                <div className="flex items-start gap-2 mt-2 p-2 bg-muted rounded text-xs">
+                  <AlertCircle className="h-3 w-3 text-muted-foreground mt-0.5 flex-shrink-0" />
+                  <span className="text-muted-foreground">
+                    Consider routing through the suggested junction boxes for optimal cable management.
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <div className="grid grid-cols-2 gap-4">
             <div>
