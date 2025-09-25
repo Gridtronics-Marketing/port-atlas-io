@@ -5,6 +5,8 @@ import { CameraPermissionTest } from '@/components/CameraPermissionTest';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { SystemConfigurationManager } from '@/components/SystemConfigurationManager';
 import { DropdownOptionsManager } from '@/components/DropdownOptionsManager';
+import { WorkflowConfigurationManager } from '@/components/WorkflowConfigurationManager';
+import { NotificationTemplatesManager } from '@/components/NotificationTemplatesManager';
 
 const Settings = () => {
   return (
@@ -84,7 +86,7 @@ const Settings = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground">Workflow configuration coming soon...</p>
+                <WorkflowConfigurationManager />
               </CardContent>
             </Card>
           </div>
@@ -100,7 +102,7 @@ const Settings = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground">Notification templates coming soon...</p>
+                <NotificationTemplatesManager />
               </CardContent>
             </Card>
           </div>

@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useClients } from "@/hooks/useClients";
+import { ConfigurableSelect } from "@/components/ui/configurable-select";
 
 interface AddProjectModalProps {
   isOpen: boolean;
@@ -163,50 +164,32 @@ export const AddProjectModal = ({ isOpen, onClose, onAddProject }: AddProjectMod
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="project_type">Project Type</Label>
-                <Select value={formData.project_type} onValueChange={(value) => handleInputChange("project_type", value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Network Installation">Network Installation</SelectItem>
-                    <SelectItem value="Cabling">Cabling</SelectItem>
-                    <SelectItem value="Fiber Optic">Fiber Optic</SelectItem>
-                    <SelectItem value="Data Center">Data Center</SelectItem>
-                    <SelectItem value="Maintenance">Maintenance</SelectItem>
-                    <SelectItem value="Upgrade">Upgrade</SelectItem>
-                  </SelectContent>
-                </Select>
+                <ConfigurableSelect
+                  category="project_types"
+                  value={formData.project_type}
+                  onValueChange={(value) => handleInputChange("project_type", value)}
+                  placeholder="Select type"
+                />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="status">Status</Label>
-                <Select value={formData.status} onValueChange={(value) => handleInputChange("status", value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Planning">Planning</SelectItem>
-                    <SelectItem value="In Progress">In Progress</SelectItem>
-                    <SelectItem value="On Hold">On Hold</SelectItem>
-                    <SelectItem value="Completed">Completed</SelectItem>
-                    <SelectItem value="Cancelled">Cancelled</SelectItem>
-                  </SelectContent>
-                </Select>
+                <ConfigurableSelect
+                  category="project_statuses"
+                  value={formData.status}
+                  onValueChange={(value) => handleInputChange("status", value)}
+                  placeholder="Select status"
+                />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="priority">Priority</Label>
-                <Select value={formData.priority} onValueChange={(value) => handleInputChange("priority", value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select priority" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Low">Low</SelectItem>
-                    <SelectItem value="Medium">Medium</SelectItem>
-                    <SelectItem value="High">High</SelectItem>
-                    <SelectItem value="Critical">Critical</SelectItem>
-                  </SelectContent>
-                </Select>
+                <ConfigurableSelect
+                  category="project_priorities"
+                  value={formData.priority}
+                  onValueChange={(value) => handleInputChange("priority", value)}
+                  placeholder="Select priority"
+                />
               </div>
             </div>
           </div>
