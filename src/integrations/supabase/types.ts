@@ -574,6 +574,83 @@ export type Database = {
         }
         Relationships: []
       }
+      contracts: {
+        Row: {
+          billing_frequency: string
+          client_id: string | null
+          client_signature_url: string | null
+          company_signature_url: string | null
+          contract_number: string
+          contract_type: string
+          contract_value: number
+          created_at: string
+          created_by: string | null
+          description: string | null
+          end_date: string | null
+          id: string
+          signed_by_client: string | null
+          signed_by_company: string | null
+          signed_date: string | null
+          start_date: string
+          status: string
+          terms_and_conditions: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          billing_frequency?: string
+          client_id?: string | null
+          client_signature_url?: string | null
+          company_signature_url?: string | null
+          contract_number: string
+          contract_type?: string
+          contract_value?: number
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          signed_by_client?: string | null
+          signed_by_company?: string | null
+          signed_date?: string | null
+          start_date: string
+          status?: string
+          terms_and_conditions?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          billing_frequency?: string
+          client_id?: string | null
+          client_signature_url?: string | null
+          company_signature_url?: string | null
+          contract_number?: string
+          contract_type?: string
+          contract_value?: number
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          signed_by_client?: string | null
+          signed_by_company?: string | null
+          signed_date?: string | null
+          start_date?: string
+          status?: string
+          terms_and_conditions?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contracts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       daily_logs: {
         Row: {
           created_at: string
@@ -1314,6 +1391,80 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      maintenance_schedules: {
+        Row: {
+          assigned_technician_id: string | null
+          completed_at: string | null
+          completion_notes: string | null
+          created_at: string
+          id: string
+          location_id: string | null
+          scheduled_date: string
+          scheduled_time: string | null
+          service_plan_id: string | null
+          status: string
+          updated_at: string
+          work_order_id: string | null
+        }
+        Insert: {
+          assigned_technician_id?: string | null
+          completed_at?: string | null
+          completion_notes?: string | null
+          created_at?: string
+          id?: string
+          location_id?: string | null
+          scheduled_date: string
+          scheduled_time?: string | null
+          service_plan_id?: string | null
+          status?: string
+          updated_at?: string
+          work_order_id?: string | null
+        }
+        Update: {
+          assigned_technician_id?: string | null
+          completed_at?: string | null
+          completion_notes?: string | null
+          created_at?: string
+          id?: string
+          location_id?: string | null
+          scheduled_date?: string
+          scheduled_time?: string | null
+          service_plan_id?: string | null
+          status?: string
+          updated_at?: string
+          work_order_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_schedules_assigned_technician_id_fkey"
+            columns: ["assigned_technician_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_schedules_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_schedules_service_plan_id_fkey"
+            columns: ["service_plan_id"]
+            isOneToOne: false
+            referencedRelation: "service_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_schedules_work_order_id_fkey"
+            columns: ["work_order_id"]
+            isOneToOne: false
+            referencedRelation: "work_orders"
             referencedColumns: ["id"]
           },
         ]
@@ -2245,6 +2396,187 @@ export type Database = {
           start_time?: string
           template_name?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      service_plans: {
+        Row: {
+          contract_id: string | null
+          created_at: string
+          description: string | null
+          equipment_covered: Json | null
+          id: string
+          is_active: boolean
+          locations_covered: string[] | null
+          plan_name: string
+          service_duration_hours: number | null
+          service_frequency: string
+          updated_at: string
+        }
+        Insert: {
+          contract_id?: string | null
+          created_at?: string
+          description?: string | null
+          equipment_covered?: Json | null
+          id?: string
+          is_active?: boolean
+          locations_covered?: string[] | null
+          plan_name: string
+          service_duration_hours?: number | null
+          service_frequency?: string
+          updated_at?: string
+        }
+        Update: {
+          contract_id?: string | null
+          created_at?: string
+          description?: string | null
+          equipment_covered?: Json | null
+          id?: string
+          is_active?: boolean
+          locations_covered?: string[] | null
+          plan_name?: string
+          service_duration_hours?: number | null
+          service_frequency?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_plans_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      signatures: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          related_id: string
+          related_table: string
+          signature_data: string
+          signature_type: string
+          signed_at: string
+          signer_name: string | null
+          signer_role: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          related_id: string
+          related_table: string
+          signature_data: string
+          signature_type: string
+          signed_at?: string
+          signer_name?: string | null
+          signer_role?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          related_id?: string
+          related_table?: string
+          signature_data?: string
+          signature_type?: string
+          signed_at?: string
+          signer_name?: string | null
+          signer_role?: string | null
+        }
+        Relationships: []
+      }
+      subscription_billing: {
+        Row: {
+          amount: number
+          billing_period_end: string
+          billing_period_start: string
+          contract_id: string | null
+          created_at: string
+          due_date: string | null
+          id: string
+          invoice_date: string | null
+          paid_date: string | null
+          payment_method: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          billing_period_end: string
+          billing_period_start: string
+          contract_id?: string | null
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          invoice_date?: string | null
+          paid_date?: string | null
+          payment_method?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          billing_period_end?: string
+          billing_period_start?: string
+          contract_id?: string | null
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          invoice_date?: string | null
+          paid_date?: string | null
+          payment_method?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_billing_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sync_queue: {
+        Row: {
+          created_at: string
+          data: Json
+          error_message: string | null
+          id: string
+          operation: string
+          record_id: string
+          sync_attempted_at: string | null
+          synced: boolean
+          table_name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data: Json
+          error_message?: string | null
+          id?: string
+          operation: string
+          record_id: string
+          sync_attempted_at?: string | null
+          synced?: boolean
+          table_name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          error_message?: string | null
+          id?: string
+          operation?: string
+          record_id?: string
+          sync_attempted_at?: string | null
+          synced?: boolean
+          table_name?: string
+          user_id?: string
         }
         Relationships: []
       }
