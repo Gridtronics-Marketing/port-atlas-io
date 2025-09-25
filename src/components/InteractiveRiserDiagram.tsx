@@ -25,6 +25,7 @@ import { useDistributionFrames } from '@/hooks/useDistributionFrames';
 import { useRiserPathways } from '@/hooks/useRiserPathways';
 import { useJunctionBoxes } from '@/hooks/useJunctionBoxes';
 import { useCableConnections } from '@/hooks/useCableConnections';
+import { useCableSegments } from '@/hooks/useCableSegments';
 import { useToast } from '@/hooks/use-toast';
 
 interface InteractiveRiserDiagramProps {
@@ -59,6 +60,7 @@ export const InteractiveRiserDiagram: React.FC<InteractiveRiserDiagramProps> = (
   const { pathways } = useRiserPathways(locationId);
   const { connections } = useCableConnections(locationId);
   const { junctionBoxes, updateJunctionBox, deleteJunctionBox } = useJunctionBoxes(locationId);
+  const { segments } = useCableSegments();
   const { toast } = useToast();
 
   // Calculate diagram dimensions and layout
@@ -101,6 +103,35 @@ export const InteractiveRiserDiagram: React.FC<InteractiveRiserDiagramProps> = (
       case 'junction_box': return '📦'; // Box for junction box
       default: return '📦';
     }
+  };
+
+  // Find equipment or junction box position by label
+  const findEquipmentPosition = (label: string, floor?: number) => {
+    // Try to find as distribution frame first
+    const frame = frames.find(f => 
+      f.id === label || 
+      (f.frame_type && floor && f.floor === floor)
+    );
+    
+    if (frame) {
+      const floorFrames = frames.filter(f => f.floor === frame.floor);
+      const frameIndex = floorFrames.indexOf(frame);
+      return getEquipmentPosition(frame, frame.floor, frameIndex);
+    }
+
+    // Try to find as junction box
+    const junctionBox = junctionBoxes.find(j => 
+      j.label === label || j.id === label ||
+      (floor && j.floor === floor && (j.label.includes(label) || label.includes(j.label)))
+    );
+    
+    if (junctionBox) {
+      const floorJunctionBoxes = junctionBoxes.filter(j => j.floor === junctionBox.floor);
+      const junctionBoxIndex = floorJunctionBoxes.indexOf(junctionBox);
+      return getJunctionBoxPosition(junctionBox, junctionBox.floor, junctionBoxIndex);
+    }
+
+    return null;
   };
 
   // Calculate equipment positions
@@ -605,6 +636,82 @@ export const InteractiveRiserDiagram: React.FC<InteractiveRiserDiagramProps> = (
 
               {/* Backbone cables */}
               {filteredCables.map((cable) => {
+                const cableColor = getCableColor(cable.cable_type);
+                const utilization = cable.capacity_total 
+                  ? (cable.capacity_used / cable.capacity_total) * 100 
+                  : 0;
+
+                // Handle multi-segment cables
+                if (cable.is_multi_segment) {
+                  const cableSegments = segments.filter(s => s.cable_run_id === cable.id)
+                    .sort((a, b) => a.segment_order - b.segment_order);
+
+                  return (
+                    <g key={cable.id}>
+                      {cableSegments.map((segment, segmentIndex) => {
+                        const originPos = findEquipmentPosition(segment.origin_equipment, segment.origin_floor || undefined);
+                        const destPos = findEquipmentPosition(segment.destination_equipment, segment.destination_floor || undefined);
+                        
+                        if (!originPos || !destPos) return null;
+
+                        return (
+                          <g key={segment.id}>
+                            <line
+                              x1={originPos.x + equipmentWidth / 2}
+                              y1={originPos.y + 40}
+                              x2={destPos.x + equipmentWidth / 2}
+                              y2={destPos.y}
+                              stroke={cableColor}
+                              strokeWidth="3"
+                              strokeDasharray="5,3"
+                              className="cursor-pointer hover:stroke-opacity-80"
+                              onClick={() => setShowDetails(cable.id)}
+                            />
+                            {/* Segment label */}
+                            <text
+                              x={(originPos.x + destPos.x) / 2 + equipmentWidth / 2}
+                              y={(originPos.y + destPos.y) / 2 + 20}
+                              fontSize="8"
+                              fill="hsl(var(--foreground))"
+                              textAnchor="middle"
+                              className="pointer-events-none"
+                            >
+                              {segment.segment_label}
+                            </text>
+                          </g>
+                        );
+                      })}
+                      {/* Main cable label */}
+                      {cableSegments.length > 0 && (
+                        <text
+                          x={diagramWidth / 2}
+                          y={30}
+                          fontSize="10"
+                          fill={cableColor}
+                          textAnchor="middle"
+                          fontWeight="bold"
+                          className="pointer-events-none"
+                        >
+                          {cable.cable_label} ({cableSegments.length} segments)
+                        </text>
+                      )}
+                      {utilization > 0 && cableSegments.length > 0 && (
+                        <text
+                          x={diagramWidth / 2}
+                          y={45}
+                          fontSize="8"
+                          fill="hsl(var(--muted-foreground))"
+                          textAnchor="middle"
+                          className="pointer-events-none"
+                        >
+                          {utilization.toFixed(0)}% used
+                        </text>
+                      )}
+                    </g>
+                  );
+                }
+
+                // Handle simple (single-segment) cables
                 const originFrames = frames.filter(f => f.floor === cable.origin_floor);
                 const destFrames = frames.filter(f => f.floor === cable.destination_floor);
                 
@@ -617,11 +724,6 @@ export const InteractiveRiserDiagram: React.FC<InteractiveRiserDiagramProps> = (
                   frames.filter(f => f.floor === cable.origin_floor).indexOf(originFrame));
                 const destPos = getEquipmentPosition(destFrame, cable.destination_floor!, 
                   frames.filter(f => f.floor === cable.destination_floor).indexOf(destFrame));
-
-                const cableColor = getCableColor(cable.cable_type);
-                const utilization = cable.capacity_total 
-                  ? (cable.capacity_used / cable.capacity_total) * 100 
-                  : 0;
 
                 return (
                   <g key={cable.id}>
