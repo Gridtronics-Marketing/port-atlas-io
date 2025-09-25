@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Network, Zap, Cable, Download, Building, Box, Trash2 } from 'lucide-react';
+import { Plus, Network, Zap, Cable, Download, Building, Box, Trash2, Edit } from 'lucide-react';
 import { useBackboneCables } from '@/hooks/useBackboneCables';
 import { useCableSegments } from '@/hooks/useCableSegments';
 import { useDistributionFrames } from '@/hooks/useDistributionFrames';
@@ -17,6 +17,9 @@ import { MultiSegmentCableCard } from '@/components/MultiSegmentCableCard';
 import { RiserDiagramPDFExporter } from '@/components/RiserDiagramPDFExporter';
 import { RiserFloorPlanToggle } from '@/components/RiserFloorPlanToggle';
 import { RiserWorkOrderIntegration } from '@/components/RiserWorkOrderIntegration';
+import { OverviewDetailsModal } from '@/components/OverviewDetailsModal';
+import { BackboneCableDetailsModal } from '@/components/BackboneCableDetailsModal';
+import { DistributionFrameDetailsModal } from '@/components/DistributionFrameDetailsModal';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -49,6 +52,13 @@ export const RiserDiagramViewer: React.FC<RiserDiagramViewerProps> = ({
   const [showAddPathway, setShowAddPathway] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<{id: string, type: 'cable' | 'frame' | 'junction', label: string} | null>(null);
+  
+  // Detail modal states
+  const [showOverviewDetails, setShowOverviewDetails] = useState(false);
+  const [showCableDetails, setShowCableDetails] = useState(false);
+  const [showFrameDetails, setShowFrameDetails] = useState(false);
+  const [selectedCable, setSelectedCable] = useState<any>(null);
+  const [selectedFrame, setSelectedFrame] = useState<any>(null);
 
   // Get unique floors from frames and cables
   const floors = Array.from(
@@ -86,6 +96,21 @@ export const RiserDiagramViewer: React.FC<RiserDiagramViewerProps> = ({
   const handleDeleteClick = (id: string, type: 'cable' | 'frame' | 'junction', label: string) => {
     setItemToDelete({ id, type, label });
     setDeleteDialogOpen(true);
+  };
+
+  const handleEditCable = (cable: any) => {
+    setSelectedCable(cable);
+    setShowCableDetails(true);
+  };
+
+  const handleEditFrame = (frame: any) => {
+    setSelectedFrame(frame);
+    setShowFrameDetails(true);
+  };
+
+  const handleOverviewDetails = (floor: number) => {
+    setSelectedFloor(floor);
+    setShowOverviewDetails(true);
   };
 
   const getCableTypeIcon = (type: string) => {
@@ -193,7 +218,7 @@ export const RiserDiagramViewer: React.FC<RiserDiagramViewerProps> = ({
                     <Button 
                       size="sm" 
                       variant="outline"
-                      onClick={() => setSelectedFloor(floor)}
+                      onClick={() => handleOverviewDetails(floor)}
                     >
                       View Details
                     </Button>
@@ -247,8 +272,16 @@ export const RiserDiagramViewer: React.FC<RiserDiagramViewerProps> = ({
                       <Button
                         size="sm"
                         variant="outline"
+                        onClick={() => handleEditCable(cable)}
+                        className="h-8 w-8 p-0"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
                         onClick={() => handleDeleteClick(cable.id, 'cable', cable.cable_label)}
-                        className="h-8 w-8 p-0 ml-2"
+                        className="h-8 w-8 p-0"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -302,6 +335,14 @@ export const RiserDiagramViewer: React.FC<RiserDiagramViewerProps> = ({
                       <Badge variant={frame.frame_type === 'MDF' ? 'default' : 'secondary'}>
                         {frame.frame_type}
                       </Badge>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleEditFrame(frame)}
+                        className="h-8 w-8 p-0"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
                       <Button
                         size="sm"
                         variant="outline"
@@ -408,6 +449,39 @@ export const RiserDiagramViewer: React.FC<RiserDiagramViewerProps> = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Detail Modals */}
+      <OverviewDetailsModal
+        open={showOverviewDetails}
+        onOpenChange={setShowOverviewDetails}
+        floor={selectedFloor}
+        frames={frames}
+        cables={cables}
+        onEditFrame={handleEditFrame}
+        onEditCable={handleEditCable}
+        onDeleteFrame={(id, label) => handleDeleteClick(id, 'frame', label)}
+        onDeleteCable={(id, label) => handleDeleteClick(id, 'cable', label)}
+      />
+
+      <BackboneCableDetailsModal
+        open={showCableDetails}
+        onOpenChange={setShowCableDetails}
+        cable={selectedCable}
+        onSuccess={() => {
+          fetchCables();
+          fetchFrames();
+        }}
+      />
+
+      <DistributionFrameDetailsModal
+        open={showFrameDetails}
+        onOpenChange={setShowFrameDetails}
+        frame={selectedFrame}
+        onSuccess={() => {
+          fetchFrames();
+          fetchCables();
+        }}
+      />
     </Card>
   );
 };
