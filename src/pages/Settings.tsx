@@ -1,5 +1,5 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Cog, Database, Workflow, Bell, Shield, Network, Activity, FileCheck, QrCode, FileText, Wrench } from 'lucide-react';
+import { Cog, Database, FileText, Wrench, Network, Shield, Workflow } from 'lucide-react';
 import { DropPointTypesManager } from '@/components/DropPointTypesManager';
 import { CameraPermissionTest } from '@/components/CameraPermissionTest';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,59 +26,27 @@ const Settings = () => {
         </p>
       </div>
 
-      <Tabs defaultValue="dropdown-options" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 lg:grid-cols-13 gap-1">
-          <TabsTrigger value="dropdown-options" className="text-xs">
-            <Database className="h-4 w-4 mr-1" />
-            <span className="hidden sm:inline">Dropdown</span>
+      <Tabs defaultValue="core" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 gap-2 h-auto p-1">
+          <TabsTrigger value="core" className="flex flex-col gap-1 h-auto py-3">
+            <Cog className="h-5 w-5" />
+            <span className="text-xs">Core Configuration</span>
           </TabsTrigger>
-          <TabsTrigger value="contracts-settings" className="text-xs">
-            <FileText className="h-4 w-4 mr-1" />
-            <span className="hidden sm:inline">Contracts</span>
+          <TabsTrigger value="business" className="flex flex-col gap-1 h-auto py-3">
+            <FileText className="h-5 w-5" />
+            <span className="text-xs">Business Management</span>
           </TabsTrigger>
-          <TabsTrigger value="maintenance-settings" className="text-xs">
-            <Wrench className="h-4 w-4 mr-1" />
-            <span className="hidden sm:inline">Maintenance</span>
+          <TabsTrigger value="infrastructure" className="flex flex-col gap-1 h-auto py-3">
+            <Network className="h-5 w-5" />
+            <span className="text-xs">Infrastructure</span>
           </TabsTrigger>
-          <TabsTrigger value="system-config" className="text-xs">
-            <Cog className="h-4 w-4 mr-1" />
-            <span className="hidden sm:inline">System</span>
-          </TabsTrigger>
-          <TabsTrigger value="riser-diagrams" className="text-xs">
-            <Network className="h-4 w-4 mr-1" />
-            <span className="hidden sm:inline">Riser</span>
-          </TabsTrigger>
-          <TabsTrigger value="network-infrastructure" className="text-xs">
-            <Activity className="h-4 w-4 mr-1" />
-            <span className="hidden sm:inline">Network</span>
-          </TabsTrigger>
-          <TabsTrigger value="capacity-management" className="text-xs">
-            <Shield className="h-4 w-4 mr-1" />
-            <span className="hidden sm:inline">Capacity</span>
-          </TabsTrigger>
-          <TabsTrigger value="compliance" className="text-xs">
-            <FileCheck className="h-4 w-4 mr-1" />
-            <span className="hidden sm:inline">Compliance</span>
-          </TabsTrigger>
-          <TabsTrigger value="work-orders" className="text-xs">
-            <QrCode className="h-4 w-4 mr-1" />
-            <span className="hidden sm:inline">Work Orders</span>
-          </TabsTrigger>
-          <TabsTrigger value="permissions" className="text-xs">
-            <Shield className="h-4 w-4 mr-1" />
-            <span className="hidden sm:inline">Permissions</span>
-          </TabsTrigger>
-          <TabsTrigger value="notifications" className="text-xs">
-            <Bell className="h-4 w-4 mr-1" />
-            <span className="hidden sm:inline">Notifications</span>
-          </TabsTrigger>
-          <TabsTrigger value="diagnostics" className="text-xs">
-            <Shield className="h-4 w-4 mr-1" />
-            <span className="hidden sm:inline">Diagnostics</span>
+          <TabsTrigger value="security" className="flex flex-col gap-1 h-auto py-3">
+            <Shield className="h-5 w-5" />
+            <span className="text-xs">Security & Operations</span>
           </TabsTrigger>
         </TabsList>
         
-        <TabsContent value="dropdown-options" className="space-y-6">
+        <TabsContent value="core" className="space-y-6">
           <div className="grid gap-6">
             <Card>
               <CardHeader>
@@ -91,58 +59,7 @@ const Settings = () => {
                 <DropdownOptionsManager />
               </CardContent>
             </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="contracts-settings" className="space-y-6">
-          <div className="grid gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Contract Settings</CardTitle>
-                <CardDescription>
-                  Configure dropdown options for contract types and billing frequencies used in contract management.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <DropdownOptionsManager />
-              </CardContent>
-            </Card>
-            <div className="mt-4 p-4 bg-muted rounded-lg">
-              <h4 className="text-sm font-medium mb-2">Available Categories:</h4>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• <strong>contract_type</strong> - Types of contracts (maintenance, installation, etc.)</li>
-                <li>• <strong>billing_frequency</strong> - How often billing occurs (monthly, quarterly, etc.)</li>
-              </ul>
-            </div>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="maintenance-settings" className="space-y-6">
-          <div className="grid gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Maintenance Settings</CardTitle>
-                <CardDescription>
-                  Configure dropdown options for service frequencies and maintenance types used in service planning.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <DropdownOptionsManager />
-              </CardContent>
-            </Card>
-            <div className="mt-4 p-4 bg-muted rounded-lg">
-              <h4 className="text-sm font-medium mb-2">Available Categories:</h4>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• <strong>service_frequency</strong> - How often services are performed (weekly, monthly, etc.)</li>
-                <li>• <strong>maintenance_type</strong> - Types of maintenance services available</li>
-                <li>• <strong>equipment_category</strong> - Categories for equipment covered in service plans</li>
-              </ul>
-            </div>
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="system-config" className="space-y-6">
-          <div className="grid gap-6">
+            
             <Card>
               <CardHeader>
                 <CardTitle>System Configuration</CardTitle>
@@ -156,40 +73,54 @@ const Settings = () => {
             </Card>
           </div>
         </TabsContent>
-        
-        <TabsContent value="workflows" className="space-y-6">
-          <div className="grid gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Workflow Configuration</CardTitle>
-                <CardDescription>
-                  Configure business processes and approval workflows
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <WorkflowConfigurationManager />
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="riser-diagrams" className="space-y-6">
-          <div className="grid gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Riser Diagram Settings</CardTitle>
-                <CardDescription>
-                  Configure visual preferences, refresh intervals, and cable labeling formats
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <RiserDiagramSettingsManager />
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
 
-        <TabsContent value="network-infrastructure" className="space-y-6">
+        <TabsContent value="business" className="space-y-6">
+          <div className="grid gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Contract Settings</CardTitle>
+                <CardDescription>
+                  Configure dropdown options for contract types and billing frequencies used in contract management.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <DropdownOptionsManager />
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>Maintenance Settings</CardTitle>
+                <CardDescription>
+                  Configure dropdown options for service frequencies and maintenance types used in service planning.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <DropdownOptionsManager />
+              </CardContent>
+            </Card>
+            
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="p-4 bg-muted rounded-lg">
+                <h4 className="text-sm font-medium mb-2">Contract Categories:</h4>
+                <ul className="text-sm text-muted-foreground space-y-1">
+                  <li>• <strong>contract_type</strong> - Types of contracts</li>
+                  <li>• <strong>billing_frequency</strong> - Billing frequencies</li>
+                </ul>
+              </div>
+              <div className="p-4 bg-muted rounded-lg">
+                <h4 className="text-sm font-medium mb-2">Maintenance Categories:</h4>
+                <ul className="text-sm text-muted-foreground space-y-1">
+                  <li>• <strong>service_frequency</strong> - Service frequencies</li>
+                  <li>• <strong>maintenance_type</strong> - Maintenance types</li>
+                  <li>• <strong>equipment_category</strong> - Equipment categories</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="infrastructure" className="space-y-6">
           <div className="grid gap-6">
             <Card>
               <CardHeader>
@@ -202,11 +133,19 @@ const Settings = () => {
                 <NetworkInfrastructureSettingsManager />
               </CardContent>
             </Card>
-          </div>
-        </TabsContent>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>Riser Diagram Settings</CardTitle>
+                <CardDescription>
+                  Configure visual preferences, refresh intervals, and cable labeling formats
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <RiserDiagramSettingsManager />
+              </CardContent>
+            </Card>
 
-        <TabsContent value="capacity-management" className="space-y-6">
-          <div className="grid gap-6">
             <Card>
               <CardHeader>
                 <CardTitle>Capacity Management Settings</CardTitle>
@@ -221,11 +160,23 @@ const Settings = () => {
           </div>
         </TabsContent>
 
-        <TabsContent value="compliance" className="space-y-6">
+        <TabsContent value="security" className="space-y-6">
           <div className="grid gap-6">
             <Card>
               <CardHeader>
-                <CardTitle>Compliance Standards Settings</CardTitle>
+                <CardTitle>User Permissions</CardTitle>
+                <CardDescription>
+                  Configure granular permissions and access control
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <GranularPermissionsManager />
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>Compliance Standards</CardTitle>
                 <CardDescription>
                   Configure BICSI, TIA, ISO standards and documentation requirements
                 </CardDescription>
@@ -234,11 +185,7 @@ const Settings = () => {
                 <ComplianceStandardsSettings />
               </CardContent>
             </Card>
-          </div>
-        </TabsContent>
 
-        <TabsContent value="workflows" className="space-y-6">
-          <div className="grid gap-6">
             <Card>
               <CardHeader>
                 <CardTitle>Workflow Configuration</CardTitle>
@@ -248,6 +195,30 @@ const Settings = () => {
               </CardHeader>
               <CardContent>
                 <WorkflowConfigurationManager />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Notification Templates</CardTitle>
+                <CardDescription>
+                  Configure email and SMS notification templates
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <NotificationTemplatesManager />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>System Diagnostics</CardTitle>
+                <CardDescription>
+                  View system logs and audit trail
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <AuditTrailViewer />
               </CardContent>
             </Card>
           </div>
