@@ -169,12 +169,12 @@ export const WorkflowConfigurationManager = () => {
 
                 {Array.isArray(workflow.steps) && workflow.steps.length > 0 && (
                   <div className="flex items-center gap-1 mt-2">
-                    {workflow.steps.map((step: any, index: number) => (
+                    {(workflow.steps as any[]).map((step: any, index: number) => (
                       <div key={index} className="flex items-center">
                         <Badge variant="outline" className="text-xs">
                           {step.name || `Step ${index + 1}`}
                         </Badge>
-                        {index < (Array.isArray(workflow.steps) ? workflow.steps.length : 0) - 1 && (
+                        {index < (workflow.steps as any[]).length - 1 && (
                           <ArrowRight className="h-3 w-3 mx-1 text-muted-foreground" />
                         )}
                       </div>
