@@ -25,11 +25,11 @@ interface AddBackboneCableModalProps {
 }
 
 interface CableFormData {
-  cable_type: 'fiber' | 'copper' | 'coax';
+  cable_type: string;
   cable_subtype?: string;
   strand_count?: number;
   pair_count?: number;
-  jacket_rating?: 'plenum' | 'riser' | 'LSZH';
+  jacket_rating?: string;
   origin_floor?: number;
   destination_floor?: number;
   origin_equipment?: string;
@@ -91,12 +91,24 @@ export const AddBackboneCableModal: React.FC<AddBackboneCableModalProps> = ({
     return 'fiber'; // fallback
   };
 
+  // Map detailed jacket ratings to database values
+  const mapJacketRating = (detailedRating?: string): 'plenum' | 'riser' | 'LSZH' | undefined => {
+    if (!detailedRating) return undefined;
+    if (detailedRating.toLowerCase().includes('plenum')) return 'plenum';
+    if (detailedRating.toLowerCase().includes('riser')) return 'riser';
+    if (detailedRating.toLowerCase().includes('lszh')) return 'LSZH';
+    // Handle the generic options that might already be mapped
+    if (['plenum', 'riser', 'LSZH'].includes(detailedRating)) return detailedRating as 'plenum' | 'riser' | 'LSZH';
+    return undefined;
+  };
+
   const onSubmit = async (data: CableFormData) => {
     try {
-      // Map the cable type before submission
+      // Map the cable type and jacket rating before submission
       const mappedData = {
         ...data,
-        cable_type: mapCableType(data.cable_type)
+        cable_type: mapCableType(data.cable_type),
+        jacket_rating: mapJacketRating(data.jacket_rating)
       };
 
       if (isMultiSegment && pathSteps.length > 0) {
@@ -213,7 +225,7 @@ export const AddBackboneCableModal: React.FC<AddBackboneCableModalProps> = ({
               <Label htmlFor="cable_type">Cable Type</Label>
               <ConfigurableSelect
                 category="cable_types"
-                onValueChange={(value) => setValue('cable_type', value as 'fiber' | 'copper' | 'coax')}
+                onValueChange={(value) => setValue('cable_type', value)}
                 placeholder="Select type"
               />
               {errors.cable_type && <p className="text-sm text-destructive">Cable type is required</p>}
@@ -268,7 +280,7 @@ export const AddBackboneCableModal: React.FC<AddBackboneCableModalProps> = ({
               <Label htmlFor="jacket_rating">Jacket Rating</Label>
               <ConfigurableSelect
                 category="jacket_ratings"
-                onValueChange={(value) => setValue('jacket_rating', value as 'plenum' | 'riser' | 'LSZH')}
+                onValueChange={(value) => setValue('jacket_rating', value)}
                 placeholder="Select rating"
               />
             </div>
