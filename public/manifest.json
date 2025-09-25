@@ -1,0 +1,73 @@
+{
+  "name": "Port Atlas - Field Operations",
+  "short_name": "Port Atlas",
+  "description": "Mobile-first cable management and field operations platform",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait-primary",
+  "categories": ["business", "productivity", "utilities"],
+  "lang": "en",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot-wide.png",
+      "type": "image/png",
+      "sizes": "1280x720",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/screenshot-narrow.png",
+      "type": "image/png",
+      "sizes": "390x844",
+      "form_factor": "narrow"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Field Operations",
+      "short_name": "Field Ops",
+      "description": "Quick access to field operations",
+      "url": "/field-operations",
+      "icons": [
+        {
+          "src": "/favicon.ico",
+          "sizes": "64x64 32x32 24x24 16x16"
+        }
+      ]
+    },
+    {
+      "name": "Work Orders",
+      "short_name": "Work Orders",
+      "description": "View and manage work orders",
+      "url": "/work-orders",
+      "icons": [
+        {
+          "src": "/favicon.ico",
+          "sizes": "64x64 32x32 24x24 16x16"
+        }
+      ]
+    }
+  ]
+}

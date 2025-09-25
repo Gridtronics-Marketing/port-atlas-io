@@ -8,6 +8,8 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AppLayout } from "@/components/AppLayout";
 import Index from "./pages/Index";
 import Projects from "./pages/Projects";
+import Contracts from "./pages/Contracts";
+import Maintenance from "./pages/Maintenance";
 import Locations from "./pages/Locations";
 import Clients from "./pages/Clients";
 import Employees from "./pages/Employees";
@@ -76,6 +78,20 @@ const App = () => (
               <ProtectedRoute>
                 <AppLayout>
                   <WorkOrders />
+                </AppLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/contracts" element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <Contracts />
+                </AppLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/maintenance" element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <Maintenance />
                 </AppLayout>
               </ProtectedRoute>
             } />

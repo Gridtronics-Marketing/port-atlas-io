@@ -6,12 +6,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { TimeTrackingCard } from '@/components/TimeTrackingCard';
 import { PhotoCaptureCard } from '@/components/PhotoCaptureCard';
-import { SafetyChecklistModal } from '@/components/SafetyChecklistModal';
+import { OfflineIndicator } from '@/components/OfflineIndicator';
 import { useSafetyChecklists } from '@/hooks/useSafetyChecklists';
 import { useEmployees } from '@/hooks/useEmployees';
 import { useProjects } from '@/hooks/useProjects';
 import { useLocations } from '@/hooks/useLocations';
 import { useWorkOrders } from '@/hooks/useWorkOrders';
+import { SafetyChecklistModal } from '@/components/SafetyChecklistModal';
 
 const FieldOperations = () => {
   const [selectedEmployee, setSelectedEmployee] = useState('');
@@ -34,15 +35,15 @@ const FieldOperations = () => {
 
   return (
     <main className="container mx-auto px-4 py-6 space-y-6">
-        {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start mb-6">
         <div>
-          <h1 className="text-3xl font-bold bg-gradient-hero bg-clip-text text-transparent">
-            Field Operations
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Mobile time tracking, safety checklists, and photo documentation
+          <h1 className="text-3xl font-bold mb-2">Field Operations</h1>
+          <p className="text-muted-foreground">
+            Mobile-optimized interface for field technicians with offline support
           </p>
         </div>
+        <OfflineIndicator />
+      </div>
 
         {/* Employee Selection */}
         <Card className="shadow-soft">

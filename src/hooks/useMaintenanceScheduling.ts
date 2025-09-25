@@ -15,6 +15,23 @@ export interface MaintenanceSchedule {
   completed_at?: string;
   created_at: string;
   updated_at: string;
+  service_plan?: {
+    plan_name: string;
+    contract: {
+      title: string;
+      client: {
+        name: string;
+      };
+    };
+  };
+  location?: {
+    name: string;
+    address: string;
+  };
+  technician?: {
+    first_name: string;
+    last_name: string;
+  };
 }
 
 export interface SubscriptionBilling {
@@ -30,6 +47,12 @@ export interface SubscriptionBilling {
   payment_method?: string;
   created_at: string;
   updated_at: string;
+  contract?: {
+    title: string;
+    client: {
+      name: string;
+    };
+  };
 }
 
 export const useMaintenanceScheduling = () => {
