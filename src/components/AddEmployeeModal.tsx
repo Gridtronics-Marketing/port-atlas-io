@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ConfigurableSelect } from "@/components/ui/configurable-select";
 import {
   Dialog,
   DialogContent,
@@ -258,36 +259,22 @@ export const AddEmployeeModal = ({ isOpen, onClose, onAddEmployee }: AddEmployee
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="role">Role *</Label>
-                <Select value={formData.role} onValueChange={(value) => handleInputChange("role", value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Network Technician">Network Technician</SelectItem>
-                    <SelectItem value="Fiber Technician">Fiber Technician</SelectItem>
-                    <SelectItem value="Installation Technician">Installation Technician</SelectItem>
-                    <SelectItem value="Project Manager">Project Manager</SelectItem>
-                    <SelectItem value="Site Supervisor">Site Supervisor</SelectItem>
-                    <SelectItem value="Network Engineer">Network Engineer</SelectItem>
-                    <SelectItem value="Field Engineer">Field Engineer</SelectItem>
-                  </SelectContent>
-                </Select>
+                <ConfigurableSelect
+                  category="employee_roles"
+                  value={formData.role}
+                  onValueChange={(value) => handleInputChange("role", value)}
+                  placeholder="Select role"
+                />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="department">Department</Label>
-                <Select value={formData.department} onValueChange={(value) => handleInputChange("department", value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select department" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Installation">Installation</SelectItem>
-                    <SelectItem value="Maintenance">Maintenance</SelectItem>
-                    <SelectItem value="Engineering">Engineering</SelectItem>
-                    <SelectItem value="Project Management">Project Management</SelectItem>
-                    <SelectItem value="Quality Assurance">Quality Assurance</SelectItem>
-                  </SelectContent>
-                </Select>
+                <ConfigurableSelect
+                  category="employee_departments"
+                  value={formData.department}
+                  onValueChange={(value) => handleInputChange("department", value)}
+                  placeholder="Select department"
+                />
               </div>
 
               <div className="space-y-2">
@@ -314,17 +301,12 @@ export const AddEmployeeModal = ({ isOpen, onClose, onAddEmployee }: AddEmployee
 
               <div className="space-y-2">
                 <Label htmlFor="status">Status</Label>
-                <Select value={formData.status} onValueChange={(value) => handleInputChange("status", value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Active">Active</SelectItem>
-                    <SelectItem value="On Leave">On Leave</SelectItem>
-                    <SelectItem value="Inactive">Inactive</SelectItem>
-                    <SelectItem value="Terminated">Terminated</SelectItem>
-                  </SelectContent>
-                </Select>
+                <ConfigurableSelect
+                  category="employee_statuses"
+                  value={formData.status}
+                  onValueChange={(value) => handleInputChange("status", value)}
+                  placeholder="Select status"
+                />
               </div>
 
               {/* Client Assignment - Only for company users creating client technicians */}

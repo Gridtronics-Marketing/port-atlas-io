@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ConfigurableSelect } from '@/components/ui/configurable-select';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useForm } from 'react-hook-form';
@@ -67,15 +68,11 @@ export const AddDistributionFrameModal: React.FC<AddDistributionFrameModalProps>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="frame_type">Frame Type</Label>
-              <Select onValueChange={(value) => setValue('frame_type', value as 'MDF' | 'IDF')}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="MDF">MDF (Main Distribution Frame)</SelectItem>
-                  <SelectItem value="IDF">IDF (Intermediate Distribution Frame)</SelectItem>
-                </SelectContent>
-              </Select>
+              <ConfigurableSelect
+                category="distribution_frame_types"
+                onValueChange={(value) => setValue('frame_type', value as 'MDF' | 'IDF')}
+                placeholder="Select type"
+              />
               {errors.frame_type && <p className="text-sm text-destructive">Frame type is required</p>}
             </div>
 

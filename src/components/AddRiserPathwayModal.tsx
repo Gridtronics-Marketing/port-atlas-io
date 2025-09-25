@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ConfigurableSelect } from '@/components/ui/configurable-select';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useForm } from 'react-hook-form';
@@ -75,18 +76,11 @@ export const AddRiserPathwayModal: React.FC<AddRiserPathwayModalProps> = ({
 
           <div>
             <Label htmlFor="pathway_type">Pathway Type</Label>
-            <Select onValueChange={(value) => setValue('pathway_type', value as any)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="riser_shaft">Riser Shaft</SelectItem>
-                <SelectItem value="cable_tray">Cable Tray</SelectItem>
-                <SelectItem value="conduit">Conduit</SelectItem>
-                <SelectItem value="plenum">Plenum Space</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
-              </SelectContent>
-            </Select>
+            <ConfigurableSelect
+              category="pathway_types"
+              onValueChange={(value) => setValue('pathway_type', value as any)}
+              placeholder="Select type"
+            />
             {errors.pathway_type && <p className="text-sm text-destructive">Pathway type is required</p>}
           </div>
 

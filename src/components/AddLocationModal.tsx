@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ConfigurableSelect } from "@/components/ui/configurable-select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -566,17 +567,13 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
 
                 <div className="space-y-2">
                   <Label htmlFor="status" className="text-sm font-medium">Location Status</Label>
-                  <Select value={formData.status} onValueChange={(value: any) => setFormData({ ...formData, status: value })}>
-                    <SelectTrigger className="h-10 bg-background">
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-popover border z-50">
-                      <SelectItem value="Active">Active</SelectItem>
-                      <SelectItem value="In Progress">In Progress</SelectItem>
-                      <SelectItem value="Completed">Completed</SelectItem>
-                      <SelectItem value="On Hold">On Hold</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <ConfigurableSelect
+                    category="location_statuses"
+                    value={formData.status}
+                    onValueChange={(value: any) => setFormData({ ...formData, status: value })}
+                    placeholder="Select status"
+                    className="h-10 bg-background"
+                  />
                 </div>
               </CardContent>
             </Card>

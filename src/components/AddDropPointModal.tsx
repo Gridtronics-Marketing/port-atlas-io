@@ -3,7 +3,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ConfigurableSelect } from '@/components/ui/configurable-select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useDropPoints } from "@/hooks/useDropPoints";
 import { useToast } from "@/hooks/use-toast";
@@ -141,22 +148,12 @@ export const AddDropPointModal = ({
 
             <div className="space-y-2">
               <Label htmlFor="cableType">Cable Type *</Label>
-              <Select 
-                value={formData.cableType} 
+              <ConfigurableSelect
+                category="cable_subtypes"
+                value={formData.cableType}
                 onValueChange={(value) => setFormData(prev => ({ ...prev, cableType: value as any }))}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="CAT5e">CAT5e</SelectItem>
-                  <SelectItem value="CAT6">CAT6</SelectItem>
-                  <SelectItem value="CAT6A">CAT6A</SelectItem>
-                  <SelectItem value="CAT7">CAT7</SelectItem>
-                  <SelectItem value="Fiber">Fiber Optic</SelectItem>
-                  <SelectItem value="Coax">Coaxial</SelectItem>
-                </SelectContent>
-              </Select>
+                placeholder="Select cable type"
+              />
             </div>
           </div>
 

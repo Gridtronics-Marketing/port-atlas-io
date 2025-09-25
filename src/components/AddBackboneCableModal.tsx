@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ConfigurableSelect } from '@/components/ui/configurable-select';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useForm } from 'react-hook-form';
@@ -74,16 +75,11 @@ export const AddBackboneCableModal: React.FC<AddBackboneCableModalProps> = ({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="cable_type">Cable Type</Label>
-              <Select onValueChange={(value) => setValue('cable_type', value as 'fiber' | 'copper' | 'coax')}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="fiber">Fiber Optic</SelectItem>
-                  <SelectItem value="copper">Copper (UTP/STP)</SelectItem>
-                  <SelectItem value="coax">Coaxial</SelectItem>
-                </SelectContent>
-              </Select>
+              <ConfigurableSelect
+                category="cable_types"
+                onValueChange={(value) => setValue('cable_type', value as 'fiber' | 'copper' | 'coax')}
+                placeholder="Select type"
+              />
               {errors.cable_type && <p className="text-sm text-destructive">Cable type is required</p>}
             </div>
 
@@ -134,16 +130,11 @@ export const AddBackboneCableModal: React.FC<AddBackboneCableModalProps> = ({
 
             <div>
               <Label htmlFor="jacket_rating">Jacket Rating</Label>
-              <Select onValueChange={(value) => setValue('jacket_rating', value as 'plenum' | 'riser' | 'LSZH')}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select rating" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="plenum">Plenum (CMP)</SelectItem>
-                  <SelectItem value="riser">Riser (CMR)</SelectItem>
-                  <SelectItem value="LSZH">LSZH</SelectItem>
-                </SelectContent>
-              </Select>
+              <ConfigurableSelect
+                category="jacket_ratings"
+                onValueChange={(value) => setValue('jacket_rating', value as 'plenum' | 'riser' | 'LSZH')}
+                placeholder="Select rating"
+              />
             </div>
           </div>
 
