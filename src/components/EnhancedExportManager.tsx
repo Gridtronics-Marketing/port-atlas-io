@@ -99,10 +99,7 @@ export const EnhancedExportManager: React.FC<EnhancedExportManagerProps> = ({
   const handleExport = async (exportType: string) => {
     setExporting(true);
     try {
-      // Simulate export process
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Create mock file content based on export type
+      // Create real file content based on export type
       const exportData = generateExportData(exportType);
       
       // Create and download file
@@ -113,7 +110,7 @@ export const EnhancedExportManager: React.FC<EnhancedExportManagerProps> = ({
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `${locationName}-${exportType}-${new Date().toISOString().split('T')[0]}.${exportOptions.format}`;
+      link.download = `${locationName.replace(/[^a-z0-9]/gi, '_')}-${exportType}-${new Date().toISOString().split('T')[0]}.${exportOptions.format}`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -121,77 +118,171 @@ export const EnhancedExportManager: React.FC<EnhancedExportManagerProps> = ({
 
       toast({
         title: "Export Complete",
-        description: `${exportType.replace('_', ' ')} exported successfully as ${exportOptions.format.toUpperCase()}`
+        description: `${exportType.replace(/_/g, ' ')} exported successfully as ${exportOptions.format.toUpperCase()}`
       });
     } catch (error) {
+      console.error('Export error:', error);
       toast({
         title: "Export Failed",
-        description: "There was an error exporting the data",
+        description: "There was an error exporting the data. Please try again.",
         variant: "destructive"
       });
     } finally {
       setExporting(false);
-      setShowExportDialog(false);
     }
   };
 
   const generateExportData = (exportType: string): string => {
-    const baseData = {
-      location: locationName,
-      locationId,
-      generatedAt: new Date().toISOString(),
-      exportType,
-      options: exportOptions,
-      cables: cables.length,
-      frames: frames.length,
-      connections: connections.length,
-      documents: files.length
-    };
-
+    const timestamp = new Date().toISOString();
+    const date = new Date().toLocaleDateString();
+    
     switch (exportOptions.format) {
       case 'json':
         return JSON.stringify({
-          ...baseData,
-          cables: exportOptions.includeConnections ? cables : [],
-          frames: exportOptions.includeConnections ? frames : [],
+          metadata: {
+            location: locationName,
+            locationId,
+            exportType: exportType.replace(/_/g, ' '),
+            generatedAt: timestamp,
+            exportOptions
+          },
+          summary: {
+            totalCables: cables.length,
+            totalFrames: frames.length,
+            totalConnections: connections.length,
+            totalDocuments: files.length
+          },
+          cables: exportOptions.includeConnections ? cables.map(cable => ({
+            id: cable.id,
+            label: cable.cable_label,
+            type: cable.cable_type,
+            subtype: cable.cable_subtype,
+            origin: cable.origin_equipment,
+            destination: cable.destination_equipment,
+            originFloor: cable.origin_floor,
+            destinationFloor: cable.destination_floor,
+            capacity: {
+              total: cable.capacity_total,
+              used: cable.capacity_used,
+              spare: cable.capacity_spare
+            },
+            jacketRating: cable.jacket_rating,
+            isMultiSegment: cable.is_multi_segment
+          })) : [],
+          frames: exportOptions.includeConnections ? frames.map(frame => ({
+            id: frame.id,
+            type: frame.frame_type,
+            floor: frame.floor,
+            room: frame.room,
+            portCount: frame.port_count,
+            capacity: frame.capacity,
+            rackPosition: frame.rack_position
+          })) : [],
           connections: exportOptions.includeConnections ? connections : [],
-          files: exportOptions.includeImages ? files : []
+          documents: exportOptions.includeImages ? files.map(file => ({
+            id: file.id,
+            fileName: file.file_name,
+            fileType: file.file_type,
+            fileSize: file.file_size,
+            uploadedBy: file.creator ? `${file.creator.first_name} ${file.creator.last_name}` : 'Unknown',
+            uploadedAt: file.created_at
+          })) : []
         }, null, 2);
       
       case 'csv':
-        return generateCSVData(exportType, baseData);
-      
-      case 'excel':
-        return generateExcelData(exportType, baseData);
+        return generateCSVData(exportType);
       
       default:
-        return generatePDFData(exportType, baseData);
+        return generateTextReport(exportType, timestamp, date);
     }
   };
 
-  const generateCSVData = (exportType: string, baseData: any): string => {
-    let csvContent = `Export Type,${exportType}\n`;
-    csvContent += `Location,${baseData.location}\n`;
-    csvContent += `Generated At,${baseData.generatedAt}\n\n`;
+  const generateCSVData = (exportType: string): string => {
+    let csvContent = '';
     
-    if (exportType === 'port_mapping' && exportOptions.includeConnections) {
-      csvContent += 'From Port,To Port,Connection Type,Status\n';
-      connections.forEach(conn => {
-        csvContent += `${conn.from_port},${conn.to_port},${conn.cable_type || 'copper'},${conn.connection_status}\n`;
+    if (exportType === 'port_mapping' || exportType === 'riser_diagram') {
+      csvContent = 'Cable Label,Cable Type,Origin Equipment,Destination Equipment,Origin Floor,Destination Floor,Capacity Total,Capacity Used,Jacket Rating\n';
+      cables.forEach(cable => {
+        csvContent += `"${cable.cable_label}","${cable.cable_type}","${cable.origin_equipment || 'N/A'}","${cable.destination_equipment || 'N/A'}",${cable.origin_floor || 'N/A'},${cable.destination_floor || 'N/A'},${cable.capacity_total || 'N/A'},${cable.capacity_used || 0},"${cable.jacket_rating || 'N/A'}"\n`;
+      });
+    } else if (exportType === 'capacity_analysis') {
+      csvContent = 'Equipment Type,Location,Port Count,Current Capacity,Utilization %\n';
+      frames.forEach(frame => {
+        const utilization = frame.capacity > 0 ? ((frame.port_count / frame.capacity) * 100).toFixed(1) : '0';
+        csvContent += `"${frame.frame_type}","Floor ${frame.floor} - ${frame.room || 'N/A'}",${frame.port_count},${frame.capacity},"${utilization}%"\n`;
+      });
+    } else {
+      // Default cable listing
+      csvContent = 'Cable Label,Type,Origin,Destination,Notes\n';
+      cables.forEach(cable => {
+        csvContent += `"${cable.cable_label}","${cable.cable_type}","${cable.origin_equipment || 'N/A'}","${cable.destination_equipment || 'N/A'}","${cable.notes || 'N/A'}"\n`;
       });
     }
     
     return csvContent;
   };
 
-  const generateExcelData = (exportType: string, baseData: any): string => {
-    // Placeholder for Excel data generation
-    return `Excel export data for ${exportType} would be generated here`;
-  };
-
-  const generatePDFData = (exportType: string, baseData: any): string => {
-    // Placeholder for PDF data generation
-    return `PDF export data for ${exportType} would be generated here`;
+  const generateTextReport = (exportType: string, timestamp: string, date: string): string => {
+    let content = `# ${exportType.replace(/_/g, ' ').toUpperCase()} REPORT\n\n`;
+    content += `Location: ${locationName}\n`;
+    content += `Generated: ${date}\n`;
+    content += `Export Type: ${exportType.replace(/_/g, ' ')}\n`;
+    content += `Compliance Standard: ${exportOptions.compliance}\n\n`;
+    
+    content += `## SUMMARY\n`;
+    content += `- Total Cables: ${cables.length}\n`;
+    content += `- Total Distribution Frames: ${frames.length}\n`;
+    content += `- Total Connections: ${connections.length}\n`;
+    content += `- Documentation Files: ${files.length}\n\n`;
+    
+    if (cables.length > 0) {
+      content += `## BACKBONE CABLES\n\n`;
+      cables.forEach((cable, index) => {
+        content += `${index + 1}. ${cable.cable_label}\n`;
+        content += `   Type: ${cable.cable_type.toUpperCase()}${cable.cable_subtype ? ` (${cable.cable_subtype})` : ''}\n`;
+        content += `   Route: ${cable.origin_equipment || 'Unknown'} → ${cable.destination_equipment || 'Unknown'}\n`;
+        content += `   Floors: ${cable.origin_floor} → ${cable.destination_floor}\n`;
+        if (cable.capacity_total) {
+          content += `   Capacity: ${cable.capacity_used}/${cable.capacity_total} (${Math.round((cable.capacity_used / cable.capacity_total) * 100)}% utilized)\n`;
+        }
+        if (cable.jacket_rating) {
+          content += `   Jacket: ${cable.jacket_rating}\n`;
+        }
+        content += `\n`;
+      });
+    }
+    
+    if (frames.length > 0) {
+      content += `## DISTRIBUTION FRAMES\n\n`;
+      frames.forEach((frame, index) => {
+        content += `${index + 1}. ${frame.frame_type} - Floor ${frame.floor}\n`;
+        content += `   Location: ${frame.room || 'Not specified'}\n`;
+        content += `   Ports: ${frame.port_count}\n`;
+        content += `   Capacity: ${frame.capacity}\n`;
+        if (frame.rack_position) {
+          content += `   Rack Position: ${frame.rack_position}\n`;
+        }
+        content += `\n`;
+      });
+    }
+    
+    if (exportType === 'capacity_analysis' && exportOptions.includeCapacityData) {
+      content += `## CAPACITY ANALYSIS\n\n`;
+      const totalPorts = frames.reduce((sum, frame) => sum + frame.port_count, 0);
+      const totalCapacity = frames.reduce((sum, frame) => sum + frame.capacity, 0);
+      const overallUtilization = totalCapacity > 0 ? ((totalPorts / totalCapacity) * 100).toFixed(1) : '0';
+      
+      content += `Overall Utilization: ${overallUtilization}%\n`;
+      content += `Total Active Ports: ${totalPorts}\n`;
+      content += `Total Available Capacity: ${totalCapacity}\n\n`;
+    }
+    
+    content += `## NOTES\n`;
+    content += `This report was generated automatically from the Port Atlas system.\n`;
+    content += `For questions or additional information, please contact your network administrator.\n\n`;
+    content += `Report generated on: ${timestamp}\n`;
+    
+    return content;
   };
 
   const getContentType = (format: string): string => {
@@ -382,19 +473,19 @@ export const EnhancedExportManager: React.FC<EnhancedExportManagerProps> = ({
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={() => handleExport('all_data')} disabled={exporting}>
               <Download className="h-4 w-4 mr-2" />
               Export All Data
             </Button>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={() => handleExport('summary_report')} disabled={exporting}>
               <FileText className="h-4 w-4 mr-2" />
               Generate Summary Report
             </Button>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={() => handleExport('diagram_images')} disabled={exporting}>
               <Image className="h-4 w-4 mr-2" />
               Export Diagram Images
             </Button>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={() => handleExport('cable_schedule')} disabled={exporting}>
               <FileSpreadsheet className="h-4 w-4 mr-2" />
               Cable Schedule
             </Button>
