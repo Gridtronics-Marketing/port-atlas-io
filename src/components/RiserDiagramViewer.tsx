@@ -228,8 +228,13 @@ export const RiserDiagramViewer: React.FC<RiserDiagramViewerProps> = ({
                       <div>
                         <div className="font-medium">{cable.cable_label}</div>
                         <div className="text-sm text-muted-foreground">
-                          {cable.origin_equipment} → {cable.destination_equipment}
+                          {cable.origin_equipment || 'Unknown'} → {cable.destination_equipment || 'Unknown'}
                         </div>
+                        {cable.cable_subtype && (
+                          <div className="text-xs text-muted-foreground">
+                            Subtype: {cable.cable_subtype}
+                          </div>
+                        )}
                       </div>
                     </div>
                     <div className="flex gap-2">

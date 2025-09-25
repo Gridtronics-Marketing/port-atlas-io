@@ -41,12 +41,14 @@ export const useBackboneCables = (locationId?: string) => {
         query = query.eq('location_id', locationId);
       }
       
-      const { data, error } = await query.order('created_at', { ascending: false });
+      const { data, error } = await query.order('cable_label', { ascending: true });
       
       if (error) throw error;
       setCables((data as BackboneCable[]) || []);
     } catch (error) {
       console.error('Error fetching backbone cables:', error);
+      // Enhanced error logging
+      console.error('Full error details:', JSON.stringify(error));
     } finally {
       setLoading(false);
     }

@@ -81,12 +81,28 @@ export const AddBackboneCableModal: React.FC<AddBackboneCableModalProps> = ({
     }
   }, [originFloor, destinationFloor, cableType, cableLabel, setValue, generateCableLabel]);
 
+  // Map detailed cable types to simple database values
+  const mapCableType = (detailedType: string): 'fiber' | 'copper' | 'coax' => {
+    if (detailedType.startsWith('fiber')) return 'fiber';
+    if (detailedType.startsWith('copper')) return 'copper';
+    if (detailedType.startsWith('coax')) return 'coax';
+    // Handle the generic options that might already be mapped
+    if (['fiber', 'copper', 'coax'].includes(detailedType)) return detailedType as 'fiber' | 'copper' | 'coax';
+    return 'fiber'; // fallback
+  };
+
   const onSubmit = async (data: CableFormData) => {
     try {
+      // Map the cable type before submission
+      const mappedData = {
+        ...data,
+        cable_type: mapCableType(data.cable_type)
+      };
+
       if (isMultiSegment && pathSteps.length > 0) {
         // Create multi-segment cable
         const cableData = {
-          ...data,
+          ...mappedData,
           location_id: locationId,
           labeling_standard: 'TIA-606',
           capacity_used: 0,
@@ -140,7 +156,7 @@ export const AddBackboneCableModal: React.FC<AddBackboneCableModalProps> = ({
       } else {
         // Create simple cable
         await addCable({
-          ...data,
+          ...mappedData,
           location_id: locationId,
           labeling_standard: 'TIA-606',
           capacity_used: 0,
@@ -158,13 +174,21 @@ export const AddBackboneCableModal: React.FC<AddBackboneCableModalProps> = ({
       onSuccess?.();
     } catch (error) {
       console.error('Error adding cable:', error);
-      toast.error('Failed to add backbone cable');
+      // Enhanced error handling with more specific messages
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      if (errorMessage.includes('23514')) {
+        toast.error('Invalid cable type. Please select a valid cable type from the dropdown.');
+      } else if (errorMessage.includes('unique')) {
+        toast.error('Cable label already exists. Please use a unique cable label.');
+      } else {
+        toast.error(`Failed to add backbone cable: ${errorMessage}`);
+      }
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-2xl lg:max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add Backbone Cable</DialogTitle>
         </DialogHeader>
