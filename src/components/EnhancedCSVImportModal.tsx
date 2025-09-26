@@ -73,13 +73,19 @@ export function EnhancedCSVImportModal({ onImportComplete }: EnhancedCSVImportMo
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
+      delimiter: "", // Auto-detect delimiter
       transformHeader: (header) => header.trim(),
       complete: (results) => {
         // Filter out non-critical errors that shouldn't block import
         const criticalErrors = results.errors.filter(error => 
-          error.type === 'Delimiter' || 
           error.type === 'Quotes' ||
           (error.type === 'FieldMismatch' && error.code === 'TooManyFields')
+        );
+
+        // Delimiter detection warnings are not critical - allow them to proceed
+        const nonCriticalErrors = results.errors.filter(error => 
+          error.type === 'Delimiter' || 
+          error.code === 'UndetectableDelimiter'
         );
 
         if (criticalErrors.length > 0) {
@@ -128,18 +134,29 @@ export function EnhancedCSVImportModal({ onImportComplete }: EnhancedCSVImportMo
         setCurrentStep(1);
         setIsProcessing(false);
 
-        // Show warnings if any non-critical errors exist
-        const warnings = results.errors.filter(error => !criticalErrors.includes(error));
-        if (warnings.length > 0) {
+        // Show info about delimiter detection and other warnings
+        let message = `Found ${data.length} rows with ${headers.length} columns`;
+        if (nonCriticalErrors.length > 0) {
+          const delimiterMsg = nonCriticalErrors.find(e => e.type === 'Delimiter' || e.code === 'UndetectableDelimiter');
+          if (delimiterMsg) {
+            message += ". Auto-detected delimiter (comma assumed)";
+          }
+        }
+        
+        const otherWarnings = results.errors.filter(error => 
+          !criticalErrors.includes(error) && !nonCriticalErrors.includes(error)
+        );
+        
+        if (otherWarnings.length > 0) {
           toast({
             title: "CSV uploaded with warnings",
-            description: `Found ${data.length} rows with ${headers.length} columns. ${warnings.length} warning(s) detected.`,
+            description: `${message}. ${otherWarnings.length} warning(s) detected.`,
             variant: "default"
           });
         } else {
           toast({
             title: "CSV uploaded successfully",
-            description: `Found ${data.length} rows with ${headers.length} columns`
+            description: message
           });
         }
       },
