@@ -15,7 +15,8 @@ import {
   MessageSquare,
   Phone,
   FileText,
-  Wrench
+  Wrench,
+  Package
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -49,6 +50,7 @@ const navigationItems = [
   { title: "Dashboard", url: "/", icon: Home },
   { title: "Projects", url: "/projects", icon: FolderOpen },
   { title: "Work Orders", url: "/work-orders", icon: ClipboardList },
+  { title: "Procurement", url: "/procurement", icon: Package },
   { title: "Contracts", url: "/contracts", icon: FileText },
   { title: "Maintenance", url: "/maintenance", icon: Wrench },
   { title: "Scheduling", url: "/scheduling", icon: Calendar },

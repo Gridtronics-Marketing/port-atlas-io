@@ -26,6 +26,7 @@ import UserManagement from "./pages/UserManagement";
 import Profile from "./pages/Profile";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import Procurement from "./pages/Procurement";
 import FloorPlanEditor from "./pages/FloorPlanEditor";
 
 const queryClient = new QueryClient();
@@ -155,6 +156,13 @@ const App = () => (
               <ProtectedRoute>
                 <AppLayout>
                   <UserManagement />
+                </AppLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/procurement" element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <Procurement />
                 </AppLayout>
               </ProtectedRoute>
             } />

@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Plus } from 'lucide-react';
+import { PriceComparisonModal } from '@/components/PriceComparisonModal';
 
 export const SupplierCatalogManager = () => {
   const { catalogItems, loading } = useSupplierCatalog();
@@ -26,10 +27,13 @@ export const SupplierCatalogManager = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-semibold">Supplier Catalog</h2>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Item
-        </Button>
+        <div className="space-x-2">
+          <PriceComparisonModal />
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Item
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

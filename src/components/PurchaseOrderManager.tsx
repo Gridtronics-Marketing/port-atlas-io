@@ -1,12 +1,11 @@
 import React from 'react';
 import { usePurchaseOrders } from '@/hooks/usePurchaseOrders';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus } from 'lucide-react';
+import { CreatePurchaseOrderModal } from '@/components/CreatePurchaseOrderModal';
 
 export const PurchaseOrderManager = () => {
-  const { purchaseOrders, loading } = usePurchaseOrders();
+  const { purchaseOrders, loading, refetch } = usePurchaseOrders();
 
   if (loading) {
     return <div>Loading purchase orders...</div>;
@@ -28,10 +27,7 @@ export const PurchaseOrderManager = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-semibold">Purchase Orders</h2>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Create PO
-        </Button>
+        <CreatePurchaseOrderModal onPOCreated={refetch} />
       </div>
 
       <div className="grid gap-4">
