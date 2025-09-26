@@ -1625,6 +1625,74 @@ export type Database = {
         }
         Relationships: []
       }
+      openphone_call_logs: {
+        Row: {
+          call_status: string | null
+          contact_id: string | null
+          contact_type: string | null
+          created_at: string
+          direction: string
+          disposition: string | null
+          duration_seconds: number | null
+          ended_at: string | null
+          id: string
+          notes: string | null
+          openphone_call_id: string
+          phone_number: string
+          recording_url: string | null
+          started_at: string
+          transcription: string | null
+          updated_at: string
+          work_order_created: string | null
+        }
+        Insert: {
+          call_status?: string | null
+          contact_id?: string | null
+          contact_type?: string | null
+          created_at?: string
+          direction: string
+          disposition?: string | null
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          notes?: string | null
+          openphone_call_id: string
+          phone_number: string
+          recording_url?: string | null
+          started_at: string
+          transcription?: string | null
+          updated_at?: string
+          work_order_created?: string | null
+        }
+        Update: {
+          call_status?: string | null
+          contact_id?: string | null
+          contact_type?: string | null
+          created_at?: string
+          direction?: string
+          disposition?: string | null
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          notes?: string | null
+          openphone_call_id?: string
+          phone_number?: string
+          recording_url?: string | null
+          started_at?: string
+          transcription?: string | null
+          updated_at?: string
+          work_order_created?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "openphone_call_logs_work_order_created_fkey"
+            columns: ["work_order_created"]
+            isOneToOne: false
+            referencedRelation: "work_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       patch_connections: {
         Row: {
           cable_type: string | null
@@ -1736,6 +1804,80 @@ export type Database = {
           },
         ]
       }
+      procurement_approvals: {
+        Row: {
+          approval_level: number
+          approved_at: string | null
+          approver_id: string | null
+          comments: string | null
+          created_at: string
+          id: string
+          purchase_order_id: string | null
+          rejection_reason: string | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          approval_level?: number
+          approved_at?: string | null
+          approver_id?: string | null
+          comments?: string | null
+          created_at?: string
+          id?: string
+          purchase_order_id?: string | null
+          rejection_reason?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          approval_level?: number
+          approved_at?: string | null
+          approver_id?: string | null
+          comments?: string | null
+          created_at?: string
+          id?: string
+          purchase_order_id?: string | null
+          rejection_reason?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "procurement_approvals_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      procurement_settings: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          setting_key: string
+          setting_value: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          setting_key: string
+          setting_value?: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          setting_key?: string
+          setting_value?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       projects: {
         Row: {
           actual_cost: number | null
@@ -1788,6 +1930,153 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_order_items: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          item_code: string | null
+          item_name: string
+          line_total: number
+          purchase_order_id: string | null
+          quantity: number
+          received_quantity: number | null
+          supplier_catalog_id: string | null
+          unit_price: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          item_code?: string | null
+          item_name: string
+          line_total?: number
+          purchase_order_id?: string | null
+          quantity?: number
+          received_quantity?: number | null
+          supplier_catalog_id?: string | null
+          unit_price?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          item_code?: string | null
+          item_name?: string
+          line_total?: number
+          purchase_order_id?: string | null
+          quantity?: number
+          received_quantity?: number | null
+          supplier_catalog_id?: string | null
+          unit_price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_order_items_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_items_supplier_catalog_id_fkey"
+            columns: ["supplier_catalog_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_catalogs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_orders: {
+        Row: {
+          actual_delivery_date: string | null
+          approved_by: string | null
+          billing_address: string | null
+          created_at: string
+          created_by: string | null
+          currency: string | null
+          expected_delivery_date: string | null
+          id: string
+          location_id: string | null
+          notes: string | null
+          order_date: string | null
+          po_number: string
+          shipping_address: string | null
+          shipping_cost: number | null
+          status: string | null
+          subtotal: number | null
+          supplier_id: string | null
+          tax_amount: number | null
+          terms_and_conditions: string | null
+          total_amount: number | null
+          updated_at: string
+        }
+        Insert: {
+          actual_delivery_date?: string | null
+          approved_by?: string | null
+          billing_address?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          expected_delivery_date?: string | null
+          id?: string
+          location_id?: string | null
+          notes?: string | null
+          order_date?: string | null
+          po_number: string
+          shipping_address?: string | null
+          shipping_cost?: number | null
+          status?: string | null
+          subtotal?: number | null
+          supplier_id?: string | null
+          tax_amount?: number | null
+          terms_and_conditions?: string | null
+          total_amount?: number | null
+          updated_at?: string
+        }
+        Update: {
+          actual_delivery_date?: string | null
+          approved_by?: string | null
+          billing_address?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          expected_delivery_date?: string | null
+          id?: string
+          location_id?: string | null
+          notes?: string | null
+          order_date?: string | null
+          po_number?: string
+          shipping_address?: string | null
+          shipping_cost?: number | null
+          status?: string | null
+          subtotal?: number | null
+          supplier_id?: string | null
+          tax_amount?: number | null
+          terms_and_conditions?: string | null
+          total_amount?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_orders_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_orders_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
             referencedColumns: ["id"]
           },
         ]
@@ -2541,6 +2830,157 @@ export type Database = {
           },
         ]
       }
+      supplier_catalogs: {
+        Row: {
+          availability_status: string | null
+          category: string | null
+          created_at: string
+          currency: string | null
+          description: string | null
+          id: string
+          item_code: string | null
+          item_name: string
+          last_price_update: string | null
+          lead_time_days: number | null
+          minimum_order_quantity: number | null
+          supplier_id: string | null
+          unit_price: number
+          updated_at: string
+        }
+        Insert: {
+          availability_status?: string | null
+          category?: string | null
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          id?: string
+          item_code?: string | null
+          item_name: string
+          last_price_update?: string | null
+          lead_time_days?: number | null
+          minimum_order_quantity?: number | null
+          supplier_id?: string | null
+          unit_price?: number
+          updated_at?: string
+        }
+        Update: {
+          availability_status?: string | null
+          category?: string | null
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          id?: string
+          item_code?: string | null
+          item_name?: string
+          last_price_update?: string | null
+          lead_time_days?: number | null
+          minimum_order_quantity?: number | null
+          supplier_id?: string | null
+          unit_price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_catalogs_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_price_history: {
+        Row: {
+          change_reason: string | null
+          created_at: string
+          effective_date: string | null
+          id: string
+          new_price: number
+          old_price: number
+          price_change_percentage: number | null
+          supplier_catalog_id: string | null
+        }
+        Insert: {
+          change_reason?: string | null
+          created_at?: string
+          effective_date?: string | null
+          id?: string
+          new_price: number
+          old_price: number
+          price_change_percentage?: number | null
+          supplier_catalog_id?: string | null
+        }
+        Update: {
+          change_reason?: string | null
+          created_at?: string
+          effective_date?: string | null
+          id?: string
+          new_price?: number
+          old_price?: number
+          price_change_percentage?: number | null
+          supplier_catalog_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_price_history_supplier_catalog_id_fkey"
+            columns: ["supplier_catalog_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_catalogs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suppliers: {
+        Row: {
+          address: string | null
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          created_at: string
+          id: string
+          name: string
+          notes: string | null
+          payment_terms: string | null
+          status: string | null
+          supplier_code: string | null
+          tax_id: string | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          notes?: string | null
+          payment_terms?: string | null
+          status?: string | null
+          supplier_code?: string | null
+          tax_id?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          payment_terms?: string | null
+          status?: string | null
+          supplier_code?: string | null
+          tax_id?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
       sync_queue: {
         Row: {
           created_at: string
@@ -2916,6 +3356,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_po_number: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_current_user_client_id: {
         Args: Record<PropertyKey, never>
         Returns: string
