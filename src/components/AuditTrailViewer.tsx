@@ -273,12 +273,12 @@ export const AuditTrailViewer = () => {
               />
             </div>
 
-            <Select value={filters.action || ''} onValueChange={(value) => setFilters(prev => ({ ...prev, action: value || undefined }))}>
+            <Select value={filters.action || 'all'} onValueChange={(value) => setFilters(prev => ({ ...prev, action: value === 'all' ? undefined : value }))}>
               <SelectTrigger>
                 <SelectValue placeholder="All Actions" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Actions</SelectItem>
+                <SelectItem value="all">All Actions</SelectItem>
                 <SelectItem value="create">Create</SelectItem>
                 <SelectItem value="read">Read</SelectItem>
                 <SelectItem value="update">Update</SelectItem>
@@ -288,12 +288,12 @@ export const AuditTrailViewer = () => {
               </SelectContent>
             </Select>
 
-            <Select value={filters.resource || ''} onValueChange={(value) => setFilters(prev => ({ ...prev, resource: value || undefined }))}>
+            <Select value={filters.resource || 'all'} onValueChange={(value) => setFilters(prev => ({ ...prev, resource: value === 'all' ? undefined : value }))}>
               <SelectTrigger>
                 <SelectValue placeholder="All Resources" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Resources</SelectItem>
+                <SelectItem value="all">All Resources</SelectItem>
                 <SelectItem value="backbone_cables">Backbone Cables</SelectItem>
                 <SelectItem value="drop_points">Drop Points</SelectItem>
                 <SelectItem value="work_orders">Work Orders</SelectItem>

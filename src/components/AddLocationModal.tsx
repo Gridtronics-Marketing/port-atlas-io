@@ -550,12 +550,12 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
                    <Label htmlFor="project_id" className="text-sm font-medium">
                      Project Assignment (Optional)
                    </Label>
-                   <Select value={formData.project_id} onValueChange={(value) => setFormData({ ...formData, project_id: value })}>
+                   <Select value={formData.project_id || "none"} onValueChange={(value) => setFormData({ ...formData, project_id: value === "none" ? "" : value })}>
                      <SelectTrigger className="h-10 bg-background">
                        <SelectValue placeholder="Select project (optional)" />
                      </SelectTrigger>
                      <SelectContent className="bg-popover border z-50">
-                       <SelectItem value="">No Project (Standalone Location)</SelectItem>
+                       <SelectItem value="none">No Project (Standalone Location)</SelectItem>
                        {filteredProjects.map((project) => (
                          <SelectItem key={project.id} value={project.id}>
                            {project.name}
