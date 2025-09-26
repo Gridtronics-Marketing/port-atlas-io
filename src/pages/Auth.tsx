@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/useAuth';
 import { Loader2, Shield } from 'lucide-react';
 import portAtlasLogo from "@/assets/port-atlas-logo.png";
+import { OfflineIndicator } from '@/components/OfflineIndicator';
 
 const Auth = () => {
   const { user, loading: authLoading, signIn, signUp } = useAuth();
@@ -62,6 +63,9 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="fixed top-4 right-4 z-50">
+        <OfflineIndicator />
+      </div>
       <Card className="w-full max-w-md shadow-medium">
         <CardHeader className="text-center space-y-4">
           <div className="flex justify-center">

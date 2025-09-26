@@ -4,6 +4,7 @@ import { FloorPlanEditor } from "@/components/FloorPlanEditor";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
+import { OfflineIndicator } from "@/components/OfflineIndicator";
 
 export default function FloorPlanEditorPage() {
   const [searchParams] = useSearchParams();
@@ -50,6 +51,9 @@ export default function FloorPlanEditorPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <div className="fixed top-4 right-4 z-50">
+        <OfflineIndicator />
+      </div>
       <div className="container mx-auto p-4">
         <FloorPlanEditor
           key={editorKey}

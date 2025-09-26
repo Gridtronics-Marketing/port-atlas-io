@@ -4,6 +4,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { OfflineIndicator } from "@/components/OfflineIndicator";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -22,6 +23,7 @@ export function AppLayout({ children }: AppLayoutProps) {
           <header className="h-14 flex items-center border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4">
             <SidebarTrigger className="mr-2" />
             <div className="flex-1" />
+            <OfflineIndicator />
             
             {/* Logout button - more prominent on mobile */}
             <Button
