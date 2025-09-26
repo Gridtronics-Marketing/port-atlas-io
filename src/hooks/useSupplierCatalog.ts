@@ -7,13 +7,16 @@ export interface SupplierCatalogItem {
   supplier_id: string;
   item_name: string;
   item_code?: string;
+  upc_code?: string;
   description?: string;
   category?: string;
   unit_price: number;
   currency: string;
+  unit_of_measure?: string;
   minimum_order_quantity: number;
   lead_time_days: number;
   availability_status: 'in_stock' | 'out_of_stock' | 'limited' | 'discontinued';
+  custom_fields?: Record<string, any>;
   last_price_update: string;
   created_at: string;
   updated_at: string;
@@ -27,13 +30,16 @@ export interface CatalogItemFormData {
   supplier_id: string;
   item_name: string;
   item_code?: string;
+  upc_code?: string;
   description?: string;
   category?: string;
   unit_price: number;
   currency: string;
+  unit_of_measure?: string;
   minimum_order_quantity: number;
   lead_time_days: number;
   availability_status: 'in_stock' | 'out_of_stock' | 'limited' | 'discontinued';
+  custom_fields?: Record<string, any>;
 }
 
 export interface PriceComparison {
@@ -197,10 +203,11 @@ export const useSupplierCatalog = () => {
           *,
           supplier:suppliers(name, supplier_code)
         `)
-        .or(`item_name.ilike.%${searchTerm}%,item_code.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`)
+        .or(`item_name.ilike.%${searchTerm}%,item_code.ilike.%${searchTerm}%,upc_code.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`)
         .order('item_name');
 
       if (error) throw error;
+      setCatalogItems((data || []) as SupplierCatalogItem[]);
       return (data || []) as SupplierCatalogItem[];
     } catch (error) {
       console.error('Error searching catalog items:', error);

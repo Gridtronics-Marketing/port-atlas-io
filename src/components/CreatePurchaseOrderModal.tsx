@@ -9,7 +9,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Loader2, Trash2 } from 'lucide-react';
+import { Plus, Loader2, Trash2, Search } from 'lucide-react';
+import { ItemSearchModal } from '@/components/ItemSearchModal';
+import { toast } from 'sonner';
 
 interface CreatePurchaseOrderModalProps {
   onPOCreated?: () => void;
@@ -51,6 +53,25 @@ export const CreatePurchaseOrderModal: React.FC<CreatePurchaseOrderModalProps> =
       ...prev,
       items: [...prev.items, { item_name: '', item_code: '', description: '', quantity: 1, unit_price: 0 }]
     }));
+  };
+
+  const addCatalogItem = (catalogItem: any, quantity: number) => {
+    const newItem = {
+      item_name: catalogItem.item_name,
+      item_code: catalogItem.item_code || '',
+      description: catalogItem.description || '',
+      quantity: quantity,
+      unit_price: catalogItem.unit_price,
+      upc_code: catalogItem.upc_code || '',
+      supplier_catalog_id: catalogItem.id
+    };
+    
+    setFormData(prev => ({
+      ...prev,
+      items: [...prev.items, newItem]
+    }));
+    
+    toast.success(`Added ${catalogItem.item_name} to purchase order`);
   };
 
   const removeItem = (index: number) => {
@@ -171,10 +192,18 @@ export const CreatePurchaseOrderModal: React.FC<CreatePurchaseOrderModalProps> =
             <CardHeader>
               <CardTitle className="text-lg flex justify-between items-center">
                 Items
-                <Button type="button" onClick={addItem} size="sm">
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add Item
-                </Button>
+                <div className="flex gap-2">
+                  <ItemSearchModal onItemSelect={addCatalogItem}>
+                    <Button type="button" variant="outline" size="sm">
+                      <Search className="h-4 w-4 mr-1" />
+                      Browse Catalog
+                    </Button>
+                  </ItemSearchModal>
+                  <Button type="button" onClick={addItem} size="sm">
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add Item
+                  </Button>
+                </div>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">

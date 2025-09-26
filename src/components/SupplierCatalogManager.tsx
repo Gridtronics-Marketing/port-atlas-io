@@ -3,11 +3,14 @@ import { useSupplierCatalog } from '@/hooks/useSupplierCatalog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus } from 'lucide-react';
+import { Plus, Upload, Search } from 'lucide-react';
 import { PriceComparisonModal } from '@/components/PriceComparisonModal';
+import { AddCatalogItemModal } from '@/components/AddCatalogItemModal';
+import { CatalogCSVImportModal } from '@/components/CatalogCSVImportModal';
+import { Input } from '@/components/ui/input';
 
 export const SupplierCatalogManager = () => {
-  const { catalogItems, loading } = useSupplierCatalog();
+  const { catalogItems, loading, refetch } = useSupplierCatalog();
 
   if (loading) {
     return <div>Loading catalog items...</div>;
@@ -27,12 +30,10 @@ export const SupplierCatalogManager = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-semibold">Supplier Catalog</h2>
-        <div className="space-x-2">
+        <div className="flex gap-2">
           <PriceComparisonModal />
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Item
-          </Button>
+          <CatalogCSVImportModal onImportComplete={refetch} />
+          <AddCatalogItemModal onItemAdded={refetch} />
         </div>
       </div>
 

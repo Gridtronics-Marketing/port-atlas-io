@@ -2836,6 +2836,7 @@ export type Database = {
           category: string | null
           created_at: string
           currency: string | null
+          custom_fields: Json | null
           description: string | null
           id: string
           item_code: string | null
@@ -2845,6 +2846,7 @@ export type Database = {
           minimum_order_quantity: number | null
           supplier_id: string | null
           unit_price: number
+          upc_code: string | null
           updated_at: string
         }
         Insert: {
@@ -2852,6 +2854,7 @@ export type Database = {
           category?: string | null
           created_at?: string
           currency?: string | null
+          custom_fields?: Json | null
           description?: string | null
           id?: string
           item_code?: string | null
@@ -2861,6 +2864,7 @@ export type Database = {
           minimum_order_quantity?: number | null
           supplier_id?: string | null
           unit_price?: number
+          upc_code?: string | null
           updated_at?: string
         }
         Update: {
@@ -2868,6 +2872,7 @@ export type Database = {
           category?: string | null
           created_at?: string
           currency?: string | null
+          custom_fields?: Json | null
           description?: string | null
           id?: string
           item_code?: string | null
@@ -2877,6 +2882,7 @@ export type Database = {
           minimum_order_quantity?: number | null
           supplier_id?: string | null
           unit_price?: number
+          upc_code?: string | null
           updated_at?: string
         }
         Relationships: [
