@@ -75,10 +75,17 @@ export function EnhancedCSVImportModal({ onImportComplete }: EnhancedCSVImportMo
       skipEmptyLines: true,
       transformHeader: (header) => header.trim(),
       complete: (results) => {
-        if (results.errors.length > 0) {
+        // Filter out non-critical errors that shouldn't block import
+        const criticalErrors = results.errors.filter(error => 
+          error.type === 'Delimiter' || 
+          error.type === 'Quotes' ||
+          (error.type === 'FieldMismatch' && error.code === 'TooManyFields')
+        );
+
+        if (criticalErrors.length > 0) {
           toast({
-            title: "CSV parsing error",
-            description: `Errors found: ${results.errors.map(e => e.message).join(', ')}`,
+            title: "CSV parsing failed",
+            description: `Critical errors: ${criticalErrors.map(e => e.message).join(', ')}`,
             variant: "destructive"
           });
           setIsProcessing(false);
@@ -86,7 +93,30 @@ export function EnhancedCSVImportModal({ onImportComplete }: EnhancedCSVImportMo
         }
 
         const data = results.data as CSVRow[];
-        const headers = Object.keys(data[0] || {});
+        
+        // Ensure we have valid data structure
+        if (!data || data.length === 0) {
+          toast({
+            title: "Empty CSV file",
+            description: "The CSV file appears to be empty or contains no valid data.",
+            variant: "destructive"
+          });
+          setIsProcessing(false);
+          return;
+        }
+
+        // Get headers from first row or detect them
+        const headers = Object.keys(data[0] || {}).filter(header => header && header.trim());
+        
+        if (headers.length === 0) {
+          toast({
+            title: "No headers detected",
+            description: "Unable to detect column headers in the CSV file.",
+            variant: "destructive"
+          });
+          setIsProcessing(false);
+          return;
+        }
         
         setCsvData(data);
         setCsvHeaders(headers);
@@ -98,10 +128,20 @@ export function EnhancedCSVImportModal({ onImportComplete }: EnhancedCSVImportMo
         setCurrentStep(1);
         setIsProcessing(false);
 
-        toast({
-          title: "CSV uploaded successfully",
-          description: `Found ${data.length} rows with ${headers.length} columns`
-        });
+        // Show warnings if any non-critical errors exist
+        const warnings = results.errors.filter(error => !criticalErrors.includes(error));
+        if (warnings.length > 0) {
+          toast({
+            title: "CSV uploaded with warnings",
+            description: `Found ${data.length} rows with ${headers.length} columns. ${warnings.length} warning(s) detected.`,
+            variant: "default"
+          });
+        } else {
+          toast({
+            title: "CSV uploaded successfully",
+            description: `Found ${data.length} rows with ${headers.length} columns`
+          });
+        }
       },
       error: (error) => {
         toast({
@@ -332,7 +372,6 @@ export function EnhancedCSVImportModal({ onImportComplete }: EnhancedCSVImportMo
               </Button>
               <Button 
                 onClick={() => setCurrentStep(2)}
-                disabled={fieldMappings.filter(m => m.dbField && m.dbField !== 'skip').length === 0}
               >
                 Preview Data
               </Button>
@@ -348,8 +387,11 @@ export function EnhancedCSVImportModal({ onImportComplete }: EnhancedCSVImportMo
               <Button variant="outline" onClick={() => setCurrentStep(1)}>
                 Back to Mapping
               </Button>
-              <Button onClick={processImport} disabled={isProcessing}>
-                Start Import
+              <Button 
+                onClick={processImport} 
+                disabled={isProcessing || fieldMappings.filter(m => m.dbField && m.dbField !== 'skip').length === 0}
+              >
+                Start Import ({fieldMappings.filter(m => m.dbField && m.dbField !== 'skip').length} fields mapped)
               </Button>
             </div>
           </TabsContent>
