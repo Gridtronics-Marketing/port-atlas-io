@@ -7,7 +7,6 @@ import { Progress } from "@/components/ui/progress";
 import { Link } from "react-router-dom";
 import { WorkOrderList } from "@/components/WorkOrderList";
 import { AddLocationModal } from "@/components/AddLocationModal";
-import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { useLocations } from "@/hooks/useLocations";
 import { useWorkOrders } from "@/hooks/useWorkOrders";
 import { useClients } from "@/hooks/useClients";
@@ -35,10 +34,6 @@ const Index = () => {
 
   return (
     <main className="container mx-auto px-4 py-6 space-y-8">
-        <div className="flex justify-end mb-4">
-          <OfflineIndicator />
-        </div>
-        
         {/* Hero Section */}
         <div className="relative">
           <div className="absolute inset-0 bg-gradient-hero rounded-2xl opacity-5"></div>
