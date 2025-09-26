@@ -5,14 +5,25 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/hooks/useAuth';
-import { Loader2, Shield } from 'lucide-react';
+import { useEnhancedOfflineSync } from '@/hooks/useEnhancedOfflineSync';
+import { Loader2, Shield, Wifi, Download } from 'lucide-react';
 import portAtlasLogo from "@/assets/port-atlas-logo.png";
 import { OfflineIndicator } from '@/components/OfflineIndicator';
 
 const Auth = () => {
   const { user, loading: authLoading, signIn, signUp } = useAuth();
+  const { 
+    isOnline, 
+    downloadInProgress, 
+    downloadAllData, 
+    storeOfflineSession,
+    isOfflineSessionValid 
+  } = useEnhancedOfflineSync();
+  
   const [isLoading, setIsLoading] = useState(false);
+  const [workOffline, setWorkOffline] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -36,8 +47,25 @@ const Auth = () => {
     if (!formData.email || !formData.password) return;
     
     setIsLoading(true);
-    await signIn(formData.email, formData.password);
-    setIsLoading(false);
+    
+    try {
+      const result = await signIn(formData.email, formData.password);
+      
+      if (!result.error && workOffline && isOnline) {
+        // Download data for offline use
+        const downloadSuccess = await downloadAllData();
+        if (downloadSuccess) {
+          // Store offline session with current user id
+          await storeOfflineSession(
+            formData.email, // Use email as temporary user ID
+            formData.email,
+            { email: formData.email }
+          );
+        }
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -133,6 +161,30 @@ const Auth = () => {
                     'Sign In'
                   )}
                 </Button>
+                
+                {isOnline && (
+                  <div className="flex items-center space-x-2 pt-2">
+                    <Checkbox 
+                      id="work-offline" 
+                      checked={workOffline}
+                      onCheckedChange={(checked) => setWorkOffline(checked as boolean)}
+                    />
+                    <Label 
+                      htmlFor="work-offline" 
+                      className="text-sm text-muted-foreground flex items-center gap-2"
+                    >
+                      <Download className="h-4 w-4" />
+                      Download data for offline work
+                    </Label>
+                  </div>
+                )}
+                
+                {!isOnline && (
+                  <div className="flex items-center space-x-2 pt-2 text-sm text-muted-foreground">
+                    <Wifi className="h-4 w-4" />
+                    <span>Offline mode - limited functionality</span>
+                  </div>
+                )}
               </form>
             </TabsContent>
             

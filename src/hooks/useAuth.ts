@@ -28,7 +28,27 @@ export const useAuthProvider = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [sessionTimer, setSessionTimer] = useState<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
+
+  const startSessionTimer = () => {
+    // Clear existing timer
+    if (sessionTimer) {
+      clearTimeout(sessionTimer);
+    }
+
+    // Set 8-hour session timeout (8 * 60 * 60 * 1000 ms)
+    const timer = setTimeout(() => {
+      toast({
+        title: "Session Expired",
+        description: "Your session has expired. Please sign in again.",
+        variant: "destructive",
+      });
+      signOut();
+    }, 8 * 60 * 60 * 1000);
+
+    setSessionTimer(timer);
+  };
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -37,6 +57,19 @@ export const useAuthProvider = () => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+        
+        // Start session timer when user signs in
+        if (session && event === 'SIGNED_IN') {
+          startSessionTimer();
+        }
+        
+        // Clear session timer when user signs out
+        if (!session && event === 'SIGNED_OUT') {
+          if (sessionTimer) {
+            clearTimeout(sessionTimer);
+            setSessionTimer(null);
+          }
+        }
       }
     );
 
@@ -45,9 +78,19 @@ export const useAuthProvider = () => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+      
+      // Start session timer for existing valid session
+      if (session) {
+        startSessionTimer();
+      }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      if (sessionTimer) {
+        clearTimeout(sessionTimer);
+      }
+    };
   }, []);
 
   const signUp = async (email: string, password: string) => {
@@ -113,6 +156,12 @@ export const useAuthProvider = () => {
 
     try {
       setLoggingOut(true);
+      
+      // Clear session timer
+      if (sessionTimer) {
+        clearTimeout(sessionTimer);
+        setSessionTimer(null);
+      }
       
       // Clear local state immediately
       setUser(null);

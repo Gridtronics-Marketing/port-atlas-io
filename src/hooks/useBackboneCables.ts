@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useOfflineDataHook } from '@/hooks/useOfflineDataHook';
 
 export interface BackboneCable {
   id: string;
@@ -24,115 +25,24 @@ export interface BackboneCable {
   notes?: string;
   is_multi_segment: boolean;
   total_segments?: number;
-  created_at: string;
-  updated_at: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export const useBackboneCables = (locationId?: string) => {
-  const [cables, setCables] = useState<BackboneCable[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const fetchCables = async () => {
-    try {
-      setLoading(true);
-      let query = supabase.from('backbone_cables').select('*');
-      
-      if (locationId) {
-        query = query.eq('location_id', locationId);
-      }
-      
-      const { data, error } = await query.order('cable_label', { ascending: true });
-      
-      if (error) throw error;
-      setCables((data as BackboneCable[]) || []);
-    } catch (error) {
-      console.error('Error fetching backbone cables:', error);
-      // Enhanced error logging
-      console.error('Full error details:', JSON.stringify(error));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const addCable = async (cableData: Omit<Partial<BackboneCable>, 'id' | 'created_at' | 'updated_at'>) => {
-    try {
-      const { data, error } = await supabase
-        .from('backbone_cables')
-        .insert([cableData as any])
-        .select()
-        .single();
-      
-      if (error) throw error;
-      await fetchCables();
-      return data;
-    } catch (error) {
-      console.error('Error adding backbone cable:', error);
-      throw error;
-    }
-  };
-
-  const updateCable = async (id: string, updates: Partial<BackboneCable>) => {
-    try {
-      const { data, error } = await supabase
-        .from('backbone_cables')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
-      
-      if (error) throw error;
-      await fetchCables();
-      return data;
-    } catch (error) {
-      console.error('Error updating backbone cable:', error);
-      throw error;
-    }
-  };
-
-  const deleteCable = async (id: string) => {
-    try {
-      // First delete any associated cable segments
-      await supabase
-        .from('cable_segments')
-        .delete()
-        .eq('cable_run_id', id);
-
-      // Handle junction boxes that reference this cable
-      // Set backbone_cable_id to NULL to unlink them instead of deleting
-      await supabase
-        .from('cable_junction_boxes')
-        .update({ backbone_cable_id: null })
-        .eq('backbone_cable_id', id);
-
-      // Then delete the main cable record
-      const { error } = await supabase
-        .from('backbone_cables')
-        .delete()
-        .eq('id', id);
-      
-      if (error) throw error;
-      await fetchCables();
-    } catch (error) {
-      console.error('Error deleting backbone cable:', error);
-      // Enhanced error logging for foreign key constraints
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      if (errorMessage.includes('foreign key') || errorMessage.includes('violates')) {
-        console.error('Foreign key constraint violation - there may be dependencies that need to be handled');
-      }
-      throw error;
-    }
-  };
-
-  useEffect(() => {
-    fetchCables();
-  }, [locationId]);
+  const offlineHook = useOfflineDataHook<BackboneCable>({
+    tableName: 'backbone_cables',
+    filter: locationId ? { location_id: locationId } : undefined,
+    orderBy: { column: 'cable_label', ascending: true },
+    dependencies: [locationId],
+  });
 
   return {
-    cables,
-    loading,
-    fetchCables,
-    addCable,
-    updateCable,
-    deleteCable
+    cables: offlineHook.data,
+    loading: offlineHook.loading,
+    fetchCables: offlineHook.refetch,
+    addCable: offlineHook.addItem,
+    updateCable: offlineHook.updateItem,
+    deleteCable: offlineHook.deleteItem
   };
 };
