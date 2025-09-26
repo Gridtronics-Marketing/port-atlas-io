@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, Upload, Search } from 'lucide-react';
 import { PriceComparisonModal } from '@/components/PriceComparisonModal';
 import { AddCatalogItemModal } from '@/components/AddCatalogItemModal';
-import { CatalogCSVImportModal } from '@/components/CatalogCSVImportModal';
+import { EnhancedCSVImportModal } from '@/components/EnhancedCSVImportModal';
 import { Input } from '@/components/ui/input';
 
 export const SupplierCatalogManager = () => {
@@ -32,7 +32,7 @@ export const SupplierCatalogManager = () => {
         <h2 className="text-2xl font-semibold">Supplier Catalog</h2>
         <div className="flex gap-2">
           <PriceComparisonModal />
-          <CatalogCSVImportModal onImportComplete={refetch} />
+          <EnhancedCSVImportModal onImportComplete={refetch} />
           <AddCatalogItemModal onItemAdded={refetch} />
         </div>
       </div>
