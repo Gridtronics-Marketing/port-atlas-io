@@ -6,6 +6,9 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/components/AuthProvider";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AppLayout } from "@/components/AppLayout";
+import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
+import { PWAUpdateNotification } from "@/components/PWAUpdateNotification";
+import { OfflineStatusIndicator } from "@/components/OfflineStatusIndicator";
 import Index from "./pages/Index";
 import Projects from "./pages/Projects";
 import Contracts from "./pages/Contracts";
@@ -37,6 +40,9 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
+        <PWAUpdateNotification />
+        <PWAInstallPrompt />
+        <OfflineStatusIndicator />
         <BrowserRouter>
           <Routes>
             <Route path="/auth" element={<Auth />} />
