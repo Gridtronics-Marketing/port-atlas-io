@@ -7,8 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
-import { Shield, User, Eye, Edit, Trash2, Plus, Settings, Lock, Unlock } from 'lucide-react';
-import { useUserRoles } from '@/hooks/useUserRoles';
+import { Shield, User, Eye, Edit, Trash2, Plus, Settings, Lock, Unlock, Loader2 } from 'lucide-react';
+import { useUserRoles, AppRole } from '@/hooks/useUserRoles';
+import { useUsers } from '@/hooks/useUsers';
 import { useToast } from '@/hooks/use-toast';
 
 interface Permission {
@@ -26,7 +27,7 @@ interface UserPermission {
   userId: string;
   userName: string;
   userEmail: string;
-  role: string;
+  roles: AppRole[];
   permissions: Permission[];
   isActive: boolean;
 }
@@ -69,67 +70,68 @@ export const GranularPermissionsManager = () => {
   const [componentPermissions, setComponentPermissions] = useState<ComponentPermission[]>([]);
   const [selectedUser, setSelectedUser] = useState<string>('');
   const [selectedComponent, setSelectedComponent] = useState<string>('');
-  const { userRoles } = useUserRoles();
+  const { assignRole, removeRole, hasAnyRole } = useUserRoles();
+  const { users, loading: usersLoading } = useUsers();
   const { toast } = useToast();
 
   useEffect(() => {
-    // Initialize with mock data - in real app, fetch from backend
-    initializeMockData();
-  }, []);
+    initializeComponentPermissions();
+    if (users.length > 0) {
+      initializeUserPermissions();
+    }
+  }, [users]);
 
-  const initializeMockData = () => {
-    // Mock user permissions
-    const mockUsers: UserPermission[] = [
-      {
-        userId: '1',
-        userName: 'John Doe',
-        userEmail: 'john@example.com',
-        role: 'technician',
-        isActive: true,
-        permissions: DEFAULT_RESOURCES.map(resource => ({
+  const initializeUserPermissions = () => {
+    // Convert real users to UserPermission format
+    const userPermissionsData: UserPermission[] = users.map(user => ({
+      userId: user.id,
+      userName: user.name || user.email.split('@')[0],
+      userEmail: user.email,
+      roles: user.roles,
+      isActive: user.is_active,
+      permissions: DEFAULT_RESOURCES.flatMap(resource => 
+        ['create', 'read', 'update', 'delete'].map(action => ({
           resource,
-          action: 'read' as const,
-          granted: true,
-          conditions: { own_only: resource === 'work_orders' }
+          action: action as 'create' | 'read' | 'update' | 'delete',
+          granted: getDefaultPermissionForRole(user.roles, resource, action),
+          conditions: getDefaultConditionsForRole(user.roles, resource)
         }))
-      },
-      {
-        userId: '2',
-        userName: 'Jane Smith',
-        userEmail: 'jane@example.com',
-        role: 'project_manager',
-        isActive: true,
-        permissions: DEFAULT_RESOURCES.map(resource => ({
-          resource,
-          action: 'update' as const,
-          granted: true,
-          conditions: { location_restricted: true }
-        }))
-      }
-    ];
-    setUserPermissions(mockUsers);
-
-    // Mock component permissions
-    const mockComponents: ComponentPermission[] = [
-      {
-        component: 'backbone_cables',
-        label: 'Backbone Cables',
-        description: 'Fiber and copper backbone infrastructure',
-        permissions: { create: true, read: true, update: true, delete: false },
-        restrictions: { own_only: false, location_restricted: true, approval_required: true }
-      },
-      {
-        component: 'work_orders',
-        label: 'Work Orders',
-        description: 'Installation and maintenance work orders',
-        permissions: { create: true, read: true, update: true, delete: false },
-        restrictions: { own_only: true, location_restricted: false, approval_required: false }
-      }
-    ];
-    setComponentPermissions(mockComponents);
+      )
+    }));
+    setUserPermissions(userPermissionsData);
   };
 
-  const updateUserPermission = (userId: string, resource: string, action: string, granted: boolean) => {
+  const getDefaultPermissionForRole = (roles: AppRole[], resource: string, action: string): boolean => {
+    if (roles.includes('admin')) return true;
+    if (roles.includes('hr_manager')) return action !== 'delete';
+    if (roles.includes('project_manager')) return action !== 'delete';
+    if (roles.includes('technician')) return action === 'read' || action === 'update';
+    return action === 'read';
+  };
+
+  const getDefaultConditionsForRole = (roles: AppRole[], resource: string) => {
+    if (roles.includes('admin')) return {};
+    if (resource === 'work_orders' && !roles.includes('admin')) return { own_only: true };
+    return { location_restricted: true };
+  };
+
+  const initializeComponentPermissions = () => {
+    const components: ComponentPermission[] = DEFAULT_RESOURCES.map(resource => ({
+      component: resource,
+      label: resource.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+      description: `Manage ${resource.replace('_', ' ')} operations and data`,
+      permissions: { create: true, read: true, update: true, delete: false },
+      restrictions: { 
+        own_only: resource === 'work_orders' || resource === 'employee_schedules',
+        location_restricted: !['employees', 'clients'].includes(resource),
+        approval_required: ['backbone_cables', 'distribution_frames'].includes(resource)
+      }
+    }));
+    setComponentPermissions(components);
+  };
+
+  const updateUserPermission = async (userId: string, resource: string, action: string, granted: boolean) => {
+    // Update local state immediately for better UX
     setUserPermissions(prev => prev.map(user => {
       if (user.userId === userId) {
         return {
@@ -144,6 +146,8 @@ export const GranularPermissionsManager = () => {
       return user;
     }));
 
+    // Note: In a full implementation, you would save these granular permissions to a database
+    // For now, we'll just show the UI update
     toast({
       title: "Permission Updated",
       description: `${granted ? 'Granted' : 'Revoked'} ${action} access to ${resource}`,
@@ -186,10 +190,13 @@ export const GranularPermissionsManager = () => {
 
   const getRoleColor = (role: string) => {
     switch (role) {
-      case 'admin': return 'bg-red-100 text-red-800';
-      case 'project_manager': return 'bg-blue-100 text-blue-800';
-      case 'technician': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'admin': return 'destructive';
+      case 'hr_manager': return 'destructive';
+      case 'project_manager': return 'default';
+      case 'technician': return 'secondary';
+      case 'client_admin': return 'outline';
+      case 'client_technician': return 'outline';
+      default: return 'outline';
     }
   };
 
@@ -216,37 +223,49 @@ export const GranularPermissionsManager = () => {
         </TabsList>
 
         <TabsContent value="users" className="space-y-4">
-          <div className="flex gap-4 items-center">
-            <Select value={selectedUser} onValueChange={setSelectedUser}>
-              <SelectTrigger className="w-64">
-                <SelectValue placeholder="Select user to configure" />
-              </SelectTrigger>
-              <SelectContent>
-                {userPermissions.map(user => (
-                  <SelectItem key={user.userId} value={user.userId}>
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4" />
-                      {user.userName} ({user.userEmail})
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {usersLoading ? (
+            <div className="flex items-center justify-center p-8">
+              <Loader2 className="h-6 w-6 animate-spin" />
+              <span className="ml-2">Loading users...</span>
+            </div>
+          ) : (
+            <>
+              <div className="flex gap-4 items-center">
+                <Select value={selectedUser} onValueChange={setSelectedUser}>
+                  <SelectTrigger className="w-64">
+                    <SelectValue placeholder="Select user to configure" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {userPermissions.map(user => (
+                      <SelectItem key={user.userId} value={user.userId}>
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4" />
+                          {user.userName} ({user.userEmail})
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Badge variant="outline">{userPermissions.length} users</Badge>
+              </div>
 
-          {selectedUser && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <User className="h-5 w-5" />
-                    {userPermissions.find(u => u.userId === selectedUser)?.userName}
-                  </div>
-                  <Badge className={getRoleColor(userPermissions.find(u => u.userId === selectedUser)?.role || '')}>
-                    {userPermissions.find(u => u.userId === selectedUser)?.role?.toUpperCase()}
-                  </Badge>
-                </CardTitle>
-              </CardHeader>
+              {selectedUser && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <User className="h-5 w-5" />
+                        {userPermissions.find(u => u.userId === selectedUser)?.userName}
+                      </div>
+                      <div className="flex gap-2">
+                        {userPermissions.find(u => u.userId === selectedUser)?.roles.map(role => (
+                          <Badge key={role} variant={getRoleColor(role)}>
+                            {role.toUpperCase()}
+                          </Badge>
+                        ))}
+                      </div>
+                    </CardTitle>
+                  </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   {DEFAULT_RESOURCES.map(resource => (
@@ -264,12 +283,12 @@ export const GranularPermissionsManager = () => {
                                 {getPermissionIcon(action)}
                                 <span className="text-sm capitalize">{action}</span>
                               </div>
-                        <Switch
-                          checked={permission?.granted || false}
-                          onCheckedChange={(checked) => 
-                            updateUserPermission(selectedUser, resource, action, checked)
-                          }
-                        />
+                              <Switch
+                                checked={permission?.granted || false}
+                                onCheckedChange={(checked) => 
+                                  updateUserPermission(selectedUser, resource, action, checked)
+                                }
+                              />
                             </div>
                           );
                         })}
@@ -277,8 +296,10 @@ export const GranularPermissionsManager = () => {
                     </div>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
+                  </CardContent>
+                </Card>
+              )}
+            </>
           )}
         </TabsContent>
 
