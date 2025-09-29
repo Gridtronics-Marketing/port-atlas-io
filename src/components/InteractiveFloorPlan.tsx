@@ -58,6 +58,7 @@ export const InteractiveFloorPlan = ({
   const [canRedo, setCanRedo] = useState(false);
   const [drawingData, setDrawingData] = useState<string>('');
   const [containerDimensions, setContainerDimensions] = useState({ width: 0, height: 0 });
+  const [showLabels, setShowLabels] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
   const drawingCanvasRef = useRef<DrawingCanvasRef>(null);
   const { toast } = useToast();
@@ -410,6 +411,23 @@ export const InteractiveFloorPlan = ({
     }
   };
 
+  const getStatusTextColor = (status: string) => {
+    switch (status) {
+      case 'planned':
+        return 'text-gray-600';
+      case 'installed':
+        return 'text-blue-600';
+      case 'tested':
+        return 'text-yellow-600';
+      case 'active':
+        return 'text-green-600';
+      case 'inactive':
+        return 'text-red-600';
+      default:
+        return 'text-gray-600';
+    }
+  };
+
   return (
     <Card className={`${className}`}>
       <CardHeader>
@@ -418,6 +436,15 @@ export const InteractiveFloorPlan = ({
             Floor {floorNumber} - Interactive Plan
           </CardTitle>
           <div className="flex items-center gap-2">
+            <Button
+              variant={showLabels ? "default" : "outline"}
+              size="sm"
+              onClick={() => setShowLabels(!showLabels)}
+              disabled={!actualFileUrl}
+            >
+              <span className="text-xs mr-2">🏷️</span>
+              {showLabels ? 'Hide Labels' : 'Show Labels'}
+            </Button>
             <Button
               variant={isDrawingMode ? "default" : "outline"}
               size="sm"
@@ -591,31 +618,54 @@ export const InteractiveFloorPlan = ({
               return (
                 <Tooltip key={point.id}>
                   <TooltipTrigger asChild>
-                    <div
-                      className={`absolute transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full border-2 flex items-center justify-center text-white font-bold hover:scale-110 transition-transform shadow-lg ${
-                        draggedPoint && draggedPoint.id === point.id 
-                          ? `cursor-grabbing scale-110 ${getDropPointColor(point.status)}` 
-                          : `cursor-grab ${getDropPointColor(point.status)}`
-                      }`}
-                      onMouseDown={(e) => !isDrawingMode && handleMouseDown(e, point, 'dropPoint')}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (!isDragging && !isDrawingMode) {
-                          setSelectedDropPoint(point);
-                          setDetailsModalOpen(true);
-                        }
-                      }}
-                      style={{
-                        ...{
-                          left: `${displayPoint.x_coordinate || 50}%`,
-                          top: `${displayPoint.y_coordinate || 50}%`,
-                          zIndex: draggedPoint && draggedPoint.id === point.id ? 50 : 10,
-                        },
-                        pointerEvents: isDrawingMode ? 'none' : 'auto'
-                      }}
-                    >
-                      <span className="text-xs">{getDropPointIcon(point.point_type)}</span>
-                    </div>
+                     <>
+                       <div
+                         className={`absolute transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full border-2 flex items-center justify-center text-white font-bold hover:scale-110 transition-transform shadow-lg ${
+                           draggedPoint && draggedPoint.id === point.id 
+                             ? `cursor-grabbing scale-110 ${getDropPointColor(point.status)}` 
+                             : `cursor-grab ${getDropPointColor(point.status)}`
+                         }`}
+                         onMouseDown={(e) => !isDrawingMode && handleMouseDown(e, point, 'dropPoint')}
+                         onClick={(e) => {
+                           e.stopPropagation();
+                           if (!isDragging && !isDrawingMode) {
+                             setSelectedDropPoint(point);
+                             setDetailsModalOpen(true);
+                           }
+                         }}
+                         style={{
+                           ...{
+                             left: `${displayPoint.x_coordinate || 50}%`,
+                             top: `${displayPoint.y_coordinate || 50}%`,
+                             zIndex: draggedPoint && draggedPoint.id === point.id ? 50 : 10,
+                           },
+                           pointerEvents: isDrawingMode ? 'none' : 'auto'
+                         }}
+                       >
+                         <span className="text-xs">{getDropPointIcon(point.point_type)}</span>
+                       </div>
+                       
+                       {/* Persistent Label for Drop Point */}
+                       {showLabels && (
+                         <div
+                           className="absolute pointer-events-none select-none"
+                           style={{
+                             left: `${displayPoint.x_coordinate || 50}%`,
+                             top: `${displayPoint.y_coordinate || 50}%`,
+                             transform: 'translate(20px, -50%)',
+                             zIndex: 5,
+                           }}
+                         >
+                           <div className="bg-black/80 backdrop-blur-sm text-white px-2 py-1 rounded-md text-xs whitespace-nowrap shadow-lg border border-white/20">
+                             <div className="font-medium">{point.label}</div>
+                             <div className={`text-xs capitalize ${getStatusTextColor(point.status)} filter brightness-200`}>
+                               {point.status}
+                               {point.room && ` • ${point.room}`}
+                             </div>
+                           </div>
+                         </div>
+                       )}
+                     </>
                   </TooltipTrigger>
                   <TooltipContent className="bg-popover border">
                     <div className="text-sm">
@@ -637,29 +687,55 @@ export const InteractiveFloorPlan = ({
               return (
                 <Tooltip key={roomView.id}>
                   <TooltipTrigger asChild>
-                    <div
-                      className={`absolute transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-blue-600 border-2 border-blue-700 flex items-center justify-center text-white hover:scale-110 transition-transform shadow-lg ${
-                        draggedRoomView && draggedRoomView.id === roomView.id 
-                          ? 'cursor-grabbing scale-110' 
-                          : 'cursor-grab'
-                      }`}
-                      style={{
-                        left: `${displayRoomView.x_coordinate || 50}%`,
-                        top: `${displayRoomView.y_coordinate || 50}%`,
-                        zIndex: draggedRoomView && draggedRoomView.id === roomView.id ? 50 : 15,
-                        pointerEvents: isDrawingMode ? 'none' : 'auto'
-                      }}
-                      onMouseDown={(e) => !isDrawingMode && handleMouseDown(e, roomView, 'roomView')}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (!isDragging && !isDrawingMode) {
-                          setSelectedRoomView(roomView);
-                          setRoomViewModalOpen(true);
-                        }
-                      }}
-                    >
-                    <Camera className="h-4 w-4" />
-                  </div>
+                     <>
+                       <div
+                         className={`absolute transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-blue-600 border-2 border-blue-700 flex items-center justify-center text-white hover:scale-110 transition-transform shadow-lg ${
+                           draggedRoomView && draggedRoomView.id === roomView.id 
+                             ? 'cursor-grabbing scale-110' 
+                             : 'cursor-grab'
+                         }`}
+                         style={{
+                           left: `${displayRoomView.x_coordinate || 50}%`,
+                           top: `${displayRoomView.y_coordinate || 50}%`,
+                           zIndex: draggedRoomView && draggedRoomView.id === roomView.id ? 50 : 15,
+                           pointerEvents: isDrawingMode ? 'none' : 'auto'
+                         }}
+                         onMouseDown={(e) => !isDrawingMode && handleMouseDown(e, roomView, 'roomView')}
+                         onClick={(e) => {
+                           e.stopPropagation();
+                           if (!isDragging && !isDrawingMode) {
+                             setSelectedRoomView(roomView);
+                             setRoomViewModalOpen(true);
+                           }
+                         }}
+                       >
+                         <Camera className="h-4 w-4" />
+                       </div>
+                       
+                       {/* Persistent Label for Room View */}
+                       {showLabels && (
+                         <div
+                           className="absolute pointer-events-none select-none"
+                           style={{
+                             left: `${displayRoomView.x_coordinate || 50}%`,
+                             top: `${displayRoomView.y_coordinate || 50}%`,
+                             transform: 'translate(20px, -50%)',
+                             zIndex: 5,
+                           }}
+                         >
+                           <div className="bg-black/80 backdrop-blur-sm text-white px-2 py-1 rounded-md text-xs whitespace-nowrap shadow-lg border border-white/20">
+                             <div className="font-medium text-blue-300">
+                               📷 {roomView.room_name || 'Room View'}
+                             </div>
+                             {roomView.employee && (
+                               <div className="text-xs text-gray-300">
+                                 By {roomView.employee.first_name} {roomView.employee.last_name}
+                               </div>
+                             )}
+                           </div>
+                         </div>
+                       )}
+                     </>
                 </TooltipTrigger>
                 <TooltipContent className="bg-popover border">
                   <div className="text-sm">
