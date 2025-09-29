@@ -928,6 +928,36 @@ export type Database = {
           },
         ]
       }
+      drop_point_photos: {
+        Row: {
+          created_at: string
+          description: string | null
+          drop_point_id: string
+          employee_id: string | null
+          id: string
+          photo_url: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          drop_point_id: string
+          employee_id?: string | null
+          id?: string
+          photo_url: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          drop_point_id?: string
+          employee_id?: string | null
+          id?: string
+          photo_url?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       drop_points: {
         Row: {
           cable_id: string | null
