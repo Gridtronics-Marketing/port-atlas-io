@@ -27,7 +27,7 @@ import { useUserRoles } from "@/hooks/useUserRoles";
 
 const Employees = () => {
   const { employees, loading, addEmployee, updateEmployee, deleteEmployee } = useEmployees();
-  const { canManageEmployees, canViewSensitiveData, hasAnyRole } = useUserRoles();
+  const { canManageEmployees, canViewSensitiveData, hasAnyRole, loading: rolesLoading } = useUserRoles();
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -181,10 +181,12 @@ const Employees = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {loading ? (
+            {(loading || rolesLoading) ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                <span className="ml-2 text-muted-foreground">Loading employees...</span>
+                <span className="ml-2 text-muted-foreground">
+                  {rolesLoading ? 'Loading permissions...' : 'Loading employees...'}
+                </span>
               </div>
             ) : employees.length === 0 ? (
               <div className="text-center py-8">

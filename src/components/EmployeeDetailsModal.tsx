@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Users, Clock, MapPin, AlertTriangle, CheckCircle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
-import { Employee } from "@/hooks/useEmployees";
+import { Employee, useEmployees } from "@/hooks/useEmployees";
 
 interface EmployeeDetailsModalProps {
   employee: Employee | null;
@@ -19,7 +19,33 @@ interface EmployeeDetailsModalProps {
 }
 
 export const EmployeeDetailsModal = ({ employee, isOpen, onClose }: EmployeeDetailsModalProps) => {
-  if (!employee) return null;
+  const { fetchEmployeeById } = useEmployees();
+  const [freshEmployee, setFreshEmployee] = useState<Employee | null>(employee);
+
+  // Fetch fresh data when modal opens
+  useEffect(() => {
+    const loadFreshData = async () => {
+      if (employee?.id && isOpen) {
+        try {
+          console.log('📥 [EmployeeDetailsModal] Loading fresh employee data...');
+          const fresh = await fetchEmployeeById(employee.id);
+          if (fresh) {
+            console.log('✅ [EmployeeDetailsModal] Fresh data loaded. Skills:', fresh.skills);
+            setFreshEmployee(fresh);
+          }
+        } catch (error) {
+          console.error('❌ [EmployeeDetailsModal] Error loading fresh data:', error);
+          setFreshEmployee(employee);
+        }
+      }
+    };
+    
+    loadFreshData();
+  }, [employee?.id, isOpen, fetchEmployeeById]);
+
+  if (!freshEmployee) return null;
+
+  const displayEmployee = freshEmployee;
 
   const getCertificationStatus = (cert: string, expiryDate?: string) => {
     if (!expiryDate) return { status: "unknown", color: "bg-muted text-muted-foreground" };
@@ -58,7 +84,7 @@ export const EmployeeDetailsModal = ({ employee, isOpen, onClose }: EmployeeDeta
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Users className="h-5 w-5 text-primary" />
-            Employee Details - {employee.first_name} {employee.last_name}
+            Employee Details - {displayEmployee.first_name} {displayEmployee.last_name}
           </DialogTitle>
         </DialogHeader>
 
@@ -68,8 +94,8 @@ export const EmployeeDetailsModal = ({ employee, isOpen, onClose }: EmployeeDeta
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <span>Basic Information</span>
-                <Badge className={getStatusColor(employee.status)}>
-                  {employee.status}
+                <Badge className={getStatusColor(displayEmployee.status)}>
+                  {displayEmployee.status}
                 </Badge>
               </CardTitle>
             </CardHeader>
@@ -77,34 +103,34 @@ export const EmployeeDetailsModal = ({ employee, isOpen, onClose }: EmployeeDeta
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Employee Number</label>
-                  <p className="text-foreground">{employee.employee_number || "Not assigned"}</p>
+                  <p className="text-foreground">{displayEmployee.employee_number || "Not assigned"}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Role</label>
-                  <p className="text-foreground">{employee.role}</p>
+                  <p className="text-foreground">{displayEmployee.role}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Department</label>
-                  <p className="text-foreground">{employee.department || "Not assigned"}</p>
+                  <p className="text-foreground">{displayEmployee.department || "Not assigned"}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Email</label>
-                  <p className="text-foreground">{employee.email || "Not provided"}</p>
+                  <p className="text-foreground">{displayEmployee.email || "Not provided"}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Phone</label>
-                  <p className="text-foreground">{employee.phone || "Not provided"}</p>
+                  <p className="text-foreground">{displayEmployee.phone || "Not provided"}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Hire Date</label>
                   <p className="text-foreground">
-                    {employee.hire_date ? new Date(employee.hire_date).toLocaleDateString() : "Not recorded"}
+                    {displayEmployee.hire_date ? new Date(displayEmployee.hire_date).toLocaleDateString() : "Not recorded"}
                   </p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Hourly Rate</label>
                   <p className="text-foreground">
-                    {employee.hourly_rate ? `$${employee.hourly_rate}/hr` : "Not set"}
+                    {displayEmployee.hourly_rate ? `$${displayEmployee.hourly_rate}/hr` : "Not set"}
                   </p>
                 </div>
               </div>
@@ -117,9 +143,9 @@ export const EmployeeDetailsModal = ({ employee, isOpen, onClose }: EmployeeDeta
               <CardTitle>Skills & Expertise</CardTitle>
             </CardHeader>
             <CardContent>
-              {employee.skills && employee.skills.length > 0 ? (
+              {displayEmployee.skills && displayEmployee.skills.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
-                  {employee.skills.map((skill, index) => (
+                  {displayEmployee.skills.map((skill, index) => (
                     <Badge key={index} variant="secondary">
                       {skill}
                     </Badge>
@@ -136,8 +162,8 @@ export const EmployeeDetailsModal = ({ employee, isOpen, onClose }: EmployeeDeta
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 Certifications
-                {employee.certifications && employee.certifications.some(cert => {
-                  const expiry = employee.certification_expiry?.[cert];
+                {displayEmployee.certifications && displayEmployee.certifications.some(cert => {
+                  const expiry = displayEmployee.certification_expiry?.[cert];
                   if (!expiry) return false;
                   const expiryDate = new Date(expiry);
                   const thirtyDaysFromNow = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
@@ -151,10 +177,10 @@ export const EmployeeDetailsModal = ({ employee, isOpen, onClose }: EmployeeDeta
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {employee.certifications && employee.certifications.length > 0 ? (
+              {displayEmployee.certifications && displayEmployee.certifications.length > 0 ? (
                 <div className="space-y-3">
-                  {employee.certifications.map((cert, index) => {
-                    const expiryDate = employee.certification_expiry?.[cert];
+                  {displayEmployee.certifications.map((cert, index) => {
+                    const expiryDate = displayEmployee.certification_expiry?.[cert];
                     const status = getCertificationStatus(cert, expiryDate);
                     
                     return (
@@ -207,11 +233,11 @@ export const EmployeeDetailsModal = ({ employee, isOpen, onClose }: EmployeeDeta
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Contact Name</label>
-                  <p className="text-foreground">{employee.emergency_contact_name || "Not provided"}</p>
+                  <p className="text-foreground">{displayEmployee.emergency_contact_name || "Not provided"}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Contact Phone</label>
-                  <p className="text-foreground">{employee.emergency_contact_phone || "Not provided"}</p>
+                  <p className="text-foreground">{displayEmployee.emergency_contact_phone || "Not provided"}</p>
                 </div>
               </div>
             </CardContent>

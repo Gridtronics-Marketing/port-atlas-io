@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useUserRoles } from '@/hooks/useUserRoles';
+import { useAuth } from '@/hooks/useAuth';
 
 // Full employee data - HR and Admin only
 export interface Employee {
@@ -52,7 +53,8 @@ export const useEmployees = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const { canViewSensitiveData, hasRole, hasAnyRole } = useUserRoles();
+  const { user } = useAuth();
+  const { canViewSensitiveData, hasRole, hasAnyRole, loading: rolesLoading } = useUserRoles();
 
   // Filter employee data based on user role - return Employee but with sensitive fields nullified
   const filterEmployeeData = (employee: Employee): Employee => {
@@ -272,8 +274,12 @@ export const useEmployees = () => {
   };
 
   useEffect(() => {
-    fetchEmployees();
-  }, []);
+    if (user && !rolesLoading) {
+      console.log('🔄 [useEmployees] Fetching employees (roles loaded, user authenticated)');
+      console.log('🔐 [useEmployees] User has admin/HR access:', canViewSensitiveData());
+      fetchEmployees();
+    }
+  }, [user, rolesLoading]);
 
   // Helper function to check if user can view sensitive employee data
   const canViewSensitiveEmployeeData = () => canViewSensitiveData();
