@@ -34,36 +34,43 @@ export const useDropPointPhotos = (dropPointId?: string, locationId?: string) =>
       if (dropPointId) {
         const { data, error } = await supabase
           .from('drop_point_photos')
-          .select(`
-            id,
-            drop_point_id,
-            photo_url,
-            description,
-            employee_id,
-            created_at,
-            updated_at,
-            employees!employee_id(first_name, last_name),
-            drop_points!drop_point_id(label, room, point_type)
-          `)
+          .select('*')
           .eq('drop_point_id', dropPointId)
           .order('created_at', { ascending: false });
 
         if (error) throw error;
 
-        const formattedData = (data || []).map((item: any) => ({
-          ...item,
-          employee: item.employees ? {
-            first_name: item.employees.first_name,
-            last_name: item.employees.last_name
-          } : undefined,
-          drop_point: item.drop_points ? {
-            label: item.drop_points.label,
-            room: item.drop_points.room,
-            point_type: item.drop_points.point_type
-          } : undefined
+        // Fetch related data separately to avoid join issues
+        const enrichedData = await Promise.all((data || []).map(async (photo: any) => {
+          let employee = undefined;
+          let drop_point = undefined;
+
+          // Fetch employee data if employee_id exists
+          if (photo.employee_id) {
+            const { data: empData } = await supabase
+              .from('employees')
+              .select('first_name, last_name')
+              .eq('id', photo.employee_id)
+              .single();
+            employee = empData;
+          }
+
+          // Fetch drop point data
+          const { data: dpData } = await supabase
+            .from('drop_points')
+            .select('label, room, point_type')
+            .eq('id', photo.drop_point_id)
+            .single();
+          drop_point = dpData;
+
+          return {
+            ...photo,
+            employee,
+            drop_point
+          };
         }));
 
-        setPhotos(formattedData);
+        setPhotos(enrichedData);
       } else if (locationId) {
         // Get all photos for drop points in this location
         const { data: dropPoints } = await supabase
@@ -76,36 +83,43 @@ export const useDropPointPhotos = (dropPointId?: string, locationId?: string) =>
           
           const { data, error } = await supabase
             .from('drop_point_photos')
-            .select(`
-              id,
-              drop_point_id,
-              photo_url,
-              description,
-              employee_id,
-              created_at,
-              updated_at,
-              employees!employee_id(first_name, last_name),
-              drop_points!drop_point_id(label, room, point_type)
-            `)
+            .select('*')
             .in('drop_point_id', dropPointIds)
             .order('created_at', { ascending: false });
 
           if (error) throw error;
 
-          const formattedData = (data || []).map((item: any) => ({
-            ...item,
-            employee: item.employees ? {
-              first_name: item.employees.first_name,
-              last_name: item.employees.last_name
-            } : undefined,
-            drop_point: item.drop_points ? {
-              label: item.drop_points.label,
-              room: item.drop_points.room,
-              point_type: item.drop_points.point_type
-            } : undefined
+          // Fetch related data separately
+          const enrichedData = await Promise.all((data || []).map(async (photo: any) => {
+            let employee = undefined;
+            let drop_point = undefined;
+
+            // Fetch employee data if employee_id exists
+            if (photo.employee_id) {
+              const { data: empData } = await supabase
+                .from('employees')
+                .select('first_name, last_name')
+                .eq('id', photo.employee_id)
+                .single();
+              employee = empData;
+            }
+
+            // Fetch drop point data
+            const { data: dpData } = await supabase
+              .from('drop_points')
+              .select('label, room, point_type')
+              .eq('id', photo.drop_point_id)
+              .single();
+            drop_point = dpData;
+
+            return {
+              ...photo,
+              employee,
+              drop_point
+            };
           }));
 
-          setPhotos(formattedData);
+          setPhotos(enrichedData);
         } else {
           setPhotos([]);
         }
