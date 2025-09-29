@@ -87,8 +87,8 @@ export const AddRoomViewModal = ({
     try {
       console.log('📸 Starting photo capture...');
       const photo = await capturePhoto(
-        'room_view',
         description || 'Room view photo',
+        'room_view',
         undefined,
         locationId,
         undefined,
@@ -133,8 +133,8 @@ export const AddRoomViewModal = ({
     try {
       console.log('🖼️ Starting gallery selection...');
       const photo = await selectFromGallery(
-        'room_view',
         description || 'Room view photo',
+        'room_view',
         undefined,
         locationId,
         undefined,

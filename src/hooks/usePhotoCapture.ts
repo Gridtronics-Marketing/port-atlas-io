@@ -207,9 +207,10 @@ export function usePhotoCapture() {
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
       const filename = `${category}-${timestamp}.jpg`;
       
-      // Upload to Supabase Storage
+      // Upload to Supabase Storage - use room-views bucket for room_view category
+      const bucketName = category === 'room_view' ? 'room-views' : 'floor-plans';
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('floor-plans') // Using existing bucket
+        .from(bucketName)
         .upload(`photos/${filename}`, blob, {
           contentType: 'image/jpeg',
           upsert: false,
@@ -224,7 +225,7 @@ export function usePhotoCapture() {
 
       // Get public URL
       const { data: urlData } = supabase.storage
-        .from('floor-plans')
+        .from(bucketName)
         .getPublicUrl(`photos/${filename}`);
 
       // Store photo metadata in daily_logs table with photos array
@@ -367,9 +368,10 @@ export function usePhotoCapture() {
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
       const filename = `${category}-${timestamp}.jpg`;
       
-      // Upload to Supabase Storage
+      // Upload to Supabase Storage - use room-views bucket for room_view category
+      const bucketName = category === 'room_view' ? 'room-views' : 'floor-plans';
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('floor-plans')
+        .from(bucketName)
         .upload(`photos/${filename}`, blob, {
           contentType: 'image/jpeg',
           upsert: false,
@@ -379,7 +381,7 @@ export function usePhotoCapture() {
 
       // Get public URL
       const { data: urlData } = supabase.storage
-        .from('floor-plans')
+        .from(bucketName)
         .getPublicUrl(`photos/${filename}`);
 
       // Create a daily log entry for gallery photos too
