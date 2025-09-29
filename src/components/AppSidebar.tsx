@@ -18,6 +18,7 @@ import {
   Wrench,
   Package
 } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { NavLink, useLocation } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -45,6 +46,8 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRoles } from "@/hooks/useUserRoles";
 import portAtlasLogo from "@/assets/port-atlas-logo.png";
+import { PWAInstallButton } from "@/components/PWAInstallButton";
+import { Separator } from "@/components/ui/separator";
 
 const navigationItems = [
   { title: "Dashboard", url: "/", icon: Home },
@@ -67,14 +70,22 @@ const navigationItems = [
 ];
 
 export function AppSidebar() {
-  const { state } = useSidebar();
+  const { state, setOpen } = useSidebar();
   const location = useLocation();
   const { user, signOut } = useAuth();
   const { hasRole } = useUserRoles();
+  const isMobile = useIsMobile();
   
   const currentPath = location.pathname;
   const isActive = (path: string) => currentPath === path;
   const isCollapsed = state === "collapsed";
+
+  // Auto-close sidebar on navigation (mobile only)
+  const handleNavClick = () => {
+    if (isMobile) {
+      setOpen(false);
+    }
+  };
   
   // Add admin-only items
   const allItems = hasRole('admin') 
@@ -115,7 +126,8 @@ export function AppSidebar() {
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink 
-                      to={item.url} 
+                      to={item.url}
+                      onClick={handleNavClick}
                       className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${getNavClassName(item.url)}`}
                     >
                       <item.icon className="h-4 w-4 flex-shrink-0" />
@@ -130,6 +142,18 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="p-4">
+        {/* PWA Install Button */}
+        <div className={`${isCollapsed ? "flex justify-center" : ""} mb-2`}>
+          <PWAInstallButton 
+            variant="outline" 
+            size={isCollapsed ? "icon" : "default"}
+            showLabel={!isCollapsed}
+            className="w-full"
+          />
+        </div>
+        
+        <Separator className="mb-4" />
+        
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button 

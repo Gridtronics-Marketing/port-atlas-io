@@ -25,19 +25,25 @@ export const PWAInstallPrompt: React.FC = () => {
 
     checkIfInstalled();
 
-    // Listen for the beforeinstallprompt event
+    // Detect iOS - iOS doesn't support beforeinstallprompt
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+    // Listen for the beforeinstallprompt event (Android/Chrome only)
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       const event = e as BeforeInstallPromptEvent;
       setDeferredPrompt(event);
       
-      // Show prompt after a delay if not dismissed
-      setTimeout(() => {
-        const dismissed = localStorage.getItem('pwa-install-dismissed');
-        if (!dismissed && !isInstalled) {
-          setShowPrompt(true);
-        }
-      }, 10000); // Show after 10 seconds
+      // Show prompt after a delay if not dismissed (only for non-iOS)
+      if (!isIOS) {
+        setTimeout(() => {
+          const dismissed = localStorage.getItem('pwa-install-dismissed');
+          if (!dismissed && !isInstalled) {
+            setShowPrompt(true);
+          }
+        }, 10000); // Show after 10 seconds
+      }
     };
 
     // Listen for app installation

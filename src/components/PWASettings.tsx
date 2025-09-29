@@ -15,15 +15,22 @@ import {
   Zap,
   Shield,
   Camera,
-  MapPin
+  MapPin,
+  Share,
+  Plus
 } from 'lucide-react';
 import { usePWA, getPWACapabilities, trackPWAEvent } from '@/hooks/usePWA';
 import { useToast } from '@/hooks/use-toast';
+import { PWAInstallButton } from '@/components/PWAInstallButton';
 
 export const PWASettings: React.FC = () => {
   const { isInstalled, isStandalone, canInstall, installPrompt, isOnline } = usePWA();
   const { toast } = useToast();
   const capabilities = getPWACapabilities();
+
+  // Detect iOS
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
   const handleInstall = async () => {
     if (installPrompt) {
@@ -131,11 +138,30 @@ export const PWASettings: React.FC = () => {
             </Badge>
           </div>
           
-          {canInstall && !isInstalled && (
-            <Button onClick={handleInstall} className="w-full">
-              <Download className="w-4 h-4 mr-2" />
-              Install Port Atlas
-            </Button>
+          {/* Install Button */}
+          {!isInstalled && (
+            <PWAInstallButton variant="default" className="w-full" />
+          )}
+
+          {/* iOS-specific instructions */}
+          {isIOS && !isInstalled && (
+            <div className="rounded-lg bg-muted p-4 space-y-3">
+              <p className="text-sm font-medium">Install on iOS</p>
+              <div className="space-y-2 text-sm text-muted-foreground">
+                <div className="flex items-start gap-2">
+                  <span className="font-medium">1.</span>
+                  <span>Tap the <Share className="inline w-3 h-3" /> Share button in Safari</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="font-medium">2.</span>
+                  <span>Select "Add to Home Screen" <Plus className="inline w-3 h-3" /></span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="font-medium">3.</span>
+                  <span>Tap "Add" to complete installation</span>
+                </div>
+              </div>
+            </div>
           )}
 
           <div className="flex items-center justify-between">
