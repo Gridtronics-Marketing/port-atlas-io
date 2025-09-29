@@ -141,7 +141,14 @@ export const DropPointDetailsModal: React.FC<DropPointDetailsModalProps> = ({
     if (!dropPoint || !currentEmployee) return;
 
     try {
-      const result = await capturePhoto('drop_point');
+      const result = await capturePhoto(
+        `Photo for drop point ${dropPoint.label}`, // description
+        'drop_point',                               // category
+        undefined,                                  // projectId
+        locationId,                                 // locationId
+        undefined,                                  // workOrderId
+        currentEmployee.id                          // employeeId
+      );
 
       if (result && result.url) {
         await addPhoto({
@@ -160,7 +167,14 @@ export const DropPointDetailsModal: React.FC<DropPointDetailsModalProps> = ({
     if (!dropPoint || !currentEmployee) return;
 
     try {
-      const result = await selectFromGallery('drop_point');
+      const result = await selectFromGallery(
+        `Photo for drop point ${dropPoint.label}`, // description
+        'drop_point',                               // category
+        undefined,                                  // projectId
+        locationId,                                 // locationId
+        undefined,                                  // workOrderId
+        currentEmployee.id                          // employeeId
+      );
 
       if (result && result.url) {
         await addPhoto({
