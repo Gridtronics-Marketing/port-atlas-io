@@ -30,6 +30,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useClients } from "@/hooks/useClients";
 import { useUserRoles } from "@/hooks/useUserRoles";
+import { useEmployees } from "@/hooks/useEmployees";
 
 interface Employee {
   id: string;
@@ -62,6 +63,7 @@ export const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdateEmployee 
   const { toast } = useToast();
   const { clients } = useClients();
   const { hasAnyRole } = useUserRoles();
+  const { fetchEmployeeById } = useEmployees();
   const [isLoading, setIsLoading] = useState(false);
   const [newSkill, setNewSkill] = useState("");
   const [newCertification, setNewCertification] = useState("");
@@ -89,27 +91,47 @@ export const EditEmployeeModal = ({ isOpen, onClose, employee, onUpdateEmployee 
   });
 
   useEffect(() => {
-    if (employee) {
-      setFormData({
-        employee_number: employee.employee_number || "",
-        first_name: employee.first_name || "",
-        last_name: employee.last_name || "",
-        email: employee.email || "",
-        phone: employee.phone || "",
-        role: employee.role || "",
-        department: employee.department || "",
-        hire_date: employee.hire_date || "",
-        hourly_rate: employee.hourly_rate?.toString() || "",
-        skills: employee.skills || [],
-        certifications: employee.certifications || [],
-        certification_expiry: employee.certification_expiry || {},
-        status: employee.status || "Active",
-        emergency_contact_name: employee.emergency_contact_name || "",
-        emergency_contact_phone: employee.emergency_contact_phone || "",
-        client_id: employee.client_id || "company"
-      });
-    }
-  }, [employee]);
+    const loadFreshData = async () => {
+      if (employee?.id && isOpen) {
+        try {
+          console.log('📥 Loading fresh employee data for edit...');
+          const freshData = await fetchEmployeeById(employee.id);
+          
+          if (freshData) {
+            setFormData({
+              employee_number: freshData.employee_number || "",
+              first_name: freshData.first_name || "",
+              last_name: freshData.last_name || "",
+              email: freshData.email || "",
+              phone: freshData.phone || "",
+              role: freshData.role || "",
+              department: freshData.department || "",
+              hire_date: freshData.hire_date || "",
+              hourly_rate: freshData.hourly_rate?.toString() || "",
+              skills: freshData.skills || [],
+              certifications: freshData.certifications || [],
+              certification_expiry: freshData.certification_expiry || {},
+              status: freshData.status || "Active",
+              emergency_contact_name: freshData.emergency_contact_name || "",
+              emergency_contact_phone: freshData.emergency_contact_phone || "",
+              client_id: freshData.client_id || "company"
+            });
+            
+            console.log('✅ Fresh data loaded. Skills:', freshData.skills);
+          }
+        } catch (error) {
+          console.error('❌ Error loading fresh employee data:', error);
+          toast({
+            title: "Error",
+            description: "Failed to load employee data",
+            variant: "destructive",
+          });
+        }
+      }
+    };
+    
+    loadFreshData();
+  }, [employee?.id, isOpen, fetchEmployeeById, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

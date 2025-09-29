@@ -92,6 +92,33 @@ export const useEmployees = () => {
     };
   };
 
+  // Fetch a single employee by ID with fresh data from database
+  const fetchEmployeeById = async (id: string): Promise<Employee | null> => {
+    try {
+      console.log('🔍 Fetching employee by ID:', id);
+      console.log('🔐 User has admin/HR access:', canViewSensitiveData());
+      
+      const { data, error } = await supabase
+        .from('employees')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
+      if (error) throw error;
+      
+      const employee = data as Employee;
+      
+      // For admins, return raw data; for others, apply filtering
+      const result = canViewSensitiveData() ? employee : filterEmployeeData(employee);
+      
+      console.log('✅ Fresh employee data fetched. Skills:', result.skills);
+      return result;
+    } catch (error) {
+      console.error('❌ Error fetching employee by ID:', error);
+      throw error;
+    }
+  };
+
   const fetchEmployees = async () => {
     try {
       setLoading(true);
@@ -176,6 +203,7 @@ export const useEmployees = () => {
 
   const updateEmployee = async (id: string, updates: Partial<Employee>) => {
     try {
+      // 1. Update in database
       const { data, error } = await supabase
         .from('employees')
         .update(updates)
@@ -185,61 +213,30 @@ export const useEmployees = () => {
 
       if (error) throw error;
       
-      console.log('✅ Employee updated successfully:', data);
-      console.log('🔐 Current user roles for filtering:', { 
-        canViewSensitive: canViewSensitiveData(),
-        hasProjectManager: hasRole('project_manager'),
-        hasAdmin: hasRole('admin'),
-        hasHR: hasRole('hr_manager')
-      });
+      console.log('✅ Employee updated in database:', data);
+      console.log('🔐 Admin access:', canViewSensitiveData());
       
-      // For update operations, merge the updated fields with existing employee data
-      // to preserve fields the user should be able to see after updating them
-      setEmployees(prev => prev.map(employee => {
-        if (employee.id === id) {
-          const updatedEmployee = data as Employee;
-          
-          // If user can view sensitive data, return full updated data
-          if (canViewSensitiveData()) {
-            return updatedEmployee;
-          }
-          
-          // For other users, merge updated fields they can edit with filtered base data
-          const filteredBase = filterEmployeeData(updatedEmployee);
-          
-          // Preserve fields that were just updated and user should see the result
-          const preservedFields: Partial<Employee> = {};
-          
-          // If skills were updated, user should see them (project managers can view skills)
-          if (updates.skills !== undefined && canViewBasicEmployeeData()) {
-            preservedFields.skills = updatedEmployee.skills;
-          }
-          
-          // If certifications were updated, user should see them (project managers can view certifications)
-          if (updates.certifications !== undefined && canViewBasicEmployeeData()) {
-            preservedFields.certifications = updatedEmployee.certifications;
-          }
-          
-          // If employee_number was updated and user can edit employees, they should see it
-          if (updates.employee_number !== undefined && (canViewSensitiveData() || hasRole('project_manager'))) {
-            preservedFields.employee_number = updatedEmployee.employee_number;
-          }
-          
-          return {
-            ...filteredBase,
-            ...preservedFields
-          };
-        }
-        return employee;
-      }).sort((a, b) => a.first_name.localeCompare(b.first_name)));
+      // 2. Fetch fresh data from database to ensure accuracy
+      const freshEmployee = await fetchEmployeeById(id);
+      
+      if (!freshEmployee) {
+        throw new Error('Failed to fetch updated employee data');
+      }
+      
+      // 3. Update state with fresh data
+      setEmployees(prev => 
+        prev.map(emp => emp.id === id ? freshEmployee : emp)
+          .sort((a, b) => a.first_name.localeCompare(b.first_name))
+      );
       
       toast({
         title: "Success",
         description: "Employee updated successfully",
       });
+      
       return data;
     } catch (error) {
-      console.error('Error updating employee:', error);
+      console.error('❌ Error updating employee:', error);
       toast({
         title: "Error",
         description: "Failed to update employee",
@@ -288,6 +285,7 @@ export const useEmployees = () => {
     employees,
     loading,
     fetchEmployees,
+    fetchEmployeeById,
     addEmployee,
     updateEmployee,
     deleteEmployee,
