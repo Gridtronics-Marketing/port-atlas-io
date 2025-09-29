@@ -29,23 +29,41 @@ export const useDropPointPhotos = (dropPointId?: string, locationId?: string) =>
   const fetchPhotos = async () => {
     try {
       setLoading(true);
-      let query = supabase
-        .from('drop_point_photos')
-        .select(`
-          id,
-          drop_point_id,
-          photo_url,
-          description,
-          employee_id,
-          created_at,
-          updated_at,
-          employee:employees(first_name, last_name),
-          drop_point:drop_points(label, room, point_type)
-        `);
-
+      
       // Filter by specific drop point or all drop points in a location
       if (dropPointId) {
-        query = query.eq('drop_point_id', dropPointId);
+        const { data, error } = await supabase
+          .from('drop_point_photos')
+          .select(`
+            id,
+            drop_point_id,
+            photo_url,
+            description,
+            employee_id,
+            created_at,
+            updated_at,
+            employees!employee_id(first_name, last_name),
+            drop_points!drop_point_id(label, room, point_type)
+          `)
+          .eq('drop_point_id', dropPointId)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        const formattedData = (data || []).map((item: any) => ({
+          ...item,
+          employee: item.employees ? {
+            first_name: item.employees.first_name,
+            last_name: item.employees.last_name
+          } : undefined,
+          drop_point: item.drop_points ? {
+            label: item.drop_points.label,
+            room: item.drop_points.room,
+            point_type: item.drop_points.point_type
+          } : undefined
+        }));
+
+        setPhotos(formattedData);
       } else if (locationId) {
         // Get all photos for drop points in this location
         const { data: dropPoints } = await supabase
@@ -55,25 +73,45 @@ export const useDropPointPhotos = (dropPointId?: string, locationId?: string) =>
         
         if (dropPoints && dropPoints.length > 0) {
           const dropPointIds = dropPoints.map(dp => dp.id);
-          query = query.in('drop_point_id', dropPointIds);
+          
+          const { data, error } = await supabase
+            .from('drop_point_photos')
+            .select(`
+              id,
+              drop_point_id,
+              photo_url,
+              description,
+              employee_id,
+              created_at,
+              updated_at,
+              employees!employee_id(first_name, last_name),
+              drop_points!drop_point_id(label, room, point_type)
+            `)
+            .in('drop_point_id', dropPointIds)
+            .order('created_at', { ascending: false });
+
+          if (error) throw error;
+
+          const formattedData = (data || []).map((item: any) => ({
+            ...item,
+            employee: item.employees ? {
+              first_name: item.employees.first_name,
+              last_name: item.employees.last_name
+            } : undefined,
+            drop_point: item.drop_points ? {
+              label: item.drop_points.label,
+              room: item.drop_points.room,
+              point_type: item.drop_points.point_type
+            } : undefined
+          }));
+
+          setPhotos(formattedData);
         } else {
           setPhotos([]);
-          setLoading(false);
-          return;
         }
       } else {
         setPhotos([]);
-        setLoading(false);
-        return;
       }
-
-      query = query.order('created_at', { ascending: false });
-      const { data, error } = await query;
-
-      if (error) throw error;
-
-      console.log('Drop point photos data:', data);
-      setPhotos(data || []);
     } catch (error) {
       console.error('Error fetching drop point photos:', error);
       toast({
@@ -85,10 +123,6 @@ export const useDropPointPhotos = (dropPointId?: string, locationId?: string) =>
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchPhotos();
-  }, [locationId]);
 
   const addPhoto = async (photoData: {
     drop_point_id: string;
@@ -188,10 +222,16 @@ export const useDropPointPhotos = (dropPointId?: string, locationId?: string) =>
     }
   };
 
+  useEffect(() => {
+    fetchPhotos();
+  }, [dropPointId, locationId]);
+
   return {
     photos,
     loading,
     refetch: fetchPhotos,
+    addPhoto,
+    updatePhoto,
     deletePhoto,
   };
 };

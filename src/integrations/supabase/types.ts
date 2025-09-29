@@ -956,7 +956,22 @@ export type Database = {
           photo_url?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_drop_point_photos_drop_point"
+            columns: ["drop_point_id"]
+            isOneToOne: false
+            referencedRelation: "drop_points"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_drop_point_photos_employee"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       drop_points: {
         Row: {
