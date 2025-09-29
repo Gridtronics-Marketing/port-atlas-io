@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { Upload, X, MapPin, Plus, Minus, Building2, Users, Phone, FileText, FileImage } from "lucide-react";
-import { InteractiveFloorPlan } from "@/components/InteractiveFloorPlan";
+import { FloorPlanEditor } from "@/components/FloorPlanEditor";
 import {
   Dialog,
   DialogContent,  
@@ -766,29 +766,31 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
                                   </div>
                                )}
                                
-                               {drawingMode[floorNumber] && (
-                                 <div className="mt-4 border-t pt-4">
-                                   <div className="min-h-[500px] border rounded-lg overflow-hidden bg-background">
-                                     <InteractiveFloorPlan
-                                       locationId="temp" // Temporary ID for drawing mode
-                                       floorNumber={floorNumber}
-                                       fileUrl=""
-                                       filePath=""
-                                       fileName={`Floor ${floorNumber} Drawing`}
-                                       className="w-full h-[500px]"
-                                     />
-                                   </div>
-                                   <div className="flex justify-end mt-2">
-                                     <Button
-                                       variant="outline"
-                                       size="sm"
-                                       onClick={() => setDrawingMode(prev => ({ ...prev, [floorNumber]: false }))}
-                                     >
-                                       Done Drawing
-                                     </Button>
-                                   </div>
-                                 </div>
-                               )}
+                                {drawingMode[floorNumber] && (
+                                  <div className="mt-4 border-t pt-4">
+                                    <div className="min-h-[500px] border rounded-lg overflow-hidden bg-background">
+                                      <FloorPlanEditor
+                                        floorNumber={floorNumber}
+                                        locationName={`${formData.name || 'Location'} - Floor ${floorNumber}`}
+                                        mode="draw"
+                                        onSave={(canvasData) => {
+                                          console.log('Drawing saved for floor', floorNumber, canvasData);
+                                          // Here you could convert the canvas data to an image file
+                                          // and set it as the layout file for this floor
+                                        }}
+                                      />
+                                    </div>
+                                    <div className="flex justify-end mt-2">
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setDrawingMode(prev => ({ ...prev, [floorNumber]: false }))}
+                                      >
+                                        Done Drawing
+                                      </Button>
+                                    </div>
+                                  </div>
+                                )}
                              </CardContent>
                            </Card>
                         </div>

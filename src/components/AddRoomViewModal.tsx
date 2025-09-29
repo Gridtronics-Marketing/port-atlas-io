@@ -160,7 +160,7 @@ export const AddRoomViewModal = ({
   };
 
   const handleAutoSubmit = async (photoUrl: string) => {
-    if (!coordinates || !canAddRoomView) {
+    if (!canAddRoomView) {
       toast({
         title: "Employee Profile Required",
         description: "You need an employee profile to add room views. Please contact your administrator.",
@@ -171,34 +171,42 @@ export const AddRoomViewModal = ({
 
     try {
       setSubmitting(true);
-      await addRoomView({
+      
+      // Handle both coordinate-based and manual room view creation
+      const roomViewData = {
         location_id: locationId,
         floor,
-        x_coordinate: coordinates.x,
-        y_coordinate: coordinates.y,
-        room_name: roomName || undefined,
+        x_coordinate: coordinates?.x || 50, // Default position if no coordinates
+        y_coordinate: coordinates?.y || 50,
+        room_name: roomName || `Room View ${Date.now()}`,
         description: description || 'Room view',
         photo_url: photoUrl,
         employee_id: currentEmployee?.id || null,
-      });
+      };
+      
+      console.log('Adding room view with data:', roomViewData);
+      await addRoomView(roomViewData);
 
       toast({
         title: "Success",
         description: "Room view added successfully!",
       });
 
-      // Call success callback to refresh parent component
+      // Call success callback to refresh parent component immediately
       if (onSuccess) {
         onSuccess();
       }
 
-      // Add a brief delay before closing to ensure the room view icon appears
-      setTimeout(() => {
-        handleClose();
-      }, 500);
+      // Close modal immediately - no delay needed
+      handleClose();
       
     } catch (error) {
       console.error('Error adding room view:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add room view. Please try again.",
+        variant: "destructive",
+      });
       setSubmitting(false);
     }
   };

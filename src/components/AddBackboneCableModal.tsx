@@ -243,7 +243,7 @@ export const AddBackboneCableModal: React.FC<AddBackboneCableModalProps> = ({
           </div>
 
           <div>
-            <Label htmlFor="cable_subtype">Cable Subtype</Label>
+            <Label htmlFor="cable_subtype"># of Strands</Label>
             <Input
               id="cable_subtype"
               {...register('cable_subtype')}

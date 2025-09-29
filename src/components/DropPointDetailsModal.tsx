@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { ConfigurableSelect } from '@/components/ui/configurable-select';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -94,8 +95,17 @@ export const DropPointDetailsModal: React.FC<DropPointDetailsModalProps> = ({
         title: "Drop Point Updated",
         description: "Drop point details have been saved successfully.",
       });
+      // Force parent component to refresh to show updated data
+      if (onOpenChange) {
+        onOpenChange(false);
+      }
     } catch (error) {
       console.error('Error updating drop point:', error);
+      toast({
+        title: "Update Failed",
+        description: "Failed to update drop point. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -288,19 +298,12 @@ export const DropPointDetailsModal: React.FC<DropPointDetailsModalProps> = ({
                 <div>
                   <Label htmlFor="status">Status</Label>
                   {isEditing ? (
-                    <select
-                      id="status"
-                      className="w-full p-2 border rounded-md"
+                    <ConfigurableSelect
+                      category="drop_point_status"
                       value={editData.status as string || ''}
-                      onChange={(e) => setEditData({ ...editData, status: e.target.value as any })}
-                    >
-                      <option value="planned">Planned</option>
-                      <option value="roughed">Roughed</option>
-                      <option value="terminated">Terminated</option>
-                      <option value="tested">Tested</option>
-                      <option value="active">Active</option>
-                      <option value="inactive">Inactive</option>
-                    </select>
+                      onValueChange={(value) => setEditData({ ...editData, status: value as any })}
+                      placeholder="Select status"
+                    />
                   ) : (
                     <Badge 
                       variant={dropPoint.status === 'active' ? 'default' : 'secondary'}

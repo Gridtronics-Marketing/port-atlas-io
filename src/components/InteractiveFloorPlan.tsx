@@ -295,6 +295,16 @@ export const InteractiveFloorPlan = ({
 
   const resetScale = () => setScale(1.0);
 
+  // Handle drop point modal close with refresh
+  const handleDropPointDetailsClose = (open: boolean) => {
+    setDetailsModalOpen(open);
+    if (!open) {
+      setSelectedDropPoint(null);
+      // Refresh drop points to show any updates
+      fetchDropPoints();
+    }
+  };
+
   // Drawing functions
   const handleDrawingToolChange = (tool: DrawingTool) => {
     console.log('✅ Drawing tool changed to:', tool);
@@ -817,7 +827,7 @@ export const InteractiveFloorPlan = ({
       {/* Drop Point Details Modal */}
       <DropPointDetailsModal
         open={detailsModalOpen}
-        onOpenChange={setDetailsModalOpen}
+        onOpenChange={handleDropPointDetailsClose}
         dropPoint={selectedDropPoint}
         locationId={locationId}
       />
