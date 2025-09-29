@@ -311,6 +311,44 @@ export type Database = {
         }
         Relationships: []
       }
+      canvas_drawings: {
+        Row: {
+          canvas_data: Json
+          created_at: string
+          created_by: string | null
+          floor_number: number
+          id: string
+          location_id: string
+          updated_at: string
+        }
+        Insert: {
+          canvas_data?: Json
+          created_at?: string
+          created_by?: string | null
+          floor_number: number
+          id?: string
+          location_id: string
+          updated_at?: string
+        }
+        Update: {
+          canvas_data?: Json
+          created_at?: string
+          created_by?: string | null
+          floor_number?: number
+          id?: string
+          location_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "canvas_drawings_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       capacity_alerts: {
         Row: {
           alert_message: string | null

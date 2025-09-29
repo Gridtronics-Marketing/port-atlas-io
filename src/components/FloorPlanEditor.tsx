@@ -1,56 +1,44 @@
 import { useEffect, useRef, useState } from "react";
-import { Canvas as FabricCanvas, Circle, Rect, Text } from "fabric";
+import { Canvas as FabricCanvas, Circle, Rect, FabricText } from "fabric";
+import { Brush, Circle as CircleIcon, Eraser, Hand, Minus, Plus, Square, Save, Type, Undo, Redo, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { 
-  MousePointer, 
-  Pencil, 
-  Square, 
-  Circle as CircleIcon, 
-  Type, 
-  Eraser, 
-  Download, 
-  Upload,
-  Undo,
-  Redo,
-  Trash2
-} from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
+import { Separator } from "@/components/ui/separator";
+import { toast } from "sonner";
+import { useCanvasDrawings } from "@/hooks/useCanvasDrawings";
+
+// Define available drawing tools
+type ToolType = "select" | "draw" | "rectangle" | "circle" | "text" | "eraser";
 
 interface FloorPlanEditorProps {
   floorNumber: number;
   locationName: string;
-  backgroundImage?: string | null;
-  onSave?: (canvasData: string) => void;
+  backgroundImage?: string;
+  onSave?: (canvasData: any) => void;
   mode?: 'draw' | 'riser';
+  locationId?: string;
+  initialCanvasData?: any;
 }
-
-type ToolType = "select" | "draw" | "rectangle" | "circle" | "text" | "eraser";
 
 export const FloorPlanEditor = ({ 
   floorNumber, 
   locationName, 
-  backgroundImage,
-  onSave,
-  mode = 'draw'
+  backgroundImage, 
+  onSave, 
+  mode = 'draw',
+  locationId,
+  initialCanvasData
 }: FloorPlanEditorProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [fabricCanvas, setFabricCanvas] = useState<FabricCanvas | null>(null);
   const [activeTool, setActiveTool] = useState<ToolType>("select");
-  const [activeColor, setActiveColor] = useState("#FF0000");
+  const [activeColor, setActiveColor] = useState("#000000");
   const [brushWidth, setBrushWidth] = useState(2);
-  const { toast } = useToast();
+  const { saveDrawing, getDrawingForFloor } = useCanvasDrawings(locationId);
 
+  // Initialize canvas
   useEffect(() => {
     if (!canvasRef.current) return;
 
@@ -60,45 +48,54 @@ export const FloorPlanEditor = ({
       backgroundColor: "#ffffff",
     });
 
-    // Initialize the freeDrawingBrush
-    if (canvas.freeDrawingBrush) {
-      canvas.freeDrawingBrush.color = activeColor;
-      canvas.freeDrawingBrush.width = brushWidth;
+    // Load existing drawing data if locationId is provided
+    if (locationId) {
+      const existingDrawing = getDrawingForFloor(floorNumber);
+      if (existingDrawing?.canvas_data) {
+        canvas.loadFromJSON(existingDrawing.canvas_data, () => {
+          canvas.renderAll();
+          console.log('Canvas loaded from existing drawing');
+        });
+      }
+    } else if (initialCanvasData) {
+      // Fallback to initial canvas data if provided
+      canvas.loadFromJSON(initialCanvasData, () => {
+        canvas.renderAll();
+        console.log('Canvas loaded from initial data');
+      });
     }
+
+    // Initialize the freeDrawingBrush right after canvas creation
+    canvas.freeDrawingBrush.color = activeColor;
+    canvas.freeDrawingBrush.width = brushWidth;
 
     setFabricCanvas(canvas);
 
-    // Load background image if provided
-    if (backgroundImage) {
-      // Check if background is a PDF - PDFs cannot be loaded as canvas backgrounds
-      const isPDF = backgroundImage.toLowerCase().includes('.pdf');
-      if (isPDF) {
-        console.log("PDF background detected - PDF files cannot be used as canvas backgrounds in the editor");
-        toast({
-          title: "PDF Background Detected",
-          description: "PDF floor plans cannot be used as backgrounds in the editor. Switch to View mode to see the PDF.",
-          variant: "default",
-        });
-      } else {
-        // Load image background
-        console.log("Loading background image:", backgroundImage);
-        // TODO: Implement image loading onto canvas
-      }
+    // Handle PDF background warning
+    if (backgroundImage && backgroundImage.toLowerCase().includes('.pdf')) {
+      console.warn('PDF backgrounds cannot be used directly. Please convert to an image format first.');
     }
 
     return () => {
       canvas.dispose();
     };
-  }, []);
+  }, [locationId, floorNumber, initialCanvasData, getDrawingForFloor]);
 
+  // Update canvas properties when tool or styling changes
   useEffect(() => {
     if (!fabricCanvas) return;
 
     fabricCanvas.isDrawingMode = activeTool === "draw";
-    
+    fabricCanvas.selection = activeTool === "select";
+
     if (activeTool === "draw" && fabricCanvas.freeDrawingBrush) {
       fabricCanvas.freeDrawingBrush.color = activeColor;
       fabricCanvas.freeDrawingBrush.width = brushWidth;
+    }
+
+    if (activeTool === "eraser" && fabricCanvas.freeDrawingBrush) {
+      fabricCanvas.freeDrawingBrush.color = "#ffffff"; // Erase with white
+      fabricCanvas.freeDrawingBrush.width = brushWidth * 2;
     }
   }, [activeTool, activeColor, brushWidth, fabricCanvas]);
 
@@ -111,11 +108,11 @@ export const FloorPlanEditor = ({
       const rect = new Rect({
         left: 100,
         top: 100,
-        fill: "transparent",
-        stroke: activeColor,
-        strokeWidth: 2,
+        fill: activeColor,
         width: 100,
         height: 100,
+        stroke: activeColor,
+        strokeWidth: 2,
       });
       fabricCanvas.add(rect);
       fabricCanvas.setActiveObject(rect);
@@ -124,25 +121,23 @@ export const FloorPlanEditor = ({
         left: 100,
         top: 100,
         fill: "transparent",
+        radius: 50,
         stroke: activeColor,
         strokeWidth: 2,
-        radius: 50,
       });
       fabricCanvas.add(circle);
       fabricCanvas.setActiveObject(circle);
     } else if (tool === "text") {
-      const text = new Text("Drop Point", {
+      const text = new FabricText("Double click to edit", {
         left: 100,
         top: 100,
-        fill: activeColor,
-        fontSize: 16,
         fontFamily: "Arial",
+        fontSize: 16,
+        fill: activeColor,
       });
       fabricCanvas.add(text);
       fabricCanvas.setActiveObject(text);
     }
-    
-    fabricCanvas.renderAll();
   };
 
   const handleClear = () => {
@@ -150,159 +145,186 @@ export const FloorPlanEditor = ({
     fabricCanvas.clear();
     fabricCanvas.backgroundColor = "#ffffff";
     fabricCanvas.renderAll();
-    toast({
-      title: "Canvas Cleared",
-      description: "Floor plan has been cleared",
-    });
+    toast("Canvas cleared");
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!fabricCanvas) return;
     
     const canvasData = fabricCanvas.toJSON();
-    const dataUrl = fabricCanvas.toDataURL({
-      format: 'png',
-      quality: 0.8,
-      multiplier: 1
-    });
+    console.log('Saving canvas data:', canvasData);
     
-    console.log("Floor plan data:", canvasData);
-    onSave?.(JSON.stringify(canvasData));
+    // If locationId is provided, save to database
+    if (locationId && floorNumber) {
+      await saveDrawing({
+        location_id: locationId,
+        floor_number: floorNumber,
+        canvas_data: canvasData
+      });
+    }
     
-    toast({
-      title: "Floor Plan Saved",
-      description: `Floor ${floorNumber} plan has been saved`,
-    });
+    onSave && onSave(canvasData);
   };
 
   const handleUndo = () => {
     // TODO: Implement undo functionality
-    toast({
-      title: "Undo",
-      description: "Undo functionality coming soon",
-    });
+    toast("Undo functionality coming soon");
   };
 
   const handleRedo = () => {
     // TODO: Implement redo functionality
-    toast({
-      title: "Redo", 
-      description: "Redo functionality coming soon",
-    });
+    toast("Redo functionality coming soon");
   };
 
-  const tools = [
-    { id: "select", icon: MousePointer, label: "Select" },
-    { id: "draw", icon: Pencil, label: "Draw" },
-    { id: "rectangle", icon: Square, label: "Rectangle" },
-    { id: "circle", icon: CircleIcon, label: "Circle" },
-    { id: "text", icon: Type, label: "Text" },
-    { id: "eraser", icon: Eraser, label: "Eraser" },
+  const colors = [
+    "#000000", "#ff0000", "#00ff00", "#0000ff", "#ffff00", 
+    "#ff00ff", "#00ffff", "#ffa500", "#800080", "#008000"
   ];
 
   return (
     <Card className="w-full">
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            Floor Plan Editor
-            <Badge variant="outline">Floor {floorNumber}</Badge>
-          </CardTitle>
-          <div className="text-sm text-muted-foreground">
-            {locationName}
+        <CardTitle className="flex items-center justify-between">
+          <span>{locationName}</span>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span>{mode === 'riser' ? 'Riser Diagram' : `Floor ${floorNumber}`}</span>
           </div>
-        </div>
+        </CardTitle>
       </CardHeader>
-      
       <CardContent className="space-y-4">
         {/* Toolbar */}
-        <div className="flex flex-wrap items-center gap-2 p-3 bg-muted rounded-lg">
+        <div className="flex flex-wrap items-center gap-2 p-4 bg-muted/50 rounded-lg">
           {/* Drawing Tools */}
-          <div className="flex gap-1">
-            {tools.map((tool) => {
-              const Icon = tool.icon;
-              return (
-                <Button
-                  key={tool.id}
-                  variant={activeTool === tool.id ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => handleToolClick(tool.id as ToolType)}
-                  title={tool.label}
-                >
-                  <Icon className="h-4 w-4" />
-                </Button>
-              );
-            })}
+          <div className="flex items-center gap-1">
+            <Button
+              variant={activeTool === "select" ? "default" : "outline"}
+              size="sm"
+              onClick={() => handleToolClick("select")}
+            >
+              <Hand className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={activeTool === "draw" ? "default" : "outline"}
+              size="sm"
+              onClick={() => handleToolClick("draw")}
+            >
+              <Brush className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={activeTool === "rectangle" ? "default" : "outline"}
+              size="sm"
+              onClick={() => handleToolClick("rectangle")}
+            >
+              <Square className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={activeTool === "circle" ? "default" : "outline"}
+              size="sm"
+              onClick={() => handleToolClick("circle")}
+            >
+              <CircleIcon className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={activeTool === "text" ? "default" : "outline"}
+              size="sm"
+              onClick={() => handleToolClick("text")}
+            >
+              <Type className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={activeTool === "eraser" ? "default" : "outline"}
+              size="sm"
+              onClick={() => handleToolClick("eraser")}
+            >
+              <Eraser className="h-4 w-4" />
+            </Button>
           </div>
 
-          <div className="h-6 w-px bg-border mx-2" />
+          <Separator orientation="vertical" className="h-8" />
 
           {/* Color Picker */}
           <div className="flex items-center gap-2">
-            <Label htmlFor="color-picker" className="text-sm">Color:</Label>
+            <Label className="text-sm">Color:</Label>
+            <div className="flex gap-1">
+              {colors.map((color) => (
+                <button
+                  key={color}
+                  className={`w-6 h-6 rounded border-2 ${
+                    activeColor === color ? "border-primary" : "border-muted"
+                  }`}
+                  style={{ backgroundColor: color }}
+                  onClick={() => setActiveColor(color)}
+                />
+              ))}
+            </div>
             <Input
-              id="color-picker"
               type="color"
               value={activeColor}
               onChange={(e) => setActiveColor(e.target.value)}
-              className="w-12 h-8 p-1 border rounded cursor-pointer"
+              className="w-8 h-8 p-0 border-0"
             />
           </div>
 
+          <Separator orientation="vertical" className="h-8" />
+
           {/* Brush Width */}
           <div className="flex items-center gap-2">
-            <Label htmlFor="brush-width" className="text-sm">Width:</Label>
-            <Select value={brushWidth.toString()} onValueChange={(value) => setBrushWidth(parseInt(value))}>
-              <SelectTrigger className="w-16 h-8">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="1">1px</SelectItem>
-                <SelectItem value="2">2px</SelectItem>
-                <SelectItem value="3">3px</SelectItem>
-                <SelectItem value="5">5px</SelectItem>
-                <SelectItem value="8">8px</SelectItem>
-                <SelectItem value="12">12px</SelectItem>
-              </SelectContent>
-            </Select>
+            <Label className="text-sm">Size:</Label>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setBrushWidth(Math.max(1, brushWidth - 1))}
+            >
+              <Minus className="h-3 w-3" />
+            </Button>
+            <span className="text-sm w-6 text-center">{brushWidth}</span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setBrushWidth(Math.min(20, brushWidth + 1))}
+            >
+              <Plus className="h-3 w-3" />
+            </Button>
           </div>
 
-          <div className="h-6 w-px bg-border mx-2" />
+          <Separator orientation="vertical" className="h-8" />
 
           {/* Action Buttons */}
-          <div className="flex gap-1">
-            <Button variant="outline" size="sm" onClick={handleUndo} title="Undo">
+          <div className="flex items-center gap-1">
+            <Button variant="outline" size="sm" onClick={handleUndo}>
               <Undo className="h-4 w-4" />
             </Button>
-            <Button variant="outline" size="sm" onClick={handleRedo} title="Redo">
+            <Button variant="outline" size="sm" onClick={handleRedo}>
               <Redo className="h-4 w-4" />
             </Button>
-            <Button variant="outline" size="sm" onClick={handleClear} title="Clear All">
+            <Button variant="outline" size="sm" onClick={handleClear}>
               <Trash2 className="h-4 w-4" />
             </Button>
-            <Button variant="default" size="sm" onClick={handleSave} title="Save Floor Plan">
-              <Download className="h-4 w-4" />
+            <Button variant="default" size="sm" onClick={handleSave}>
+              <Save className="h-4 w-4 mr-1" />
+              Save
             </Button>
           </div>
         </div>
 
         {/* Canvas */}
-        <div className="border border-border rounded-lg shadow-sm overflow-hidden bg-white">
-          <canvas 
-            ref={canvasRef} 
-            className="max-w-full cursor-crosshair"
-          />
+        <div className="flex justify-center">
+          <div className="border border-border rounded-lg overflow-hidden shadow-sm">
+            <canvas ref={canvasRef} />
+          </div>
         </div>
 
         {/* Instructions */}
-        <div className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">
-          <p className="font-medium mb-1">Instructions:</p>
+        <div className="text-sm text-muted-foreground bg-muted/30 p-3 rounded-lg">
+          <p className="font-medium mb-1">Drawing Instructions:</p>
           <ul className="space-y-1 text-xs">
-            <li>• Use the <strong>Select</strong> tool to move and resize objects</li>
-            <li>• Use <strong>Draw</strong> to sketch drop point locations and cable runs</li>
-            <li>• Add <strong>Rectangles</strong> and <strong>Circles</strong> to mark equipment areas</li>
-            <li>• Use <strong>Text</strong> to label rooms, equipment, or drop points</li>
-            <li>• Click <strong>Save</strong> to store your floor plan changes</li>
+            <li>• Select the <strong>Hand</strong> tool to move and select objects</li>
+            <li>• Use the <strong>Brush</strong> tool to draw freehand</li>
+            <li>• Click <strong>Rectangle</strong> or <strong>Circle</strong> to add shapes</li>
+            <li>• Click <strong>Text</strong> to add text labels</li>
+            <li>• Use the <strong>Eraser</strong> to remove parts of your drawing</li>
+            <li>• Choose colors and adjust brush size using the toolbar</li>
+            <li>• Click <strong>Save</strong> to preserve your work</li>
           </ul>
         </div>
       </CardContent>

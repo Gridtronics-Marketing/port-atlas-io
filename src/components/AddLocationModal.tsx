@@ -752,15 +752,15 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
                                          <div className="h-px bg-border flex-1"></div>
                                        </div>
                                        
-                                        <Button 
-                                          variant="outline" 
-                                          size="sm"
-                                          onClick={() => setDrawingMode(prev => ({ ...prev, [floorNumber]: !prev[floorNumber] }))}
-                                          className="bg-background hover:bg-muted"
-                                        >
-                                          <FileImage className="h-4 w-4 mr-2" />
-                                          {drawingMode[floorNumber] ? 'Exit Draw Mode' : 'Draw Map'}
-                                        </Button>
+                                         <Button 
+                                           variant="outline" 
+                                           size="sm"
+                                           onClick={() => setDrawingMode(prev => ({ ...prev, [floorNumber]: !prev[floorNumber] }))}
+                                           className="bg-background hover:bg-muted"
+                                         >
+                                           <FileImage className="h-4 w-4 mr-2" />
+                                           {drawingMode[floorNumber] ? 'Exit Draw Mode' : 'Draw Map'}
+                                         </Button>
                                      </div>
                                    </div>
                                   </div>
@@ -769,16 +769,16 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
                                 {drawingMode[floorNumber] && (
                                   <div className="mt-4 border-t pt-4">
                                     <div className="min-h-[500px] border rounded-lg overflow-hidden bg-background">
-                                      <FloorPlanEditor
-                                        floorNumber={floorNumber}
-                                        locationName={`${formData.name || 'Location'} - Floor ${floorNumber}`}
-                                        mode="draw"
-                                        onSave={(canvasData) => {
-                                          console.log('Drawing saved for floor', floorNumber, canvasData);
-                                          // Here you could convert the canvas data to an image file
-                                          // and set it as the layout file for this floor
-                                        }}
-                                      />
+                                       <FloorPlanEditor
+                                         floorNumber={floorNumber}
+                                         locationName={`${formData.name || 'Location'} - Floor ${floorNumber}`}
+                                         mode="draw"
+                                         locationId={location?.id}
+                                         onSave={(canvasData) => {
+                                           console.log('Drawing saved for floor', floorNumber, canvasData);
+                                           setDrawingMode(prev => ({ ...prev, [floorNumber]: false }));
+                                         }}
+                                       />
                                     </div>
                                     <div className="flex justify-end mt-2">
                                       <Button

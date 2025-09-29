@@ -50,18 +50,29 @@ interface ComponentPermission {
 }
 
 const DEFAULT_RESOURCES = [
-  'backbone_cables',
-  'distribution_frames', 
-  'drop_points',
-  'work_orders',
+  'projects',
+  'locations', 
   'employees',
   'clients',
-  'locations',
-  'documentation',
-  'capacity_alerts',
-  'patch_connections',
-  'network_devices',
-  'vlans'
+  'contracts',
+  'work_orders',
+  'equipment',
+  'drop_points',
+  'distribution_frames',
+  'backbone_cables',
+  'photo_uploads',
+  'room_views',
+  'drop_point_photos',
+  'documentation_files',
+  'maintenance_schedules',
+  'procurement',
+  'financial_data',
+  'reporting',
+  'system_settings',
+  'user_management',
+  'capacity_management',
+  'change_logs',
+  'canvas_drawings'
 ];
 
 export const GranularPermissionsManager = () => {
@@ -102,11 +113,40 @@ export const GranularPermissionsManager = () => {
   };
 
   const getDefaultPermissionForRole = (roles: AppRole[], resource: string, action: string): boolean => {
+    // Admin gets ALL permissions for ALL resources and actions
     if (roles.includes('admin')) return true;
-    if (roles.includes('hr_manager')) return action !== 'delete';
-    if (roles.includes('project_manager')) return action !== 'delete';
-    if (roles.includes('technician')) return action === 'read' || action === 'update';
-    return action === 'read';
+    
+    // HR Manager gets comprehensive permissions but not system-wide admin
+    if (roles.includes('hr_manager')) {
+      if (resource === 'system_settings' && action === 'delete') return false;
+      if (resource === 'user_management' && action === 'delete') return false;
+      return true;
+    }
+    
+    // Project Manager gets project and operational permissions
+    if (roles.includes('project_manager')) {
+      if (['system_settings', 'user_management', 'financial_data'].includes(resource)) return false;
+      if (resource === 'employees' && ['create', 'delete'].includes(action)) return false;
+      return true;
+    }
+    
+    // Technician gets operational permissions
+    if (roles.includes('technician')) {
+      const readWriteResources = ['drop_points', 'photo_uploads', 'room_views', 'drop_point_photos', 'documentation_files', 'canvas_drawings', 'maintenance_schedules'];
+      const readOnlyResources = ['projects', 'locations', 'employees', 'equipment', 'work_orders'];
+      
+      if (readWriteResources.includes(resource)) return true;
+      if (readOnlyResources.includes(resource) && action === 'read') return true;
+      return false;
+    }
+    
+    // Viewer gets read-only permissions for basic resources
+    if (roles.includes('viewer')) {
+      const viewableResources = ['projects', 'locations', 'drop_points', 'equipment', 'documentation_files'];
+      return viewableResources.includes(resource) && action === 'read';
+    }
+    
+    return false;
   };
 
   const getDefaultConditionsForRole = (roles: AppRole[], resource: string) => {
