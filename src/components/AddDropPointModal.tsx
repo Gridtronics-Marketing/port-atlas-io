@@ -81,6 +81,7 @@ export const AddDropPointModal = ({
         room: null,
         point_type: "data" as const,
         status: "planned" as const,
+        cable_count: formData.numberOfCables ? parseInt(formData.numberOfCables) : 1,
         notes: `${formData.numberOfCables ? `Cables: ${formData.numberOfCables}` : 'Cables: TBD'}, Type: ${formData.cableType}${formData.notes ? `, Notes: ${formData.notes}` : ''}`,
         floor,
         x_coordinate: coordinates?.x || null,

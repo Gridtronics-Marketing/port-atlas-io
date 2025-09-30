@@ -1013,6 +1013,7 @@ export type Database = {
       }
       drop_points: {
         Row: {
+          cable_count: number | null
           cable_id: string | null
           created_at: string
           floor: number | null
@@ -1038,6 +1039,7 @@ export type Database = {
           y_coordinate: number | null
         }
         Insert: {
+          cable_count?: number | null
           cable_id?: string | null
           created_at?: string
           floor?: number | null
@@ -1063,6 +1065,7 @@ export type Database = {
           y_coordinate?: number | null
         }
         Update: {
+          cable_count?: number | null
           cable_id?: string | null
           created_at?: string
           floor?: number | null
@@ -3405,6 +3408,63 @@ export type Database = {
           {
             foreignKeyName: "test_results_tested_by_fkey"
             columns: ["tested_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      test_results_files: {
+        Row: {
+          created_at: string | null
+          drop_point_id: string
+          file_name: string
+          file_size: number | null
+          file_url: string
+          id: string
+          notes: string | null
+          test_type: string | null
+          updated_at: string | null
+          uploaded_at: string | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          drop_point_id: string
+          file_name: string
+          file_size?: number | null
+          file_url: string
+          id?: string
+          notes?: string | null
+          test_type?: string | null
+          updated_at?: string | null
+          uploaded_at?: string | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          drop_point_id?: string
+          file_name?: string
+          file_size?: number | null
+          file_url?: string
+          id?: string
+          notes?: string | null
+          test_type?: string | null
+          updated_at?: string | null
+          uploaded_at?: string | null
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "test_results_files_drop_point_id_fkey"
+            columns: ["drop_point_id"]
+            isOneToOne: false
+            referencedRelation: "drop_points"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "test_results_files_uploaded_by_fkey"
+            columns: ["uploaded_by"]
             isOneToOne: false
             referencedRelation: "employees"
             referencedColumns: ["id"]

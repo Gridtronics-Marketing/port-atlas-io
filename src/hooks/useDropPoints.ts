@@ -13,6 +13,7 @@ export interface DropPoint {
   y_coordinate: number | null;
   status: 'planned' | 'roughed' | 'terminated' | 'tested' | 'active' | 'inactive';
   cable_id: string | null;
+  cable_count: number;
   patch_panel_port: string | null;
   switch_port: string | null;
   vlan: string | null;

@@ -45,6 +45,7 @@ import { usePhotoCapture } from '@/hooks/usePhotoCapture';
 import { useToast } from '@/hooks/use-toast';
 import { EnhancedPhotoGallery } from './EnhancedPhotoGallery';
 import { PhotoCaptureCard } from './PhotoCaptureCard';
+import { TestResultsUpload } from './TestResultsUpload';
 
 interface DropPointDetailsModalProps {
   open: boolean;
@@ -74,6 +75,7 @@ export const DropPointDetailsModal: React.FC<DropPointDetailsModalProps> = ({
       setEditData({
         label: dropPoint.label,
         room: dropPoint.room,
+        cable_count: dropPoint.cable_count,
         notes: dropPoint.notes,
         point_type: dropPoint.point_type,
         status: dropPoint.status,
@@ -326,6 +328,21 @@ export const DropPointDetailsModal: React.FC<DropPointDetailsModalProps> = ({
                     </Badge>
                   )}
                 </div>
+
+                <div>
+                  <Label htmlFor="cable_count">Number of Cables</Label>
+                  {isEditing ? (
+                    <Input
+                      id="cable_count"
+                      type="number"
+                      min="1"
+                      value={editData.cable_count || 1}
+                      onChange={(e) => setEditData({ ...editData, cable_count: parseInt(e.target.value) || 1 })}
+                    />
+                  ) : (
+                    <p className="text-sm">{dropPoint.cable_count || 1}</p>
+                  )}
+                </div>
               </div>
 
               <div className="space-y-4">
@@ -387,6 +404,15 @@ export const DropPointDetailsModal: React.FC<DropPointDetailsModalProps> = ({
                 <p className="text-sm">{dropPoint.notes || 'No notes available'}</p>
               )}
             </div>
+
+            <Separator className="my-6" />
+
+            <TestResultsUpload 
+              dropPointId={dropPoint.id} 
+              onUploadComplete={() => {
+                // Optionally refresh drop point data
+              }}
+            />
           </TabsContent>
 
           <TabsContent value="photos" className="space-y-4">

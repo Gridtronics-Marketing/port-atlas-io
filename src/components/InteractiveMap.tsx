@@ -19,6 +19,7 @@ interface DropPoint {
   label: string;
   room: string;
   status: "planned" | "installed" | "tested" | "active" | "inactive";
+  cable_count: number;
 }
 
 interface InteractiveMapProps {
@@ -45,7 +46,8 @@ export const InteractiveMap = ({ locationId, floors = 1, currentFloor = 1, backg
       type: dp.point_type as "data" | "fiber" | "security" | "wireless" | "power",
       label: dp.label,
       room: dp.room || "Unknown",
-      status: dp.status as "planned" | "installed" | "tested" | "active" | "inactive"
+      status: dp.status as "planned" | "installed" | "tested" | "active" | "inactive",
+      cable_count: dp.cable_count || 1
     }));
 
   const getDropPointIcon = (type: string) => {
@@ -127,14 +129,15 @@ export const InteractiveMap = ({ locationId, floors = 1, currentFloor = 1, backg
           </Badge>
         </div>
         
-        <Button
-          variant={isAddingPoint ? "default" : "outline"}
-          onClick={() => setIsAddingPoint(!isAddingPoint)}
-          className={isAddingPoint ? "bg-gradient-primary" : ""}
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          {isAddingPoint ? "Click to Place" : "Add Drop Point"}
-        </Button>
+        {!isAddingPoint && (
+          <Button
+            variant="outline"
+            onClick={() => setIsAddingPoint(true)}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Drop Point
+          </Button>
+        )}
       </div>
 
       {/* Interactive Map */}
@@ -231,7 +234,10 @@ export const InteractiveMap = ({ locationId, floors = 1, currentFloor = 1, backg
                   <div className="text-sm">
                     <p className="font-medium">{point.label}</p>
                     <p className="text-muted-foreground">{point.room}</p>
-                    <p className="text-xs capitalize">{point.type} • {point.status}</p>
+                    <p className="text-xs capitalize">
+                      {point.type} • {point.status}
+                      {point.cable_count > 1 && ` • ${point.cable_count} cables`}
+                    </p>
                   </div>
                 </TooltipContent>
               </Tooltip>
