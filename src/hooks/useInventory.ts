@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 export interface InventoryItem {
   id: string;
@@ -12,9 +12,14 @@ export interface InventoryItem {
   current_stock: number;
   minimum_stock: number;
   maximum_stock?: number;
+  reorder_point: number;
   unit_cost?: number;
-  supplier?: string;
-  location?: string;
+  last_purchase_price?: number;
+  average_cost?: number;
+  preferred_supplier_id?: string;
+  alternate_supplier_ids?: string[];
+  location_id?: string;
+  warehouse_location?: string;
   last_restock_date?: string;
   last_used_date?: string;
   status: 'available' | 'low_stock' | 'out_of_stock' | 'discontinued';
@@ -32,10 +37,12 @@ export interface StockTransaction {
   employee_id?: string;
   project_id?: string;
   work_order_id?: string;
-  supplier?: string;
+  purchase_order_id?: string;
+  supplier_id?: string;
   reference_number?: string;
-  notes?: string;
   transaction_date: string;
+  notes?: string;
+  created_by?: string;
   created_at: string;
 }
 
@@ -47,11 +54,12 @@ export interface ToolCheckout {
   checkout_date: string;
   expected_return_date?: string;
   actual_return_date?: string;
-  condition_out: string;
+  condition_out?: string;
   condition_in?: string;
-  notes?: string;
   status: 'checked_out' | 'returned' | 'overdue' | 'lost_damaged';
+  notes?: string;
   created_at: string;
+  updated_at: string;
 }
 
 export function useInventory() {
@@ -59,134 +67,42 @@ export function useInventory() {
   const [transactions, setTransactions] = useState<StockTransaction[]>([]);
   const [toolCheckouts, setToolCheckouts] = useState<ToolCheckout[]>([]);
   const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
 
   const fetchInventory = async () => {
     try {
-      // Since we don't have an inventory table, we'll simulate with equipment data
-      const { data: equipmentData, error } = await supabase
-        .from('equipment')
+      setLoading(true);
+      
+      // Fetch inventory items from database
+      const { data: inventoryData, error: inventoryError } = await supabase
+        .from('inventory_items')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('name');
 
-      if (error) throw error;
+      if (inventoryError) throw inventoryError;
 
-      // Transform equipment to inventory items
-      const inventoryItems: InventoryItem[] = equipmentData?.map(eq => ({
-        id: eq.id,
-        name: eq.name,
-        category: eq.equipment_type,
-        sku: eq.asset_tag,
-        description: `${eq.make} ${eq.model}`.trim(),
-        unit_of_measure: 'each',
-        current_stock: eq.status === 'Available' ? 1 : 0,
-        minimum_stock: 1,
-        maximum_stock: 5,
-        unit_cost: eq.cost,
-        supplier: 'TechCorp Supply',
-        location: eq.location_id,
-        status: eq.status === 'Available' ? 'available' : 'out_of_stock' as any,
-        created_at: eq.created_at,
-        updated_at: eq.updated_at,
-      })) || [];
+      // Fetch transactions
+      const { data: transactionsData, error: transactionsError } = await supabase
+        .from('stock_transactions')
+        .select('*')
+        .order('transaction_date', { ascending: false })
+        .limit(100);
 
-      // Add some consumable items
-      const consumables: InventoryItem[] = [
-        {
-          id: 'cable-cat6-1000ft',
-          name: 'Cat6 Cable - 1000ft',
-          category: 'Cables',
-          sku: 'CAB-CAT6-1000',
-          description: 'Category 6 UTP Cable, 1000ft spool',
-          unit_of_measure: 'feet',
-          current_stock: 5000,
-          minimum_stock: 1000,
-          maximum_stock: 10000,
-          unit_cost: 0.25,
-          supplier: 'Cable Solutions Inc',
-          location: 'Warehouse A',
-          status: 'available',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-        {
-          id: 'fiber-sm-2000ft',
-          name: 'Single Mode Fiber - 2000ft',
-          category: 'Cables',
-          sku: 'FIB-SM-2000',
-          description: 'Single Mode Fiber Optic Cable, 2000ft spool',
-          unit_of_measure: 'feet',
-          current_stock: 800,
-          minimum_stock: 500,
-          maximum_stock: 3000,
-          unit_cost: 0.45,
-          supplier: 'Fiber Optics Corp',
-          location: 'Warehouse A',
-          status: 'available',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-        {
-          id: 'connectors-rj45-100',
-          name: 'RJ45 Connectors - Box of 100',
-          category: 'Connectors',
-          sku: 'CON-RJ45-100',
-          description: 'Cat6 RJ45 connectors, box of 100',
-          unit_of_measure: 'box',
-          current_stock: 25,
-          minimum_stock: 10,
-          maximum_stock: 50,
-          unit_cost: 15.99,
-          supplier: 'ConnectTech Supply',
-          location: 'Warehouse B',
-          status: 'available',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-        {
-          id: 'patch-panels-24port',
-          name: '24-Port Patch Panel',
-          category: 'Patch Panels',
-          sku: 'PP-24-CAT6',
-          description: '24-port Cat6 patch panel, 1U rack mount',
-          unit_of_measure: 'each',
-          current_stock: 8,
-          minimum_stock: 5,
-          maximum_stock: 20,
-          unit_cost: 125.00,
-          supplier: 'Network Hardware Pro',
-          location: 'Warehouse B',
-          status: 'low_stock',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-        {
-          id: 'cable-ties-1000',
-          name: 'Cable Ties - Pack of 1000',
-          category: 'Accessories',
-          sku: 'ACC-TIE-1000',
-          description: '8" cable ties, pack of 1000',
-          unit_of_measure: 'pack',
-          current_stock: 2,
-          minimum_stock: 5,
-          maximum_stock: 20,
-          unit_cost: 12.50,
-          supplier: 'General Supply Co',
-          location: 'Warehouse A',
-          status: 'low_stock',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-      ];
+      if (transactionsError) throw transactionsError;
 
-      setInventory([...inventoryItems, ...consumables]);
+      // Fetch tool checkouts
+      const { data: checkoutsData, error: checkoutsError } = await supabase
+        .from('tool_checkouts')
+        .select('*')
+        .order('checkout_date', { ascending: false });
+
+      if (checkoutsError) throw checkoutsError;
+
+      setInventory((inventoryData || []) as InventoryItem[]);
+      setTransactions((transactionsData || []) as StockTransaction[]);
+      setToolCheckouts((checkoutsData || []) as ToolCheckout[]);
     } catch (error) {
       console.error('Error fetching inventory:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch inventory',
-        variant: 'destructive',
-      });
+      toast.error('Failed to load inventory data');
     } finally {
       setLoading(false);
     }
@@ -194,109 +110,100 @@ export function useInventory() {
 
   const addInventoryItem = async (itemData: Omit<InventoryItem, 'id' | 'created_at' | 'updated_at'>) => {
     try {
-      // In a real implementation, this would create an inventory record
-      const newItem: InventoryItem = {
-        id: crypto.randomUUID(),
-        ...itemData,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
+      const { data, error } = await supabase
+        .from('inventory_items')
+        .insert([itemData])
+        .select()
+        .single();
 
-      setInventory(prev => [newItem, ...prev]);
-      toast({
-        title: 'Success',
-        description: 'Inventory item added successfully',
-      });
-      
-      return newItem;
+      if (error) throw error;
+
+      setInventory(prev => [data as InventoryItem, ...prev]);
+      toast.success('Inventory item added successfully');
+      return data;
     } catch (error) {
       console.error('Error adding inventory item:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to add inventory item',
-        variant: 'destructive',
-      });
+      toast.error('Failed to add inventory item');
       throw error;
     }
   };
 
   const updateStock = async (
-    itemId: string, 
-    transactionType: 'in' | 'out' | 'adjustment',
+    itemId: string,
+    transactionType: 'in' | 'out' | 'adjustment' | 'return',
     quantity: number,
     employeeId?: string,
     projectId?: string,
+    workOrderId?: string,
     notes?: string
   ) => {
     try {
       const item = inventory.find(i => i.id === itemId);
       if (!item) throw new Error('Item not found');
 
-      let newStock = item.current_stock;
-      switch (transactionType) {
-        case 'in':
-          newStock += quantity;
-          break;
-        case 'out':
-          newStock -= quantity;
-          break;
-        case 'adjustment':
-          newStock = quantity; // Direct adjustment to specific amount
-          break;
-      }
-
-      // Update item status based on stock levels
-      let newStatus: InventoryItem['status'] = 'available';
-      if (newStock <= 0) newStatus = 'out_of_stock';
-      else if (newStock <= item.minimum_stock) newStatus = 'low_stock';
-
-      // Create transaction record
-      const transaction: StockTransaction = {
-        id: crypto.randomUUID(),
+      // Create stock transaction
+      const transactionData = {
         inventory_item_id: itemId,
         transaction_type: transactionType,
-        quantity: transactionType === 'adjustment' ? quantity - item.current_stock : quantity,
+        quantity,
         employee_id: employeeId,
         project_id: projectId,
+        work_order_id: workOrderId,
         notes,
-        transaction_date: new Date().toISOString(),
-        created_at: new Date().toISOString(),
+        unit_cost: item.unit_cost,
+        total_cost: item.unit_cost ? item.unit_cost * quantity : undefined,
       };
 
-      setTransactions(prev => [transaction, ...prev]);
-      setInventory(prev => 
-        prev.map(i => i.id === itemId ? {
-          ...i,
-          current_stock: newStock,
-          status: newStatus,
-          last_used_date: transactionType === 'out' ? new Date().toISOString() : i.last_used_date,
-          last_restock_date: transactionType === 'in' ? new Date().toISOString() : i.last_restock_date,
-          updated_at: new Date().toISOString(),
-        } : i)
-      );
+      const { data: transaction, error: transactionError } = await supabase
+        .from('stock_transactions')
+        .insert([transactionData])
+        .select()
+        .single();
 
-      toast({
-        title: 'Success',
-        description: `Stock ${transactionType === 'in' ? 'added' : transactionType === 'out' ? 'removed' : 'adjusted'} successfully`,
-      });
+      if (transactionError) throw transactionError;
 
-      // Check for low stock alerts
-      if (newStatus === 'low_stock' || newStatus === 'out_of_stock') {
-        toast({
-          title: 'Stock Alert',
-          description: `${item.name} is ${newStatus === 'out_of_stock' ? 'out of stock' : 'running low'}`,
-          variant: 'destructive',
-        });
+      // Calculate new stock level
+      let newStock = item.current_stock;
+      if (transactionType === 'in' || transactionType === 'return') {
+        newStock += quantity;
+      } else if (transactionType === 'out') {
+        newStock -= quantity;
+      } else if (transactionType === 'adjustment') {
+        newStock = quantity;
       }
 
-      return transaction;
+      // Determine new status
+      let newStatus: InventoryItem['status'] = 'available';
+      if (newStock === 0) {
+        newStatus = 'out_of_stock';
+      } else if (newStock <= item.reorder_point) {
+        newStatus = 'low_stock';
+      }
+
+      // Update inventory item
+      const { data: updatedItem, error: updateError } = await supabase
+        .from('inventory_items')
+        .update({
+          current_stock: newStock,
+          status: newStatus,
+          last_used_date: transactionType === 'out' ? new Date().toISOString() : item.last_used_date,
+        })
+        .eq('id', itemId)
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
+
+      setInventory(prev => prev.map(i => i.id === itemId ? updatedItem as InventoryItem : i));
+      setTransactions(prev => [transaction as StockTransaction, ...prev]);
+      toast.success('Stock updated successfully');
+
+      if (newStatus === 'low_stock' || newStatus === 'out_of_stock') {
+        toast.error(`${item.name} is ${newStatus === 'out_of_stock' ? 'out of stock' : 'running low'}`);
+      }
     } catch (error) {
       console.error('Error updating stock:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to update stock',
-        variant: 'destructive',
-      });
+      toast.error('Failed to update stock');
       throw error;
     }
   };
@@ -306,80 +213,78 @@ export function useInventory() {
     employeeId: string,
     projectId?: string,
     expectedReturnDate?: string,
+    conditionOut?: string,
     notes?: string
   ) => {
     try {
-      const checkout: ToolCheckout = {
-        id: crypto.randomUUID(),
+      const checkoutData = {
         tool_id: toolId,
         employee_id: employeeId,
         project_id: projectId,
-        checkout_date: new Date().toISOString(),
         expected_return_date: expectedReturnDate,
-        condition_out: 'good',
+        condition_out: conditionOut,
         notes,
-        status: 'checked_out',
-        created_at: new Date().toISOString(),
+        status: 'checked_out' as const,
       };
 
-      setToolCheckouts(prev => [checkout, ...prev]);
+      const { data, error } = await supabase
+        .from('tool_checkouts')
+        .insert([checkoutData])
+        .select()
+        .single();
 
-      // Update inventory item status
-      await updateStock(toolId, 'out', 1, employeeId, projectId, `Tool checked out: ${notes || ''}`);
+      if (error) throw error;
 
-      toast({
-        title: 'Success',
-        description: 'Tool checked out successfully',
-      });
+      await updateStock(toolId, 'out', 1, employeeId, projectId, undefined, `Tool checked out: ${notes || ''}`);
 
-      return checkout;
+      setToolCheckouts(prev => [data as ToolCheckout, ...prev]);
+      toast.success('Tool checked out successfully');
+      return data;
     } catch (error) {
       console.error('Error checking out tool:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to check out tool',
-        variant: 'destructive',
-      });
+      toast.error('Failed to check out tool');
       throw error;
     }
   };
 
-  const returnTool = async (checkoutId: string, condition: string, notes?: string) => {
+  const returnTool = async (
+    checkoutId: string,
+    conditionIn?: string,
+    notes?: string
+  ) => {
     try {
       const checkout = toolCheckouts.find(c => c.id === checkoutId);
-      if (!checkout) throw new Error('Checkout record not found');
+      if (!checkout) throw new Error('Checkout not found');
 
-      setToolCheckouts(prev =>
-        prev.map(c => c.id === checkoutId ? {
-          ...c,
+      const { data, error } = await supabase
+        .from('tool_checkouts')
+        .update({
+          status: 'returned' as const,
           actual_return_date: new Date().toISOString(),
-          condition_in: condition,
-          notes: notes || c.notes,
-          status: 'returned',
-        } : c)
-      );
+          condition_in: conditionIn,
+          notes: notes || checkout.notes,
+        })
+        .eq('id', checkoutId)
+        .select()
+        .single();
 
-      // Update inventory item status
+      if (error) throw error;
+
       await updateStock(
-        checkout.tool_id, 
-        'in', 
-        1, 
-        checkout.employee_id, 
-        checkout.project_id, 
-        `Tool returned: ${condition} condition. ${notes || ''}`
+        checkout.tool_id,
+        'return',
+        1,
+        checkout.employee_id,
+        checkout.project_id,
+        undefined,
+        `Tool returned: ${notes || ''}`
       );
 
-      toast({
-        title: 'Success',
-        description: 'Tool returned successfully',
-      });
+      setToolCheckouts(prev => prev.map(c => c.id === checkoutId ? data as ToolCheckout : c));
+      toast.success('Tool returned successfully');
     } catch (error) {
       console.error('Error returning tool:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to return tool',
-        variant: 'destructive',
-      });
+      toast.error('Failed to return tool');
       throw error;
     }
   };
@@ -392,7 +297,8 @@ export function useInventory() {
 
   const getInventoryValue = () => {
     return inventory.reduce((total, item) => {
-      return total + (item.current_stock * (item.unit_cost || 0));
+      const itemValue = (item.average_cost || item.unit_cost || 0) * item.current_stock;
+      return total + itemValue;
     }, 0);
   };
 

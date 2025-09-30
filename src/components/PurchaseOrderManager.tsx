@@ -1,11 +1,24 @@
-import React from 'react';
+import { useState } from 'react';
 import { usePurchaseOrders } from '@/hooks/usePurchaseOrders';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { CreatePurchaseOrderModal } from '@/components/CreatePurchaseOrderModal';
+import { ReceivePurchaseOrderModal } from '@/components/ReceivePurchaseOrderModal';
+import { Package } from 'lucide-react';
 
 export const PurchaseOrderManager = () => {
-  const { purchaseOrders, loading, refetch } = usePurchaseOrders();
+  const { purchaseOrders, loading, refetch, getPurchaseOrderItems } = usePurchaseOrders();
+  const [receiveModalOpen, setReceiveModalOpen] = useState(false);
+  const [selectedPO, setSelectedPO] = useState<any>(null);
+  const [poItems, setPoItems] = useState<any[]>([]);
+
+  const handleOpenReceiveModal = async (po: any) => {
+    const items = await getPurchaseOrderItems(po.id);
+    setSelectedPO(po);
+    setPoItems(items);
+    setReceiveModalOpen(true);
+  };
 
   if (loading) {
     return <div>Loading purchase orders...</div>;
@@ -18,6 +31,7 @@ export const PurchaseOrderManager = () => {
       case 'approved': return 'default';
       case 'ordered': return 'default';
       case 'received': return 'default';
+      case 'partially_received': return 'default';
       case 'cancelled': return 'destructive';
       default: return 'secondary';
     }
@@ -60,10 +74,35 @@ export const PurchaseOrderManager = () => {
                   <p>{po.expected_delivery_date ? new Date(po.expected_delivery_date).toLocaleDateString() : 'N/A'}</p>
                 </div>
               </div>
+              {(po.status === 'approved' || po.status === 'ordered' || po.status === 'partially_received') && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleOpenReceiveModal(po)}
+                  className="mt-4"
+                >
+                  <Package className="h-4 w-4 mr-2" />
+                  Receive Items
+                </Button>
+              )}
             </CardContent>
           </Card>
         ))}
       </div>
+
+      {selectedPO && (
+        <ReceivePurchaseOrderModal
+          open={receiveModalOpen}
+          onClose={() => {
+            setReceiveModalOpen(false);
+            setSelectedPO(null);
+            setPoItems([]);
+          }}
+          purchaseOrder={selectedPO}
+          items={poItems}
+          onSuccess={refetch}
+        />
+      )}
     </div>
   );
 };

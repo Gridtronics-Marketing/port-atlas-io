@@ -1410,6 +1410,96 @@ export type Database = {
           },
         ]
       }
+      inventory_items: {
+        Row: {
+          alternate_supplier_ids: string[] | null
+          average_cost: number | null
+          category: string
+          created_at: string
+          current_stock: number
+          description: string | null
+          id: string
+          last_purchase_price: number | null
+          last_restock_date: string | null
+          last_used_date: string | null
+          location_id: string | null
+          maximum_stock: number | null
+          minimum_stock: number
+          name: string
+          preferred_supplier_id: string | null
+          reorder_point: number
+          sku: string | null
+          status: string
+          unit_cost: number | null
+          unit_of_measure: string
+          updated_at: string
+          warehouse_location: string | null
+        }
+        Insert: {
+          alternate_supplier_ids?: string[] | null
+          average_cost?: number | null
+          category: string
+          created_at?: string
+          current_stock?: number
+          description?: string | null
+          id?: string
+          last_purchase_price?: number | null
+          last_restock_date?: string | null
+          last_used_date?: string | null
+          location_id?: string | null
+          maximum_stock?: number | null
+          minimum_stock?: number
+          name: string
+          preferred_supplier_id?: string | null
+          reorder_point?: number
+          sku?: string | null
+          status?: string
+          unit_cost?: number | null
+          unit_of_measure?: string
+          updated_at?: string
+          warehouse_location?: string | null
+        }
+        Update: {
+          alternate_supplier_ids?: string[] | null
+          average_cost?: number | null
+          category?: string
+          created_at?: string
+          current_stock?: number
+          description?: string | null
+          id?: string
+          last_purchase_price?: number | null
+          last_restock_date?: string | null
+          last_used_date?: string | null
+          location_id?: string | null
+          maximum_stock?: number | null
+          minimum_stock?: number
+          name?: string
+          preferred_supplier_id?: string | null
+          reorder_point?: number
+          sku?: string | null
+          status?: string
+          unit_cost?: number | null
+          unit_of_measure?: string
+          updated_at?: string
+          warehouse_location?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_items_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_items_preferred_supplier_id_fkey"
+            columns: ["preferred_supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       locations: {
         Row: {
           access_instructions: string | null
@@ -2022,6 +2112,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          inventory_item_id: string | null
           item_code: string | null
           item_name: string
           line_total: number
@@ -2036,6 +2127,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          inventory_item_id?: string | null
           item_code?: string | null
           item_name: string
           line_total?: number
@@ -2050,6 +2142,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          inventory_item_id?: string | null
           item_code?: string | null
           item_name?: string
           line_total?: number
@@ -2061,6 +2154,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "purchase_order_items_inventory_item_id_fkey"
+            columns: ["inventory_item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "purchase_order_items_purchase_order_id_fkey"
             columns: ["purchase_order_id"]
@@ -2860,6 +2960,106 @@ export type Database = {
         }
         Relationships: []
       }
+      stock_transactions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          employee_id: string | null
+          id: string
+          inventory_item_id: string
+          notes: string | null
+          project_id: string | null
+          purchase_order_id: string | null
+          quantity: number
+          reference_number: string | null
+          supplier_id: string | null
+          total_cost: number | null
+          transaction_date: string
+          transaction_type: string
+          unit_cost: number | null
+          work_order_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          employee_id?: string | null
+          id?: string
+          inventory_item_id: string
+          notes?: string | null
+          project_id?: string | null
+          purchase_order_id?: string | null
+          quantity: number
+          reference_number?: string | null
+          supplier_id?: string | null
+          total_cost?: number | null
+          transaction_date?: string
+          transaction_type: string
+          unit_cost?: number | null
+          work_order_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          employee_id?: string | null
+          id?: string
+          inventory_item_id?: string
+          notes?: string | null
+          project_id?: string | null
+          purchase_order_id?: string | null
+          quantity?: number
+          reference_number?: string | null
+          supplier_id?: string | null
+          total_cost?: number | null
+          transaction_date?: string
+          transaction_type?: string
+          unit_cost?: number | null
+          work_order_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_transactions_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_transactions_inventory_item_id_fkey"
+            columns: ["inventory_item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_transactions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_transactions_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_transactions_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_transactions_work_order_id_fkey"
+            columns: ["work_order_id"]
+            isOneToOne: false
+            referencedRelation: "work_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscription_billing: {
         Row: {
           amount: number
@@ -3207,6 +3407,76 @@ export type Database = {
             columns: ["tested_by"]
             isOneToOne: false
             referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tool_checkouts: {
+        Row: {
+          actual_return_date: string | null
+          checkout_date: string
+          condition_in: string | null
+          condition_out: string | null
+          created_at: string
+          employee_id: string
+          expected_return_date: string | null
+          id: string
+          notes: string | null
+          project_id: string | null
+          status: string
+          tool_id: string
+          updated_at: string
+        }
+        Insert: {
+          actual_return_date?: string | null
+          checkout_date?: string
+          condition_in?: string | null
+          condition_out?: string | null
+          created_at?: string
+          employee_id: string
+          expected_return_date?: string | null
+          id?: string
+          notes?: string | null
+          project_id?: string | null
+          status?: string
+          tool_id: string
+          updated_at?: string
+        }
+        Update: {
+          actual_return_date?: string | null
+          checkout_date?: string
+          condition_in?: string | null
+          condition_out?: string | null
+          created_at?: string
+          employee_id?: string
+          expected_return_date?: string | null
+          id?: string
+          notes?: string | null
+          project_id?: string | null
+          status?: string
+          tool_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tool_checkouts_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tool_checkouts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tool_checkouts_tool_id_fkey"
+            columns: ["tool_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
             referencedColumns: ["id"]
           },
         ]

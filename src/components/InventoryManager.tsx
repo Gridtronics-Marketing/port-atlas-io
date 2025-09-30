@@ -80,9 +80,10 @@ export function InventoryManager() {
     current_stock: 0,
     minimum_stock: 1,
     maximum_stock: 100,
+    reorder_point: 5,
     unit_cost: 0,
-    supplier: '',
-    location: '',
+    preferred_supplier_id: undefined as string | undefined,
+    location_id: undefined as string | undefined,
   });
 
   const filteredInventory = inventory.filter(item => {
@@ -96,6 +97,7 @@ export function InventoryManager() {
     return matchesSearch && matchesCategory;
   });
 
+  const uniqueCategories = ['all', ...Array.from(new Set(inventory.map(item => item.category)))];
   const lowStockItems = getLowStockItems();
   const inventoryValue = getInventoryValue();
 
@@ -130,9 +132,10 @@ export function InventoryManager() {
         current_stock: 0,
         minimum_stock: 1,
         maximum_stock: 100,
+        reorder_point: 5,
         unit_cost: 0,
-        supplier: '',
-        location: '',
+        preferred_supplier_id: undefined,
+        location_id: undefined,
       });
       setShowAddItem(false);
     } catch (error) {
@@ -316,10 +319,10 @@ export function InventoryManager() {
                               <span>SKU: {item.sku}</span>
                             </>
                           )}
-                          {item.supplier && (
+                          {item.warehouse_location && (
                             <>
                               <span>•</span>
-                              <span>{item.supplier}</span>
+                              <span>{item.warehouse_location}</span>
                             </>
                           )}
                         </div>
@@ -700,20 +703,21 @@ export function InventoryManager() {
               </div>
               
               <div>
-                <Label>Supplier</Label>
+                <Label>Warehouse Location</Label>
                 <Input
-                  value={newItem.supplier}
-                  onChange={(e) => setNewItem(prev => ({ ...prev, supplier: e.target.value }))}
-                  placeholder="Supplier name"
+                  value={newItem.preferred_supplier_id || ''}
+                  onChange={(e) => setNewItem(prev => ({ ...prev, preferred_supplier_id: e.target.value || undefined }))}
+                  placeholder="Warehouse location code"
                 />
               </div>
               
               <div>
-                <Label>Location</Label>
+                <Label>Reorder Point</Label>
                 <Input
-                  value={newItem.location}
-                  onChange={(e) => setNewItem(prev => ({ ...prev, location: e.target.value }))}
-                  placeholder="Storage location"
+                  type="number"
+                  value={newItem.reorder_point}
+                  onChange={(e) => setNewItem(prev => ({ ...prev, reorder_point: parseInt(e.target.value) || 0 }))}
+                  placeholder="Reorder threshold"
                 />
               </div>
             </div>
