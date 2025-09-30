@@ -9,6 +9,7 @@ import { AppLayout } from "@/components/AppLayout";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { PWAUpdateNotification } from "@/components/PWAUpdateNotification";
 import { OfflineStatusIndicator } from "@/components/OfflineStatusIndicator";
+import { InAppEducationBanner } from "@/components/InAppEducationBanner";
 import Index from "./pages/Index";
 import Projects from "./pages/Projects";
 import Contracts from "./pages/Contracts";
@@ -43,6 +44,7 @@ const App = () => (
         <PWAUpdateNotification />
         <PWAInstallPrompt />
         <OfflineStatusIndicator />
+        <InAppEducationBanner />
         <BrowserRouter>
           <Routes>
             <Route path="/auth" element={<Auth />} />

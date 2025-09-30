@@ -22,6 +22,7 @@ import {
 import { usePWA, getPWACapabilities, trackPWAEvent } from '@/hooks/usePWA';
 import { useToast } from '@/hooks/use-toast';
 import { PWAInstallButton } from '@/components/PWAInstallButton';
+import { PWAInstallationStatus } from '@/components/PWAInstallationStatus';
 
 export const PWASettings: React.FC = () => {
   const { isInstalled, isStandalone, canInstall, installPrompt, isOnline } = usePWA();
@@ -114,6 +115,29 @@ export const PWASettings: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Multi-Device Installation Info */}
+      <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-background">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Smartphone className="w-5 h-5" />
+            Multi-Device Installation
+          </CardTitle>
+          <CardDescription>
+            Important: PWAs must be installed separately on each device
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="rounded-lg bg-background/80 p-4 space-y-3">
+            <p className="text-sm font-medium">Did you know?</p>
+            <p className="text-sm text-muted-foreground">
+              If you installed Port Atlas on your computer, you'll need to install it separately on your phone, tablet, or other devices. PWA installations don't sync across devices - each device needs its own installation.
+            </p>
+          </div>
+          
+          <PWAInstallationStatus />
+        </CardContent>
+      </Card>
+
       {/* Installation Status */}
       <Card>
         <CardHeader>

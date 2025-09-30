@@ -23,9 +23,13 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
   const { toast } = useToast();
   const [showIOSInstructions, setShowIOSInstructions] = useState(false);
 
-  // Detect iOS
+  // Enhanced iOS/iPadOS detection
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
-    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) ||
+    (navigator.platform === 'iPad' && navigator.maxTouchPoints > 1);
+  
+  // Check if running in Safari (required for iOS PWA installation)
+  const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome|CriOS|FxiOS/.test(navigator.userAgent);
 
   const handleInstallClick = async () => {
     // For iOS, show instructions modal
@@ -88,7 +92,7 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
           {showLabel && <span>Install App</span>}
           {isIOS && showLabel && (
             <Badge variant="secondary" className="ml-2 text-xs">
-              iOS
+              {isSafari ? 'iOS' : 'Use Safari'}
             </Badge>
           )}
         </Button>
@@ -97,6 +101,7 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
           <IOSInstallInstructions
             open={showIOSInstructions}
             onOpenChange={setShowIOSInstructions}
+            isSafari={isSafari}
           />
         )}
       </>
