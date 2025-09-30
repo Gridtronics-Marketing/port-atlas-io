@@ -19,10 +19,11 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Building2, User, Mail, Phone, MapPin, Calendar, ExternalLink, Loader2, Edit, Plus, Trash2 } from "lucide-react";
+import { Building2, User, Mail, Phone, MapPin, Calendar, ExternalLink, Loader2, Edit, Plus, Trash2, Map } from "lucide-react";
 import { Client } from "@/hooks/useClients";
 import { useClientLocations } from "@/hooks/useClientLocations";
 import { LocationMap } from "@/components/LocationMap";
+import { MultiLocationMap } from "@/components/MultiLocationMap";
 import { LocationDetailsModal } from "@/components/LocationDetailsModal";
 import { AddLocationModal } from "@/components/AddLocationModal";
 import { type Location } from "@/hooks/useLocations";
@@ -41,6 +42,7 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onDe
   const [isEditMode, setIsEditMode] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isAddLocationModalOpen, setIsAddLocationModalOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
 
   if (!client) return null;
 
@@ -202,20 +204,48 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onDe
           {/* Client Locations */}
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <CardTitle className="text-lg flex items-center gap-2">
                   <MapPin className="h-5 w-5 text-primary" />
-                  Client Locations
+                  Managed Locations
+                  {locations.length > 0 && (
+                    <Badge variant="secondary" className="ml-2">
+                      {locations.length}
+                    </Badge>
+                  )}
                 </CardTitle>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsAddLocationModalOpen(true)}
-                  className="flex items-center gap-2"
-                >
-                  <Plus className="h-4 w-4" />
-                  Add Location
-                </Button>
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
+                    <Button
+                      variant={viewMode === 'list' ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => setViewMode('list')}
+                      className="h-8 px-3"
+                    >
+                      <MapPin className="h-4 w-4 mr-1" />
+                      List
+                    </Button>
+                    <Button
+                      variant={viewMode === 'map' ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => setViewMode('map')}
+                      className="h-8 px-3"
+                      disabled={locations.length === 0}
+                    >
+                      <Map className="h-4 w-4 mr-1" />
+                      Map
+                    </Button>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsAddLocationModalOpen(true)}
+                    className="flex items-center gap-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span className="hidden sm:inline">Add Location</span>
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
@@ -228,38 +258,63 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onDe
                 <div className="text-center py-8 text-muted-foreground">
                   <MapPin className="h-8 w-8 mx-auto mb-2 opacity-50" />
                   <p>No locations found for this client</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsAddLocationModalOpen(true)}
+                    className="mt-4"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add First Location
+                  </Button>
+                </div>
+              ) : viewMode === 'map' ? (
+                <div className="space-y-4">
+                  <MultiLocationMap
+                    locations={locations}
+                    onLocationClick={(location) => setSelectedLocation(location)}
+                    height="h-[500px]"
+                  />
+                  <div className="text-xs text-muted-foreground text-center">
+                    Click on map pins to view location details
+                  </div>
                 </div>
               ) : (
-                <div className="space-y-6">
+                <div className="space-y-3">
                   {locations.map((location) => (
                     <div 
                       key={location.id} 
-                      className="border rounded-lg p-4 space-y-2 cursor-pointer hover:shadow-soft transition-all duration-200 hover:border-primary/30"
+                      className="border rounded-lg p-4 space-y-2 cursor-pointer hover:shadow-soft transition-all duration-200 hover:border-primary/30 bg-card"
                       onClick={() => setSelectedLocation(location)}
                     >
-                      <div className="flex items-center gap-2 mb-1">
-                        <div className="p-2 bg-primary/10 rounded-lg">
+                      <div className="flex items-start gap-3">
+                        <div className="p-2 bg-primary/10 rounded-lg shrink-0">
                           <MapPin className="h-4 w-4 text-primary" />
                         </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-semibold text-base">{location.name}</h4>
-                            <Badge variant="secondary" className="text-xs">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-2 mb-1">
+                            <h4 className="font-semibold text-base truncate">{location.name}</h4>
+                            <Badge variant="secondary" className="text-xs shrink-0">
                               {location.status}
                             </Badge>
                           </div>
-                          <p className="text-muted-foreground text-sm">
+                          <p className="text-muted-foreground text-sm line-clamp-1">
                             {location.address}
                           </p>
+                          <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground mt-2">
+                            <span className="flex items-center gap-1">
+                              <Building2 className="h-3 w-3" />
+                              {location.floors} floor{location.floors !== 1 ? 's' : ''}
+                            </span>
+                            {location.total_square_feet && (
+                              <span>{location.total_square_feet.toLocaleString()} sq ft</span>
+                            )}
+                            <span className="flex items-center gap-1">
+                              <MapPin className="h-3 w-3" />
+                              {location.drop_points_count || 0} drops
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground ml-12">
-                        <span>{location.floors} floor{location.floors !== 1 ? 's' : ''}</span>
-                        {location.total_square_feet && (
-                          <span>{location.total_square_feet.toLocaleString()} sq ft</span>
-                        )}
-                        <span>{location.drop_points_count || 0} drop points</span>
-                        <span className="text-xs">• Click to view details</span>
                       </div>
                     </div>
                   ))}
