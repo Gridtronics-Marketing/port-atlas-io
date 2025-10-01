@@ -47,43 +47,85 @@ export const FloorPlanDrawingCanvas = forwardRef<DrawingCanvasRef, FloorPlanDraw
   const [editingTextObject, setEditingTextObject] = useState<FabricText | null>(null);
   const [pendingTextPosition, setPendingTextPosition] = useState<{ x: number; y: number } | null>(null);
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const initDimensionsRef = useRef({ width: 0, height: 0 });
   const { toast } = useToast();
 
   // Initialize Fabric canvas
   useEffect(() => {
     if (!canvasRef.current) return;
+    
+    // Prevent re-initialization for minor dimension changes
+    const dimensionThreshold = 10; // pixels
+    const widthDiff = Math.abs(width - initDimensionsRef.current.width);
+    const heightDiff = Math.abs(height - initDimensionsRef.current.height);
+    
+    if (fabricCanvas && widthDiff < dimensionThreshold && heightDiff < dimensionThreshold) {
+      // Just resize existing canvas
+      fabricCanvas.setDimensions({ width, height });
+      fabricCanvas.renderAll();
+      return;
+    }
+    
+    console.log('🎨 Initializing canvas with dimensions:', width, 'x', height);
+    initDimensionsRef.current = { width, height };
+    
+    // Clean up existing canvas
+    if (fabricCanvas) {
+      console.log('🧹 Disposing old canvas before re-initialization');
+      fabricCanvas.dispose();
+    }
 
-    const canvas = new FabricCanvas(canvasRef.current, {
-      width,
-      height,
-      backgroundColor: '#f8f9fa',
-      preserveObjectStacking: true,
-    });
+    try {
+      const canvas = new FabricCanvas(canvasRef.current, {
+        width,
+        height,
+        backgroundColor: '#f8f9fa',
+        preserveObjectStacking: true,
+      });
 
-    // Initialize the freeDrawingBrush explicitly for Fabric.js v6
-    const brush = new PencilBrush(canvas);
-    brush.color = brushColor;
-    brush.width = brushSize;
-    canvas.freeDrawingBrush = brush;
+      // Initialize the freeDrawingBrush explicitly for Fabric.js v6
+      const brush = new PencilBrush(canvas);
+      brush.color = brushColor;
+      brush.width = brushSize;
+      canvas.freeDrawingBrush = brush;
 
-    setFabricCanvas(canvas);
+      setFabricCanvas(canvas);
 
-    // Load saved data if available
-    if (savedData) {
-      try {
-        canvas.loadFromJSON(savedData, () => {
-          canvas.renderAll();
-          saveToHistory(canvas);
-        });
-      } catch (error) {
-        console.error('Error loading saved drawing data:', error);
+      // Load saved data if available
+      if (savedData) {
+        try {
+          canvas.loadFromJSON(savedData, () => {
+            canvas.renderAll();
+            saveToHistory(canvas);
+          });
+        } catch (error) {
+          console.error('❌ Error loading saved drawing data:', error);
+          toast({
+            title: "Load Failed",
+            description: "Failed to load previous drawing. Starting fresh.",
+            variant: "destructive",
+          });
+        }
+      } else {
+        saveToHistory(canvas);
       }
-    } else {
-      saveToHistory(canvas);
+      
+      console.log('✅ Canvas initialized successfully');
+    } catch (error) {
+      console.error('❌ Error initializing canvas:', error);
+      toast({
+        title: "Canvas Error",
+        description: "Failed to initialize drawing canvas.",
+        variant: "destructive",
+      });
     }
 
     return () => {
-      canvas.dispose();
+      // Clear auto-save timer on cleanup
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+        autoSaveTimerRef.current = null;
+      }
     };
   }, [width, height]);
 
@@ -113,11 +155,6 @@ export const FloorPlanDrawingCanvas = forwardRef<DrawingCanvasRef, FloorPlanDraw
     fabricCanvas.isDrawingMode = false;
     fabricCanvas.selection = false;
     fabricCanvas.defaultCursor = 'default';
-    
-    // Reset composite operation
-    if (fabricCanvas.freeDrawingBrush) {
-      (fabricCanvas.freeDrawingBrush as any).globalCompositeOperation = 'source-over';
-    }
 
     switch (activeTool) {
       case 'select':
@@ -139,12 +176,9 @@ export const FloorPlanDrawingCanvas = forwardRef<DrawingCanvasRef, FloorPlanDraw
       
       case 'eraser':
         fabricCanvas.isDrawingMode = true;
-        fabricCanvas.freeDrawingBrush.color = 'white';
+        // Use white color with increased width for eraser effect
+        fabricCanvas.freeDrawingBrush.color = '#f8f9fa'; // Match background color
         fabricCanvas.freeDrawingBrush.width = brushSize * 2;
-        // Set composite operation to erase
-        if (fabricCanvas.freeDrawingBrush) {
-          (fabricCanvas.freeDrawingBrush as any).globalCompositeOperation = 'destination-out';
-        }
         fabricCanvas.defaultCursor = 'crosshair';
         break;
     }
@@ -210,14 +244,21 @@ export const FloorPlanDrawingCanvas = forwardRef<DrawingCanvasRef, FloorPlanDraw
     
     // Auto-save with debouncing
     const triggerAutoSave = () => {
+      // Clear any existing timer
       if (autoSaveTimerRef.current) {
         clearTimeout(autoSaveTimerRef.current);
       }
       
+      // Set new timer with longer delay to reduce frequency
       autoSaveTimerRef.current = setTimeout(() => {
-        const data = JSON.stringify(fabricCanvas.toJSON());
-        onSave(data);
-      }, autoSaveDelay);
+        try {
+          const data = JSON.stringify(fabricCanvas.toJSON());
+          onSave(data);
+          console.log('💾 Auto-save triggered');
+        } catch (error) {
+          console.error('❌ Auto-save failed:', error);
+        }
+      }, 5000); // Increased from 2000ms to 5000ms
     };
 
     fabricCanvas.on('mouse:down', handleMouseDown);
@@ -291,19 +332,20 @@ export const FloorPlanDrawingCanvas = forwardRef<DrawingCanvasRef, FloorPlanDraw
 
   // Load drawing data
   const load = useCallback((data: string) => {
-    if (!fabricCanvas) return;
+    if (!fabricCanvas) {
+      console.warn('⚠️ Cannot load: Canvas not initialized');
+      return;
+    }
     
     try {
+      console.log('📂 Loading drawing data into canvas');
       fabricCanvas.loadFromJSON(data, () => {
         fabricCanvas.renderAll();
         saveToHistory(fabricCanvas);
-        toast({
-          title: "Drawing Loaded",
-          description: "Floor plan annotations have been loaded.",
-        });
+        console.log('✅ Drawing loaded successfully');
       });
     } catch (error) {
-      console.error('Error loading drawing data:', error);
+      console.error('❌ Error loading drawing data:', error);
       toast({
         title: "Load Failed",
         description: "Failed to load drawing data.",

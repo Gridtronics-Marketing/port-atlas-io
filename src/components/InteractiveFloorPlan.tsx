@@ -79,6 +79,9 @@ export const InteractiveFloorPlan = ({
     return stored ? JSON.parse(stored) : null;
   });
   
+  // Track if drawing data has been loaded to prevent infinite loops
+  const drawingDataLoadedRef = useRef(false);
+  
   // Generate the actual file URL from path or use provided URL
   const actualFileUrl = fileUrl || (filePath ? getStorageUrl('floor-plans', filePath) : undefined);
 
@@ -358,6 +361,7 @@ export const InteractiveFloorPlan = ({
   };
 
   const handleDrawingSave = async (data: string) => {
+    console.log('💾 Saving drawing data...');
     setDrawingData(data);
     
     if (!locationId || !isValidUUID(locationId)) {
@@ -368,10 +372,7 @@ export const InteractiveFloorPlan = ({
       const storageKey = `temp-drawing-${floorNumber}`;
       localStorage.setItem(storageKey, data);
       
-      toast({
-        title: "Drawing Saved Temporarily",
-        description: "Your annotations will be saved after creating the location.",
-      });
+      console.log('💾 Drawing saved to localStorage');
       return;
     }
     
@@ -386,11 +387,7 @@ export const InteractiveFloorPlan = ({
       // Clear temporary storage after successful save
       const storageKey = `temp-drawing-${floorNumber}`;
       localStorage.removeItem(storageKey);
-      
-      toast({
-        title: "Drawing Saved",
-        description: "Your annotations have been saved to the database.",
-      });
+      console.log('💾 Drawing saved to database');
     }
   };
 
@@ -405,27 +402,41 @@ export const InteractiveFloorPlan = ({
 
   // Load saved drawing data on mount and when floor changes
   useEffect(() => {
-    if (!isValidUUID(locationId)) {
-      // Load temporary data if available
-      if (tempDrawingData && isDrawingMode && drawingCanvasRef.current?.drawingActions) {
-        const canvasDataStr = JSON.stringify(tempDrawingData);
-        drawingCanvasRef.current.drawingActions.load(canvasDataStr);
-        setDrawingData(canvasDataStr);
+    console.log('🔄 Drawing data load effect triggered');
+    
+    // Reset the loaded flag when floor changes
+    if (!drawingDataLoadedRef.current) {
+      if (!isValidUUID(locationId)) {
+        // Load temporary data if available
+        if (tempDrawingData && isDrawingMode && drawingCanvasRef.current?.drawingActions) {
+          console.log('📂 Loading temporary drawing data');
+          const canvasDataStr = JSON.stringify(tempDrawingData);
+          drawingCanvasRef.current.drawingActions.load(canvasDataStr);
+          setDrawingData(canvasDataStr);
+          drawingDataLoadedRef.current = true;
+        }
+        return;
       }
-      return;
-    }
 
-    const savedDrawing = getDrawingForFloor(floorNumber);
-    if (savedDrawing) {
-      const canvasDataStr = JSON.stringify(savedDrawing.canvas_data);
-      setDrawingData(canvasDataStr);
-      
-      // Auto-load into canvas if drawing mode is active
-      if (isDrawingMode && drawingCanvasRef.current?.drawingActions) {
-        drawingCanvasRef.current.drawingActions.load(canvasDataStr);
+      const savedDrawing = getDrawingForFloor(floorNumber);
+      if (savedDrawing) {
+        console.log('📂 Loading saved drawing data from database');
+        const canvasDataStr = JSON.stringify(savedDrawing.canvas_data);
+        setDrawingData(canvasDataStr);
+        
+        // Auto-load into canvas if drawing mode is active
+        if (isDrawingMode && drawingCanvasRef.current?.drawingActions) {
+          drawingCanvasRef.current.drawingActions.load(canvasDataStr);
+          drawingDataLoadedRef.current = true;
+        }
       }
     }
-  }, [locationId, floorNumber, getDrawingForFloor, isDrawingMode, tempDrawingData]);
+  }, [locationId, floorNumber, getDrawingForFloor, isDrawingMode]);
+  
+  // Reset loaded flag when floor changes
+  useEffect(() => {
+    drawingDataLoadedRef.current = false;
+  }, [floorNumber]);
 
   const handleRepairFiles = async () => {
     setIsRepairing(true);
