@@ -88,7 +88,10 @@ export const InteractiveFloorPlan = ({
     
     const updateDimensions = () => {
       const rect = containerRef.current!.getBoundingClientRect();
-      setContainerDimensions({ width: rect.width, height: rect.height });
+      // Provide fallback dimensions when no floor plan is uploaded
+      const width = rect.width || 800;
+      const height = actualFileUrl ? rect.height : 600; // Default height for blank canvas
+      setContainerDimensions({ width, height });
     };
     
     updateDimensions();
@@ -309,15 +312,6 @@ export const InteractiveFloorPlan = ({
   const handleDrawingToolChange = (tool: DrawingTool) => {
     console.log('✅ Drawing tool changed to:', tool);
     
-    if (!actualFileUrl) {
-      toast({
-        title: "Floor Plan Required",
-        description: "Please upload a floor plan image before using drawing tools.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
     setActiveTool(tool);
     
     // When switching to select mode, reset adding states and exit drawing mode
@@ -459,7 +453,6 @@ export const InteractiveFloorPlan = ({
               variant={isDrawingMode ? "default" : "outline"}
               size="sm"
               onClick={() => setIsDrawingMode(!isDrawingMode)}
-              disabled={!actualFileUrl}
             >
               <Paintbrush className="h-4 w-4 mr-2" />
               {isDrawingMode ? 'Exit Draw' : 'Draw Mode'}
@@ -598,13 +591,13 @@ export const InteractiveFloorPlan = ({
             <div className="w-full h-96 bg-muted flex items-center justify-center">
               <div className="text-center text-muted-foreground">
                 <p className="text-sm font-medium">No floor plan uploaded</p>
-                <p className="text-xs">Upload a floor plan to enable interactive placement</p>
+                <p className="text-xs">{isDrawingMode ? 'Draw on blank canvas or upload a floor plan' : 'Upload a floor plan to enable interactive placement'}</p>
               </div>
             </div>
           )}
 
           {/* Drawing Canvas Overlay */}
-          {actualFileUrl && containerDimensions.width > 0 && isDrawingMode && (
+          {containerDimensions.width > 0 && isDrawingMode && (
             <FloorPlanDrawingCanvas
               ref={drawingCanvasRef}
               width={containerDimensions.width * scale}
