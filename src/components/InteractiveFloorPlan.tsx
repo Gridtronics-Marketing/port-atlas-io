@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Plus, Minus, RotateCcw, ZoomIn, ZoomOut, RefreshCw, Camera, Paintbrush } from 'lucide-react';
+import { Plus, Minus, RotateCcw, ZoomIn, ZoomOut, RefreshCw, Camera, Paintbrush, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,6 +12,7 @@ import { FloorPlanDrawingToolbar, type DrawingTool } from './FloorPlanDrawingToo
 import { FloorPlanDrawingCanvas, type DrawingCanvasRef } from './FloorPlanDrawingCanvas';
 import { useDropPoints } from '@/hooks/useDropPoints';
 import { useRoomViews } from '@/hooks/useRoomViews';
+import { useCanvasDrawings } from '@/hooks/useCanvasDrawings';
 import { getStorageUrl, repairFloorPlanFiles } from '@/lib/storage-utils';
 import { useToast } from '@/hooks/use-toast';
 
@@ -65,6 +66,7 @@ export const InteractiveFloorPlan = ({
   
   const { dropPoints, loading: dropPointsLoading, updateDropPoint, fetchDropPoints } = useDropPoints(locationId);
   const { roomViews, loading: roomViewsLoading, updateRoomView, fetchRoomViews } = useRoomViews(locationId);
+  const { getDrawingForFloor, saveDrawing } = useCanvasDrawings(locationId);
   
   // Generate the actual file URL from path or use provided URL
   const actualFileUrl = fileUrl || (filePath ? getStorageUrl('floor-plans', filePath) : undefined);
@@ -344,26 +346,46 @@ export const InteractiveFloorPlan = ({
     setCanRedo(canRedoValue);
   };
 
-  const handleDrawingSave = (data: string) => {
+  const handleDrawingSave = async (data: string) => {
     setDrawingData(data);
-    // Here you could save to Supabase or local storage
-    localStorage.setItem(`floor-plan-drawing-${locationId}-${floorNumber}`, data);
+    
+    // Save to database
+    const result = await saveDrawing({
+      location_id: locationId,
+      floor_number: floorNumber,
+      canvas_data: JSON.parse(data)
+    });
+    
+    if (result) {
+      toast({
+        title: "Drawing Saved",
+        description: "Your annotations have been saved to the database.",
+      });
+    }
   };
 
   const handleDrawingLoad = () => {
-    const savedData = localStorage.getItem(`floor-plan-drawing-${locationId}-${floorNumber}`);
-    if (savedData && drawingCanvasRef.current?.drawingActions) {
-      drawingCanvasRef.current.drawingActions.load(savedData);
+    const savedDrawing = getDrawingForFloor(floorNumber);
+    if (savedDrawing && drawingCanvasRef.current?.drawingActions) {
+      const canvasDataStr = JSON.stringify(savedDrawing.canvas_data);
+      drawingCanvasRef.current.drawingActions.load(canvasDataStr);
+      setDrawingData(canvasDataStr);
     }
   };
 
-  // Load saved drawing data on mount
+  // Load saved drawing data on mount and when floor changes
   useEffect(() => {
-    const savedData = localStorage.getItem(`floor-plan-drawing-${locationId}-${floorNumber}`);
-    if (savedData) {
-      setDrawingData(savedData);
+    const savedDrawing = getDrawingForFloor(floorNumber);
+    if (savedDrawing) {
+      const canvasDataStr = JSON.stringify(savedDrawing.canvas_data);
+      setDrawingData(canvasDataStr);
+      
+      // Auto-load into canvas if drawing mode is active
+      if (isDrawingMode && drawingCanvasRef.current?.drawingActions) {
+        drawingCanvasRef.current.drawingActions.load(canvasDataStr);
+      }
     }
-  }, [locationId, floorNumber]);
+  }, [locationId, floorNumber, getDrawingForFloor, isDrawingMode]);
 
   const handleRepairFiles = async () => {
     setIsRepairing(true);

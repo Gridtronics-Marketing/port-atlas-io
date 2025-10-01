@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { Upload, X, MapPin, Plus, Minus, Building2, Users, Phone, FileText, FileImage } from "lucide-react";
-import { FloorPlanEditor } from "@/components/FloorPlanEditor";
+import { InteractiveFloorPlan } from "@/components/InteractiveFloorPlan";
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import {
   Dialog,
@@ -782,18 +782,13 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
                                   </div>
                                )}
                                
-                                {drawingMode[floorNumber] && (
+                                 {drawingMode[floorNumber] && (
                                   <div className="mt-4 border-t pt-4">
                                     <div className="min-h-[500px] border rounded-lg overflow-hidden bg-background">
-                                       <FloorPlanEditor
+                                       <InteractiveFloorPlan
+                                         locationId={location?.id || 'temp-location-id'}
                                          floorNumber={floorNumber}
-                                         locationName={`${formData.name || 'Location'} - Floor ${floorNumber}`}
-                                         mode="draw"
-                                         locationId={location?.id}
-                                         onSave={(canvasData) => {
-                                           console.log('Drawing saved for floor', floorNumber, canvasData);
-                                           setDrawingMode(prev => ({ ...prev, [floorNumber]: false }));
-                                         }}
+                                         className="w-full h-full"
                                        />
                                     </div>
                                     <div className="flex justify-end mt-2">

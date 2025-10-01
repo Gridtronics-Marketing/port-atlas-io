@@ -14,6 +14,7 @@ interface FloorPlanDrawingCanvasProps {
   onSave: (data: string) => void;
   savedData?: string;
   className?: string;
+  autoSaveDelay?: number; // Delay in ms before auto-saving, default 2000
 }
 
 export interface DrawingCanvasRef {
@@ -35,7 +36,8 @@ export const FloorPlanDrawingCanvas = forwardRef<DrawingCanvasRef, FloorPlanDraw
   onHistoryChange,
   onSave,
   savedData,
-  className = ""
+  className = "",
+  autoSaveDelay = 2000
 }, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [fabricCanvas, setFabricCanvas] = useState<FabricCanvas | null>(null);
@@ -44,6 +46,7 @@ export const FloorPlanDrawingCanvas = forwardRef<DrawingCanvasRef, FloorPlanDraw
   const [isTextDialogOpen, setIsTextDialogOpen] = useState(false);
   const [editingTextObject, setEditingTextObject] = useState<FabricText | null>(null);
   const [pendingTextPosition, setPendingTextPosition] = useState<{ x: number; y: number } | null>(null);
+  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
 
   // Initialize Fabric canvas
@@ -191,15 +194,30 @@ export const FloorPlanDrawingCanvas = forwardRef<DrawingCanvasRef, FloorPlanDraw
     const handlePathCreated = () => {
       if (activeTool === 'pencil' || activeTool === 'eraser') {
         saveToHistory(fabricCanvas);
+        triggerAutoSave();
       }
     };
 
     const handleObjectModified = () => {
       saveToHistory(fabricCanvas);
+      triggerAutoSave();
     };
 
     const handleTextEdited = () => {
       saveToHistory(fabricCanvas);
+      triggerAutoSave();
+    };
+    
+    // Auto-save with debouncing
+    const triggerAutoSave = () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+      
+      autoSaveTimerRef.current = setTimeout(() => {
+        const data = JSON.stringify(fabricCanvas.toJSON());
+        onSave(data);
+      }, autoSaveDelay);
     };
 
     fabricCanvas.on('mouse:down', handleMouseDown);
