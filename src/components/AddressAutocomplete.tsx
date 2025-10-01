@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useSystemConfigurations } from "@/hooks/useSystemConfigurations";
+import { useGoogleMapsAPI } from "@/hooks/useGoogleMapsAPI";
 import { Loader2, MapPin } from "lucide-react";
 import { toast } from "sonner";
 
@@ -33,7 +33,7 @@ export const AddressAutocomplete = ({
   placeholder = "Start typing an address...",
   required = false,
 }: AddressAutocompleteProps) => {
-  const { configurations } = useSystemConfigurations("external_apis");
+  const { isLoaded, isLoading: isApiLoading, error } = useGoogleMapsAPI();
   const [isLoading, setIsLoading] = useState(false);
   const [predictions, setPredictions] = useState<any[]>([]);
   const [showPredictions, setShowPredictions] = useState(false);
@@ -42,17 +42,13 @@ export const AddressAutocomplete = ({
   const placesService = useRef<google.maps.places.PlacesService | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
-  const placesApiKey = configurations.find(
-    (config) => config.key === "google_maps_api_key" && config.is_active
-  )?.value;
-
   useEffect(() => {
-    if (placesApiKey && window.google?.maps?.places) {
+    if (isLoaded && window.google?.maps?.places) {
       autocompleteService.current = new google.maps.places.AutocompleteService();
       const div = document.createElement("div");
       placesService.current = new google.maps.places.PlacesService(div);
     }
-  }, [placesApiKey]);
+  }, [isLoaded]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -156,17 +152,23 @@ export const AddressAutocomplete = ({
     );
   };
 
-  if (!placesApiKey) {
+  if (error || !isLoaded) {
     return (
       <div className="space-y-2">
         <Label htmlFor={label}>{label}</Label>
-        <Input
-          ref={inputRef}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          required={required}
-        />
+        <div className="relative">
+          <Input
+            ref={inputRef}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={placeholder}
+            required={required}
+            disabled={isApiLoading}
+          />
+          {isApiLoading && (
+            <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+          )}
+        </div>
       </div>
     );
   }
