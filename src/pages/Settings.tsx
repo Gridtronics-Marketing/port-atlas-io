@@ -1,5 +1,5 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Cog, Database, FileText, Wrench, Network, Shield, Workflow, Key } from 'lucide-react';
+import { Cog, Database, FileText, Wrench, Network, Shield, Workflow, Key, Info } from 'lucide-react';
 import { DropPointTypesManager } from '@/components/DropPointTypesManager';
 import { CameraPermissionTest } from '@/components/CameraPermissionTest';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,6 +14,7 @@ import { ComplianceStandardsSettings } from '@/components/ComplianceStandardsSet
 import { GranularPermissionsManager } from '@/components/GranularPermissionsManager';
 import { AuditTrailViewer } from '@/components/AuditTrailViewer';
 import { APIKeysManager } from '@/components/APIKeysManager';
+import { VersionInfo } from '@/components/VersionInfo';
 
 const Settings = () => {
   return (
@@ -28,7 +29,7 @@ const Settings = () => {
       </div>
 
       <Tabs defaultValue="core" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 gap-2 h-auto p-1">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-6 gap-2 h-auto p-1">
           <TabsTrigger value="core" className="flex flex-col gap-1 h-auto py-3">
             <Cog className="h-5 w-5" />
             <span className="text-xs">Core Configuration</span>
@@ -48,6 +49,10 @@ const Settings = () => {
           <TabsTrigger value="api-keys" className="flex flex-col gap-1 h-auto py-3">
             <Key className="h-5 w-5" />
             <span className="text-xs">API Keys</span>
+          </TabsTrigger>
+          <TabsTrigger value="about" className="flex flex-col gap-1 h-auto py-3">
+            <Info className="h-5 w-5" />
+            <span className="text-xs">About</span>
           </TabsTrigger>
         </TabsList>
         
@@ -241,6 +246,10 @@ const Settings = () => {
               <APIKeysManager />
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="about" className="space-y-6">
+          <VersionInfo />
         </TabsContent>
       </Tabs>
     </main>

@@ -48,6 +48,7 @@ import { useUserRoles } from "@/hooks/useUserRoles";
 import portAtlasLogo from "@/assets/port-atlas-logo.png";
 import { PWAInstallButton } from "@/components/PWAInstallButton";
 import { Separator } from "@/components/ui/separator";
+import { APP_VERSION } from "@/lib/version";
 
 const navigationItems = [
   { title: "Dashboard", url: "/", icon: Home },
@@ -155,7 +156,7 @@ export function AppSidebar() {
         {/* Build Version */}
         <div className={`${isCollapsed ? "text-center" : ""} mb-2`}>
           <p className="text-xs text-muted-foreground/60">
-            {isCollapsed ? `v${__APP_VERSION__.split('.').slice(0, 2).join('.')}` : `Version ${__APP_VERSION__}`}
+            {isCollapsed ? `v${APP_VERSION.split('.').slice(0, 2).join('.')}` : `Version ${APP_VERSION}`}
           </p>
         </div>
         
