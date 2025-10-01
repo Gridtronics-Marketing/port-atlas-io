@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.1.0";
+export const APP_VERSION = "0.2.0";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,19 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "0.2.0",
+    date: "2025-01-08",
+    changes: [
+      "Enhanced blank canvas drawing flow with visible light gray background",
+      "Added localStorage persistence for temporary drawings",
+      "Enabled drawing mode immediately for new locations without floor plans",
+      "Improved canvas visibility with dashed border and subtle shadow",
+      "Added auto-save functionality with clear status indicators",
+      "Enhanced UX with better visual feedback for blank canvas state",
+      "Fixed drawing canvas initialization issues",
+    ],
+  },
   {
     version: "0.1.0",
     date: "2025-10-01",
