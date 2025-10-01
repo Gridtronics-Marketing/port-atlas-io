@@ -704,6 +704,7 @@ export const InteractiveFloorPlan = ({
           {/* Drawing Canvas Overlay - Edit Mode */}
           {containerDimensions.width > 0 && isDrawingMode && (
             <FloorPlanDrawingCanvas
+              key="drawing-canvas-edit"
               ref={drawingCanvasRef}
               width={containerDimensions.width * scale}
               height={containerDimensions.height * scale}
@@ -720,6 +721,7 @@ export const InteractiveFloorPlan = ({
           {/* Drawing Canvas Overlay - View Mode */}
           {containerDimensions.width > 0 && !isDrawingMode && drawingData && (
             <FloorPlanDrawingViewer
+              key="drawing-canvas-view"
               width={containerDimensions.width * scale}
               height={containerDimensions.height * scale}
               drawingData={drawingData}

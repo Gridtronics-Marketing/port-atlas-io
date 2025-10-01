@@ -126,6 +126,16 @@ export const FloorPlanDrawingCanvas = forwardRef<DrawingCanvasRef, FloorPlanDraw
         clearTimeout(autoSaveTimerRef.current);
         autoSaveTimerRef.current = null;
       }
+      
+      // Properly dispose of the canvas when component unmounts
+      if (fabricCanvas) {
+        try {
+          console.log('🧹 Cleaning up canvas on component unmount');
+          fabricCanvas.dispose();
+        } catch (error) {
+          console.error('❌ Error disposing canvas on cleanup:', error);
+        }
+      }
     };
   }, [width, height]);
 

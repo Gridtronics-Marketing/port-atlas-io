@@ -19,43 +19,62 @@ export const FloorPlanDrawingViewer = ({
     if (!canvasRef.current) return;
 
     console.log("[DrawingViewer] Initializing read-only canvas");
+    
+    let isMounted = true;
+    let canvas: FabricCanvas | null = null;
 
-    const canvas = new FabricCanvas(canvasRef.current, {
-      width,
-      height,
-      selection: false,
-      renderOnAddRemove: true,
-    });
+    // Small delay to ensure DOM is ready and previous canvas is fully disposed
+    const initTimer = setTimeout(() => {
+      if (!isMounted || !canvasRef.current) return;
 
-    // Disable all interactions
-    canvas.isDrawingMode = false;
-    canvas.selection = false;
-
-    fabricCanvasRef.current = canvas;
-
-    // Load the saved drawing data
-    if (drawingData) {
       try {
-        console.log("[DrawingViewer] Loading drawing data");
-        canvas.loadFromJSON(drawingData, () => {
-          canvas.renderAll();
-          
-          // Make all objects non-interactive
-          canvas.forEachObject((obj) => {
-            obj.selectable = false;
-            obj.evented = false;
-          });
-          
-          console.log("[DrawingViewer] Drawing data loaded successfully");
+        canvas = new FabricCanvas(canvasRef.current, {
+          width,
+          height,
+          selection: false,
+          renderOnAddRemove: true,
         });
+
+        // Disable all interactions
+        canvas.isDrawingMode = false;
+        canvas.selection = false;
+
+        fabricCanvasRef.current = canvas;
+
+        // Load the saved drawing data after canvas is initialized
+        if (drawingData && canvas) {
+          console.log("[DrawingViewer] Loading drawing data");
+          canvas.loadFromJSON(drawingData, () => {
+            if (!canvas || !isMounted) return;
+            
+            canvas.renderAll();
+            
+            // Make all objects non-interactive
+            canvas.forEachObject((obj) => {
+              obj.selectable = false;
+              obj.evented = false;
+            });
+            
+            console.log("[DrawingViewer] Drawing data loaded successfully");
+          });
+        }
       } catch (error) {
-        console.error("[DrawingViewer] Error loading drawing data:", error);
+        console.error("[DrawingViewer] Error initializing canvas:", error);
       }
-    }
+    }, 50);
 
     return () => {
-      console.log("[DrawingViewer] Disposing canvas");
-      canvas.dispose();
+      isMounted = false;
+      clearTimeout(initTimer);
+      
+      if (canvas) {
+        try {
+          console.log("[DrawingViewer] Disposing canvas");
+          canvas.dispose();
+        } catch (error) {
+          console.error("[DrawingViewer] Error disposing canvas:", error);
+        }
+      }
       fabricCanvasRef.current = null;
     };
   }, [width, height, drawingData]);
