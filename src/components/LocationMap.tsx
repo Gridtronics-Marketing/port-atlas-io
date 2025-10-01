@@ -1,6 +1,9 @@
 import React, { useEffect, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { MapPin } from 'lucide-react';
+import { MapPin, Settings } from 'lucide-react';
+import { useGoogleMapsAPI } from '@/hooks/useGoogleMapsAPI';
+import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 
 declare global {
   interface Window {
@@ -18,10 +21,11 @@ interface LocationMapProps {
 export const LocationMap = ({ address, latitude, longitude, locationName }: LocationMapProps) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
+  const { isLoaded, isLoading, error } = useGoogleMapsAPI();
 
   useEffect(() => {
     const initMap = async () => {
-      if (!mapRef.current || typeof window.google === 'undefined') return;
+      if (!mapRef.current || !isLoaded || typeof window.google === 'undefined') return;
 
       try {
         // Initialize the map
@@ -72,21 +76,44 @@ export const LocationMap = ({ address, latitude, longitude, locationName }: Loca
       }
     };
 
-    // Check if Google Maps API is available
-    if (typeof window.google !== 'undefined' && window.google.maps) {
+    if (isLoaded) {
       initMap();
     }
-  }, [address, latitude, longitude, locationName]);
+  }, [address, latitude, longitude, locationName, isLoaded]);
 
-  // Check if Google Maps API is available
-  if (typeof window.google === 'undefined' || !window.google?.maps) {
+  // Show loading state
+  if (isLoading) {
     return (
       <Card className="h-64">
         <CardContent className="flex items-center justify-center h-full">
           <div className="text-center text-muted-foreground">
-            <MapPin className="h-8 w-8 mx-auto mb-2" />
-            <p className="text-sm">Map view requires Google Maps API</p>
-            <p className="text-xs mt-1">{address}</p>
+            <MapPin className="h-8 w-8 mx-auto mb-2 animate-pulse" />
+            <p className="text-sm">Loading map...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Show error or not configured state
+  if (error || !isLoaded) {
+    return (
+      <Card className="h-64">
+        <CardContent className="flex items-center justify-center h-full">
+          <div className="text-center space-y-3">
+            <MapPin className="h-8 w-8 mx-auto text-muted-foreground" />
+            <div>
+              <p className="text-sm text-muted-foreground mb-1">
+                {error || 'Map view requires Google Maps API'}
+              </p>
+              <p className="text-xs text-muted-foreground mb-3">{address}</p>
+            </div>
+            <Button asChild variant="outline" size="sm">
+              <Link to="/settings" className="flex items-center gap-2">
+                <Settings className="h-4 w-4" />
+                Configure API Key
+              </Link>
+            </Button>
           </div>
         </CardContent>
       </Card>

@@ -1,5 +1,5 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Cog, Database, FileText, Wrench, Network, Shield, Workflow } from 'lucide-react';
+import { Cog, Database, FileText, Wrench, Network, Shield, Workflow, Key } from 'lucide-react';
 import { DropPointTypesManager } from '@/components/DropPointTypesManager';
 import { CameraPermissionTest } from '@/components/CameraPermissionTest';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,6 +13,7 @@ import { CapacityManagementSettings } from '@/components/CapacityManagementSetti
 import { ComplianceStandardsSettings } from '@/components/ComplianceStandardsSettings';
 import { GranularPermissionsManager } from '@/components/GranularPermissionsManager';
 import { AuditTrailViewer } from '@/components/AuditTrailViewer';
+import { APIKeysManager } from '@/components/APIKeysManager';
 
 const Settings = () => {
   return (
@@ -27,7 +28,7 @@ const Settings = () => {
       </div>
 
       <Tabs defaultValue="core" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 gap-2 h-auto p-1">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 gap-2 h-auto p-1">
           <TabsTrigger value="core" className="flex flex-col gap-1 h-auto py-3">
             <Cog className="h-5 w-5" />
             <span className="text-xs">Core Configuration</span>
@@ -43,6 +44,10 @@ const Settings = () => {
           <TabsTrigger value="security" className="flex flex-col gap-1 h-auto py-3">
             <Shield className="h-5 w-5" />
             <span className="text-xs">Security & Operations</span>
+          </TabsTrigger>
+          <TabsTrigger value="api-keys" className="flex flex-col gap-1 h-auto py-3">
+            <Key className="h-5 w-5" />
+            <span className="text-xs">API Keys</span>
           </TabsTrigger>
         </TabsList>
         
@@ -222,6 +227,20 @@ const Settings = () => {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        <TabsContent value="api-keys" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>External API Keys</CardTitle>
+              <CardDescription>
+                Configure API keys for Google Maps and other external services
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <APIKeysManager />
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </main>

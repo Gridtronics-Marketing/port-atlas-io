@@ -1,7 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { MapPin, Loader2 } from 'lucide-react';
+import { MapPin, Loader2, Settings } from 'lucide-react';
 import { type Location } from '@/hooks/useLocations';
+import { useGoogleMapsAPI } from '@/hooks/useGoogleMapsAPI';
+import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 
 declare global {
   interface Window {
@@ -24,10 +27,11 @@ export const MultiLocationMap = ({
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
   const [isInitializing, setIsInitializing] = useState(true);
+  const { isLoaded, isLoading, error } = useGoogleMapsAPI();
 
   useEffect(() => {
     const initMap = async () => {
-      if (!mapRef.current || typeof window.google === 'undefined') {
+      if (!mapRef.current || !isLoaded || typeof window.google === 'undefined') {
         setIsInitializing(false);
         return;
       }
@@ -176,7 +180,7 @@ export const MultiLocationMap = ({
       }
     };
 
-    if (typeof window.google !== 'undefined' && window.google.maps) {
+    if (isLoaded) {
       initMap();
     } else {
       setIsInitializing(false);
@@ -187,16 +191,43 @@ export const MultiLocationMap = ({
       markersRef.current.forEach(marker => marker.map = null);
       markersRef.current = [];
     };
-  }, [locations, onLocationClick]);
+  }, [locations, onLocationClick, isLoaded]);
 
-  // Check if Google Maps API is available
-  if (typeof window.google === 'undefined' || !window.google?.maps) {
+  // Show loading state
+  if (isLoading) {
     return (
       <Card className={height}>
         <CardContent className="flex items-center justify-center h-full">
-          <div className="text-center text-muted-foreground">
-            <MapPin className="h-8 w-8 mx-auto mb-2" />
-            <p className="text-sm">Map view requires Google Maps API</p>
+          <div className="text-center space-y-2">
+            <Loader2 className="h-8 w-8 mx-auto animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">Loading Google Maps...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Show error or not configured state
+  if (error || !isLoaded) {
+    return (
+      <Card className={height}>
+        <CardContent className="flex items-center justify-center h-full">
+          <div className="text-center space-y-3">
+            <MapPin className="h-8 w-8 mx-auto text-muted-foreground" />
+            <div>
+              <p className="text-sm text-muted-foreground mb-1">
+                {error || 'Map view requires Google Maps API'}
+              </p>
+              <p className="text-xs text-muted-foreground mb-3">
+                Configure your API key to enable maps
+              </p>
+            </div>
+            <Button asChild variant="outline" size="sm">
+              <Link to="/settings" className="flex items-center gap-2">
+                <Settings className="h-4 w-4" />
+                Go to Settings
+              </Link>
+            </Button>
           </div>
         </CardContent>
       </Card>
