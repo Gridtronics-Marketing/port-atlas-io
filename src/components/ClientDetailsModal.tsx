@@ -23,11 +23,13 @@ import { Building2, User, Mail, Phone, MapPin, Calendar, ExternalLink, Loader2, 
 import { openNavigation } from "@/lib/navigation-utils";
 import { Client } from "@/hooks/useClients";
 import { useClientLocations } from "@/hooks/useClientLocations";
+import { useLocations } from "@/hooks/useLocations";
 import { LocationMap } from "@/components/LocationMap";
 import { MultiLocationMap } from "@/components/MultiLocationMap";
 import { LocationDetailsModal } from "@/components/LocationDetailsModal";
 import { AddLocationModal } from "@/components/AddLocationModal";
 import { type Location } from "@/hooks/useLocations";
+import { useToast } from "@/hooks/use-toast";
 
 interface ClientDetailsModalProps {
   client: Client | null;
@@ -39,11 +41,48 @@ interface ClientDetailsModalProps {
 
 export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onDeleteClient }: ClientDetailsModalProps) => {
   const { locations, loading: locationsLoading, refetch: refetchLocations } = useClientLocations(client?.id);
+  const { deleteLocation, updateLocation } = useLocations();
+  const { toast } = useToast();
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isAddLocationModalOpen, setIsAddLocationModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
+
+  const handleDeleteLocation = async (locationId: string) => {
+    try {
+      await deleteLocation(locationId);
+      toast({
+        title: "Success",
+        description: "Location deleted successfully",
+      });
+      refetchLocations();
+      setSelectedLocation(null);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete location",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEditLocation = async (location: Location) => {
+    try {
+      await updateLocation(location.id, location);
+      toast({
+        title: "Success",
+        description: "Location updated successfully",
+      });
+      refetchLocations();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update location",
+        variant: "destructive",
+      });
+    }
+  };
 
   if (!client) return null;
 
@@ -361,6 +400,8 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onDe
         location={selectedLocation}
         open={!!selectedLocation}
         onOpenChange={(open) => !open && setSelectedLocation(null)}
+        onEditLocation={handleEditLocation}
+        onDeleteLocation={handleDeleteLocation}
       />
 
       <AddLocationModal
