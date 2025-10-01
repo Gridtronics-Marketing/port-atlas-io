@@ -10,6 +10,7 @@ import { AddRoomViewModal } from './AddRoomViewModal';
 import { RoomViewModal } from './RoomViewModal';
 import { FloorPlanDrawingToolbar, type DrawingTool } from './FloorPlanDrawingToolbar';
 import { FloorPlanDrawingCanvas, type DrawingCanvasRef } from './FloorPlanDrawingCanvas';
+import { FloorPlanDrawingViewer } from './FloorPlanDrawingViewer';
 import { useDropPoints } from '@/hooks/useDropPoints';
 import { useRoomViews } from '@/hooks/useRoomViews';
 import { useCanvasDrawings } from '@/hooks/useCanvasDrawings';
@@ -700,7 +701,7 @@ export const InteractiveFloorPlan = ({
             </div>
           )}
 
-          {/* Drawing Canvas Overlay */}
+          {/* Drawing Canvas Overlay - Edit Mode */}
           {containerDimensions.width > 0 && isDrawingMode && (
             <FloorPlanDrawingCanvas
               ref={drawingCanvasRef}
@@ -713,6 +714,15 @@ export const InteractiveFloorPlan = ({
               onSave={handleDrawingSave}
               savedData={drawingData}
               className="pointer-events-auto"
+            />
+          )}
+
+          {/* Drawing Canvas Overlay - View Mode */}
+          {containerDimensions.width > 0 && !isDrawingMode && drawingData && (
+            <FloorPlanDrawingViewer
+              width={containerDimensions.width * scale}
+              height={containerDimensions.height * scale}
+              drawingData={drawingData}
             />
           )}
 

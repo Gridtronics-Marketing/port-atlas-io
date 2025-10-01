@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.3.0";
+export const APP_VERSION = "0.3.1";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,16 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "0.3.1",
+    date: "2025-01-08",
+    changes: [
+      "Fixed saved drawings not appearing outside of drawing mode",
+      "Added read-only drawing viewer for non-editing contexts",
+      "Improved drawing persistence and visibility",
+      "Optimized canvas rendering and disposal",
+    ],
+  },
   {
     version: "0.3.0",
     date: "2025-01-08",
