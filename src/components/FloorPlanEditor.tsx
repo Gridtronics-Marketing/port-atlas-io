@@ -48,6 +48,12 @@ export const FloorPlanEditor = ({
       backgroundColor: "#ffffff",
     });
 
+    // Initialize the freeDrawingBrush right after canvas creation
+    if (canvas.freeDrawingBrush) {
+      canvas.freeDrawingBrush.color = activeColor;
+      canvas.freeDrawingBrush.width = brushWidth;
+    }
+
     // Load existing drawing data if locationId is provided
     if (locationId) {
       const existingDrawing = getDrawingForFloor(floorNumber);
@@ -64,10 +70,6 @@ export const FloorPlanEditor = ({
         console.log('Canvas loaded from initial data');
       });
     }
-
-    // Initialize the freeDrawingBrush right after canvas creation
-    canvas.freeDrawingBrush.color = activeColor;
-    canvas.freeDrawingBrush.width = brushWidth;
 
     setFabricCanvas(canvas);
 
