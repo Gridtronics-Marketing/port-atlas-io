@@ -152,6 +152,13 @@ export function AppSidebar() {
           />
         </div>
         
+        {/* Build Version */}
+        <div className={`${isCollapsed ? "text-center" : ""} mb-2`}>
+          <p className="text-xs text-muted-foreground/60">
+            {isCollapsed ? `v${__APP_VERSION__.split('.').slice(0, 2).join('.')}` : `Version ${__APP_VERSION__}`}
+          </p>
+        </div>
+        
         <Separator className="mb-4" />
         
         <DropdownMenu>

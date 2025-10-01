@@ -1,4 +1,7 @@
 /// <reference types="vite/client" />
+
+declare const __APP_VERSION__: string;
+declare const __BUILD_TIME__: string;
 /// <reference types="vite-plugin-pwa/react" />
 /// <reference types="vite-plugin-pwa/client" />
 
