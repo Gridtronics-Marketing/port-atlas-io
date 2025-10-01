@@ -1,23 +1,40 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
-import { FloorPlanEditor } from "@/components/FloorPlanEditor";
+import { InteractiveFloorPlan } from "@/components/InteractiveFloorPlan";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
+import { useToast } from "@/hooks/use-toast";
 
 export default function FloorPlanEditorPage() {
   const [searchParams] = useSearchParams();
-  const [editorKey, setEditorKey] = useState(0);
+  const { toast } = useToast();
+  const hasAutoActivated = useRef(false);
   
   const mode = searchParams.get('mode') || 'draw';
   const floor = searchParams.get('floor') || '1';
+  const locationId = searchParams.get('locationId') || 'temp-editor-location';
   const riserName = searchParams.get('name') || 'Riser Diagram';
   
+  // Auto-activate drawing mode on mount
   useEffect(() => {
-    // Force re-render of editor when params change
-    setEditorKey(prev => prev + 1);
-  }, [mode, floor]);
+    if (!hasAutoActivated.current) {
+      hasAutoActivated.current = true;
+      
+      // Give the component time to mount, then auto-activate drawing mode
+      setTimeout(() => {
+        const drawButton = document.querySelector('[data-draw-mode-button]') as HTMLButtonElement;
+        if (drawButton) {
+          drawButton.click();
+          toast({
+            title: "Drawing Mode Active",
+            description: "Use the toolbar to start drawing on your floor plan",
+          });
+        }
+      }, 500);
+    }
+  }, [toast]);
 
   if (!mode || !floor) {
     return (
@@ -36,31 +53,24 @@ export default function FloorPlanEditorPage() {
     );
   }
 
-  const handleSave = (canvasData: any) => {
-    console.log('Floor plan saved:', canvasData);
-    // Here you could implement saving logic or close the window
-    if (window.opener) {
-      // Notify parent window if opened as popup
-      window.opener.postMessage({ 
-        type: 'floorPlanSaved', 
-        data: canvasData, 
-        floor: parseInt(floor) 
-      }, '*');
-    }
-  };
-
   return (
     <div className="min-h-screen bg-background">
       <div className="fixed top-4 right-4 z-50">
         <OfflineIndicator />
       </div>
       <div className="container mx-auto p-4">
-        <FloorPlanEditor
-          key={editorKey}
+        <div className="mb-4">
+          <h1 className="text-2xl font-bold">
+            {mode === 'riser' ? riserName : `Floor ${floor} Editor`}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Draw and annotate your floor plan with the advanced drawing tools
+          </p>
+        </div>
+        <InteractiveFloorPlan
+          locationId={locationId}
           floorNumber={mode === 'riser' ? 0 : parseInt(floor)}
-          locationName={mode === 'riser' ? riserName : `Floor ${floor} Editor`}
-          onSave={handleSave}
-          mode={mode as 'draw' | 'riser'}
+          className="w-full"
         />
       </div>
     </div>

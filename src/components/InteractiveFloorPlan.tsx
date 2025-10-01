@@ -453,6 +453,7 @@ export const InteractiveFloorPlan = ({
               variant={isDrawingMode ? "default" : "outline"}
               size="sm"
               onClick={() => setIsDrawingMode(!isDrawingMode)}
+              data-draw-mode-button
             >
               <Paintbrush className="h-4 w-4 mr-2" />
               {isDrawingMode ? 'Exit Draw' : 'Draw Mode'}
