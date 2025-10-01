@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.3.2";
+export const APP_VERSION = "0.4.0";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,19 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "0.4.0",
+    date: "2025-10-01",
+    changes: [
+      "Added 'Use as Floor Plan' feature to convert drawings to permanent floor plans",
+      "Implemented high-resolution PNG export from canvas drawings",
+      "Added confirmation dialog with preview before replacing floor plans",
+      "Automatic file management and Supabase storage integration",
+      "Enhanced workflow: drawing annotations can now become full floor plans",
+      "Seamless conversion process with automatic cleanup of old files",
+      "Improved user experience with clear success feedback and page refresh",
+    ],
+  },
   {
     version: "0.3.2",
     date: "2025-01-08",
