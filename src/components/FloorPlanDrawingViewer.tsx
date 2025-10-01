@@ -14,9 +14,10 @@ export const FloorPlanDrawingViewer = ({
 }: FloorPlanDrawingViewerProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fabricCanvasRef = useRef<FabricCanvas | null>(null);
+  const isDisposingRef = useRef(false);
 
   useEffect(() => {
-    if (!canvasRef.current) return;
+    if (!canvasRef.current || isDisposingRef.current) return;
 
     console.log("[DrawingViewer] Initializing read-only canvas");
     
@@ -25,9 +26,15 @@ export const FloorPlanDrawingViewer = ({
 
     // Small delay to ensure DOM is ready and previous canvas is fully disposed
     const initTimer = setTimeout(() => {
-      if (!isMounted || !canvasRef.current) return;
+      if (!isMounted || !canvasRef.current || isDisposingRef.current) return;
 
       try {
+        // Check if canvas already has fabric initialized
+        if (canvasRef.current.hasAttribute('data-fabric')) {
+          console.warn("[DrawingViewer] Canvas already initialized, skipping");
+          return;
+        }
+
         canvas = new FabricCanvas(canvasRef.current, {
           width,
           height,
@@ -61,29 +68,36 @@ export const FloorPlanDrawingViewer = ({
       } catch (error) {
         console.error("[DrawingViewer] Error initializing canvas:", error);
       }
-    }, 50);
+    }, 100);
 
     return () => {
       isMounted = false;
+      isDisposingRef.current = true;
       clearTimeout(initTimer);
       
-      if (canvas) {
+      if (canvas || fabricCanvasRef.current) {
         try {
           console.log("[DrawingViewer] Disposing canvas");
-          canvas.dispose();
+          const canvasToDispose = canvas || fabricCanvasRef.current;
+          if (canvasToDispose) {
+            canvasToDispose.dispose();
+          }
+          // Clear the reference immediately
+          if (canvasRef.current) {
+            canvasRef.current.removeAttribute('data-fabric');
+          }
         } catch (error) {
           console.error("[DrawingViewer] Error disposing canvas:", error);
         }
       }
       fabricCanvasRef.current = null;
+      isDisposingRef.current = false;
     };
   }, [width, height, drawingData]);
 
   return (
-    <canvas
-      ref={canvasRef}
-      className="absolute top-0 left-0 pointer-events-none"
-      style={{ zIndex: 10 }}
-    />
+    <div className="absolute top-0 left-0 pointer-events-none" style={{ zIndex: 10 }}>
+      <canvas ref={canvasRef} />
+    </div>
   );
 };

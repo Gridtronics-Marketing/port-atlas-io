@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.3.1";
+export const APP_VERSION = "0.3.2";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,17 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "0.3.2",
+    date: "2025-01-08",
+    changes: [
+      "Fixed critical DOM removal error with Fabric.js canvas disposal",
+      "Added proper guards to prevent canvas double-initialization",
+      "Implemented synchronous cleanup of Fabric.js DOM elements",
+      "Wrapped canvases in container divs to prevent React/Fabric.js conflicts",
+      "Enhanced canvas lifecycle management for stability",
+    ],
+  },
   {
     version: "0.3.1",
     date: "2025-01-08",

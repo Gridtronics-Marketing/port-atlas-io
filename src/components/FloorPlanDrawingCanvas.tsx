@@ -48,11 +48,12 @@ export const FloorPlanDrawingCanvas = forwardRef<DrawingCanvasRef, FloorPlanDraw
   const [pendingTextPosition, setPendingTextPosition] = useState<{ x: number; y: number } | null>(null);
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const initDimensionsRef = useRef({ width: 0, height: 0 });
+  const isDisposingRef = useRef(false);
   const { toast } = useToast();
 
   // Initialize Fabric canvas
   useEffect(() => {
-    if (!canvasRef.current) return;
+    if (!canvasRef.current || isDisposingRef.current) return;
     
     // Prevent re-initialization for minor dimension changes
     const dimensionThreshold = 10; // pixels
@@ -72,10 +73,20 @@ export const FloorPlanDrawingCanvas = forwardRef<DrawingCanvasRef, FloorPlanDraw
     // Clean up existing canvas
     if (fabricCanvas) {
       console.log('🧹 Disposing old canvas before re-initialization');
-      fabricCanvas.dispose();
+      try {
+        fabricCanvas.dispose();
+      } catch (error) {
+        console.error('❌ Error disposing old canvas:', error);
+      }
     }
 
     try {
+      // Check if canvas already has fabric initialized
+      if (canvasRef.current.hasAttribute('data-fabric')) {
+        console.warn('⚠️ Canvas already initialized, cleaning up first');
+        canvasRef.current.removeAttribute('data-fabric');
+      }
+
       const canvas = new FabricCanvas(canvasRef.current, {
         width,
         height,
@@ -127,15 +138,24 @@ export const FloorPlanDrawingCanvas = forwardRef<DrawingCanvasRef, FloorPlanDraw
         autoSaveTimerRef.current = null;
       }
       
+      isDisposingRef.current = true;
+      
       // Properly dispose of the canvas when component unmounts
       if (fabricCanvas) {
         try {
           console.log('🧹 Cleaning up canvas on component unmount');
           fabricCanvas.dispose();
+          // Clear the data-fabric attribute
+          if (canvasRef.current) {
+            canvasRef.current.removeAttribute('data-fabric');
+          }
         } catch (error) {
           console.error('❌ Error disposing canvas on cleanup:', error);
         }
       }
+      
+      setFabricCanvas(null);
+      isDisposingRef.current = false;
     };
   }, [width, height]);
 
