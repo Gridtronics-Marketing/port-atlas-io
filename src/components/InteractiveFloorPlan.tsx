@@ -15,6 +15,7 @@ import { useRoomViews } from '@/hooks/useRoomViews';
 import { useCanvasDrawings } from '@/hooks/useCanvasDrawings';
 import { getStorageUrl, repairFloorPlanFiles } from '@/lib/storage-utils';
 import { useToast } from '@/hooks/use-toast';
+import { isValidUUID } from '@/lib/uuid-utils';
 
 interface InteractiveFloorPlanProps {
   locationId: string;
@@ -64,9 +65,14 @@ export const InteractiveFloorPlan = ({
   const drawingCanvasRef = useRef<DrawingCanvasRef>(null);
   const { toast } = useToast();
   
-  const { dropPoints, loading: dropPointsLoading, updateDropPoint, fetchDropPoints } = useDropPoints(locationId);
-  const { roomViews, loading: roomViewsLoading, updateRoomView, fetchRoomViews } = useRoomViews(locationId);
-  const { getDrawingForFloor, saveDrawing } = useCanvasDrawings(locationId);
+  // Only use hooks with valid UUID
+  const validLocationId = locationId && isValidUUID(locationId) ? locationId : undefined;
+  const { dropPoints, loading: dropPointsLoading, updateDropPoint, fetchDropPoints } = useDropPoints(validLocationId);
+  const { roomViews, loading: roomViewsLoading, updateRoomView, fetchRoomViews } = useRoomViews(validLocationId);
+  const { getDrawingForFloor, saveDrawing } = useCanvasDrawings(validLocationId);
+
+  // Temporary storage for drawings when location doesn't exist yet
+  const [tempDrawingData, setTempDrawingData] = useState<any>(null);
   
   // Generate the actual file URL from path or use provided URL
   const actualFileUrl = fileUrl || (filePath ? getStorageUrl('floor-plans', filePath) : undefined);
@@ -349,6 +355,16 @@ export const InteractiveFloorPlan = ({
   const handleDrawingSave = async (data: string) => {
     setDrawingData(data);
     
+    if (!locationId || !isValidUUID(locationId)) {
+      // Store temporarily if location doesn't exist yet
+      setTempDrawingData(JSON.parse(data));
+      toast({
+        title: "Drawing Saved Temporarily",
+        description: "Your annotations will be saved after creating the location.",
+      });
+      return;
+    }
+    
     // Save to database
     const result = await saveDrawing({
       location_id: locationId,
@@ -375,6 +391,16 @@ export const InteractiveFloorPlan = ({
 
   // Load saved drawing data on mount and when floor changes
   useEffect(() => {
+    if (!isValidUUID(locationId)) {
+      // Load temporary data if available
+      if (tempDrawingData && isDrawingMode && drawingCanvasRef.current?.drawingActions) {
+        const canvasDataStr = JSON.stringify(tempDrawingData);
+        drawingCanvasRef.current.drawingActions.load(canvasDataStr);
+        setDrawingData(canvasDataStr);
+      }
+      return;
+    }
+
     const savedDrawing = getDrawingForFloor(floorNumber);
     if (savedDrawing) {
       const canvasDataStr = JSON.stringify(savedDrawing.canvas_data);
@@ -385,7 +411,7 @@ export const InteractiveFloorPlan = ({
         drawingCanvasRef.current.drawingActions.load(canvasDataStr);
       }
     }
-  }, [locationId, floorNumber, getDrawingForFloor, isDrawingMode]);
+  }, [locationId, floorNumber, getDrawingForFloor, isDrawingMode, tempDrawingData]);
 
   const handleRepairFiles = async () => {
     setIsRepairing(true);

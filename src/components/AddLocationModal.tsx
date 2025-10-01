@@ -782,15 +782,27 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
                                   </div>
                                )}
                                
-                                 {drawingMode[floorNumber] && (
-                                  <div className="mt-4 border-t pt-4">
-                                    <div className="min-h-[500px] border rounded-lg overflow-hidden bg-background">
-                                       <InteractiveFloorPlan
-                                         locationId={location?.id || 'temp-location-id'}
-                                         floorNumber={floorNumber}
-                                         className="w-full h-full"
-                                       />
-                                    </div>
+                                  {drawingMode[floorNumber] && (
+                                   <div className="mt-4 border-t pt-4">
+                                     {location?.id ? (
+                                       <div className="min-h-[500px] border rounded-lg overflow-hidden bg-background">
+                                          <InteractiveFloorPlan
+                                            locationId={location.id}
+                                            floorNumber={floorNumber}
+                                            className="w-full h-full"
+                                          />
+                                       </div>
+                                     ) : (
+                                       <div className="min-h-[200px] p-8 border rounded-lg bg-muted/30">
+                                         <div className="text-center space-y-2">
+                                           <FileImage className="h-12 w-12 mx-auto text-muted-foreground/50" />
+                                           <p className="text-sm font-medium text-foreground">Drawing Mode Available After Creation</p>
+                                           <p className="text-xs text-muted-foreground max-w-md mx-auto">
+                                             You can upload floor plan images now and add annotations after creating the location. Your work will be saved automatically.
+                                           </p>
+                                         </div>
+                                       </div>
+                                     )}
                                     <div className="flex justify-end mt-2">
                                       <Button
                                         variant="outline"

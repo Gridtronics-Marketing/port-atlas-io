@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { isValidUUID } from "@/lib/uuid-utils";
 
 interface CanvasDrawing {
   id: string;
@@ -24,7 +25,7 @@ export function useCanvasDrawings(locationId?: string) {
   const { toast } = useToast();
 
   const fetchDrawings = async () => {
-    if (!locationId) {
+    if (!locationId || !isValidUUID(locationId)) {
       setDrawings([]);
       setLoading(false);
       return;
@@ -62,6 +63,11 @@ export function useCanvasDrawings(locationId?: string) {
   };
 
   const saveDrawing = async (drawingData: CanvasDrawingData) => {
+    if (!isValidUUID(drawingData.location_id)) {
+      console.warn("Invalid location ID, skipping save to database");
+      return null;
+    }
+    
     try {
       const { data, error } = await supabase
         .from("canvas_drawings")

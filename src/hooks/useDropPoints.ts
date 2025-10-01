@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { isValidUUID } from '@/lib/uuid-utils';
 
 export interface DropPoint {
   id: string;
@@ -44,6 +45,12 @@ export const useDropPoints = (locationId?: string) => {
   const { toast } = useToast();
 
   const fetchDropPoints = async () => {
+    if (locationId && !isValidUUID(locationId)) {
+      setDropPoints([]);
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       let query = supabase

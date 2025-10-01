@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { isValidUUID } from '@/lib/uuid-utils';
 
 export interface RoomView {
   id: string;
@@ -26,7 +27,7 @@ export const useRoomViews = (locationId?: string) => {
   const { toast } = useToast();
 
   const fetchRoomViews = async () => {
-    if (!locationId) {
+    if (!locationId || !isValidUUID(locationId)) {
       setRoomViews([]);
       setLoading(false);
       return;
