@@ -444,7 +444,7 @@ export const InteractiveFloorPlan = ({
               variant={showLabels ? "default" : "outline"}
               size="sm"
               onClick={() => setShowLabels(!showLabels)}
-              disabled={!actualFileUrl}
+              disabled={isDrawingMode}
             >
               <span className="text-xs mr-2">🏷️</span>
               {showLabels ? 'Hide Labels' : 'Show Labels'}
@@ -466,7 +466,7 @@ export const InteractiveFloorPlan = ({
                 setIsDrawingMode(false);
                 setActiveTool('select');
               }}
-              disabled={!actualFileUrl || isDrawingMode}
+              disabled={isDrawingMode}
             >
               <Plus className="h-4 w-4 mr-2" />
               Add Drop Point
@@ -480,7 +480,7 @@ export const InteractiveFloorPlan = ({
                 setIsDrawingMode(false);
                 setActiveTool('select');
               }}
-              disabled={!actualFileUrl || isDrawingMode}
+              disabled={isDrawingMode}
             >
               <Camera className="h-4 w-4 mr-2" />
               Add Room View
@@ -589,9 +589,26 @@ export const InteractiveFloorPlan = ({
             </div>
           ) : (
             <div className="w-full h-96 bg-muted flex items-center justify-center">
-              <div className="text-center text-muted-foreground">
-                <p className="text-sm font-medium">No floor plan uploaded</p>
-                <p className="text-xs">{isDrawingMode ? 'Draw on blank canvas or upload a floor plan' : 'Upload a floor plan to enable interactive placement'}</p>
+              <div className="text-center space-y-4">
+                <div className="text-muted-foreground">
+                  <p className="text-sm font-medium mb-1">No floor plan uploaded</p>
+                  <p className="text-xs">Upload a floor plan above or start drawing</p>
+                </div>
+                <Button
+                  size="lg"
+                  onClick={() => {
+                    setIsDrawingMode(true);
+                    setActiveTool('pencil');
+                    toast({
+                      title: "Drawing Mode Active",
+                      description: "Start drawing on the blank canvas below",
+                    });
+                  }}
+                  className="gap-2"
+                >
+                  <Paintbrush className="h-5 w-5" />
+                  Start with Blank Canvas
+                </Button>
               </div>
             </div>
           )}
