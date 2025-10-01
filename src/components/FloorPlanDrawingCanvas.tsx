@@ -24,6 +24,7 @@ export interface DrawingCanvasRef {
     clear: () => void;
     save: () => void;
     load: (data: string) => void;
+    exportToPNG: () => string | null;
   };
 }
 
@@ -416,6 +417,21 @@ export const FloorPlanDrawingCanvas = forwardRef<DrawingCanvasRef, FloorPlanDraw
     setPendingTextPosition(null);
   }, [fabricCanvas, editingTextObject, pendingTextPosition, saveToHistory]);
 
+  // Export canvas to PNG
+  const exportToPNG = useCallback(() => {
+    if (!fabricCanvas) return null;
+    try {
+      return fabricCanvas.toDataURL({
+        format: 'png',
+        quality: 1,
+        multiplier: 2, // Higher resolution
+      });
+    } catch (error) {
+      console.error('Error exporting canvas to PNG:', error);
+      return null;
+    }
+  }, [fabricCanvas]);
+
   // Expose functions to parent via ref
   useImperativeHandle(ref, () => ({
     drawingActions: {
@@ -423,9 +439,10 @@ export const FloorPlanDrawingCanvas = forwardRef<DrawingCanvasRef, FloorPlanDraw
       redo,
       clear,
       save,
-      load
+      load,
+      exportToPNG
     }
-  }), [undo, redo, clear, save, load]);
+  }), [undo, redo, clear, save, load, exportToPNG]);
 
   return (
     <>

@@ -13,7 +13,8 @@ import {
   MousePointer, 
   Download,
   Upload,
-  Palette
+  Palette,
+  Image
 } from 'lucide-react';
 
 export type DrawingTool = 'select' | 'pencil' | 'text' | 'eraser';
@@ -32,6 +33,8 @@ interface FloorPlanDrawingToolbarProps {
   onBrushColorChange: (color: string) => void;
   brushSize: number;
   onBrushSizeChange: (size: number) => void;
+  onUseAsFloorPlan?: () => void;
+  hasSavedDrawing?: boolean;
 }
 
 const colors = [
@@ -54,7 +57,9 @@ export const FloorPlanDrawingToolbar = ({
   brushColor,
   onBrushColorChange,
   brushSize,
-  onBrushSizeChange
+  onBrushSizeChange,
+  onUseAsFloorPlan,
+  hasSavedDrawing = false
 }: FloorPlanDrawingToolbarProps) => {
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showBrushSizes, setShowBrushSizes] = useState(false);
@@ -224,6 +229,21 @@ export const FloorPlanDrawingToolbar = ({
               <Trash2 className="h-4 w-4" />
             </Button>
           </div>
+
+          {hasSavedDrawing && onUseAsFloorPlan && (
+            <>
+              <Separator orientation="vertical" className="h-6" />
+              <Button
+                variant="default"
+                size="sm"
+                onClick={onUseAsFloorPlan}
+                className="h-8 px-3"
+              >
+                <Image className="h-4 w-4 mr-1" />
+                Use as Floor Plan
+              </Button>
+            </>
+          )}
 
           {/* Current Tool Badge */}
           <div className="ml-auto">

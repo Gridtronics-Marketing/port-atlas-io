@@ -4,6 +4,16 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { AddDropPointModal } from './AddDropPointModal';
 import { DropPointDetailsModal } from './DropPointDetailsModal';
 import { AddRoomViewModal } from './AddRoomViewModal';
@@ -15,6 +25,7 @@ import { useDropPoints } from '@/hooks/useDropPoints';
 import { useRoomViews } from '@/hooks/useRoomViews';
 import { useCanvasDrawings } from '@/hooks/useCanvasDrawings';
 import { getStorageUrl, repairFloorPlanFiles } from '@/lib/storage-utils';
+import { saveDrawingAsFloorPlan, deleteCanvasDrawing } from '@/lib/floor-plan-utils';
 import { useToast } from '@/hooks/use-toast';
 import { isValidUUID } from '@/lib/uuid-utils';
 
@@ -62,6 +73,8 @@ export const InteractiveFloorPlan = ({
   const [drawingData, setDrawingData] = useState<string>('');
   const [containerDimensions, setContainerDimensions] = useState({ width: 0, height: 0 });
   const [showLabels, setShowLabels] = useState(true);
+  const [hasSavedDrawing, setHasSavedDrawing] = useState(false);
+  const [showUseAsFloorPlanDialog, setShowUseAsFloorPlanDialog] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const drawingCanvasRef = useRef<DrawingCanvasRef>(null);
   const { toast } = useToast();
@@ -374,6 +387,7 @@ export const InteractiveFloorPlan = ({
       localStorage.setItem(storageKey, data);
       
       console.log('💾 Drawing saved to localStorage');
+      setHasSavedDrawing(true);
       return;
     }
     
@@ -388,6 +402,7 @@ export const InteractiveFloorPlan = ({
       // Clear temporary storage after successful save
       const storageKey = `temp-drawing-${floorNumber}`;
       localStorage.removeItem(storageKey);
+      setHasSavedDrawing(true);
       console.log('💾 Drawing saved to database');
     }
   };
@@ -414,6 +429,7 @@ export const InteractiveFloorPlan = ({
           const canvasDataStr = JSON.stringify(tempDrawingData);
           drawingCanvasRef.current.drawingActions.load(canvasDataStr);
           setDrawingData(canvasDataStr);
+          setHasSavedDrawing(true);
           drawingDataLoadedRef.current = true;
         }
         return;
@@ -424,12 +440,15 @@ export const InteractiveFloorPlan = ({
         console.log('📂 Loading saved drawing data from database');
         const canvasDataStr = JSON.stringify(savedDrawing.canvas_data);
         setDrawingData(canvasDataStr);
+        setHasSavedDrawing(true);
         
         // Auto-load into canvas if drawing mode is active
         if (isDrawingMode && drawingCanvasRef.current?.drawingActions) {
           drawingCanvasRef.current.drawingActions.load(canvasDataStr);
           drawingDataLoadedRef.current = true;
         }
+      } else {
+        setHasSavedDrawing(false);
       }
     }
   }, [locationId, floorNumber, getDrawingForFloor, isDrawingMode]);
@@ -459,6 +478,65 @@ export const InteractiveFloorPlan = ({
     } finally {
       setIsRepairing(false);
     }
+  };
+
+  const handleUseAsFloorPlan = () => {
+    setShowUseAsFloorPlanDialog(true);
+  };
+
+  const confirmUseAsFloorPlan = async () => {
+    if (!drawingCanvasRef.current?.drawingActions || !validLocationId) {
+      toast({
+        title: "Error",
+        description: "Cannot convert drawing to floor plan.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const pngDataURL = drawingCanvasRef.current.drawingActions.exportToPNG();
+    if (!pngDataURL) {
+      toast({
+        title: "Error",
+        description: "Failed to export drawing. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Converting to floor plan",
+      description: "Please wait...",
+    });
+
+    const result = await saveDrawingAsFloorPlan(validLocationId, floorNumber, pngDataURL);
+    
+    if (result.success) {
+      // Delete the canvas drawing since it's now a permanent floor plan
+      await deleteCanvasDrawing(validLocationId, floorNumber);
+      
+      // Exit drawing mode and refresh
+      setIsDrawingMode(false);
+      setHasSavedDrawing(false);
+      
+      toast({
+        title: "Success",
+        description: "Your drawing is now the floor plan for this floor!",
+      });
+      
+      // Refresh the page to show new floor plan
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    } else {
+      toast({
+        title: "Error",
+        description: result.error || "Failed to save as floor plan. Please try again.",
+        variant: "destructive",
+      });
+    }
+    
+    setShowUseAsFloorPlanDialog(false);
   };
 
   const getDropPointIcon = (type: string) => {
@@ -615,6 +693,8 @@ export const InteractiveFloorPlan = ({
             onBrushColorChange={setBrushColor}
             brushSize={brushSize}
             onBrushSizeChange={setBrushSize}
+            onUseAsFloorPlan={handleUseAsFloorPlan}
+            hasSavedDrawing={hasSavedDrawing}
           />
         )}
         <div 
@@ -948,6 +1028,28 @@ export const InteractiveFloorPlan = ({
           roomView={selectedRoomView}
           locationId={locationId}
         />
+
+      {/* Use As Floor Plan Confirmation Dialog */}
+      <AlertDialog open={showUseAsFloorPlanDialog} onOpenChange={setShowUseAsFloorPlanDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Use Drawing as Floor Plan?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will convert your drawing into a permanent floor plan image for Floor {floorNumber}.
+              The current floor plan (if any) will be replaced, and your drawing annotations will become
+              part of the background image.
+              <br /><br />
+              <strong>This action cannot be undone.</strong>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmUseAsFloorPlan}>
+              Confirm & Create Floor Plan
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 };
