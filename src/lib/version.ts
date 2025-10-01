@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.2.0";
+export const APP_VERSION = "0.3.0";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,17 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "0.3.0",
+    date: "2025-01-08",
+    changes: [
+      "Removed non-functional demo mode from floor plan viewer",
+      "Enhanced floor plan workflow to directly show interactive editor",
+      "Users can now immediately upload or draw on blank canvas",
+      "Improved discoverability of floor plan tools",
+      "Streamlined user experience for locations without floor plans",
+    ],
+  },
   {
     version: "0.2.0",
     date: "2025-01-08",

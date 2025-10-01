@@ -45,7 +45,7 @@ import { CreateRiserDiagramModal } from "@/components/CreateRiserDiagramModal";
 import { ScheduleAssignmentModal } from "@/components/ScheduleAssignmentModal";
 import { AddLocationNoteModal } from "@/components/AddLocationNoteModal";
 import { FloorPlanEditor } from "@/components/FloorPlanEditor";
-import { FloorPlanDemo } from "@/components/FloorPlanDemo";
+
 import { FloorPlanRepairTool } from "@/components/FloorPlanRepairTool";
 import { FloorPlanFileManager } from "@/components/FloorPlanFileManager";
 import { InteractiveFloorPlan } from "@/components/InteractiveFloorPlan";
@@ -436,42 +436,18 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
                     </Select>
                   </div>
                   
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Floor Plan
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      Demo
-                    </Button>
-                  </div>
                 </div>
 
-                {currentFloorPlanUrl ? (
-                  <div className="space-y-4">
-                    <InteractiveFloorPlan
-                      locationId={location.id}
-                      floorNumber={selectedFloor}
-                      fileUrl={currentFloorPlanUrl}
-                      filePath={location.floor_plan_files?.[selectedFloor] || ''}
-                      fileName={location.floor_plan_files?.[selectedFloor]?.split('/').pop() || ''}
-                      className="min-h-[500px]"
-                    />
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed">
-                      <p className="text-gray-600 mb-4">
-                        No floor plan available for Floor {selectedFloor}
-                      </p>
-                      <FloorPlanDemo 
-                        floorNumber={selectedFloor}
-                        totalFloors={location.floors}
-                        onStartEditor={() => {}}
-                      />
-                    </div>
-                  </div>
-                )}
+                <div className="space-y-4">
+                  <InteractiveFloorPlan
+                    locationId={location.id}
+                    floorNumber={selectedFloor}
+                    fileUrl={currentFloorPlanUrl}
+                    filePath={location.floor_plan_files?.[selectedFloor] || ''}
+                    fileName={location.floor_plan_files?.[selectedFloor]?.split('/').pop() || ''}
+                    className="min-h-[500px]"
+                  />
+                </div>
                 <Tabs defaultValue="diagnostics" className="w-full">
                   <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="diagnostics">Diagnostics</TabsTrigger>
