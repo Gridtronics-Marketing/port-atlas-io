@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import {
   Select,
   SelectContent,
@@ -30,6 +32,7 @@ interface AddClientModalProps {
 export const AddClientModal = ({ isOpen, onClose, onAddClient }: AddClientModalProps) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [sameAsPhysical, setSameAsPhysical] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     contact_name: "",
@@ -169,27 +172,42 @@ export const AddClientModal = ({ isOpen, onClose, onAddClient }: AddClientModalP
             <h3 className="font-semibold text-foreground">Address Information</h3>
             
             <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="address">Physical Address</Label>
-                <Textarea
-                  id="address"
-                  value={formData.address}
-                  onChange={(e) => handleInputChange("address", e.target.value)}
-                  placeholder="Enter physical address"
-                  rows={2}
+              <AddressAutocomplete
+                label="Physical Address"
+                value={formData.address}
+                onChange={(address) => {
+                  handleInputChange("address", address);
+                  if (sameAsPhysical) {
+                    handleInputChange("billing_address", address);
+                  }
+                }}
+                placeholder="Start typing an address..."
+              />
+
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="same-address"
+                  checked={sameAsPhysical}
+                  onCheckedChange={(checked) => {
+                    setSameAsPhysical(checked as boolean);
+                    if (checked) {
+                      handleInputChange("billing_address", formData.address);
+                    }
+                  }}
                 />
+                <Label htmlFor="same-address" className="text-sm font-normal cursor-pointer">
+                  Billing address same as physical address
+                </Label>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="billing_address">Billing Address</Label>
-                <Textarea
-                  id="billing_address"
+              {!sameAsPhysical && (
+                <AddressAutocomplete
+                  label="Billing Address"
                   value={formData.billing_address}
-                  onChange={(e) => handleInputChange("billing_address", e.target.value)}
-                  placeholder="Enter billing address (leave blank if same as physical)"
-                  rows={2}
+                  onChange={(address) => handleInputChange("billing_address", address)}
+                  placeholder="Start typing an address..."
                 />
-              </div>
+              )}
             </div>
           </div>
 

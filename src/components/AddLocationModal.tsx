@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Upload, X, MapPin, Plus, Minus, Building2, Users, Phone, FileText, FileImage } from "lucide-react";
 import { FloorPlanEditor } from "@/components/FloorPlanEditor";
+import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import {
   Dialog,
   DialogContent,  
@@ -53,6 +54,7 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
   
   const [formData, setFormData] = useState({
     name: "",
+    address: "", // Full address for autocomplete
     street1: "",
     street2: "",
     city: "",
@@ -83,6 +85,7 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
       const addressParts = (location.address || "").split(", ");
       setFormData({
         name: location.name || "",
+        address: location.address || "",
         street1: addressParts[0] || "",
         street2: addressParts[1] || "",
         city: addressParts[2] || "",
@@ -119,6 +122,7 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
   const resetForm = () => {
     setFormData({
       name: "",
+      address: "",
       street1: "",
       street2: "",
       city: "",
@@ -437,28 +441,24 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
                 </div>
 
                 <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="street1" className="text-sm font-medium">Street Address 1 *</Label>
-                    <Input
-                      id="street1"
-                      placeholder="123 Main Street"
-                      value={formData.street1}
-                      onChange={(e) => setFormData({ ...formData, street1: e.target.value })}
-                      className="h-10"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="street2" className="text-sm font-medium">Street Address 2</Label>
-                    <Input
-                      id="street2"
-                      placeholder="Apt, Suite, Unit, etc. (optional)"
-                      value={formData.street2}
-                      onChange={(e) => setFormData({ ...formData, street2: e.target.value })}
-                      className="h-10"
-                    />
-                  </div>
-                  
+                  <AddressAutocomplete
+                    label="Location Address"
+                    value={formData.address}
+                    onChange={(address) => setFormData({ ...formData, address })}
+                    onAddressSelect={(components) => {
+                      setFormData({
+                        ...formData,
+                        address: components.fullAddress,
+                        street1: components.street,
+                        city: components.city,
+                        state: components.state,
+                        zipCode: components.zip,
+                      });
+                    }}
+                    placeholder="Start typing an address..."
+                    required
+                  />
+
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="city" className="text-sm font-medium">City *</Label>
