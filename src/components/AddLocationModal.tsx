@@ -70,6 +70,14 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
     status: "Active" as "Active" | "In Progress" | "Completed" | "On Hold",
   });
 
+  const [coordinates, setCoordinates] = useState<{
+    latitude: number | null;
+    longitude: number | null;
+  }>({
+    latitude: location?.latitude ?? null,
+    longitude: location?.longitude ?? null,
+  });
+
   // Filter projects by client if preSelectedClientId is provided
   const filteredProjects = useMemo(() => 
     preSelectedClientId 
@@ -136,6 +144,10 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
       contact_phone: "",
       project_id: "",
       status: "Active",
+    });
+    setCoordinates({
+      latitude: null,
+      longitude: null,
     });
     setLayoutFiles({});
     setConversionProgress({});
@@ -274,8 +286,8 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
         project_id: formData.project_id || null,
         status: formData.status,
         completion_percentage: 0,
-        latitude: null,
-        longitude: null,
+        latitude: coordinates.latitude,
+        longitude: coordinates.longitude,
         floor_plan_files: {},
       };
 
@@ -453,6 +465,10 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
                         city: components.city,
                         state: components.state,
                         zipCode: components.zip,
+                      });
+                      setCoordinates({
+                        latitude: components.latitude,
+                        longitude: components.longitude,
                       });
                     }}
                     placeholder="Start typing an address..."

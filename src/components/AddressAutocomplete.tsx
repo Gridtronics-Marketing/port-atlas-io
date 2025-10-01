@@ -12,6 +12,8 @@ interface AddressComponents {
   zip: string;
   country: string;
   fullAddress: string;
+  latitude: number | null;
+  longitude: number | null;
 }
 
 interface AddressAutocompleteProps {
@@ -119,6 +121,9 @@ export const AddressAutocomplete = ({
       }
     });
 
+    const latitude = place.geometry?.location?.lat() ?? null;
+    const longitude = place.geometry?.location?.lng() ?? null;
+
     return {
       street: street.trim(),
       city,
@@ -126,6 +131,8 @@ export const AddressAutocomplete = ({
       zip,
       country,
       fullAddress: place.formatted_address || value,
+      latitude,
+      longitude,
     };
   };
 
