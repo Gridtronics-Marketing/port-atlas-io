@@ -5,6 +5,7 @@ import { type Location } from '@/hooks/useLocations';
 import { useGoogleMapsAPI } from '@/hooks/useGoogleMapsAPI';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
+import { openNavigation } from '@/lib/navigation-utils';
 
 declare global {
   interface Window {
@@ -135,12 +136,16 @@ export const MultiLocationMap = ({
             title: location.name,
           });
 
+          const address = location.address || '';
+          const lat = position.lat;
+          const lng = position.lng;
+
           // Create info window
           const infoWindow = new window.google.maps.InfoWindow({
             content: `
               <div class="p-3 min-w-[200px]">
                 <h3 class="font-semibold text-base mb-1">${location.name}</h3>
-                <p class="text-sm text-muted-foreground mb-2">${location.address || 'No address'}</p>
+                <p class="text-sm text-muted-foreground mb-2">${address || 'No address'}</p>
                 <div class="flex items-center gap-3 text-xs text-muted-foreground">
                   <span>${location.floors} floor${location.floors !== 1 ? 's' : ''}</span>
                   ${location.drop_points_count ? `<span>${location.drop_points_count} drop points</span>` : ''}
@@ -150,6 +155,13 @@ export const MultiLocationMap = ({
                     <span class="inline-block px-2 py-1 text-xs rounded-full bg-secondary text-secondary-foreground">${location.status}</span>
                   </div>
                 ` : ''}
+                <button 
+                  id="navigate-btn-${location.id}"
+                  style="margin-top: 12px; padding: 8px 16px; background-color: hsl(222.2 47.4% 11.2%); color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 6px; width: 100%; justify-content: center;"
+                >
+                  <span style="font-size: 16px;">🧭</span>
+                  Navigate to Location
+                </button>
               </div>
             `,
           });
@@ -162,6 +174,22 @@ export const MultiLocationMap = ({
             });
             
             infoWindow.open(map, marker);
+            
+            // Add click handler for navigate button
+            window.google.maps.event.addListenerOnce(infoWindow, 'domready', () => {
+              const navigateBtn = document.getElementById(`navigate-btn-${location.id}`);
+              if (navigateBtn) {
+                navigateBtn.addEventListener('click', (e) => {
+                  e.stopPropagation();
+                  openNavigation({
+                    latitude: lat,
+                    longitude: lng,
+                    address: address,
+                    name: location.name
+                  });
+                });
+              }
+            });
             
             if (onLocationClick) {
               onLocationClick(location);

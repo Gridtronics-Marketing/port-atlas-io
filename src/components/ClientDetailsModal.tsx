@@ -19,7 +19,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Building2, User, Mail, Phone, MapPin, Calendar, ExternalLink, Loader2, Edit, Plus, Trash2, Map } from "lucide-react";
+import { Building2, User, Mail, Phone, MapPin, Calendar, ExternalLink, Loader2, Edit, Plus, Trash2, Map, Navigation } from "lucide-react";
+import { openNavigation } from "@/lib/navigation-utils";
 import { Client } from "@/hooks/useClients";
 import { useClientLocations } from "@/hooks/useClientLocations";
 import { LocationMap } from "@/components/LocationMap";
@@ -284,10 +285,9 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onDe
                   {locations.map((location) => (
                     <div 
                       key={location.id} 
-                      className="border rounded-lg p-4 space-y-2 cursor-pointer hover:shadow-soft transition-all duration-200 hover:border-primary/30 bg-card"
-                      onClick={() => setSelectedLocation(location)}
+                      className="border rounded-lg p-4 space-y-3 bg-card"
                     >
-                      <div className="flex items-start gap-3">
+                      <div className="flex items-start gap-3 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => setSelectedLocation(location)}>
                         <div className="p-2 bg-primary/10 rounded-lg shrink-0">
                           <MapPin className="h-4 w-4 text-primary" />
                         </div>
@@ -316,6 +316,24 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onDe
                           </div>
                         </div>
                       </div>
+                      {(location.latitude && location.longitude) && (
+                        <div className="flex gap-2 pt-2 border-t border-border">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openNavigation({
+                              latitude: location.latitude!,
+                              longitude: location.longitude!,
+                              address: location.address,
+                              name: location.name
+                            })}
+                            className="flex-1"
+                          >
+                            <Navigation className="h-4 w-4 mr-1" />
+                            Navigate
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

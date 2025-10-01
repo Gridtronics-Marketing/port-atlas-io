@@ -41,7 +41,7 @@ export const AddressAutocomplete = ({
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   const placesApiKey = configurations.find(
-    (config) => config.key === "google_places_api_key" && config.is_active
+    (config) => config.key === "google_maps_api_key" && config.is_active
   )?.value;
 
   useEffect(() => {

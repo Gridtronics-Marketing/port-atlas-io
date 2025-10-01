@@ -13,9 +13,7 @@ export const APIKeysManager = () => {
   const { toast } = useToast();
   const [showKeys, setShowKeys] = useState<Record<string, boolean>>({});
   const [formData, setFormData] = useState({
-    google_maps_api_key: '',
-    google_places_api_key: '',
-    google_geocoding_api_key: ''
+    google_maps_api_key: ''
   });
 
   useEffect(() => {
@@ -87,14 +85,14 @@ export const APIKeysManager = () => {
       <Alert>
         <Key className="h-4 w-4" />
         <AlertDescription>
-          Configure your Google Cloud API keys for map functionality. Keys are securely stored and only visible to administrators.
+          Google now uses a single unified API key for all Maps Platform services. Configure your key for Maps, Places, Geocoding, and Directions functionality.
           <a 
-            href="https://console.cloud.google.com/apis/credentials" 
+            href="https://console.cloud.google.com/google/maps-apis/start" 
             target="_blank" 
             rel="noopener noreferrer"
             className="ml-2 inline-flex items-center gap-1 text-primary hover:underline"
           >
-            Get API Keys <ExternalLink className="h-3 w-3" />
+            Get API Key <ExternalLink className="h-3 w-3" />
           </a>
         </AlertDescription>
       </Alert>
@@ -103,10 +101,10 @@ export const APIKeysManager = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Key className="h-5 w-5" />
-            Google Maps JavaScript API
+            Google Maps Platform API Key
           </CardTitle>
           <CardDescription>
-            Required for displaying interactive maps. Enable Maps JavaScript API in Google Cloud Console.
+            Single unified key for Maps, Places, Geocoding, and Directions services
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -132,7 +130,7 @@ export const APIKeysManager = () => {
                   {showKeys.google_maps_api_key ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </Button>
               </div>
-              <Button onClick={() => handleSave('google_maps_api_key', 'Google Maps API Key')}>
+              <Button onClick={() => handleSave('google_maps_api_key', 'Google Maps Platform API Key')}>
                 Save
               </Button>
             </div>
@@ -146,108 +144,14 @@ export const APIKeysManager = () => {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Key className="h-5 w-5" />
-            Google Places API
-          </CardTitle>
-          <CardDescription>
-            Optional - Enables location autocomplete and search features.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="google_places_api_key">API Key</Label>
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <Input
-                  id="google_places_api_key"
-                  type={showKeys.google_places_api_key ? 'text' : 'password'}
-                  value={formData.google_places_api_key}
-                  onChange={(e) => setFormData(prev => ({ ...prev, google_places_api_key: e.target.value }))}
-                  placeholder="AIza..."
-                  className="pr-10"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3"
-                  onClick={() => setShowKeys(prev => ({ ...prev, google_places_api_key: !prev.google_places_api_key }))}
-                >
-                  {showKeys.google_places_api_key ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </Button>
-              </div>
-              <Button onClick={() => handleSave('google_places_api_key', 'Google Places API Key')}>
-                Save
-              </Button>
-            </div>
-          </div>
-          {configurations.find(c => c.key === 'google_places_api_key' && c.is_active) && (
-            <div className="flex items-center gap-2 text-sm text-green-600">
-              <CheckCircle2 className="h-4 w-4" />
-              <span>Configured and active</span>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Key className="h-5 w-5" />
-            Google Geocoding API
-          </CardTitle>
-          <CardDescription>
-            Optional - Converts addresses to coordinates. Maps API key can be used if not configured separately.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="google_geocoding_api_key">API Key</Label>
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <Input
-                  id="google_geocoding_api_key"
-                  type={showKeys.google_geocoding_api_key ? 'text' : 'password'}
-                  value={formData.google_geocoding_api_key}
-                  onChange={(e) => setFormData(prev => ({ ...prev, google_geocoding_api_key: e.target.value }))}
-                  placeholder="AIza..."
-                  className="pr-10"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3"
-                  onClick={() => setShowKeys(prev => ({ ...prev, google_geocoding_api_key: !prev.google_geocoding_api_key }))}
-                >
-                  {showKeys.google_geocoding_api_key ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </Button>
-              </div>
-              <Button onClick={() => handleSave('google_geocoding_api_key', 'Google Geocoding API Key')}>
-                Save
-              </Button>
-            </div>
-          </div>
-          {configurations.find(c => c.key === 'google_geocoding_api_key' && c.is_active) && (
-            <div className="flex items-center gap-2 text-sm text-green-600">
-              <CheckCircle2 className="h-4 w-4" />
-              <span>Configured and active</span>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
       <div className="rounded-lg border border-border bg-muted/50 p-4">
         <h4 className="text-sm font-medium mb-2">Setup Instructions</h4>
         <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
-          <li>Visit the <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Google Cloud Console</a></li>
+          <li>Visit the <a href="https://console.cloud.google.com/google/maps-apis/start" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Google Maps Platform</a></li>
           <li>Create a new project or select an existing one</li>
-          <li>Enable the required APIs: Maps JavaScript API, Places API (optional), Geocoding API (optional)</li>
+          <li>Enable the Maps Platform APIs (this automatically enables Maps, Places, Geocoding, and Directions)</li>
           <li>Create an API key in the Credentials section</li>
-          <li>Configure API restrictions (HTTP referrers recommended for security)</li>
+          <li>Restrict the API key to your domain and required APIs for security</li>
           <li>Copy and paste the API key above</li>
         </ol>
       </div>
