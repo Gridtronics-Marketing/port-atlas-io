@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Plus, Minus, RotateCcw, ZoomIn, ZoomOut, RefreshCw, Camera, Paintbrush, Save } from 'lucide-react';
+import { Plus, Minus, RotateCcw, ZoomIn, ZoomOut, RefreshCw, Camera, Paintbrush, Save, FileImage } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -72,7 +72,12 @@ export const InteractiveFloorPlan = ({
   const { getDrawingForFloor, saveDrawing } = useCanvasDrawings(validLocationId);
 
   // Temporary storage for drawings when location doesn't exist yet
-  const [tempDrawingData, setTempDrawingData] = useState<any>(null);
+  const [tempDrawingData, setTempDrawingData] = useState<any>(() => {
+    // Load from localStorage on init
+    const storageKey = `temp-drawing-${floorNumber}`;
+    const stored = localStorage.getItem(storageKey);
+    return stored ? JSON.parse(stored) : null;
+  });
   
   // Generate the actual file URL from path or use provided URL
   const actualFileUrl = fileUrl || (filePath ? getStorageUrl('floor-plans', filePath) : undefined);
@@ -356,8 +361,13 @@ export const InteractiveFloorPlan = ({
     setDrawingData(data);
     
     if (!locationId || !isValidUUID(locationId)) {
-      // Store temporarily if location doesn't exist yet
-      setTempDrawingData(JSON.parse(data));
+      // Store temporarily in state and localStorage
+      const parsedData = JSON.parse(data);
+      setTempDrawingData(parsedData);
+      
+      const storageKey = `temp-drawing-${floorNumber}`;
+      localStorage.setItem(storageKey, data);
+      
       toast({
         title: "Drawing Saved Temporarily",
         description: "Your annotations will be saved after creating the location.",
@@ -373,6 +383,10 @@ export const InteractiveFloorPlan = ({
     });
     
     if (result) {
+      // Clear temporary storage after successful save
+      const storageKey = `temp-drawing-${floorNumber}`;
+      localStorage.removeItem(storageKey);
+      
       toast({
         title: "Drawing Saved",
         description: "Your annotations have been saved to the database.",
@@ -637,27 +651,40 @@ export const InteractiveFloorPlan = ({
               </div>
             </div>
           ) : (
-            <div className="w-full h-96 bg-muted flex items-center justify-center">
+            <div className="w-full h-96 bg-muted/10 flex items-center justify-center border border-dashed border-muted-foreground/20">
               <div className="text-center space-y-4">
                 <div className="text-muted-foreground">
-                  <p className="text-sm font-medium mb-1">No floor plan uploaded</p>
-                  <p className="text-xs">Upload a floor plan above or start drawing</p>
+                  {!isDrawingMode ? (
+                    <>
+                      <FileImage className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                      <p className="text-lg font-medium">No Floor Plan Uploaded</p>
+                      <p className="text-sm mt-2">Click the Draw button to start annotating on a blank canvas</p>
+                    </>
+                  ) : (
+                    <>
+                      <Paintbrush className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                      <p className="text-lg font-medium">Blank Canvas Ready</p>
+                      <p className="text-sm mt-2">Start drawing your floor plan annotations</p>
+                    </>
+                  )}
                 </div>
-                <Button
-                  size="lg"
-                  onClick={() => {
-                    setIsDrawingMode(true);
-                    setActiveTool('pencil');
-                    toast({
-                      title: "Drawing Mode Active",
-                      description: "Start drawing on the blank canvas below",
-                    });
-                  }}
-                  className="gap-2"
-                >
-                  <Paintbrush className="h-5 w-5" />
-                  Start with Blank Canvas
-                </Button>
+                {!isDrawingMode && (
+                  <Button
+                    size="lg"
+                    onClick={() => {
+                      setIsDrawingMode(true);
+                      setActiveTool('pencil');
+                      toast({
+                        title: "Drawing Mode Active",
+                        description: "Start drawing on the blank canvas below",
+                      });
+                    }}
+                    className="gap-2"
+                  >
+                    <Paintbrush className="h-5 w-5" />
+                    Start with Blank Canvas
+                  </Button>
+                )}
               </div>
             </div>
           )}

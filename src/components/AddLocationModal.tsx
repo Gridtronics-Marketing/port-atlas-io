@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Upload, X, MapPin, Plus, Minus, Building2, Users, Phone, FileText, FileImage } from "lucide-react";
+import { Upload, X, MapPin, Plus, Minus, Building2, Users, Phone, FileText, FileImage, Paintbrush } from "lucide-react";
 import { InteractiveFloorPlan } from "@/components/InteractiveFloorPlan";
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import {
@@ -782,38 +782,31 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
                                   </div>
                                )}
                                
-                                  {drawingMode[floorNumber] && (
-                                   <div className="mt-4 border-t pt-4">
-                                     {location?.id ? (
-                                       <div className="min-h-[500px] border rounded-lg overflow-hidden bg-background">
-                                          <InteractiveFloorPlan
-                                            locationId={location.id}
-                                            floorNumber={floorNumber}
-                                            className="w-full h-full"
-                                          />
-                                       </div>
-                                     ) : (
-                                       <div className="min-h-[200px] p-8 border rounded-lg bg-muted/30">
-                                         <div className="text-center space-y-2">
-                                           <FileImage className="h-12 w-12 mx-auto text-muted-foreground/50" />
-                                           <p className="text-sm font-medium text-foreground">Drawing Mode Available After Creation</p>
-                                           <p className="text-xs text-muted-foreground max-w-md mx-auto">
-                                             You can upload floor plan images now and add annotations after creating the location. Your work will be saved automatically.
-                                           </p>
-                                         </div>
-                                       </div>
-                                     )}
-                                    <div className="flex justify-end mt-2">
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => setDrawingMode(prev => ({ ...prev, [floorNumber]: false }))}
-                                      >
-                                        Done Drawing
-                                      </Button>
-                                    </div>
-                                  </div>
-                                )}
+                                   {drawingMode[floorNumber] && (
+                                    <div className="mt-4 border-t pt-4">
+                                      <div className="flex items-center justify-between py-2 px-3 bg-primary/10 rounded-md border border-primary/20 mb-3">
+                                        <span className="text-sm font-medium">
+                                          {location?.id ? "Editing floor plan" : "Drawing mode active - Your work is auto-saved"}
+                                        </span>
+                                        <Button
+                                          type="button"
+                                          size="sm"
+                                          variant="outline"
+                                          onClick={() => setDrawingMode(prev => ({ ...prev, [floorNumber]: false }))}
+                                        >
+                                          Exit Drawing
+                                        </Button>
+                                      </div>
+                                      <div className="min-h-[500px] border-2 border-primary/20 rounded-lg overflow-hidden bg-background shadow-lg">
+                                        <InteractiveFloorPlan
+                                          locationId={location?.id || ""}
+                                          floorNumber={floorNumber}
+                                          fileUrl={file ? URL.createObjectURL(file) : undefined}
+                                          className="w-full h-full"
+                                        />
+                                      </div>
+                                   </div>
+                                 )}
                              </CardContent>
                            </Card>
                         </div>

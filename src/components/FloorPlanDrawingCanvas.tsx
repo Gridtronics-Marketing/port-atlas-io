@@ -56,7 +56,7 @@ export const FloorPlanDrawingCanvas = forwardRef<DrawingCanvasRef, FloorPlanDraw
     const canvas = new FabricCanvas(canvasRef.current, {
       width,
       height,
-      backgroundColor: 'transparent',
+      backgroundColor: '#f8f9fa',
       preserveObjectStacking: true,
     });
 
@@ -266,7 +266,7 @@ export const FloorPlanDrawingCanvas = forwardRef<DrawingCanvasRef, FloorPlanDraw
     if (!fabricCanvas) return;
     
     fabricCanvas.clear();
-    fabricCanvas.backgroundColor = 'transparent';
+    fabricCanvas.backgroundColor = '#f8f9fa';
     fabricCanvas.renderAll();
     saveToHistory(fabricCanvas);
     
@@ -360,10 +360,11 @@ export const FloorPlanDrawingCanvas = forwardRef<DrawingCanvasRef, FloorPlanDraw
       <div className={`absolute inset-0 ${className}`} style={{ pointerEvents: 'auto' }}>
         <canvas 
           ref={canvasRef}
-          className="absolute top-0 left-0"
+          className="absolute top-0 left-0 border border-dashed border-muted"
           style={{ 
             zIndex: 30,
-            pointerEvents: 'auto'
+            pointerEvents: 'auto',
+            boxShadow: 'inset 0 0 20px rgba(0,0,0,0.03)'
           }}
         />
       </div>
