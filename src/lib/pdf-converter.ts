@@ -1,17 +1,11 @@
 import * as pdfjsLib from 'pdfjs-dist';
 
-// Set worker path to match installed pdfjs-dist version (5.4.149)
-const setWorkerSrc = () => {
-  try {
-    // Use version that matches package.json
-    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/5.4.149/pdf.worker.min.mjs`;
-  } catch {
-    // Fallback to unpkg with matching version
-    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@5.4.149/build/pdf.worker.min.mjs`;
-  }
-};
-
-setWorkerSrc();
+// Configure worker to use the local file from pdfjs-dist package
+// This ensures version compatibility between the library and worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.min.mjs',
+  import.meta.url
+).toString();
 
 export interface ConvertedPage {
   pageNumber: number;
