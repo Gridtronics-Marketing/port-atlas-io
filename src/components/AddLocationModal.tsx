@@ -507,14 +507,13 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
         <div className="flex-1 overflow-y-auto px-6">
           <div className="space-y-6 py-4">
             {/* Client Selection Section */}
-            {!isEditing && (
-              <Card className="shadow-soft border-border">
-                <CardHeader className="pb-4">
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <Users className="h-5 w-5 text-primary" />
-                    Client Assignment
-                  </CardTitle>
-                </CardHeader>
+            <Card className="shadow-soft border-border">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Users className="h-5 w-5 text-primary" />
+                  Client Assignment
+                </CardTitle>
+              </CardHeader>
                 <CardContent className="space-y-4">
                   {!showClientCreationForm ? (
                     <>
@@ -720,7 +719,6 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
                   )}
                 </CardContent>
               </Card>
-            )}
 
             {/* Basic Information Section */}
             <Card className="shadow-soft border-border">
