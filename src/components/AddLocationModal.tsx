@@ -160,6 +160,22 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
       }
     }
   }, [location, open, preSelectedProjectId, preSelectedClientId, filteredProjects, selectedClientId, projects]);
+  
+  // Clear project selection when client changes during edit
+  useEffect(() => {
+    if (isEditing && selectedClientId) {
+      // Check if current project belongs to selected client
+      const currentProject = projects.find(p => p.id === formData.project_id);
+      if (currentProject && currentProject.client_id !== selectedClientId) {
+        // Clear project if it doesn't belong to the newly selected client
+        setFormData(prev => ({ ...prev, project_id: "" }));
+        toast({
+          title: "Project Cleared",
+          description: "Please select a project from the new client or continue without a project.",
+        });
+      }
+    }
+  }, [selectedClientId, isEditing, formData.project_id, projects, toast]);
 
   const resetForm = () => {
     setFormData({
