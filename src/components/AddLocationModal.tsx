@@ -250,13 +250,23 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
   };
 
   const handleSubmit = async () => {
-    // Check required fields (project is now optional)
+    // Validate required fields
     const requiredFieldsError = !formData.name.trim() || !formData.street1.trim() || !formData.city.trim() || !formData.state.trim();
     
     if (requiredFieldsError) {
       toast({
         title: "Validation Error",
         description: "Please fill in all required fields (Name, Street Address, City, and State)",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // For new locations from dashboard (no pre-selected project), require project selection
+    if (!isEditing && !preSelectedProjectId && !formData.project_id) {
+      toast({
+        title: "Project Required",
+        description: "Please select a project for this location, or create the location from within a specific client/project context.",
         variant: "destructive",
       });
       return;

@@ -1,13 +1,13 @@
 import * as pdfjsLib from 'pdfjs-dist';
 
-// Set worker path with updated version
+// Set worker path to match installed pdfjs-dist version (5.4.149)
 const setWorkerSrc = () => {
   try {
-    // Use latest stable version from CDN
-    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs`;
+    // Use version that matches package.json
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/5.4.149/pdf.worker.min.mjs`;
   } catch {
-    // Fallback to unpkg
-    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@4.0.379/build/pdf.worker.min.mjs`;
+    // Fallback to unpkg with matching version
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@5.4.149/build/pdf.worker.min.mjs`;
   }
 };
 

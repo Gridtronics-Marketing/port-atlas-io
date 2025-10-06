@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.4.0";
+export const APP_VERSION = "0.5.0";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,22 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "0.5.0",
+    date: "2025-10-06",
+    changes: [
+      "Added all 6 drop point status options: planned, roughed, terminated, tested, active, inactive",
+      "Auto-start blank canvas - removed manual 'Start with Blank Canvas' button",
+      "Enhanced drawing save with retry logic and better error handling",
+      "Updated PDF.js library to match worker version for reliable PDF conversion",
+      "Added cable count to floor plan labels (shows '# Cables' or 'TBD')",
+      "Improved label layout: Cable count (top), Status (middle), Label (bottom)",
+      "Added PDF export functionality for floor plans with metadata",
+      "PDF export includes drop points summary, room views, and location details",
+      "Fixed camera lifecycle management for room view captures",
+      "Enhanced error messages for drawing conversion failures",
+    ],
+  },
   {
     version: "0.4.0",
     date: "2025-10-01",

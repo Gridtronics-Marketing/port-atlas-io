@@ -604,7 +604,21 @@ export const InteractiveFloorPlan = ({
             <Button
               variant={isDrawingMode ? "default" : "outline"}
               size="sm"
-              onClick={() => setIsDrawingMode(!isDrawingMode)}
+              onClick={() => {
+                const newDrawingMode = !isDrawingMode;
+                setIsDrawingMode(newDrawingMode);
+                
+                // Auto-activate pencil tool when entering drawing mode
+                if (newDrawingMode) {
+                  setActiveTool('pencil');
+                  toast({
+                    title: "Drawing Mode Active",
+                    description: "Use the toolbar to start drawing on your floor plan",
+                  });
+                } else {
+                  setActiveTool('select');
+                }
+              }}
               data-draw-mode-button
             >
               <Paintbrush className="h-4 w-4 mr-2" />
@@ -638,6 +652,37 @@ export const InteractiveFloorPlan = ({
               <Camera className="h-4 w-4 mr-2" />
               Add Room View
             </Button>
+            {actualFileUrl && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={async () => {
+                  try {
+                    const { exportFloorPlanToPDF } = await import('@/lib/floor-plan-exporter');
+                    await exportFloorPlanToPDF(locationId, floorNumber, actualFileUrl, {
+                      title: `Floor ${floorNumber} Plan`,
+                      includeDropPoints: true,
+                      includeRoomViews: true,
+                      includeMetadata: true,
+                    });
+                    toast({
+                      title: "PDF Export Complete",
+                      description: "Floor plan has been exported to PDF successfully.",
+                    });
+                  } catch (error) {
+                    console.error('Error exporting PDF:', error);
+                    toast({
+                      title: "Export Failed",
+                      description: "Failed to export floor plan to PDF. Please try again.",
+                      variant: "destructive",
+                    });
+                  }
+                }}
+              >
+                <FileImage className="h-4 w-4 mr-2" />
+                Export PDF
+              </Button>
+            )}
             {!actualFileUrl && filePath && (
               <Button
                 variant="outline"
@@ -750,33 +795,16 @@ export const InteractiveFloorPlan = ({
                     <>
                       <FileImage className="h-16 w-16 mx-auto mb-4 opacity-50" />
                       <p className="text-lg font-medium">No Floor Plan Uploaded</p>
-                      <p className="text-sm mt-2">Click the Draw button to start annotating on a blank canvas</p>
+                      <p className="text-sm mt-2">Click "Draw Mode" button above to start drawing</p>
                     </>
                   ) : (
                     <>
                       <Paintbrush className="h-16 w-16 mx-auto mb-4 opacity-50" />
                       <p className="text-lg font-medium">Blank Canvas Ready</p>
-                      <p className="text-sm mt-2">Start drawing your floor plan annotations</p>
+                      <p className="text-sm mt-2">Use the toolbar above to draw your floor plan</p>
                     </>
                   )}
                 </div>
-                {!isDrawingMode && (
-                  <Button
-                    size="lg"
-                    onClick={() => {
-                      setIsDrawingMode(true);
-                      setActiveTool('pencil');
-                      toast({
-                        title: "Drawing Mode Active",
-                        description: "Start drawing on the blank canvas below",
-                      });
-                    }}
-                    className="gap-2"
-                  >
-                    <Paintbrush className="h-5 w-5" />
-                    Start with Blank Canvas
-                  </Button>
-                )}
               </div>
             </div>
           )}
@@ -844,26 +872,28 @@ export const InteractiveFloorPlan = ({
                          <span className="text-xs">{getDropPointIcon(point.point_type)}</span>
                        </div>
                        
-                       {/* Persistent Label for Drop Point */}
-                       {showLabels && (
-                         <div
-                           className="absolute pointer-events-none select-none"
-                           style={{
-                             left: `${displayPoint.x_coordinate || 50}%`,
-                             top: `${displayPoint.y_coordinate || 50}%`,
-                             transform: 'translate(20px, -50%)',
-                             zIndex: 5,
-                           }}
-                         >
-                           <div className="bg-black/80 backdrop-blur-sm text-white px-2 py-1 rounded-md text-xs whitespace-nowrap shadow-lg border border-white/20">
-                             <div className="font-medium">{point.label}</div>
-                             <div className={`text-xs capitalize ${getStatusTextColor(point.status)} filter brightness-200`}>
-                               {point.status}
-                               {point.room && ` • ${point.room}`}
-                             </div>
-                           </div>
-                         </div>
-                       )}
+                        {/* Persistent Label for Drop Point - Updated with Cable Count */}
+                        {showLabels && (
+                          <div
+                            className="absolute pointer-events-none select-none"
+                            style={{
+                              left: `${displayPoint.x_coordinate || 50}%`,
+                              top: `${displayPoint.y_coordinate || 50}%`,
+                              transform: 'translate(20px, -50%)',
+                              zIndex: 5,
+                            }}
+                          >
+                            <div className="bg-black/80 backdrop-blur-sm text-white px-2 py-1 rounded-md text-xs whitespace-nowrap shadow-lg border border-white/20">
+                              <div className="font-medium text-blue-300 text-[10px]">
+                                {point.cable_count ? `${point.cable_count} Cable${point.cable_count > 1 ? 's' : ''}` : 'TBD'}
+                              </div>
+                              <div className={`text-xs capitalize ${getStatusTextColor(point.status)} filter brightness-200`}>
+                                {point.status}
+                              </div>
+                              <div className="font-medium">{point.label || 'TBD'}</div>
+                            </div>
+                          </div>
+                        )}
                      </>
                   </TooltipTrigger>
                   <TooltipContent className="bg-popover border">

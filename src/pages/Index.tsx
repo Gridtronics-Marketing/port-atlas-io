@@ -12,6 +12,7 @@ import { useWorkOrders } from "@/hooks/useWorkOrders";
 import { useClients } from "@/hooks/useClients";
 import { useProjects } from "@/hooks/useProjects";
 import { useDropPoints } from "@/hooks/useDropPoints";
+import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
   const [showAddLocation, setShowAddLocation] = useState(false);
@@ -20,6 +21,7 @@ const Index = () => {
   const { clients } = useClients();
   const { projects } = useProjects();
   const { dropPoints } = useDropPoints();
+  const { toast } = useToast();
 
   // Calculate key metrics
   const activeLocations = locations.filter(l => l.status === 'Active').length;
@@ -73,9 +75,15 @@ const Index = () => {
               {/* Primary Actions */}
               <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
                 <Button 
-                  onClick={() => setShowAddLocation(true)}
+                  onClick={() => {
+                    // New Location from dashboard - users should create via Projects/Clients
+                    toast({
+                      title: "Create Location via Project",
+                      description: "Please create locations from the Projects or Clients page to ensure proper organization.",
+                    });
+                  }}
                   size="lg"
-                  className="bg-gradient-primary hover:bg-primary-hover shadow-medium"
+                  variant="outline"
                 >
                   <Plus className="h-5 w-5 mr-2" />
                   New Location

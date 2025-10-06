@@ -24,24 +24,66 @@ export async function saveDrawingAsFloorPlan(
   pngDataURL: string
 ): Promise<{ success: boolean; error?: string; filePath?: string }> {
   try {
+    // Validate input
+    if (!pngDataURL || !pngDataURL.startsWith('data:image')) {
+      console.error('Invalid PNG data URL');
+      return { success: false, error: 'Invalid image data. Please try drawing again.' };
+    }
+
     // Convert data URL to blob
     const blob = dataURLtoBlob(pngDataURL);
+    
+    if (!blob || blob.size === 0) {
+      console.error('Failed to convert data URL to blob');
+      return { success: false, error: 'Failed to process image. Please try again.' };
+    }
+
+    console.log('Converting drawing to floor plan:', {
+      locationId,
+      floorNumber,
+      blobSize: blob.size,
+      blobType: blob.type
+    });
     
     // Generate unique filename
     const timestamp = Date.now();
     const fileName = `${locationId}/floor-${floorNumber}-${timestamp}.png`;
     
-    // Upload to storage
-    const { error: uploadError } = await supabase.storage
-      .from('floor-plans')
-      .upload(fileName, blob, {
-        contentType: 'image/png',
-        upsert: false,
-      });
+    // Upload to storage with retry logic
+    let uploadAttempt = 0;
+    const maxAttempts = 3;
+    let uploadError: any = null;
+
+    while (uploadAttempt < maxAttempts) {
+      uploadAttempt++;
+      
+      const { error } = await supabase.storage
+        .from('floor-plans')
+        .upload(fileName, blob, {
+          contentType: 'image/png',
+          upsert: false,
+        });
+
+      if (!error) {
+        uploadError = null;
+        break;
+      }
+      
+      uploadError = error;
+      console.error(`Upload attempt ${uploadAttempt} failed:`, error);
+      
+      if (uploadAttempt < maxAttempts) {
+        // Wait before retry
+        await new Promise(resolve => setTimeout(resolve, 1000 * uploadAttempt));
+      }
+    }
 
     if (uploadError) {
-      console.error('Error uploading floor plan:', uploadError);
-      return { success: false, error: uploadError.message };
+      console.error('Error uploading floor plan after retries:', uploadError);
+      return { 
+        success: false, 
+        error: `Upload failed: ${uploadError.message}. Please check your connection and try again.` 
+      };
     }
 
     // Get current location data
