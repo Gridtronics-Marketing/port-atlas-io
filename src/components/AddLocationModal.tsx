@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Upload, X, MapPin, Plus, Minus, Building2, Users, Phone, FileText, FileImage, Paintbrush } from "lucide-react";
+import { Upload, X, MapPin, Plus, Minus, Building2, Users, Phone, FileText, FileImage, Paintbrush, Search, UserPlus } from "lucide-react";
 import { InteractiveFloorPlan } from "@/components/InteractiveFloorPlan";
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import {
@@ -26,6 +26,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useClients } from "@/hooks/useClients";
 import { useLocations, type Location } from "@/hooks/useLocations";
 import { useProjects } from "@/hooks/useProjects";
@@ -46,11 +49,33 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [conversionProgress, setConversionProgress] = useState<{ [floorNumber: number]: ConversionProgress | null }>({});
   const [drawingMode, setDrawingMode] = useState<{ [floorNumber: number]: boolean }>({});
-  const { clients } = useClients();
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(preSelectedClientId || null);
+  const [showClientCreationForm, setShowClientCreationForm] = useState(false);
+  const [clientSearchOpen, setClientSearchOpen] = useState(false);
+  const [sameAsPhysical, setSameAsPhysical] = useState(false);
+  const { clients, addClient } = useClients();
   const { projects } = useProjects();
   const { addLocation, updateLocation } = useLocations();
   const { toast } = useToast();
   const isEditing = !!location;
+  
+  const [clientFormData, setClientFormData] = useState<{
+    name: string;
+    contact_name: string;
+    contact_email: string;
+    contact_phone: string;
+    address: string;
+    billing_address: string;
+    status: "Active" | "Inactive" | "Pending";
+  }>({
+    name: "",
+    contact_name: "",
+    contact_email: "",
+    contact_phone: "",
+    address: "",
+    billing_address: "",
+    status: "Active"
+  });
   
   const [formData, setFormData] = useState({
     name: "",
@@ -78,12 +103,18 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
     longitude: location?.longitude ?? null,
   });
 
-  // Filter projects by client if preSelectedClientId is provided
+  // Filter projects by selected client
   const filteredProjects = useMemo(() => 
-    preSelectedClientId 
-      ? projects.filter(project => project.client_id === preSelectedClientId)
+    selectedClientId 
+      ? projects.filter(project => project.client_id === selectedClientId)
       : projects,
-    [preSelectedClientId, projects]
+    [selectedClientId, projects]
+  );
+  
+  // Get selected client details
+  const selectedClient = useMemo(() => 
+    clients.find(c => c.id === selectedClientId),
+    [clients, selectedClientId]
   );
 
   // Effect to populate form when editing or when modal opens with pre-selected values
@@ -108,24 +139,27 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
         project_id: location.project_id || "",
         status: location.status as any || "Active",
       });
+      
+      // Set selected client based on location's project
+      if (location.project_id) {
+        const project = projects.find(p => p.id === location.project_id);
+        if (project) {
+          setSelectedClientId(project.client_id);
+        }
+      }
     } else if (!location && open) {
       resetForm();
+      setSelectedClientId(preSelectedClientId || null);
+      setShowClientCreationForm(false);
       
       // Auto-select project if pre-selected or if only one project available for client
       if (preSelectedProjectId) {
-        console.log('✅ Pre-selecting project:', preSelectedProjectId);
         setFormData(prev => ({ ...prev, project_id: preSelectedProjectId }));
-      } else if (preSelectedClientId && filteredProjects.length === 1) {
-        console.log('✅ Auto-selecting single project for client:', filteredProjects[0].name);
+      } else if (selectedClientId && filteredProjects.length === 1) {
         setFormData(prev => ({ ...prev, project_id: filteredProjects[0].id }));
-       } else if (preSelectedClientId && filteredProjects.length === 0) {
-         console.warn('⚠️ No projects found for client:', preSelectedClientId);
-         // Don't show error - locations can be created without projects
-       } else if (preSelectedClientId && filteredProjects.length > 1) {
-        console.log('ℹ️ Multiple projects available for client, user needs to select one');
       }
     }
-  }, [location, open, preSelectedProjectId, preSelectedClientId, filteredProjects, toast]);
+  }, [location, open, preSelectedProjectId, preSelectedClientId, filteredProjects, selectedClientId, projects]);
 
   const resetForm = () => {
     setFormData({
@@ -151,6 +185,49 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
     });
     setLayoutFiles({});
     setConversionProgress({});
+    setSelectedClientId(null);
+    setShowClientCreationForm(false);
+    setClientFormData({
+      name: "",
+      contact_name: "",
+      contact_email: "",
+      contact_phone: "",
+      address: "",
+      billing_address: "",
+      status: "Active"
+    });
+  };
+  
+  const handleCreateClient = async () => {
+    if (!clientFormData.name.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Client name is required",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      const newClient = await addClient(clientFormData);
+      setSelectedClientId(newClient.id);
+      setShowClientCreationForm(false);
+      setClientFormData({
+        name: "",
+        contact_name: "",
+        contact_email: "",
+        contact_phone: "",
+        address: "",
+        billing_address: "",
+        status: "Active"
+      });
+      toast({
+        title: "Success",
+        description: "Client created successfully",
+      });
+    } catch (error) {
+      console.error('Error creating client:', error);
+    }
   };
 
   const handleFileChange = async (floorNumber: number, event: React.ChangeEvent<HTMLInputElement>) => {
@@ -262,11 +339,11 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
       return;
     }
 
-    // For new locations from dashboard (no pre-selected project), require project selection
-    if (!isEditing && !preSelectedProjectId && !formData.project_id) {
+    // For new locations, require client selection (either existing or newly created)
+    if (!isEditing && !selectedClientId && !showClientCreationForm) {
       toast({
-        title: "Project Required",
-        description: "Please select a project for this location, or create the location from within a specific client/project context.",
+        title: "Client Required",
+        description: "Please select a client or create a new one to continue.",
         variant: "destructive",
       });
       return;
@@ -429,6 +506,222 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
 
         <div className="flex-1 overflow-y-auto px-6">
           <div className="space-y-6 py-4">
+            {/* Client Selection Section */}
+            {!isEditing && (
+              <Card className="shadow-soft border-border">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Users className="h-5 w-5 text-primary" />
+                    Client Assignment
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {!showClientCreationForm ? (
+                    <>
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">Select Client *</Label>
+                        <Popover open={clientSearchOpen} onOpenChange={setClientSearchOpen}>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              aria-expanded={clientSearchOpen}
+                              className="w-full justify-between h-10"
+                            >
+                              {selectedClient ? selectedClient.name : "Search for a client..."}
+                              <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-full p-0" align="start">
+                            <Command>
+                              <CommandInput placeholder="Search clients..." />
+                              <CommandList>
+                                <CommandEmpty>
+                                  <div className="py-6 text-center text-sm">
+                                    <p className="text-muted-foreground mb-2">No client found.</p>
+                                    <Button
+                                      size="sm"
+                                      onClick={() => {
+                                        setShowClientCreationForm(true);
+                                        setClientSearchOpen(false);
+                                      }}
+                                      className="bg-gradient-primary"
+                                    >
+                                      <UserPlus className="mr-2 h-4 w-4" />
+                                      Create New Client
+                                    </Button>
+                                  </div>
+                                </CommandEmpty>
+                                <CommandGroup>
+                                  {clients.map((client) => (
+                                    <CommandItem
+                                      key={client.id}
+                                      value={client.name}
+                                      onSelect={() => {
+                                        setSelectedClientId(client.id);
+                                        setClientSearchOpen(false);
+                                      }}
+                                    >
+                                      <div className="flex flex-col">
+                                        <span className="font-medium">{client.name}</span>
+                                        {client.contact_name && (
+                                          <span className="text-xs text-muted-foreground">
+                                            {client.contact_name}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        <Separator className="flex-1" />
+                        <span className="text-xs text-muted-foreground">OR</span>
+                        <Separator className="flex-1" />
+                      </div>
+                      
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setShowClientCreationForm(true)}
+                        className="w-full"
+                      >
+                        <UserPlus className="mr-2 h-4 w-4" />
+                        Create New Client
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-sm font-semibold">New Client Information</h3>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setShowClientCreationForm(false)}
+                        >
+                          <X className="h-4 w-4 mr-1" />
+                          Cancel
+                        </Button>
+                      </div>
+                      
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="client_name">Client Name *</Label>
+                            <Input
+                              id="client_name"
+                              value={clientFormData.name}
+                              onChange={(e) => setClientFormData({ ...clientFormData, name: e.target.value })}
+                              placeholder="Enter client name"
+                            />
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label htmlFor="client_status">Status</Label>
+                            <ConfigurableSelect
+                              category="client_statuses"
+                              value={clientFormData.status}
+                              onValueChange={(value) => setClientFormData({ ...clientFormData, status: value as "Active" | "Inactive" | "Pending" })}
+                              placeholder="Select status"
+                            />
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="client_contact_name">Contact Name</Label>
+                            <Input
+                              id="client_contact_name"
+                              value={clientFormData.contact_name}
+                              onChange={(e) => setClientFormData({ ...clientFormData, contact_name: e.target.value })}
+                              placeholder="Primary contact"
+                            />
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label htmlFor="client_contact_email">Contact Email</Label>
+                            <Input
+                              id="client_contact_email"
+                              type="email"
+                              value={clientFormData.contact_email}
+                              onChange={(e) => setClientFormData({ ...clientFormData, contact_email: e.target.value })}
+                              placeholder="contact@company.com"
+                            />
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label htmlFor="client_contact_phone">Contact Phone</Label>
+                          <Input
+                            id="client_contact_phone"
+                            value={clientFormData.contact_phone}
+                            onChange={(e) => setClientFormData({ ...clientFormData, contact_phone: e.target.value })}
+                            placeholder="(555) 123-4567"
+                          />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <AddressAutocomplete
+                            label="Physical Address"
+                            value={clientFormData.address}
+                            onChange={(address) => {
+                              setClientFormData({ ...clientFormData, address });
+                              if (sameAsPhysical) {
+                                setClientFormData(prev => ({ ...prev, billing_address: address }));
+                              }
+                            }}
+                            placeholder="Start typing an address..."
+                          />
+                        </div>
+                        
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id="same-address"
+                            checked={sameAsPhysical}
+                            onCheckedChange={(checked) => {
+                              setSameAsPhysical(checked as boolean);
+                              if (checked) {
+                                setClientFormData(prev => ({ ...prev, billing_address: prev.address }));
+                              }
+                            }}
+                          />
+                          <Label htmlFor="same-address" className="text-sm font-normal cursor-pointer">
+                            Billing address same as physical address
+                          </Label>
+                        </div>
+                        
+                        {!sameAsPhysical && (
+                          <div className="space-y-2">
+                            <AddressAutocomplete
+                              label="Billing Address"
+                              value={clientFormData.billing_address}
+                              onChange={(address) => setClientFormData({ ...clientFormData, billing_address: address })}
+                              placeholder="Start typing an address..."
+                            />
+                          </div>
+                        )}
+                        
+                        <Button
+                          type="button"
+                          onClick={handleCreateClient}
+                          className="w-full bg-gradient-primary"
+                        >
+                          <UserPlus className="mr-2 h-4 w-4" />
+                          Create Client & Continue
+                        </Button>
+                      </div>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
             {/* Basic Information Section */}
             <Card className="shadow-soft border-border">
               <CardHeader className="pb-4">
