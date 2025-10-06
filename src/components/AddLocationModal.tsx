@@ -53,8 +53,9 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
   const [showClientCreationForm, setShowClientCreationForm] = useState(false);
   const [clientSearchOpen, setClientSearchOpen] = useState(false);
   const [sameAsPhysical, setSameAsPhysical] = useState(false);
+  const [showProjectCreationForm, setShowProjectCreationForm] = useState(false);
   const { clients, addClient } = useClients();
-  const { projects } = useProjects();
+  const { projects, addProject } = useProjects();
   const { addLocation, updateLocation } = useLocations();
   const { toast } = useToast();
   const isEditing = !!location;
@@ -75,6 +76,17 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
     address: "",
     billing_address: "",
     status: "Active"
+  });
+
+  const [projectFormData, setProjectFormData] = useState({
+    name: "",
+    description: "",
+    project_type: "Network Installation",
+    status: "Planning",
+    priority: "Medium",
+    start_date: "",
+    end_date: "",
+    estimated_budget: ""
   });
   
   const [formData, setFormData] = useState({
@@ -203,6 +215,7 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
     setConversionProgress({});
     setSelectedClientId(null);
     setShowClientCreationForm(false);
+    setShowProjectCreationForm(false);
     setClientFormData({
       name: "",
       contact_name: "",
@@ -211,6 +224,16 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
       address: "",
       billing_address: "",
       status: "Active"
+    });
+    setProjectFormData({
+      name: "",
+      description: "",
+      project_type: "Network Installation",
+      status: "Planning",
+      priority: "Medium",
+      start_date: "",
+      end_date: "",
+      estimated_budget: ""
     });
   };
   
@@ -243,6 +266,57 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
       });
     } catch (error) {
       console.error('Error creating client:', error);
+    }
+  };
+
+  const handleCreateProject = async () => {
+    if (!projectFormData.name.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Project name is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!selectedClientId) {
+      toast({
+        title: "Validation Error",
+        description: "Please select a client first",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const newProject = await addProject({
+        ...projectFormData,
+        client_id: selectedClientId,
+        estimated_budget: projectFormData.estimated_budget ? parseFloat(projectFormData.estimated_budget) : null
+      });
+
+      // Auto-select the newly created project
+      setFormData(prev => ({ ...prev, project_id: newProject.id }));
+
+      // Reset and hide form
+      setProjectFormData({
+        name: "",
+        description: "",
+        project_type: "Network Installation",
+        status: "Planning",
+        priority: "Medium",
+        start_date: "",
+        end_date: "",
+        estimated_budget: ""
+      });
+      setShowProjectCreationForm(false);
+
+      toast({
+        title: "Success",
+        description: "Project created and selected successfully",
+      });
+    } catch (error) {
+      console.error('Error creating project:', error);
     }
   };
 
@@ -360,6 +434,16 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
       toast({
         title: "Client Required",
         description: "Please select a client or create a new one to continue.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // When client is selected, project is REQUIRED
+    if (selectedClientId && !formData.project_id) {
+      toast({
+        title: "Project Required",
+        description: "Please select or create a project for this client.",
         variant: "destructive",
       });
       return;
@@ -879,23 +963,195 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                   <Label htmlFor="project_id" className="text-sm font-medium">
-                     Project Assignment (Optional)
-                   </Label>
-                   <Select value={formData.project_id || "none"} onValueChange={(value) => setFormData({ ...formData, project_id: value === "none" ? "" : value })}>
-                     <SelectTrigger className="h-10 bg-background">
-                       <SelectValue placeholder="Select project (optional)" />
-                     </SelectTrigger>
-                     <SelectContent className="bg-popover border z-50">
-                       <SelectItem value="none">No Project (Standalone Location)</SelectItem>
-                       {filteredProjects.map((project) => (
-                         <SelectItem key={project.id} value={project.id}>
-                           {project.name}
-                         </SelectItem>
-                       ))}
-                     </SelectContent>
-                   </Select>
+                <div className="space-y-3">
+                  <Label htmlFor="project_id" className="text-sm font-medium">
+                    Project Assignment {selectedClientId && <span className="text-destructive">*</span>}
+                  </Label>
+                  
+                  {selectedClientId ? (
+                    <>
+                      {filteredProjects.length > 0 ? (
+                        <Select 
+                          value={formData.project_id || ""} 
+                          onValueChange={(value) => setFormData({ ...formData, project_id: value })}
+                        >
+                          <SelectTrigger className="h-10 bg-background">
+                            <SelectValue placeholder="Select a project *" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-popover border z-50">
+                            {filteredProjects.map((project) => (
+                              <SelectItem key={project.id} value={project.id}>
+                                {project.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <div className="p-3 bg-muted/50 rounded-md border border-border">
+                          <p className="text-sm text-muted-foreground">
+                            No projects found for {selectedClient?.name}
+                          </p>
+                        </div>
+                      )}
+
+                      {!showProjectCreationForm && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setShowProjectCreationForm(true)}
+                          className="w-full"
+                          size="sm"
+                        >
+                          <Plus className="mr-2 h-4 w-4" />
+                          Create New Project
+                        </Button>
+                      )}
+
+                      {showProjectCreationForm && (
+                        <Card className="border-2 border-primary/50 bg-primary/5">
+                          <CardHeader className="pb-3">
+                            <CardTitle className="text-sm flex items-center justify-between">
+                              <span className="flex items-center gap-2">
+                                <Plus className="h-4 w-4" />
+                                Create New Project for {selectedClient?.name}
+                              </span>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setShowProjectCreationForm(false)}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-3">
+                            {/* Project Name */}
+                            <div className="space-y-2">
+                              <Label className="text-xs">Project Name *</Label>
+                              <Input
+                                value={projectFormData.name}
+                                onChange={(e) => setProjectFormData(prev => ({ ...prev, name: e.target.value }))}
+                                placeholder="e.g., Headquarters Fiber Installation"
+                                className="h-9"
+                              />
+                            </div>
+
+                            {/* Description */}
+                            <div className="space-y-2">
+                              <Label className="text-xs">Description</Label>
+                              <Textarea
+                                value={projectFormData.description}
+                                onChange={(e) => setProjectFormData(prev => ({ ...prev, description: e.target.value }))}
+                                placeholder="Brief project description"
+                                rows={2}
+                                className="text-sm"
+                              />
+                            </div>
+
+                            {/* Type, Status, Priority */}
+                            <div className="grid grid-cols-3 gap-2">
+                              <div className="space-y-2">
+                                <Label className="text-xs">Type</Label>
+                                <ConfigurableSelect
+                                  category="project_types"
+                                  value={projectFormData.project_type}
+                                  onValueChange={(value) => setProjectFormData(prev => ({ ...prev, project_type: value }))}
+                                  className="h-9"
+                                />
+                              </div>
+
+                              <div className="space-y-2">
+                                <Label className="text-xs">Status</Label>
+                                <ConfigurableSelect
+                                  category="project_statuses"
+                                  value={projectFormData.status}
+                                  onValueChange={(value) => setProjectFormData(prev => ({ ...prev, status: value }))}
+                                  className="h-9"
+                                />
+                              </div>
+
+                              <div className="space-y-2">
+                                <Label className="text-xs">Priority</Label>
+                                <ConfigurableSelect
+                                  category="project_priorities"
+                                  value={projectFormData.priority}
+                                  onValueChange={(value) => setProjectFormData(prev => ({ ...prev, priority: value }))}
+                                  className="h-9"
+                                />
+                              </div>
+                            </div>
+
+                            {/* Dates and Budget */}
+                            <div className="grid grid-cols-3 gap-2">
+                              <div className="space-y-2">
+                                <Label className="text-xs">Start Date</Label>
+                                <Input
+                                  type="date"
+                                  value={projectFormData.start_date}
+                                  onChange={(e) => setProjectFormData(prev => ({ ...prev, start_date: e.target.value }))}
+                                  className="h-9 text-sm"
+                                />
+                              </div>
+
+                              <div className="space-y-2">
+                                <Label className="text-xs">End Date</Label>
+                                <Input
+                                  type="date"
+                                  value={projectFormData.end_date}
+                                  onChange={(e) => setProjectFormData(prev => ({ ...prev, end_date: e.target.value }))}
+                                  className="h-9 text-sm"
+                                />
+                              </div>
+
+                              <div className="space-y-2">
+                                <Label className="text-xs">Budget ($)</Label>
+                                <Input
+                                  type="number"
+                                  step="0.01"
+                                  value={projectFormData.estimated_budget}
+                                  onChange={(e) => setProjectFormData(prev => ({ ...prev, estimated_budget: e.target.value }))}
+                                  placeholder="0.00"
+                                  className="h-9 text-sm"
+                                />
+                              </div>
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="flex gap-2 pt-2">
+                              <Button
+                                type="button"
+                                onClick={handleCreateProject}
+                                className="flex-1 bg-gradient-primary"
+                                size="sm"
+                              >
+                                <Plus className="h-4 w-4 mr-1" />
+                                Create Project
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setShowProjectCreationForm(false)}
+                                size="sm"
+                              >
+                                Cancel
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
+
+                      <p className="text-xs text-muted-foreground">
+                        A project is required when a client is selected
+                      </p>
+                    </>
+                  ) : (
+                    <div className="p-3 bg-muted/50 rounded-md border border-border">
+                      <p className="text-sm text-muted-foreground">
+                        Select a client first to choose or create a project
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2">
