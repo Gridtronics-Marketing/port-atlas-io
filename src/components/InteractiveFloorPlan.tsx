@@ -658,16 +658,53 @@ export const InteractiveFloorPlan = ({
                 size="sm"
                 onClick={async () => {
                   try {
-                    const { exportFloorPlanToPDF } = await import('@/lib/floor-plan-exporter');
-                    await exportFloorPlanToPDF(locationId, floorNumber, actualFileUrl, {
-                      title: `Floor ${floorNumber} Plan`,
-                      includeDropPoints: true,
-                      includeRoomViews: true,
-                      includeMetadata: true,
+                    toast({
+                      title: "Generating PDF",
+                      description: "Creating composite image with all annotations...",
                     });
+
+                    // Get canvas drawing as PNG if in drawing mode
+                    const canvasDrawingUrl = drawingCanvasRef.current?.drawingActions?.exportToPNG();
+                    
+                    // Create composite image with all layers
+                    const { createCompositeFloorPlan } = await import('@/lib/floor-plan-composite');
+                    const compositeUrl = await createCompositeFloorPlan({
+                      baseImageUrl: actualFileUrl,
+                      canvasDrawingDataUrl: canvasDrawingUrl,
+                      dropPoints: floorDropPoints.map(dp => ({
+                        x: dp.x_coordinate || 0,
+                        y: dp.y_coordinate || 0,
+                        label: dp.label,
+                        type: dp.point_type || 'data',
+                        status: dp.status || 'planned'
+                      })),
+                      roomViews: floorRoomViews.map(rv => ({
+                        x: rv.x_coordinate || 0,
+                        y: rv.y_coordinate || 0,
+                        label: rv.room_name || 'Room'
+                      })),
+                      width: containerDimensions.width || 800,
+                      height: containerDimensions.height || 600
+                    });
+
+                    // Export to PDF with composite image
+                    const { exportFloorPlanToPDF } = await import('@/lib/floor-plan-exporter');
+                    await exportFloorPlanToPDF(
+                      locationId, 
+                      floorNumber, 
+                      actualFileUrl, 
+                      {
+                        title: `Floor ${floorNumber} Plan`,
+                        includeDropPoints: true,
+                        includeRoomViews: true,
+                        includeMetadata: true,
+                      },
+                      compositeUrl
+                    );
+                    
                     toast({
                       title: "PDF Export Complete",
-                      description: "Floor plan has been exported to PDF successfully.",
+                      description: "Floor plan with all annotations has been exported successfully.",
                     });
                   } catch (error) {
                     console.error('Error exporting PDF:', error);

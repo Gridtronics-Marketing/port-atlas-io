@@ -15,7 +15,8 @@ export async function exportFloorPlanToPDF(
   locationId: string,
   floorNumber: number,
   floorPlanUrl: string,
-  options: ExportOptions = {}
+  options: ExportOptions = {},
+  compositeImageUrl?: string
 ): Promise<void> {
   const {
     title = `Floor ${floorNumber} Plan`,
@@ -44,14 +45,15 @@ export async function exportFloorPlanToPDF(
     pdf.setFontSize(10);
     pdf.text(`Generated: ${new Date().toLocaleDateString()}`, margin, margin + 12);
 
-    // Load and add the floor plan image
+    // Load and add the floor plan image (use composite if provided)
+    const imageUrl = compositeImageUrl || floorPlanUrl;
     const img = new Image();
     img.crossOrigin = 'anonymous';
     
     await new Promise((resolve, reject) => {
       img.onload = resolve;
       img.onerror = () => reject(new Error('Failed to load floor plan image'));
-      img.src = floorPlanUrl;
+      img.src = imageUrl;
     });
 
     // Calculate image dimensions to fit the page
