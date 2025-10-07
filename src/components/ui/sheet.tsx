@@ -1,9 +1,9 @@
 import * as SheetPrimitive from "@radix-ui/react-dialog";
 import { cva, type VariantProps } from "class-variance-authority";
-import { X } from "lucide-react";
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
+import { MacOSWindowControls } from "./macos-window-controls";
 
 const Sheet = SheetPrimitive.Root;
 
@@ -49,21 +49,41 @@ const sheetVariants = cva(
 
 interface SheetContentProps
   extends React.ComponentPropsWithoutRef<typeof SheetPrimitive.Content>,
-    VariantProps<typeof sheetVariants> {}
+    VariantProps<typeof sheetVariants> {
+  onOpenChange?: (open: boolean) => void;
+}
 
 const SheetContent = React.forwardRef<React.ElementRef<typeof SheetPrimitive.Content>, SheetContentProps>(
-  ({ side = "right", className, children, ...props }, ref) => (
-    <SheetPortal>
-      <SheetOverlay />
-      <SheetPrimitive.Content ref={ref} className={cn(sheetVariants({ side }), className)} {...props}>
-        {children}
-        <SheetPrimitive.Close className="absolute right-3 top-3 z-10 rounded-md p-2 opacity-100 ring-offset-background transition-all hover:bg-accent hover:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
-          <X className="h-5 w-5" />
-          <span className="sr-only">Close</span>
-        </SheetPrimitive.Close>
-      </SheetPrimitive.Content>
-    </SheetPortal>
-  ),
+  ({ side = "right", className, children, onOpenChange, ...props }, ref) => {
+    const [isMinimized, setIsMinimized] = React.useState(false);
+    const [isMaximized, setIsMaximized] = React.useState(false);
+
+    return (
+      <SheetPortal>
+        <SheetOverlay />
+        <SheetPrimitive.Content
+          ref={ref}
+          className={cn(
+            sheetVariants({ side }),
+            "transition-all",
+            isMaximized && "w-screen h-screen max-w-none",
+            isMinimized && "max-h-[60px] overflow-hidden",
+            className
+          )}
+          {...props}
+        >
+          <MacOSWindowControls
+            onClose={() => onOpenChange?.(false)}
+            onMinimize={() => setIsMinimized(!isMinimized)}
+            onMaximize={() => setIsMaximized(!isMaximized)}
+            isMinimized={isMinimized}
+            isMaximized={isMaximized}
+          />
+          {!isMinimized && children}
+        </SheetPrimitive.Content>
+      </SheetPortal>
+    );
+  },
 );
 SheetContent.displayName = SheetPrimitive.Content.displayName;
 

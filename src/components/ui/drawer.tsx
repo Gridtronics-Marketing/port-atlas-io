@@ -1,8 +1,8 @@
 import * as React from "react";
 import { Drawer as DrawerPrimitive } from "vaul";
-import { X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { MacOSWindowControls } from "./macos-window-controls";
 
 const Drawer = ({ shouldScaleBackground = true, ...props }: React.ComponentProps<typeof DrawerPrimitive.Root>) => (
   <DrawerPrimitive.Root shouldScaleBackground={shouldScaleBackground} {...props} />
@@ -25,27 +25,39 @@ DrawerOverlay.displayName = DrawerPrimitive.Overlay.displayName;
 
 const DrawerContent = React.forwardRef<
   React.ElementRef<typeof DrawerPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Content>
->(({ className, children, ...props }, ref) => (
-  <DrawerPortal>
-    <DrawerOverlay />
-    <DrawerPrimitive.Content
-      ref={ref}
-      className={cn(
-        "fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto flex-col rounded-t-[10px] border bg-background",
-        className,
-      )}
-      {...props}
-    >
-      <div className="mx-auto mt-4 h-2 w-[100px] rounded-full bg-muted" />
-      <DrawerClose className="absolute right-3 top-3 z-10 rounded-md p-2 opacity-100 ring-offset-background transition-all hover:bg-accent hover:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
-        <X className="h-5 w-5" />
-        <span className="sr-only">Close</span>
-      </DrawerClose>
-      {children}
-    </DrawerPrimitive.Content>
-  </DrawerPortal>
-));
+  React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Content> & {
+    onOpenChange?: (open: boolean) => void;
+  }
+>(({ className, children, onOpenChange, ...props }, ref) => {
+  const [isMinimized, setIsMinimized] = React.useState(false);
+  const [isMaximized, setIsMaximized] = React.useState(false);
+
+  return (
+    <DrawerPortal>
+      <DrawerOverlay />
+      <DrawerPrimitive.Content
+        ref={ref}
+        className={cn(
+          "fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto flex-col rounded-t-[10px] border bg-background transition-all",
+          isMaximized && "h-screen rounded-none",
+          isMinimized && "max-h-[60px] overflow-hidden",
+          className,
+        )}
+        {...props}
+      >
+        <div className="mx-auto mt-4 h-2 w-[100px] rounded-full bg-muted" />
+        <MacOSWindowControls
+          onClose={() => onOpenChange?.(false)}
+          onMinimize={() => setIsMinimized(!isMinimized)}
+          onMaximize={() => setIsMaximized(!isMaximized)}
+          isMinimized={isMinimized}
+          isMaximized={isMaximized}
+        />
+        {!isMinimized && children}
+      </DrawerPrimitive.Content>
+    </DrawerPortal>
+  );
+});
 DrawerContent.displayName = "DrawerContent";
 
 const DrawerHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
