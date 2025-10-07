@@ -52,6 +52,9 @@ const DrawerContent = React.forwardRef<
           onMaximize={() => setIsMaximized(!isMaximized)}
           isMinimized={isMinimized}
           isMaximized={isMaximized}
+          CloseWrapper={({ children }) => (
+            <DrawerPrimitive.Close asChild>{children}</DrawerPrimitive.Close>
+          )}
         />
         {!isMinimized && children}
       </DrawerPrimitive.Content>

@@ -57,6 +57,9 @@ const DialogContent = React.forwardRef<
           onMaximize={() => setIsMaximized(!isMaximized)}
           isMinimized={isMinimized}
           isMaximized={isMaximized}
+          CloseWrapper={({ children }) => (
+            <DialogPrimitive.Close asChild>{children}</DialogPrimitive.Close>
+          )}
         />
         {!isMinimized && children}
       </DialogPrimitive.Content>

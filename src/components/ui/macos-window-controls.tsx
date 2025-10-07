@@ -9,6 +9,7 @@ interface MacOSWindowControlsProps {
   isMinimized: boolean;
   isMaximized: boolean;
   className?: string;
+  CloseWrapper?: React.ComponentType<{ children: React.ReactNode }>;
 }
 
 export const MacOSWindowControls = ({
@@ -18,28 +19,31 @@ export const MacOSWindowControls = ({
   isMinimized,
   isMaximized,
   className,
+  CloseWrapper = React.Fragment,
 }: MacOSWindowControlsProps) => {
   const [hoveredButton, setHoveredButton] = React.useState<string | null>(null);
 
   return (
     <div className={cn("absolute top-3 left-3 z-50 flex items-center gap-2", className)}>
       {/* Red - Close */}
-      <button
-        onClick={onClose}
-        onMouseEnter={() => setHoveredButton("close")}
-        onMouseLeave={() => setHoveredButton(null)}
-        className="group relative w-3 h-3 rounded-full transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-        style={{ backgroundColor: "#FF5F57" }}
-        aria-label="Close dialog"
-      >
-        <X
-          className={cn(
-            "absolute inset-0 m-auto w-2 h-2 text-black/60 transition-opacity duration-150",
-            hoveredButton === "close" ? "opacity-100" : "opacity-0"
-          )}
-          strokeWidth={3}
-        />
-      </button>
+      <CloseWrapper>
+        <button
+          onClick={onClose}
+          onMouseEnter={() => setHoveredButton("close")}
+          onMouseLeave={() => setHoveredButton(null)}
+          className="group relative w-3 h-3 rounded-full transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+          style={{ backgroundColor: "#FF5F57" }}
+          aria-label="Close dialog"
+        >
+          <X
+            className={cn(
+              "absolute inset-0 m-auto w-2 h-2 text-black/60 transition-opacity duration-150",
+              hoveredButton === "close" ? "opacity-100" : "opacity-0"
+            )}
+            strokeWidth={3}
+          />
+        </button>
+      </CloseWrapper>
 
       {/* Yellow - Minimize */}
       <button

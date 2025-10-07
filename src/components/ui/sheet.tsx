@@ -72,13 +72,16 @@ const SheetContent = React.forwardRef<React.ElementRef<typeof SheetPrimitive.Con
           )}
           {...props}
         >
-          <MacOSWindowControls
-            onClose={() => onOpenChange?.(false)}
-            onMinimize={() => setIsMinimized(!isMinimized)}
-            onMaximize={() => setIsMaximized(!isMaximized)}
-            isMinimized={isMinimized}
-            isMaximized={isMaximized}
-          />
+        <MacOSWindowControls
+          onClose={() => onOpenChange?.(false)}
+          onMinimize={() => setIsMinimized(!isMinimized)}
+          onMaximize={() => setIsMaximized(!isMaximized)}
+          isMinimized={isMinimized}
+          isMaximized={isMaximized}
+          CloseWrapper={({ children }) => (
+            <SheetPrimitive.Close asChild>{children}</SheetPrimitive.Close>
+          )}
+        />
           {!isMinimized && children}
         </SheetPrimitive.Content>
       </SheetPortal>
