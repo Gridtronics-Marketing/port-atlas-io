@@ -31,7 +31,6 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useClients } from "@/hooks/useClients";
 import { useLocations, type Location } from "@/hooks/useLocations";
-import { useProjects } from "@/hooks/useProjects";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { convertPDFToImages, isPDFFile, isImageFile, type ConversionProgress } from "@/lib/pdf-converter";
@@ -40,11 +39,10 @@ interface AddLocationModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   location?: Location | null; // Optional location for editing
-  preSelectedClientId?: string; // Optional client ID to filter projects
-  preSelectedProjectId?: string; // Optional project ID to pre-select
+  preSelectedClientId?: string; // Optional client ID
 }
 
-export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClientId, preSelectedProjectId }: AddLocationModalProps) => {
+export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClientId }: AddLocationModalProps) => {
   const [layoutFiles, setLayoutFiles] = useState<{ [floorNumber: number]: File | null }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [conversionProgress, setConversionProgress] = useState<{ [floorNumber: number]: ConversionProgress | null }>({});
@@ -53,9 +51,7 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
   const [showClientCreationForm, setShowClientCreationForm] = useState(false);
   const [clientSearchOpen, setClientSearchOpen] = useState(false);
   const [sameAsPhysical, setSameAsPhysical] = useState(false);
-  const [showProjectCreationForm, setShowProjectCreationForm] = useState(false);
   const { clients, addClient } = useClients();
-  const { projects, addProject } = useProjects();
   const { addLocation, updateLocation } = useLocations();
   const { toast } = useToast();
   const isEditing = !!location;
@@ -77,17 +73,6 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
     billing_address: "",
     status: "Active"
   });
-
-  const [projectFormData, setProjectFormData] = useState({
-    name: "",
-    description: "",
-    project_type: "Network Installation",
-    status: "Planning",
-    priority: "Medium",
-    start_date: "",
-    end_date: "",
-    estimated_budget: ""
-  });
   
   const [formData, setFormData] = useState({
     name: "",
@@ -103,7 +88,6 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
     access_instructions: "",
     contact_onsite: "",
     contact_phone: "",
-    project_id: "",
     status: "Active" as "Active" | "In Progress" | "Completed" | "On Hold",
   });
 
@@ -114,14 +98,6 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
     latitude: location?.latitude ?? null,
     longitude: location?.longitude ?? null,
   });
-
-  // Filter projects by selected client
-  const filteredProjects = useMemo(() => 
-    selectedClientId 
-      ? projects.filter(project => project.client_id === selectedClientId)
-      : projects,
-    [selectedClientId, projects]
-  );
   
   // Get selected client details
   const selectedClient = useMemo(() => 
@@ -148,46 +124,14 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
         access_instructions: location.access_instructions || "",
         contact_onsite: location.contact_onsite || "",
         contact_phone: location.contact_phone || "",
-        project_id: location.project_id || "",
         status: location.status as any || "Active",
       });
-      
-      // Set selected client based on location's project
-      if (location.project_id) {
-        const project = projects.find(p => p.id === location.project_id);
-        if (project) {
-          setSelectedClientId(project.client_id);
-        }
-      }
     } else if (!location && open) {
       resetForm();
       setSelectedClientId(preSelectedClientId || null);
       setShowClientCreationForm(false);
-      
-      // Auto-select project if pre-selected or if only one project available for client
-      if (preSelectedProjectId) {
-        setFormData(prev => ({ ...prev, project_id: preSelectedProjectId }));
-      } else if (selectedClientId && filteredProjects.length === 1) {
-        setFormData(prev => ({ ...prev, project_id: filteredProjects[0].id }));
-      }
     }
-  }, [location, open, preSelectedProjectId, preSelectedClientId, filteredProjects, selectedClientId, projects]);
-  
-  // Clear project selection when client changes during edit
-  useEffect(() => {
-    if (isEditing && selectedClientId) {
-      // Check if current project belongs to selected client
-      const currentProject = projects.find(p => p.id === formData.project_id);
-      if (currentProject && currentProject.client_id !== selectedClientId) {
-        // Clear project if it doesn't belong to the newly selected client
-        setFormData(prev => ({ ...prev, project_id: "" }));
-        toast({
-          title: "Project Cleared",
-          description: "Please select a project from the new client or continue without a project.",
-        });
-      }
-    }
-  }, [selectedClientId, isEditing, formData.project_id, projects, toast]);
+  }, [location, open, preSelectedClientId]);
 
   const resetForm = () => {
     setFormData({
@@ -204,7 +148,6 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
       access_instructions: "",
       contact_onsite: "",
       contact_phone: "",
-      project_id: "",
       status: "Active",
     });
     setCoordinates({
@@ -215,7 +158,6 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
     setConversionProgress({});
     setSelectedClientId(null);
     setShowClientCreationForm(false);
-    setShowProjectCreationForm(false);
     setClientFormData({
       name: "",
       contact_name: "",
@@ -224,16 +166,6 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
       address: "",
       billing_address: "",
       status: "Active"
-    });
-    setProjectFormData({
-      name: "",
-      description: "",
-      project_type: "Network Installation",
-      status: "Planning",
-      priority: "Medium",
-      start_date: "",
-      end_date: "",
-      estimated_budget: ""
     });
   };
   
@@ -269,56 +201,6 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
     }
   };
 
-  const handleCreateProject = async () => {
-    if (!projectFormData.name.trim()) {
-      toast({
-        title: "Validation Error",
-        description: "Project name is required",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!selectedClientId) {
-      toast({
-        title: "Validation Error",
-        description: "Please select a client first",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const newProject = await addProject({
-        ...projectFormData,
-        client_id: selectedClientId,
-        estimated_budget: projectFormData.estimated_budget ? parseFloat(projectFormData.estimated_budget) : null
-      });
-
-      // Auto-select the newly created project
-      setFormData(prev => ({ ...prev, project_id: newProject.id }));
-
-      // Reset and hide form
-      setProjectFormData({
-        name: "",
-        description: "",
-        project_type: "Network Installation",
-        status: "Planning",
-        priority: "Medium",
-        start_date: "",
-        end_date: "",
-        estimated_budget: ""
-      });
-      setShowProjectCreationForm(false);
-
-      toast({
-        title: "Success",
-        description: "Project created and selected successfully",
-      });
-    } catch (error) {
-      console.error('Error creating project:', error);
-    }
-  };
 
   const handleFileChange = async (floorNumber: number, event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -439,16 +321,6 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
       return;
     }
 
-    // When client is selected, project is REQUIRED
-    if (selectedClientId && !formData.project_id) {
-      toast({
-        title: "Project Required",
-        description: "Please select or create a project for this client.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
       setIsSubmitting(true);
       
@@ -470,7 +342,7 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
         access_instructions: formData.access_instructions.trim() || null,
         contact_onsite: formData.contact_onsite.trim() || null,
         contact_phone: formData.contact_phone.trim() || null,
-        project_id: formData.project_id || null,
+        project_id: null,
         status: formData.status,
         completion_percentage: 0,
         latitude: coordinates.latitude,
@@ -593,13 +465,7 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
           <DialogDescription className="text-muted-foreground">
             {isEditing 
                  ? 'Update location details and manage floor plans for your jobsite.'
-                 : preSelectedClientId
-                   ? filteredProjects.length === 0
-                     ? 'No projects found for this client. You can still create a standalone location.'
-                     : filteredProjects.length === 1
-                       ? `Adding location to project: ${filteredProjects[0].name}`
-                       : `Select from ${filteredProjects.length} available projects or create a standalone location.`
-                   : 'Create a new jobsite location and optionally assign to a project. Upload floor plans for comprehensive drop point management.'
+                 : 'Create a new jobsite location with floor plans for comprehensive drop point management.'
             }
           </DialogDescription>
         </DialogHeader>
@@ -961,197 +827,6 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
                       className="h-10"
                     />
                   </div>
-                </div>
-
-                <div className="space-y-3">
-                  <Label htmlFor="project_id" className="text-sm font-medium">
-                    Project Assignment {selectedClientId && <span className="text-destructive">*</span>}
-                  </Label>
-                  
-                  {selectedClientId ? (
-                    <>
-                      {filteredProjects.length > 0 ? (
-                        <Select 
-                          value={formData.project_id || ""} 
-                          onValueChange={(value) => setFormData({ ...formData, project_id: value })}
-                        >
-                          <SelectTrigger className="h-10 bg-background">
-                            <SelectValue placeholder="Select a project *" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-popover border z-50">
-                            {filteredProjects.map((project) => (
-                              <SelectItem key={project.id} value={project.id}>
-                                {project.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        <div className="p-3 bg-muted/50 rounded-md border border-border">
-                          <p className="text-sm text-muted-foreground">
-                            No projects found for {selectedClient?.name}
-                          </p>
-                        </div>
-                      )}
-
-                      {!showProjectCreationForm && (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => setShowProjectCreationForm(true)}
-                          className="w-full"
-                          size="sm"
-                        >
-                          <Plus className="mr-2 h-4 w-4" />
-                          Create New Project
-                        </Button>
-                      )}
-
-                      {showProjectCreationForm && (
-                        <Card className="border-2 border-primary/50 bg-primary/5">
-                          <CardHeader className="pb-3">
-                            <CardTitle className="text-sm flex items-center justify-between">
-                              <span className="flex items-center gap-2">
-                                <Plus className="h-4 w-4" />
-                                Create New Project for {selectedClient?.name}
-                              </span>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setShowProjectCreationForm(false)}
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent className="space-y-3">
-                            {/* Project Name */}
-                            <div className="space-y-2">
-                              <Label className="text-xs">Project Name *</Label>
-                              <Input
-                                value={projectFormData.name}
-                                onChange={(e) => setProjectFormData(prev => ({ ...prev, name: e.target.value }))}
-                                placeholder="e.g., Headquarters Fiber Installation"
-                                className="h-9"
-                              />
-                            </div>
-
-                            {/* Description */}
-                            <div className="space-y-2">
-                              <Label className="text-xs">Description</Label>
-                              <Textarea
-                                value={projectFormData.description}
-                                onChange={(e) => setProjectFormData(prev => ({ ...prev, description: e.target.value }))}
-                                placeholder="Brief project description"
-                                rows={2}
-                                className="text-sm"
-                              />
-                            </div>
-
-                            {/* Type, Status, Priority */}
-                            <div className="grid grid-cols-3 gap-2">
-                              <div className="space-y-2">
-                                <Label className="text-xs">Type</Label>
-                                <ConfigurableSelect
-                                  category="project_types"
-                                  value={projectFormData.project_type}
-                                  onValueChange={(value) => setProjectFormData(prev => ({ ...prev, project_type: value }))}
-                                  className="h-9"
-                                />
-                              </div>
-
-                              <div className="space-y-2">
-                                <Label className="text-xs">Status</Label>
-                                <ConfigurableSelect
-                                  category="project_statuses"
-                                  value={projectFormData.status}
-                                  onValueChange={(value) => setProjectFormData(prev => ({ ...prev, status: value }))}
-                                  className="h-9"
-                                />
-                              </div>
-
-                              <div className="space-y-2">
-                                <Label className="text-xs">Priority</Label>
-                                <ConfigurableSelect
-                                  category="project_priorities"
-                                  value={projectFormData.priority}
-                                  onValueChange={(value) => setProjectFormData(prev => ({ ...prev, priority: value }))}
-                                  className="h-9"
-                                />
-                              </div>
-                            </div>
-
-                            {/* Dates and Budget */}
-                            <div className="grid grid-cols-3 gap-2">
-                              <div className="space-y-2">
-                                <Label className="text-xs">Start Date</Label>
-                                <Input
-                                  type="date"
-                                  value={projectFormData.start_date}
-                                  onChange={(e) => setProjectFormData(prev => ({ ...prev, start_date: e.target.value }))}
-                                  className="h-9 text-sm"
-                                />
-                              </div>
-
-                              <div className="space-y-2">
-                                <Label className="text-xs">End Date</Label>
-                                <Input
-                                  type="date"
-                                  value={projectFormData.end_date}
-                                  onChange={(e) => setProjectFormData(prev => ({ ...prev, end_date: e.target.value }))}
-                                  className="h-9 text-sm"
-                                />
-                              </div>
-
-                              <div className="space-y-2">
-                                <Label className="text-xs">Budget ($)</Label>
-                                <Input
-                                  type="number"
-                                  step="0.01"
-                                  value={projectFormData.estimated_budget}
-                                  onChange={(e) => setProjectFormData(prev => ({ ...prev, estimated_budget: e.target.value }))}
-                                  placeholder="0.00"
-                                  className="h-9 text-sm"
-                                />
-                              </div>
-                            </div>
-
-                            {/* Action Buttons */}
-                            <div className="flex gap-2 pt-2">
-                              <Button
-                                type="button"
-                                onClick={handleCreateProject}
-                                className="flex-1 bg-gradient-primary"
-                                size="sm"
-                              >
-                                <Plus className="h-4 w-4 mr-1" />
-                                Create Project
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => setShowProjectCreationForm(false)}
-                                size="sm"
-                              >
-                                Cancel
-                              </Button>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      )}
-
-                      <p className="text-xs text-muted-foreground">
-                        A project is required when a client is selected
-                      </p>
-                    </>
-                  ) : (
-                    <div className="p-3 bg-muted/50 rounded-md border border-border">
-                      <p className="text-sm text-muted-foreground">
-                        Select a client first to choose or create a project
-                      </p>
-                    </div>
-                  )}
                 </div>
 
                 <div className="space-y-2">
