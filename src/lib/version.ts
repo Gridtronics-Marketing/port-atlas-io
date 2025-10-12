@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.5.0";
+export const APP_VERSION = "0.5.1";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,16 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "0.5.1",
+    date: "2025-10-12",
+    changes: [
+      "Fixed 'Cannot convert drawing to floor plan' error for new locations",
+      "Hidden 'Use as Floor Plan' button when creating new locations (only shows for existing locations)",
+      "Enhanced user experience by preventing conversion errors during location creation",
+      "Improved drawing workflow clarity for new vs. existing locations",
+    ],
+  },
   {
     version: "0.5.0",
     date: "2025-10-06",
