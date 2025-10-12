@@ -801,7 +801,7 @@ export const InteractiveFloorPlan = ({
             onBrushColorChange={setBrushColor}
             brushSize={brushSize}
             onBrushSizeChange={setBrushSize}
-            onUseAsFloorPlan={handleUseAsFloorPlan}
+            onUseAsFloorPlan={validLocationId ? handleUseAsFloorPlan : undefined}
             hasSavedDrawing={hasSavedDrawing}
           />
         )}
