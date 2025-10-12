@@ -624,34 +624,60 @@ export const InteractiveFloorPlan = ({
               <Paintbrush className="h-4 w-4 mr-2" />
               {isDrawingMode ? 'Exit Draw' : 'Draw Mode'}
             </Button>
-            <Button
-              variant={isAddingPoint ? "default" : "outline"}
-              size="sm"
-              onClick={() => {
-                setIsAddingPoint(!isAddingPoint);
-                setIsAddingRoomView(false);
-                setIsDrawingMode(false);
-                setActiveTool('select');
-              }}
-              disabled={isDrawingMode}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Drop Point
-            </Button>
-            <Button
-              variant={isAddingRoomView ? "default" : "outline"}
-              size="sm"
-              onClick={() => {
-                setIsAddingRoomView(!isAddingRoomView);
-                setIsAddingPoint(false);
-                setIsDrawingMode(false);
-                setActiveTool('select');
-              }}
-              disabled={isDrawingMode}
-            >
-              <Camera className="h-4 w-4 mr-2" />
-              Add Room View
-            </Button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-block">
+                    <Button
+                      variant={isAddingPoint ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => {
+                        setIsAddingPoint(!isAddingPoint);
+                        setIsAddingRoomView(false);
+                        setIsDrawingMode(false);
+                        setActiveTool('select');
+                      }}
+                      disabled={isDrawingMode || !validLocationId}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Drop Point
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                {!validLocationId && (
+                  <TooltipContent>
+                    <p>Save the location first to add drop points</p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-block">
+                    <Button
+                      variant={isAddingRoomView ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => {
+                        setIsAddingRoomView(!isAddingRoomView);
+                        setIsAddingPoint(false);
+                        setIsDrawingMode(false);
+                        setActiveTool('select');
+                      }}
+                      disabled={isDrawingMode || !validLocationId}
+                    >
+                      <Camera className="h-4 w-4 mr-2" />
+                      Add Room View
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                {!validLocationId && (
+                  <TooltipContent>
+                    <p>Save the location first to add room views</p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
             {actualFileUrl && (
               <Button
                 variant="outline"
@@ -873,80 +899,81 @@ export const InteractiveFloorPlan = ({
             />
           )}
 
-          {/* Drop Points Overlay */}
-          <TooltipProvider>
-            {floorDropPoints.map((point) => {
-              // Use dragged point coordinates if this point is being dragged
-              const displayPoint = draggedPoint && draggedPoint.id === point.id ? draggedPoint : point;
-              
-              return (
-                <Tooltip key={point.id}>
-                  <TooltipTrigger asChild>
-                     <>
-                       <div
-                         className={`absolute transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full border-2 flex items-center justify-center text-white font-bold hover:scale-110 transition-transform shadow-lg ${
-                           draggedPoint && draggedPoint.id === point.id 
-                             ? `cursor-grabbing scale-110 ${getDropPointColor(point.status)}` 
-                             : `cursor-grab ${getDropPointColor(point.status)}`
-                         }`}
-                         onMouseDown={(e) => !isDrawingMode && handleMouseDown(e, point, 'dropPoint')}
-                         onClick={(e) => {
-                           e.stopPropagation();
-                           if (!isDragging && !isDrawingMode) {
-                             setSelectedDropPoint(point);
-                             setDetailsModalOpen(true);
-                           }
-                         }}
-                         style={{
-                           ...{
-                             left: `${displayPoint.x_coordinate || 50}%`,
-                             top: `${displayPoint.y_coordinate || 50}%`,
-                             zIndex: draggedPoint && draggedPoint.id === point.id ? 50 : 10,
-                           },
-                           pointerEvents: isDrawingMode ? 'none' : 'auto'
-                         }}
-                       >
-                         <span className="text-xs">{getDropPointIcon(point.point_type)}</span>
-                       </div>
-                       
-                        {/* Persistent Label for Drop Point - Updated with Cable Count */}
-                        {showLabels && (
-                          <div
-                            className="absolute pointer-events-none select-none"
-                            style={{
-                              left: `${displayPoint.x_coordinate || 50}%`,
-                              top: `${displayPoint.y_coordinate || 50}%`,
-                              transform: 'translate(20px, -50%)',
-                              zIndex: 5,
-                            }}
-                          >
-                            <div className="bg-black/80 backdrop-blur-sm text-white px-2 py-1 rounded-md text-xs whitespace-nowrap shadow-lg border border-white/20">
-                              <div className="font-medium text-blue-300 text-[10px]">
-                                {point.cable_count ? `${point.cable_count} Cable${point.cable_count > 1 ? 's' : ''}` : 'TBD'}
+          {/* Drop Points Overlay - Only show for valid locations */}
+          {validLocationId && (
+            <TooltipProvider>
+              {floorDropPoints.map((point) => {
+                // Use dragged point coordinates if this point is being dragged
+                const displayPoint = draggedPoint && draggedPoint.id === point.id ? draggedPoint : point;
+                
+                return (
+                  <Tooltip key={point.id}>
+                    <TooltipTrigger asChild>
+                       <>
+                         <div
+                           className={`absolute transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full border-2 flex items-center justify-center text-white font-bold hover:scale-110 transition-transform shadow-lg ${
+                             draggedPoint && draggedPoint.id === point.id 
+                               ? `cursor-grabbing scale-110 ${getDropPointColor(point.status)}` 
+                               : `cursor-grab ${getDropPointColor(point.status)}`
+                           }`}
+                           onMouseDown={(e) => !isDrawingMode && handleMouseDown(e, point, 'dropPoint')}
+                           onClick={(e) => {
+                             e.stopPropagation();
+                             if (!isDragging && !isDrawingMode) {
+                               setSelectedDropPoint(point);
+                               setDetailsModalOpen(true);
+                             }
+                           }}
+                           style={{
+                             ...{
+                               left: `${displayPoint.x_coordinate || 50}%`,
+                               top: `${displayPoint.y_coordinate || 50}%`,
+                               zIndex: draggedPoint && draggedPoint.id === point.id ? 50 : 10,
+                             },
+                             pointerEvents: isDrawingMode ? 'none' : 'auto'
+                           }}
+                         >
+                           <span className="text-xs">{getDropPointIcon(point.point_type)}</span>
+                         </div>
+                         
+                          {/* Persistent Label for Drop Point - Updated with Cable Count */}
+                          {showLabels && (
+                            <div
+                              className="absolute pointer-events-none select-none"
+                              style={{
+                                left: `${displayPoint.x_coordinate || 50}%`,
+                                top: `${displayPoint.y_coordinate || 50}%`,
+                                transform: 'translate(20px, -50%)',
+                                zIndex: 5,
+                              }}
+                            >
+                              <div className="bg-black/80 backdrop-blur-sm text-white px-2 py-1 rounded-md text-xs whitespace-nowrap shadow-lg border border-white/20">
+                                <div className="font-medium text-blue-300 text-[10px]">
+                                  {point.cable_count ? `${point.cable_count} Cable${point.cable_count > 1 ? 's' : ''}` : 'TBD'}
+                                </div>
+                                <div className={`text-xs capitalize ${getStatusTextColor(point.status)} filter brightness-200`}>
+                                  {point.status}
+                                </div>
+                                <div className="font-medium">{point.label || 'TBD'}</div>
                               </div>
-                              <div className={`text-xs capitalize ${getStatusTextColor(point.status)} filter brightness-200`}>
-                                {point.status}
-                              </div>
-                              <div className="font-medium">{point.label || 'TBD'}</div>
                             </div>
-                          </div>
-                        )}
-                     </>
-                  </TooltipTrigger>
-                  <TooltipContent className="bg-popover border">
-                    <div className="text-sm">
-                      <p className="font-medium">{point.label}</p>
-                      <p className="text-muted-foreground">{point.room}</p>
-                      <p className="text-xs capitalize">{point.point_type} • {point.status}</p>
-                      <p className="text-xs text-muted-foreground mt-1">Click and drag to move</p>
-                    </div>
-                  </TooltipContent>
-                </Tooltip>
-              );
-            })}
+                          )}
+                       </>
+                    </TooltipTrigger>
+                    <TooltipContent className="bg-popover border">
+                      <div className="text-sm">
+                        <p className="font-medium">{point.label}</p>
+                        <p className="text-muted-foreground">{point.room}</p>
+                        <p className="text-xs capitalize">{point.point_type} • {point.status}</p>
+                        <p className="text-xs text-muted-foreground mt-1">Click and drag to move</p>
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                );
+              })}
 
-            {/* Room Views Overlay */}
-            {floorRoomViews.map((roomView) => {
+              {/* Room Views Overlay - Only show for valid locations */}
+              {floorRoomViews.map((roomView) => {
               // Use dragged room view coordinates if this room view is being dragged
               const displayRoomView = draggedRoomView && draggedRoomView.id === roomView.id ? draggedRoomView : roomView;
               
@@ -1017,8 +1044,9 @@ export const InteractiveFloorPlan = ({
                 </TooltipContent>
                 </Tooltip>
               );
-            })}
-          </TooltipProvider>
+              })}
+            </TooltipProvider>
+          )}
 
           {/* Add Point Indicators */}
           {isAddingPoint && (
