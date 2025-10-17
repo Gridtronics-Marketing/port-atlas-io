@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Camera, Upload, X } from 'lucide-react';
+import { Camera, Upload, X, Maximize2 } from 'lucide-react';
 import { usePhotoCapture } from '@/hooks/usePhotoCapture';
 import { useRoomViews } from '@/hooks/useRoomViews';
 import { useCurrentEmployee } from '@/hooks/useCurrentEmployee';
@@ -34,6 +34,7 @@ export const AddRoomViewModal = ({
   const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [showPhotoOptions, setShowPhotoOptions] = useState(false);
+  const [isPanoramic, setIsPanoramic] = useState(false);
 
   const { capturePhoto, selectFromGallery, loading: photoLoading } = usePhotoCapture();
   const { addRoomView } = useRoomViews();
@@ -67,7 +68,7 @@ export const AddRoomViewModal = ({
     }
   }, [capturedPhoto, coordinates, submitting]);
 
-  const handlePhotoCapture = async (e: React.MouseEvent) => {
+  const handlePhotoCapture = async (e: React.MouseEvent, panoramic: boolean = false) => {
     e.preventDefault();
     e.stopPropagation();
     
@@ -83,6 +84,7 @@ export const AddRoomViewModal = ({
     }
 
     setShowPhotoOptions(false);
+    setIsPanoramic(panoramic);
 
     try {
       console.log('📸 Starting photo capture...');
@@ -92,7 +94,9 @@ export const AddRoomViewModal = ({
         undefined,
         locationId,
         undefined,
-        currentEmployee?.id
+        currentEmployee?.id,
+        isAdmin,
+        panoramic
       );
 
       if (photo) {
@@ -113,7 +117,7 @@ export const AddRoomViewModal = ({
     }
   };
 
-  const handleGallerySelect = async (e: React.MouseEvent) => {
+  const handleGallerySelect = async (e: React.MouseEvent, panoramic: boolean = false) => {
     e.preventDefault();
     e.stopPropagation();
     
@@ -129,6 +133,7 @@ export const AddRoomViewModal = ({
     }
 
     setShowPhotoOptions(false);
+    setIsPanoramic(panoramic);
 
     try {
       console.log('🖼️ Starting gallery selection...');
@@ -138,7 +143,9 @@ export const AddRoomViewModal = ({
         undefined,
         locationId,
         undefined,
-        currentEmployee?.id
+        currentEmployee?.id,
+        isAdmin,
+        panoramic
       );
 
       if (photo) {
@@ -250,30 +257,45 @@ export const AddRoomViewModal = ({
           <div className="flex flex-col items-center justify-center py-8 space-y-6">
             <Camera className="h-16 w-16 text-blue-600" />
             <div className="text-center">
-              <h3 className="text-lg font-semibold mb-2">Choose Photo Source</h3>
+              <h3 className="text-lg font-semibold mb-2">Choose Photo Type & Source</h3>
               <p className="text-sm text-muted-foreground">
-                Select how you'd like to add a photo for this room view
+                Select whether you want a standard or panoramic photo
               </p>
             </div>
-            <div className="grid grid-cols-1 gap-4 w-full max-w-sm">
+            <div className="grid grid-cols-1 gap-3 w-full max-w-sm">
               <Button
-                onClick={handlePhotoCapture}
+                onClick={(e) => handlePhotoCapture(e, false)}
                 disabled={photoLoading}
-                className="h-16 text-lg"
-                size="lg"
+                className="h-14"
               >
-                <Camera className="h-6 w-6 mr-3" />
-                Take Photo with Camera
+                <Camera className="h-5 w-5 mr-2" />
+                Take Standard Photo
               </Button>
               <Button
                 variant="outline"
-                onClick={handleGallerySelect}
+                onClick={(e) => handleGallerySelect(e, false)}
                 disabled={photoLoading}
-                className="h-16 text-lg"
-                size="lg"
+                className="h-14"
               >
-                <Upload className="h-6 w-6 mr-3" />
-                Upload from Gallery
+                <Upload className="h-5 w-5 mr-2" />
+                Upload Standard Photo
+              </Button>
+              <Button
+                onClick={(e) => handlePhotoCapture(e, true)}
+                disabled={photoLoading}
+                className="h-14"
+              >
+                <Maximize2 className="h-5 w-5 mr-2" />
+                Take Panoramic Photo
+              </Button>
+              <Button
+                variant="outline"
+                onClick={(e) => handleGallerySelect(e, true)}
+                disabled={photoLoading}
+                className="h-14"
+              >
+                <Maximize2 className="h-5 w-5 mr-2" />
+                Upload Panoramic Photo
               </Button>
             </div>
             <Button variant="ghost" onClick={handleClose} className="mt-4">

@@ -93,7 +93,14 @@ export const RoomViewModal: React.FC<RoomViewModalProps> = ({
   };
 
   const handlePhotoCapture = async (isPanoramic: boolean = false) => {
-    if (!roomView) return;
+    if (!roomView?.id) {
+      toast({
+        title: "Error",
+        description: "Room view ID is missing. Please close and reopen this view.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
       const result = await capturePhoto(
@@ -121,11 +128,23 @@ export const RoomViewModal: React.FC<RoomViewModalProps> = ({
       }
     } catch (error) {
       console.error('Error capturing photo:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add photo. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
   const handleGallerySelect = async (isPanoramic: boolean = false) => {
-    if (!roomView) return;
+    if (!roomView?.id) {
+      toast({
+        title: "Error",
+        description: "Room view ID is missing. Please close and reopen this view.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
       const result = await selectFromGallery(
@@ -153,6 +172,11 @@ export const RoomViewModal: React.FC<RoomViewModalProps> = ({
       }
     } catch (error) {
       console.error('Error selecting photo:', error);
+      toast({
+        title: "Error",
+        description: "Failed to upload photo. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 

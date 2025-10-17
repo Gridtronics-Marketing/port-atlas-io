@@ -56,6 +56,17 @@ export const useRoomViewPhotos = (roomViewId?: string) => {
 
   const addPhoto = async (photoData: Omit<RoomViewPhoto, 'id' | 'created_at' | 'updated_at' | 'employee'> & { employee_id?: string | null }) => {
     try {
+      // Validate that room_view exists before inserting
+      const { data: roomViewExists, error: checkError } = await supabase
+        .from('room_views')
+        .select('id')
+        .eq('id', photoData.room_view_id)
+        .single();
+
+      if (checkError || !roomViewExists) {
+        throw new Error('Room view not found. It may have been deleted.');
+      }
+
       const { data, error } = await supabase
         .from('room_view_photos')
         .insert(photoData)
@@ -78,7 +89,7 @@ export const useRoomViewPhotos = (roomViewId?: string) => {
       console.error('Error adding room view photo:', error);
       toast({
         title: "Error",
-        description: "Failed to add photo",
+        description: error instanceof Error ? error.message : "Failed to add photo",
         variant: "destructive",
       });
       throw error;
