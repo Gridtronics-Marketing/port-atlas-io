@@ -75,13 +75,7 @@ const Index = () => {
               {/* Primary Actions */}
               <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
                 <Button 
-                  onClick={() => {
-                    // New Location from dashboard - users should create via Projects/Clients
-                    toast({
-                      title: "Create Location via Project",
-                      description: "Please create locations from the Projects or Clients page to ensure proper organization.",
-                    });
-                  }}
+                  onClick={() => setShowAddLocation(true)}
                   size="lg"
                   variant="outline"
                 >
