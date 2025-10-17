@@ -343,6 +343,7 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
         contact_onsite: formData.contact_onsite.trim() || null,
         contact_phone: formData.contact_phone.trim() || null,
         project_id: null,
+        client_id: selectedClientId,
         status: formData.status,
         completion_percentage: 0,
         latitude: coordinates.latitude,

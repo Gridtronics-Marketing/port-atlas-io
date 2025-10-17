@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 export interface Location {
   id: string;
   project_id: string | null;
+  client_id: string | null;
   name: string;
   address: string;
   building_type: string | null;
@@ -21,6 +22,9 @@ export interface Location {
   created_at: string;
   updated_at: string;
   // Joined data
+  client?: {
+    name: string;
+  };
   project?: {
     name: string;
     client?: {
@@ -42,6 +46,7 @@ export const useLocations = () => {
         .from('locations')
         .select(`
           *,
+          client:clients(name),
           project:projects(
             name,
             client:clients(name)

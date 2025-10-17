@@ -1511,6 +1511,7 @@ export type Database = {
           access_instructions: string | null
           address: string
           building_type: string | null
+          client_id: string | null
           completion_percentage: number | null
           contact_onsite: string | null
           contact_phone: string | null
@@ -1530,6 +1531,7 @@ export type Database = {
           access_instructions?: string | null
           address: string
           building_type?: string | null
+          client_id?: string | null
           completion_percentage?: number | null
           contact_onsite?: string | null
           contact_phone?: string | null
@@ -1549,6 +1551,7 @@ export type Database = {
           access_instructions?: string | null
           address?: string
           building_type?: string | null
+          client_id?: string | null
           completion_percentage?: number | null
           contact_onsite?: string | null
           contact_phone?: string | null
@@ -1565,6 +1568,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "locations_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "locations_project_id_fkey"
             columns: ["project_id"]

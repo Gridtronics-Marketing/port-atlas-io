@@ -21,13 +21,14 @@ export const useClientLocations = (clientId?: string) => {
         .from('locations')
         .select(`
           *,
-          project:projects!inner(
+          client:clients(name),
+          project:projects(
             name,
             client_id,
             client:clients(name)
           )
         `)
-        .eq('project.client_id', clientId)
+        .or(`client_id.eq.${clientId},project.client_id.eq.${clientId}`)
         .order('created_at', { ascending: false });
 
       if (error) throw error;

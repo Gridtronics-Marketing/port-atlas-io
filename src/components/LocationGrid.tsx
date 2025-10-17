@@ -72,7 +72,7 @@ export const LocationGrid = () => {
                 </div>
                 
                 <p className="text-sm text-muted-foreground mb-2">
-                  {location.project?.client?.name || 'No Client'} • {location.address}
+                  {location.client?.name || location.project?.client?.name || 'No Client'} • {location.address}
                 </p>
                 
                 <div className="flex items-center gap-4 text-xs text-muted-foreground">
