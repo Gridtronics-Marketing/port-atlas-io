@@ -8,6 +8,7 @@ export interface RoomViewPhoto {
   photo_url: string;
   description?: string;
   employee_id?: string;
+  photo_type?: 'standard' | 'panoramic';
   created_at: string;
   updated_at: string;
   employee?: {
@@ -40,7 +41,7 @@ export const useRoomViewPhotos = (roomViewId?: string) => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setPhotos(data || []);
+      setPhotos((data || []) as RoomViewPhoto[]);
     } catch (error) {
       console.error('Error fetching room view photos:', error);
       toast({
@@ -66,7 +67,7 @@ export const useRoomViewPhotos = (roomViewId?: string) => {
 
       if (error) throw error;
 
-      setPhotos(prev => [data, ...prev]);
+      setPhotos(prev => [data as RoomViewPhoto, ...prev]);
       toast({
         title: "Photo Added",
         description: "Photo has been successfully added to the room view.",
@@ -98,7 +99,7 @@ export const useRoomViewPhotos = (roomViewId?: string) => {
 
       if (error) throw error;
 
-      setPhotos(prev => prev.map(photo => photo.id === id ? data : photo));
+      setPhotos(prev => prev.map(photo => photo.id === id ? data as RoomViewPhoto : photo));
       toast({
         title: "Photo Updated",
         description: "Photo has been updated successfully.",

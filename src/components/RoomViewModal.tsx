@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Pencil, Trash2, User, Calendar, MapPin, Hash, Camera, Upload } from 'lucide-react';
+import { Pencil, Trash2, User, Calendar, MapPin, Hash, Camera, Upload, Maximize2 } from 'lucide-react';
 import { RoomView } from '@/hooks/useRoomViews';
 import { useRoomViews } from '@/hooks/useRoomViews';
 import { useRoomViewPhotos } from '@/hooks/useRoomViewPhotos';
@@ -15,6 +15,7 @@ import { usePhotoCapture } from '@/hooks/usePhotoCapture';
 import { useCurrentEmployee } from '@/hooks/useCurrentEmployee';
 import { useToast } from '@/hooks/use-toast';
 import { PhotoGallery } from '@/components/PhotoGallery';
+import { useUserRoles } from '@/hooks/useUserRoles';
 
 interface RoomViewModalProps {
   open: boolean;
@@ -36,7 +37,9 @@ export const RoomViewModal: React.FC<RoomViewModalProps> = ({
   const { photos, loading: photosLoading, addPhoto, deletePhoto } = useRoomViewPhotos(roomView?.id);
   const { capturePhoto, selectFromGallery } = usePhotoCapture();
   const { employee } = useCurrentEmployee();
+  const { hasRole } = useUserRoles();
   const { toast } = useToast();
+  const isAdmin = hasRole('admin');
 
   if (!roomView) return null;
 
@@ -89,16 +92,31 @@ export const RoomViewModal: React.FC<RoomViewModalProps> = ({
     setEditData({});
   };
 
-  const handlePhotoCapture = async () => {
+  const handlePhotoCapture = async (isPanoramic: boolean = false) => {
     if (!roomView) return;
 
     try {
-      const result = await capturePhoto();
+      const result = await capturePhoto(
+        `${isPanoramic ? 'Panoramic ' : ''}${roomView.room_name || 'Room View'}`,
+        'room_view',
+        undefined,
+        locationId,
+        undefined,
+        employee?.id,
+        isAdmin,
+        isPanoramic
+      );
       if (result && typeof result === 'object' && 'url' in result) {
         await addPhoto({
           room_view_id: roomView.id,
           photo_url: result.url,
+          description: `${isPanoramic ? 'Panoramic ' : ''}${roomView.room_name || 'Room View'}`,
           employee_id: employee?.id || null,
+          photo_type: isPanoramic ? 'panoramic' : 'standard',
+        });
+        toast({
+          title: 'Success',
+          description: `${isPanoramic ? 'Panoramic photo' : 'Photo'} captured successfully`,
         });
       }
     } catch (error) {
@@ -106,16 +124,31 @@ export const RoomViewModal: React.FC<RoomViewModalProps> = ({
     }
   };
 
-  const handleGallerySelect = async () => {
+  const handleGallerySelect = async (isPanoramic: boolean = false) => {
     if (!roomView) return;
 
     try {
-      const result = await selectFromGallery();
+      const result = await selectFromGallery(
+        `${isPanoramic ? 'Panoramic ' : ''}${roomView.room_name || 'Room View'}`,
+        'room_view',
+        undefined,
+        locationId,
+        undefined,
+        employee?.id,
+        isAdmin,
+        isPanoramic
+      );
       if (result && typeof result === 'object' && 'url' in result) {
         await addPhoto({
           room_view_id: roomView.id,
           photo_url: result.url,
+          description: `${isPanoramic ? 'Panoramic ' : ''}${roomView.room_name || 'Room View'}`,
           employee_id: employee?.id || null,
+          photo_type: isPanoramic ? 'panoramic' : 'standard',
+        });
+        toast({
+          title: 'Success',
+          description: `${isPanoramic ? 'Panoramic photo' : 'Photo'} uploaded successfully`,
         });
       }
     } catch (error) {
@@ -302,16 +335,25 @@ export const RoomViewModal: React.FC<RoomViewModalProps> = ({
           <TabsContent value="photos" className="space-y-4">
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-semibold">Room Photos</h3>
-              <div className="flex gap-2">
-                <Button onClick={handlePhotoCapture} size="sm">
-                  <Camera className="w-4 h-4 mr-2" />
-                  Take Photo
-                </Button>
-                <Button onClick={handleGallerySelect} variant="outline" size="sm">
-                  <Upload className="w-4 h-4 mr-2" />
-                  Upload Photo
-                </Button>
-              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 mb-4">
+              <Button onClick={() => handlePhotoCapture(false)} size="sm">
+                <Camera className="w-4 h-4 mr-2" />
+                Take Photo
+              </Button>
+              <Button onClick={() => handleGallerySelect(false)} variant="outline" size="sm">
+                <Upload className="w-4 h-4 mr-2" />
+                Upload Photo
+              </Button>
+              <Button onClick={() => handlePhotoCapture(true)} variant="secondary" size="sm">
+                <Maximize2 className="w-4 h-4 mr-2" />
+                Take Panoramic
+              </Button>
+              <Button onClick={() => handleGallerySelect(true)} variant="outline" size="sm">
+                <Maximize2 className="w-4 h-4 mr-2" />
+                Upload Panoramic
+              </Button>
             </div>
 
             <PhotoGallery

@@ -18,6 +18,7 @@ interface PhotoItem {
   id: string;
   photo_url: string;
   description?: string;
+  photo_type?: 'standard' | 'panoramic';
   created_at: string;
   employee?: {
     first_name: string;
@@ -67,6 +68,11 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = ({
               alt={photo.description || "Photo"}
               className="w-full h-full object-cover"
             />
+            {photo.photo_type === 'panoramic' && (
+              <Badge className="absolute top-2 left-2" variant="secondary">
+                Panoramic
+              </Badge>
+            )}
           </div>
           
           {/* Photo overlay with info and delete button */}

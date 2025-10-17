@@ -135,12 +135,14 @@ export function usePhotoCapture() {
     projectId?: string,
     locationId?: string,
     workOrderId?: string,
-    employeeId?: string
+    employeeId?: string,
+    isAdmin?: boolean,
+    isPanoramic?: boolean
   ): Promise<CapturedPhoto | null> => {
-    console.log('🔄 Starting photo capture:', { description, category, employeeId, locationId, projectId, workOrderId });
+    console.log('🔄 Starting photo capture:', { description, category, employeeId, locationId, projectId, workOrderId, isAdmin, isPanoramic });
     
-    // Validate employee ID - must be provided and not use auth user ID as fallback
-    if (!employeeId) {
+    // Validate employee ID - must be provided or user must be admin
+    if (!employeeId && !isAdmin) {
       console.error('❌ Employee ID is required for photo capture');
       toast({
         title: 'Employee Required',
@@ -241,12 +243,12 @@ export function usePhotoCapture() {
       console.log('💾 Creating daily log entry with photo...');
       
       const logEntry = {
-        employee_id: employeeId, // Now guaranteed to be valid
+        employee_id: employeeId || null,
         project_id: projectId || undefined,
         location_id: locationId || undefined,
         work_order_id: workOrderId || undefined,
         log_date: new Date().toISOString().split('T')[0],
-        work_description: `Photo captured: ${category}${description ? ` - ${description}` : ''}`,
+        work_description: `${isPanoramic ? 'Panoramic photo' : 'Photo'} captured${isAdmin && !employeeId ? ' by Admin' : ''}: ${category}${description ? ` - ${description}` : ''}`,
         photos: [urlData.publicUrl],
         hours_worked: 0,
       };
@@ -329,12 +331,14 @@ export function usePhotoCapture() {
     projectId?: string,
     locationId?: string,
     workOrderId?: string,
-    employeeId?: string
+    employeeId?: string,
+    isAdmin?: boolean,
+    isPanoramic?: boolean
   ): Promise<CapturedPhoto | null> => {
-    console.log('🔄 Starting gallery selection:', { description, category, employeeId, locationId, projectId, workOrderId });
+    console.log('🔄 Starting gallery selection:', { description, category, employeeId, locationId, projectId, workOrderId, isAdmin, isPanoramic });
     
-    // Validate employee ID - must be provided and not use auth user ID as fallback
-    if (!employeeId) {
+    // Validate employee ID - must be provided or user must be admin
+    if (!employeeId && !isAdmin) {
       console.error('❌ Employee ID is required for gallery selection');
       toast({
         title: 'Employee Required',
@@ -390,12 +394,12 @@ export function usePhotoCapture() {
       const { data: logData, error: logError } = await supabase
         .from('daily_logs')
         .insert({
-          employee_id: employeeId, // Now guaranteed to be valid
+          employee_id: employeeId || null,
           project_id: projectId || undefined,
           location_id: locationId || undefined, 
           work_order_id: workOrderId || undefined,
           log_date: new Date().toISOString().split('T')[0],
-          work_description: `Photo selected from gallery: ${category}${description ? ` - ${description}` : ''}`,
+          work_description: `${isPanoramic ? 'Panoramic photo' : 'Photo'} selected from gallery${isAdmin && !employeeId ? ' by Admin' : ''}: ${category}${description ? ` - ${description}` : ''}`,
           photos: [urlData.publicUrl],
           hours_worked: 0,
         })

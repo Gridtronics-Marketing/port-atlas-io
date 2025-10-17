@@ -2515,6 +2515,7 @@ export type Database = {
           description: string | null
           employee_id: string | null
           id: string
+          photo_type: string | null
           photo_url: string
           room_view_id: string
           updated_at: string
@@ -2524,6 +2525,7 @@ export type Database = {
           description?: string | null
           employee_id?: string | null
           id?: string
+          photo_type?: string | null
           photo_url: string
           room_view_id: string
           updated_at?: string
@@ -2533,6 +2535,7 @@ export type Database = {
           description?: string | null
           employee_id?: string | null
           id?: string
+          photo_type?: string | null
           photo_url?: string
           room_view_id?: string
           updated_at?: string
