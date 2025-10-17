@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.5.4";
+export const APP_VERSION = "0.5.5";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,19 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "0.5.5",
+    date: "2025-10-17",
+    changes: [
+      "Added click-to-expand lightbox functionality to PhotoGallery component",
+      "Added photo thumbnail display in Safety Checklist modal with click-to-expand",
+      "Enhanced photo viewing experience - all photos now expandable to full-size view",
+      "Fixed issue where safety checklist photos were only showing badges instead of thumbnails",
+      "Improved photo gallery UX with cursor pointer and hover effects on clickable photos",
+      "Added metadata display in expanded photo views (panoramic badge, employee, date)",
+      "Prevented delete button clicks from triggering photo expansion in PhotoGallery",
+    ],
+  },
   {
     version: "0.5.4",
     date: "2025-10-17",

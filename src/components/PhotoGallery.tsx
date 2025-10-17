@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Trash2, User, Calendar, FileText } from 'lucide-react';
+import { Trash2, User, Calendar, FileText, Maximize2 } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,6 +13,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 interface PhotoItem {
   id: string;
@@ -39,6 +40,7 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = ({
   loading = false,
   emptyMessage = "No photos available"
 }) => {
+  const [expandedPhoto, setExpandedPhoto] = React.useState<PhotoItem | null>(null);
   if (loading) {
     return (
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -59,9 +61,14 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = ({
   }
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-      {photos.map((photo) => (
-        <div key={photo.id} className="relative group">
+    <>
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        {photos.map((photo) => (
+          <div 
+            key={photo.id} 
+            className="relative group cursor-pointer"
+            onClick={() => setExpandedPhoto(photo)}
+          >
           <div className="aspect-square rounded-lg overflow-hidden border">
             <img
               src={photo.photo_url}
@@ -84,6 +91,7 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = ({
                     variant="destructive"
                     size="sm"
                     className="h-8 w-8 p-0"
+                    onClick={(e) => e.stopPropagation()}
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>
@@ -132,5 +140,49 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = ({
         </div>
       ))}
     </div>
+
+    <Dialog open={!!expandedPhoto} onOpenChange={() => setExpandedPhoto(null)}>
+      <DialogContent className="max-w-4xl max-h-[90vh]">
+        {expandedPhoto && (
+          <>
+            <DialogHeader>
+              <DialogTitle>
+                {expandedPhoto.description || 'Photo'}
+              </DialogTitle>
+            </DialogHeader>
+            
+            <div className="relative w-full h-full overflow-auto">
+              <img
+                src={expandedPhoto.photo_url}
+                alt={expandedPhoto.description || "Photo"}
+                className="w-full h-auto"
+              />
+            </div>
+            
+            <div className="flex flex-wrap gap-2 mt-4">
+              {expandedPhoto.photo_type === 'panoramic' && (
+                <Badge variant="outline">
+                  <Maximize2 className="w-3 h-3 mr-1" />
+                  Panoramic Photo
+                </Badge>
+              )}
+              
+              {expandedPhoto.employee && (
+                <Badge variant="secondary">
+                  <User className="w-3 h-3 mr-1" />
+                  {`${expandedPhoto.employee.first_name} ${expandedPhoto.employee.last_name}`}
+                </Badge>
+              )}
+              
+              <Badge variant="outline">
+                <Calendar className="w-3 h-3 mr-1" />
+                {new Date(expandedPhoto.created_at).toLocaleDateString()}
+              </Badge>
+            </div>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
+    </>
   );
 };

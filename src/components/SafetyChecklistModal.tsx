@@ -39,6 +39,7 @@ export function SafetyChecklistModal({
     photo_type?: 'standard' | 'panoramic';
   }>>({});
   const [loading, setLoading] = useState(false);
+  const [expandedPhoto, setExpandedPhoto] = useState<string | null>(null);
 
   const handleCheckboxChange = (itemId: string, checked: boolean) => {
     setResponses(prev => ({
@@ -255,16 +256,29 @@ export function SafetyChecklistModal({
                         </div>
                         
                         {response.photo_url && (
-                          <div className="flex gap-2">
-                            <Badge variant="secondary" className="text-xs">
-                              Photo captured
-                            </Badge>
-                            {response.photo_type === 'panoramic' && (
+                          <div className="space-y-2">
+                            <div className="flex gap-2">
                               <Badge variant="secondary" className="text-xs">
-                                <Maximize2 className="h-3 w-3 mr-1" />
-                                Panoramic
+                                Photo captured
                               </Badge>
-                            )}
+                              {response.photo_type === 'panoramic' && (
+                                <Badge variant="secondary" className="text-xs">
+                                  <Maximize2 className="h-3 w-3 mr-1" />
+                                  Panoramic
+                                </Badge>
+                              )}
+                            </div>
+                            
+                            <div 
+                              className="relative w-24 h-24 rounded-lg overflow-hidden border cursor-pointer hover:opacity-80 transition-opacity"
+                              onClick={() => setExpandedPhoto(response.photo_url || null)}
+                            >
+                              <img
+                                src={response.photo_url}
+                                alt="Checklist item photo"
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
                           </div>
                         )}
 
@@ -298,6 +312,18 @@ export function SafetyChecklistModal({
           </div>
         </div>
       </DialogContent>
+
+      <Dialog open={!!expandedPhoto} onOpenChange={() => setExpandedPhoto(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh]">
+          <div className="relative w-full h-full overflow-auto">
+            <img
+              src={expandedPhoto || ''}
+              alt="Checklist photo"
+              className="w-full h-auto"
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }
