@@ -2,7 +2,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Trash2, User, Calendar, FileText, MapPin, Tag, Filter } from 'lucide-react';
+import { Trash2, User, Calendar, FileText, MapPin, Tag, Filter, Maximize2 } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,6 +28,7 @@ interface PhotoItem {
   photo_url: string;
   description?: string;
   created_at: string;
+  photo_type?: 'standard' | 'panoramic';
   employee?: {
     first_name: string;
     last_name: string;
@@ -254,6 +255,13 @@ export const EnhancedPhotoGallery: React.FC<EnhancedPhotoGalleryProps> = ({
                       {photo.drop_point?.point_type && (
                         <Badge variant="outline" className="text-xs text-white border-blue-300">
                           {photo.drop_point.point_type}
+                        </Badge>
+                      )}
+                      
+                      {photo.photo_type === 'panoramic' && (
+                        <Badge variant="outline" className="text-xs text-white border-yellow-300">
+                          <Maximize2 className="w-3 h-3 mr-1" />
+                          Panoramic
                         </Badge>
                       )}
                     </div>

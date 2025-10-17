@@ -973,6 +973,7 @@ export type Database = {
           drop_point_id: string
           employee_id: string | null
           id: string
+          photo_type: string | null
           photo_url: string
           updated_at: string
         }
@@ -982,6 +983,7 @@ export type Database = {
           drop_point_id: string
           employee_id?: string | null
           id?: string
+          photo_type?: string | null
           photo_url: string
           updated_at?: string
         }
@@ -991,6 +993,7 @@ export type Database = {
           drop_point_id?: string
           employee_id?: string | null
           id?: string
+          photo_type?: string | null
           photo_url?: string
           updated_at?: string
         }

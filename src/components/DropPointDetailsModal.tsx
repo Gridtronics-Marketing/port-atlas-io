@@ -36,7 +36,9 @@ import {
   Calendar,
   Camera,
   Plus,
-  History
+  History,
+  Maximize2,
+  Upload
 } from 'lucide-react';
 import { useDropPoints, type DropPoint } from '@/hooks/useDropPoints';
 import { useDropPointPhotos } from '@/hooks/useDropPointPhotos';
@@ -139,25 +141,28 @@ export const DropPointDetailsModal: React.FC<DropPointDetailsModalProps> = ({
     }
   };
 
-  const handlePhotoCapture = async () => {
+  const handlePhotoCapture = async (isPanoramic: boolean = false) => {
     if (!dropPoint || !currentEmployee) return;
 
     try {
       const result = await capturePhoto(
-        `Photo for drop point ${dropPoint.label}`, // description
+        `${isPanoramic ? 'Panoramic ' : ''}Photo for drop point ${dropPoint.label}`, // description
         'drop_point',                               // category
         undefined,                                  // projectId
         locationId,                                 // locationId
         undefined,                                  // workOrderId
-        currentEmployee.id                          // employeeId
+        currentEmployee.id,                          // employeeId
+        false,                                      // isAdmin
+        isPanoramic                                 // isPanoramic
       );
 
       if (result && result.url) {
         await addPhoto({
           drop_point_id: dropPoint.id,
           photo_url: result.url,
-          description: `Photo for drop point ${dropPoint.label}`,
+          description: `${isPanoramic ? 'Panoramic ' : ''}Photo for drop point ${dropPoint.label}`,
           employee_id: currentEmployee.id,
+          photo_type: isPanoramic ? 'panoramic' : 'standard',
         });
       }
     } catch (error) {
@@ -165,25 +170,28 @@ export const DropPointDetailsModal: React.FC<DropPointDetailsModalProps> = ({
     }
   };
 
-  const handleGallerySelect = async () => {
+  const handleGallerySelect = async (isPanoramic: boolean = false) => {
     if (!dropPoint || !currentEmployee) return;
 
     try {
       const result = await selectFromGallery(
-        `Photo for drop point ${dropPoint.label}`, // description
+        `${isPanoramic ? 'Panoramic ' : ''}Photo for drop point ${dropPoint.label}`, // description
         'drop_point',                               // category
         undefined,                                  // projectId
         locationId,                                 // locationId
         undefined,                                  // workOrderId
-        currentEmployee.id                          // employeeId
+        currentEmployee.id,                          // employeeId
+        false,                                      // isAdmin
+        isPanoramic                                 // isPanoramic
       );
 
       if (result && result.url) {
         await addPhoto({
           drop_point_id: dropPoint.id,
           photo_url: result.url,
-          description: `Photo for drop point ${dropPoint.label}`,
+          description: `${isPanoramic ? 'Panoramic ' : ''}Photo for drop point ${dropPoint.label}`,
           employee_id: currentEmployee.id,
+          photo_type: isPanoramic ? 'panoramic' : 'standard',
         });
       }
     } catch (error) {
@@ -416,14 +424,22 @@ export const DropPointDetailsModal: React.FC<DropPointDetailsModalProps> = ({
           <TabsContent value="photos" className="space-y-4">
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-semibold">Drop Point Photos</h3>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={handlePhotoCapture}>
+              <div className="grid grid-cols-2 gap-2">
+                <Button variant="outline" size="sm" onClick={() => handlePhotoCapture(false)}>
                   <Camera className="w-4 h-4 mr-2" />
                   Take Photo
                 </Button>
-                <Button variant="outline" size="sm" onClick={handleGallerySelect}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Gallery
+                <Button variant="outline" size="sm" onClick={() => handleGallerySelect(false)}>
+                  <Upload className="w-4 h-4 mr-2" />
+                  Upload Photo
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => handlePhotoCapture(true)}>
+                  <Maximize2 className="w-4 h-4 mr-2" />
+                  Take Panoramic
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => handleGallerySelect(true)}>
+                  <Maximize2 className="w-4 h-4 mr-2" />
+                  Upload Panoramic
                 </Button>
               </div>
             </div>
@@ -435,7 +451,8 @@ export const DropPointDetailsModal: React.FC<DropPointDetailsModalProps> = ({
                 description: photo.description,
                 created_at: photo.created_at,
                 employee: photo.employee,
-                drop_point: photo.drop_point
+                drop_point: photo.drop_point,
+                photo_type: photo.photo_type,
               }))}
               onDeletePhoto={handleDeletePhoto}
               loading={photosLoading}

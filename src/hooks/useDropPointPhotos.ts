@@ -8,6 +8,7 @@ export interface DropPointPhoto {
   photo_url: string;
   description?: string;
   employee_id?: string;
+  photo_type?: 'standard' | 'panoramic';
   created_at: string;
   updated_at: string;
   employee?: {
@@ -143,6 +144,7 @@ export const useDropPointPhotos = (dropPointId?: string, locationId?: string) =>
     photo_url: string;
     description?: string;
     employee_id?: string;
+    photo_type?: 'standard' | 'panoramic';
   }) => {
     try {
       const { error } = await supabase

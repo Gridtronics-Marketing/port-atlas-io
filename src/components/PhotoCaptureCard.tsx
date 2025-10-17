@@ -38,9 +38,10 @@ export function PhotoCaptureCard({
   const [category, setCategory] = useState('progress');
   const [description, setDescription] = useState('');
   const [lastPhoto, setLastPhoto] = useState<CapturedPhoto | null>(null);
+  const [isPanoramic, setIsPanoramic] = useState(false);
 
   const handleCapture = async () => {
-    console.log('📸 Mobile photo capture initiated:', { employeeId, locationId, projectId, workOrderId });
+    console.log('📸 Mobile photo capture initiated:', { employeeId, locationId, projectId, workOrderId, isPanoramic });
     
     const photo = await capturePhoto(
       description, // Fixed: description first
@@ -48,7 +49,9 @@ export function PhotoCaptureCard({
       projectId,
       locationId,
       workOrderId,
-      employeeId
+      employeeId,
+      false,       // isAdmin
+      isPanoramic  // isPanoramic
     );
 
     if (photo) {
@@ -62,7 +65,7 @@ export function PhotoCaptureCard({
   };
 
   const handleGallerySelect = async () => {
-    console.log('🖼️ Mobile gallery selection initiated:', { employeeId, locationId, projectId, workOrderId });
+    console.log('🖼️ Mobile gallery selection initiated:', { employeeId, locationId, projectId, workOrderId, isPanoramic });
     
     const photo = await selectFromGallery(
       description, // Fixed: description first
@@ -70,7 +73,9 @@ export function PhotoCaptureCard({
       projectId,
       locationId,
       workOrderId,
-      employeeId
+      employeeId,
+      false,       // isAdmin
+      isPanoramic  // isPanoramic
     );
 
     if (photo) {
@@ -154,6 +159,19 @@ export function PhotoCaptureCard({
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Describe what this photo shows..."
             />
+          </div>
+          
+          <div>
+            <Label>Photo Type</Label>
+            <Select value={isPanoramic ? 'panoramic' : 'standard'} onValueChange={(value) => setIsPanoramic(value === 'panoramic')}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="standard">Standard Photo</SelectItem>
+                <SelectItem value="panoramic">Panoramic Photo</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
