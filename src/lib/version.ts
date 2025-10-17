@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.5.2";
+export const APP_VERSION = "0.5.3";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,22 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "0.5.3",
+    date: "2025-10-17",
+    changes: [
+      "Fixed foreign key constraint violation error in room view photos",
+      "Added validation to prevent photo operations with invalid room view IDs",
+      "Implemented panoramic photo support across all photo capture locations",
+      "Added panoramic photo option to Room View creation modal (4 photo buttons)",
+      "Added panoramic photo support for Drop Points with database schema update",
+      "Added panoramic photo type selector in PhotoCaptureCard component",
+      "Added panoramic photo support to Safety Checklist modal",
+      "Enhanced all photo galleries to display panoramic photo indicators",
+      "Updated drop_point_photos table with photo_type column",
+      "Improved error handling and user feedback for photo operations",
+    ],
+  },
   {
     version: "0.5.2",
     date: "2025-10-17",

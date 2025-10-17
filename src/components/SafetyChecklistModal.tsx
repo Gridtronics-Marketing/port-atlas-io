@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Shield, Camera, AlertTriangle } from 'lucide-react';
+import { Shield, Camera, AlertTriangle, Maximize2, Upload } from 'lucide-react';
 import { SafetyChecklist, useSafetyChecklists } from '@/hooks/useSafetyChecklists';
 import { usePhotoCapture } from '@/hooks/usePhotoCapture';
 
@@ -30,12 +30,13 @@ export function SafetyChecklistModal({
   workOrderId 
 }: SafetyChecklistModalProps) {
   const { submitChecklist } = useSafetyChecklists();
-  const { capturePhoto, loading: photoLoading } = usePhotoCapture();
+  const { capturePhoto, selectFromGallery, loading: photoLoading } = usePhotoCapture();
   
   const [responses, setResponses] = useState<Record<string, {
     checked: boolean;
     notes?: string;
     photo_url?: string;
+    photo_type?: 'standard' | 'panoramic';
   }>>({});
   const [loading, setLoading] = useState(false);
 
@@ -59,16 +60,18 @@ export function SafetyChecklistModal({
     }));
   };
 
-  const handlePhotoCapture = async (itemId: string) => {
+  const handlePhotoCapture = async (itemId: string, isPanoramic: boolean = false) => {
     if (!employeeId) return;
     
     const photo = await capturePhoto(
-      'safety-checklist',
       `${checklist.name} - ${checklist.items.find(i => i.id === itemId)?.title}`,
+      'safety-checklist',
       projectId,
       locationId,
       workOrderId,
-      employeeId
+      employeeId,
+      false,
+      isPanoramic
     );
 
     if (photo) {
@@ -77,6 +80,33 @@ export function SafetyChecklistModal({
         [itemId]: {
           ...prev[itemId],
           photo_url: photo.url,
+          photo_type: isPanoramic ? 'panoramic' : 'standard',
+        },
+      }));
+    }
+  };
+
+  const handleGallerySelect = async (itemId: string, isPanoramic: boolean = false) => {
+    if (!employeeId) return;
+    
+    const photo = await selectFromGallery(
+      `${checklist.name} - ${checklist.items.find(i => i.id === itemId)?.title}`,
+      'safety-checklist',
+      projectId,
+      locationId,
+      workOrderId,
+      employeeId,
+      false,
+      isPanoramic
+    );
+
+    if (photo) {
+      setResponses(prev => ({
+        ...prev,
+        [itemId]: {
+          ...prev[itemId],
+          photo_url: photo.url,
+          photo_type: isPanoramic ? 'panoramic' : 'standard',
         },
       }));
     }
@@ -181,24 +211,62 @@ export function SafetyChecklistModal({
                       </div>
 
                       <div className="ml-6 space-y-2">
-                        <div className="flex gap-2">
+                        <div className="grid grid-cols-2 gap-2">
                           <Button
                             type="button"
                             variant="outline"
                             size="sm"
-                            onClick={() => handlePhotoCapture(item.id)}
+                            onClick={() => handlePhotoCapture(item.id, false)}
                             disabled={photoLoading || !employeeId}
                           >
                             <Camera className="h-3 w-3 mr-1" />
-                            {response.photo_url ? 'Retake Photo' : 'Add Photo'}
+                            Take Photo
                           </Button>
-                          
-                          {response.photo_url && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleGallerySelect(item.id, false)}
+                            disabled={photoLoading || !employeeId}
+                          >
+                            <Upload className="h-3 w-3 mr-1" />
+                            Upload Photo
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handlePhotoCapture(item.id, true)}
+                            disabled={photoLoading || !employeeId}
+                          >
+                            <Maximize2 className="h-3 w-3 mr-1" />
+                            Take Panoramic
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleGallerySelect(item.id, true)}
+                            disabled={photoLoading || !employeeId}
+                          >
+                            <Upload className="h-3 w-3 mr-1" />
+                            Upload Panoramic
+                          </Button>
+                        </div>
+                        
+                        {response.photo_url && (
+                          <div className="flex gap-2">
                             <Badge variant="secondary" className="text-xs">
                               Photo captured
                             </Badge>
-                          )}
-                        </div>
+                            {response.photo_type === 'panoramic' && (
+                              <Badge variant="secondary" className="text-xs">
+                                <Maximize2 className="h-3 w-3 mr-1" />
+                                Panoramic
+                              </Badge>
+                            )}
+                          </div>
+                        )}
 
                         <Textarea
                           placeholder="Additional notes (optional)"
