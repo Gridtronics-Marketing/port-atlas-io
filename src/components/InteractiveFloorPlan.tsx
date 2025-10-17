@@ -112,6 +112,17 @@ export const InteractiveFloorPlan = ({
   const fileExtension = getFileExtension(actualFileUrl, filePath, fileName);
   const isImage = ['jpg', 'jpeg', 'png', 'webp', 'svg', 'bmp', 'tiff'].includes(fileExtension);
 
+  // Helper to extract coordinates from mouse or touch events
+  const getEventCoordinates = (e: React.MouseEvent | React.TouchEvent | MouseEvent | TouchEvent) => {
+    if ('touches' in e && e.touches.length > 0) {
+      return { clientX: e.touches[0].clientX, clientY: e.touches[0].clientY };
+    }
+    if ('clientX' in e) {
+      return { clientX: e.clientX, clientY: e.clientY };
+    }
+    return { clientX: 0, clientY: 0 };
+  };
+
   // Update container dimensions for drawing canvas
   useEffect(() => {
     if (!containerRef.current) return;
@@ -150,10 +161,12 @@ export const InteractiveFloorPlan = ({
     }
   };
 
-  const handleMouseDown = (e: React.MouseEvent, item: any, type: 'dropPoint' | 'roomView') => {
+  const handlePointerDown = (e: React.MouseEvent | React.TouchEvent, item: any, type: 'dropPoint' | 'roomView') => {
     e.stopPropagation();
+    e.preventDefault(); // Prevent scrolling on touch
     if (!containerRef.current) return;
 
+    const { clientX, clientY } = getEventCoordinates(e);
     const rect = containerRef.current.getBoundingClientRect();
     const pointX = (item.x_coordinate / 100) * rect.width;
     const pointY = (item.y_coordinate / 100) * rect.height;
@@ -167,10 +180,10 @@ export const InteractiveFloorPlan = ({
     }
     
     setIsMouseDown(true);
-    setMouseDownPosition({ x: e.clientX, y: e.clientY });
+    setMouseDownPosition({ x: clientX, y: clientY });
     setDragOffset({
-      x: e.clientX - rect.left - pointX,
-      y: e.clientY - rect.top - pointY
+      x: clientX - rect.left - pointX,
+      y: clientY - rect.top - pointY
     });
   };
 
@@ -264,19 +277,21 @@ export const InteractiveFloorPlan = ({
     setMouseDownPosition({ x: 0, y: 0 });
   };
 
-  // Add mouse event listeners to handle dragging outside the container
+  // Add mouse and touch event listeners to handle dragging outside the container
   useEffect(() => {
     if (isMouseDown) {
-      const handleGlobalMouseMove = (e: MouseEvent) => {
-        if (!containerRef.current || !draggedPoint) return;
+      const handleGlobalMove = (e: MouseEvent | TouchEvent) => {
+        if (!containerRef.current || (!draggedPoint && !draggedRoomView)) return;
+        
+        const { clientX, clientY } = getEventCoordinates(e);
         
         // Calculate distance moved from initial mouse down position
         const distanceMoved = Math.sqrt(
-          Math.pow(e.clientX - mouseDownPosition.x, 2) + 
-          Math.pow(e.clientY - mouseDownPosition.y, 2)
+          Math.pow(clientX - mouseDownPosition.x, 2) + 
+          Math.pow(clientY - mouseDownPosition.y, 2)
         );
 
-        // Only start dragging if mouse has moved more than 5 pixels
+        // Only start dragging if pointer has moved more than 5 pixels
         if (!isDragging && distanceMoved > 5) {
           setIsDragging(true);
         }
@@ -284,8 +299,8 @@ export const InteractiveFloorPlan = ({
         if (!isDragging) return;
         
         const rect = containerRef.current.getBoundingClientRect();
-        const x = ((e.clientX - rect.left - dragOffset.x) / rect.width) * 100;
-        const y = ((e.clientY - rect.top - dragOffset.y) / rect.height) * 100;
+        const x = ((clientX - rect.left - dragOffset.x) / rect.width) * 100;
+        const y = ((clientY - rect.top - dragOffset.y) / rect.height) * 100;
 
         const constrainedX = Math.max(0, Math.min(100, x));
         const constrainedY = Math.max(0, Math.min(100, y));
@@ -305,16 +320,20 @@ export const InteractiveFloorPlan = ({
         }
       };
 
-      const handleGlobalMouseUp = () => {
+      const handleGlobalEnd = () => {
         handleMouseUp();
       };
 
-      document.addEventListener('mousemove', handleGlobalMouseMove);
-      document.addEventListener('mouseup', handleGlobalMouseUp);
+      document.addEventListener('mousemove', handleGlobalMove);
+      document.addEventListener('mouseup', handleGlobalEnd);
+      document.addEventListener('touchmove', handleGlobalMove, { passive: false });
+      document.addEventListener('touchend', handleGlobalEnd);
 
       return () => {
-        document.removeEventListener('mousemove', handleGlobalMouseMove);
-        document.removeEventListener('mouseup', handleGlobalMouseUp);
+        document.removeEventListener('mousemove', handleGlobalMove);
+        document.removeEventListener('mouseup', handleGlobalEnd);
+        document.removeEventListener('touchmove', handleGlobalMove);
+        document.removeEventListener('touchend', handleGlobalEnd);
       };
     }
   }, [isMouseDown, isDragging, draggedPoint, draggedRoomView, dragOffset, mouseDownPosition]);
@@ -816,7 +835,8 @@ export const InteractiveFloorPlan = ({
             transformOrigin: 'top left',
             height: 'auto',
             minHeight: '400px',
-            pointerEvents: isDrawingMode ? 'none' : 'auto'
+            pointerEvents: isDrawingMode ? 'none' : 'auto',
+            touchAction: isDragging ? 'none' : 'auto',
           }}
           onClick={handleContainerClick}
           onMouseMove={handleMouseMove}
@@ -916,7 +936,8 @@ export const InteractiveFloorPlan = ({
                                ? `cursor-grabbing scale-110 ${getDropPointColor(point.status)}` 
                                : `cursor-grab ${getDropPointColor(point.status)}`
                            }`}
-                           onMouseDown={(e) => !isDrawingMode && handleMouseDown(e, point, 'dropPoint')}
+                           onMouseDown={(e) => !isDrawingMode && handlePointerDown(e, point, 'dropPoint')}
+                           onTouchStart={(e) => !isDrawingMode && handlePointerDown(e, point, 'dropPoint')}
                            onClick={(e) => {
                              e.stopPropagation();
                              if (!isDragging && !isDrawingMode) {
@@ -993,7 +1014,8 @@ export const InteractiveFloorPlan = ({
                            zIndex: draggedRoomView && draggedRoomView.id === roomView.id ? 50 : 15,
                            pointerEvents: isDrawingMode ? 'none' : 'auto'
                          }}
-                         onMouseDown={(e) => !isDrawingMode && handleMouseDown(e, roomView, 'roomView')}
+                         onMouseDown={(e) => !isDrawingMode && handlePointerDown(e, roomView, 'roomView')}
+                         onTouchStart={(e) => !isDrawingMode && handlePointerDown(e, roomView, 'roomView')}
                          onClick={(e) => {
                            e.stopPropagation();
                            if (!isDragging && !isDrawingMode) {
