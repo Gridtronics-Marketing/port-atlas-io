@@ -17,7 +17,10 @@ export const useClientLocations = (clientId?: string) => {
 
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      console.log('Fetching locations for client:', clientId);
+
+      // Query 1: Direct client_id match
+      const { data: directLocations, error: directError } = await supabase
         .from('locations')
         .select(`
           *,
@@ -28,14 +31,53 @@ export const useClientLocations = (clientId?: string) => {
             client:clients(name)
           )
         `)
-        .or(`client_id.eq.${clientId},project.client_id.eq.${clientId}`)
+        .eq('client_id', clientId)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (directError) {
+        console.error('Error fetching direct locations:', directError);
+        throw directError;
+      }
+
+      // Query 2: Via project relationship (only locations without direct client_id)
+      const { data: projectLocations, error: projectError } = await supabase
+        .from('locations')
+        .select(`
+          *,
+          client:clients(name),
+          project:projects!inner(
+            name,
+            client_id,
+            client:clients(name)
+          )
+        `)
+        .eq('project.client_id', clientId)
+        .is('client_id', null)
+        .order('created_at', { ascending: false });
+
+      if (projectError) {
+        console.error('Error fetching project locations:', projectError);
+        throw projectError;
+      }
+
+      // Merge results and remove duplicates
+      const allLocationIds = new Set();
+      const mergedLocations = [
+        ...(directLocations || []),
+        ...(projectLocations || [])
+      ].filter(location => {
+        if (allLocationIds.has(location.id)) {
+          return false;
+        }
+        allLocationIds.add(location.id);
+        return true;
+      });
+
+      console.log('Found locations:', mergedLocations.length);
       
       // Get drop points count for each location
       const locationsWithCounts = await Promise.all(
-        (data || []).map(async (location) => {
+        mergedLocations.map(async (location) => {
           const { count } = await supabase
             .from('drop_points')
             .select('*', { count: 'exact', head: true })
