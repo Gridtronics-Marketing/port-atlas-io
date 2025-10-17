@@ -15,6 +15,12 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -67,6 +73,7 @@ export const EnhancedPhotoGallery: React.FC<EnhancedPhotoGalleryProps> = ({
 }) => {
   const [filterType, setFilterType] = useState<string>('all');
   const [filterRoom, setFilterRoom] = useState<string>('all');
+  const [expandedPhoto, setExpandedPhoto] = useState<PhotoItem | null>(null);
 
   // Get unique types and rooms for filtering
   const uniqueTypes = [...new Set(photos.map(p => p.drop_point?.point_type || p.room_view ? 'room_view' : 'unknown').filter(Boolean))];
@@ -181,7 +188,10 @@ export const EnhancedPhotoGallery: React.FC<EnhancedPhotoGalleryProps> = ({
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {filteredPhotos.map((photo) => (
               <div key={photo.id} className="relative group">
-                <div className="aspect-square rounded-lg overflow-hidden border">
+                <div 
+                  className="aspect-square rounded-lg overflow-hidden border cursor-pointer hover:ring-2 hover:ring-primary transition-all"
+                  onClick={() => setExpandedPhoto(photo)}
+                >
                   <img
                     src={photo.photo_url}
                     alt={photo.description || "Photo"}
@@ -286,6 +296,72 @@ export const EnhancedPhotoGallery: React.FC<EnhancedPhotoGalleryProps> = ({
           </div>
         )}
       </CardContent>
+      
+      {/* Expanded Photo Dialog */}
+      <Dialog open={!!expandedPhoto} onOpenChange={() => setExpandedPhoto(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
+          {expandedPhoto && (
+            <>
+              <DialogHeader>
+                <DialogTitle>
+                  {expandedPhoto.description || 'Photo'}
+                </DialogTitle>
+              </DialogHeader>
+              
+              <div className="relative w-full">
+                <img
+                  src={expandedPhoto.photo_url}
+                  alt={expandedPhoto.description || "Photo"}
+                  className="w-full h-auto rounded-lg"
+                />
+              </div>
+              
+              {/* Photo Metadata */}
+              <div className="flex flex-wrap gap-2 mt-4">
+                {expandedPhoto.photo_type === 'panoramic' && (
+                  <Badge variant="outline" className="bg-yellow-500/10 border-yellow-500">
+                    <Maximize2 className="w-3 h-3 mr-1" />
+                    Panoramic Photo
+                  </Badge>
+                )}
+                
+                {expandedPhoto.drop_point && (
+                  <Badge variant="outline">
+                    <Tag className="w-3 h-3 mr-1" />
+                    {expandedPhoto.drop_point.label}
+                    {expandedPhoto.drop_point.room && ` - ${expandedPhoto.drop_point.room}`}
+                  </Badge>
+                )}
+                
+                {expandedPhoto.room_view && (
+                  <Badge variant="outline">
+                    <Tag className="w-3 h-3 mr-1" />
+                    {expandedPhoto.room_view.name}
+                  </Badge>
+                )}
+                
+                {expandedPhoto.drop_point?.point_type && (
+                  <Badge variant="secondary">
+                    {expandedPhoto.drop_point.point_type}
+                  </Badge>
+                )}
+                
+                {expandedPhoto.employee && (
+                  <Badge variant="secondary">
+                    <User className="w-3 h-3 mr-1" />
+                    {`${expandedPhoto.employee.first_name} ${expandedPhoto.employee.last_name}`}
+                  </Badge>
+                )}
+                
+                <Badge variant="outline">
+                  <Calendar className="w-3 h-3 mr-1" />
+                  {new Date(expandedPhoto.created_at).toLocaleDateString()}
+                </Badge>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };

@@ -176,7 +176,7 @@ export function usePhotoCapture() {
       
       if (isWeb) {
         // Use enhanced HTML5 camera for web that handles the entire process
-        return await captureWebPhotoWithProcessing(description, category, projectId, locationId, workOrderId, employeeId);
+        return await captureWebPhotoWithProcessing(description, category, projectId, locationId, workOrderId, employeeId, isPanoramic);
       } else {
         // Use Capacitor Camera for native
         const cameraPromise = Camera.getPhoto({
@@ -452,7 +452,8 @@ export function usePhotoCapture() {
     projectId?: string,
     locationId?: string,
     workOrderId?: string,
-    employeeId?: string
+    employeeId?: string,
+    isPanoramic?: boolean
   ): Promise<CapturedPhoto | null> => {
     return new Promise((resolve, reject) => {
       // Create video element
@@ -503,6 +504,26 @@ export function usePhotoCapture() {
         color: #ccc;
         text-align: center;
       `;
+      
+      // Panoramic mode indicator
+      const panoramicBadge = document.createElement('div');
+      if (isPanoramic) {
+        panoramicBadge.textContent = '📷 PANORAMIC MODE';
+        panoramicBadge.style.cssText = `
+          position: absolute;
+          top: 70px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: rgba(255, 193, 7, 0.9);
+          color: black;
+          padding: 8px 16px;
+          border-radius: 20px;
+          font-size: 14px;
+          font-weight: bold;
+          backdrop-filter: blur(4px);
+          z-index: 10;
+        `;
+      }
       
       // Loading spinner
       const spinner = document.createElement('div');
@@ -730,7 +751,7 @@ export function usePhotoCapture() {
               location_id: locationId || undefined,
               work_order_id: workOrderId || undefined,
               log_date: new Date().toISOString().split('T')[0],
-              work_description: `Photo captured: ${category}${description ? ` - ${description}` : ''}`,
+              work_description: `${isPanoramic ? 'Panoramic photo' : 'Photo'} captured: ${category}${description ? ` - ${description}` : ''}`,
               photos: [urlData.publicUrl],
               hours_worked: 0,
             })
@@ -823,6 +844,9 @@ export function usePhotoCapture() {
       // Build modal structure
       modal.appendChild(header);
       modal.appendChild(instructions);
+      if (isPanoramic) {
+        modal.appendChild(panoramicBadge);
+      }
       modal.appendChild(countdownElement);
       modal.appendChild(video);
       modal.appendChild(statusMsg);
@@ -846,8 +870,24 @@ export function usePhotoCapture() {
         }
       }, 10000);
       
-      // Get camera stream
-      navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+      // Get camera stream with panoramic constraints
+      const constraints = isPanoramic ? {
+        video: {
+          facingMode: 'environment',
+          width: { ideal: 3840 },
+          height: { ideal: 2160 },
+          aspectRatio: { ideal: 16/9 }
+        }
+      } : {
+        video: {
+          facingMode: 'environment',
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+          aspectRatio: { ideal: 4/3 }
+        }
+      };
+      
+      navigator.mediaDevices.getUserMedia(constraints)
         .then(mediaStream => {
           stream = mediaStream;
           video.srcObject = stream;
