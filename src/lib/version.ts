@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.5.6";
+export const APP_VERSION = "0.5.7";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,17 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "0.5.7",
+    date: "2025-01-17",
+    changes: [
+      "Added direct client assignment to locations",
+      "Locations can now be assigned to clients without requiring projects",
+      "Updated location grid to display client information from direct assignment",
+      "Enhanced client locations filtering to support both direct and project-based relationships",
+      "Added client_id column to locations database table with proper foreign key constraints",
+    ],
+  },
   {
     version: "0.5.6",
     date: "2025-10-17",
