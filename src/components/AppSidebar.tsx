@@ -130,10 +130,10 @@ export function AppSidebar() {
                     <NavLink 
                       to={item.url}
                       onClick={handleNavClick}
-                      className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${getNavClassName(item.url)}`}
+                      className={`flex items-center gap-3 px-3 py-3 md:py-2 rounded-lg transition-colors ${getNavClassName(item.url)}`}
                     >
-                      <item.icon className="h-4 w-4 flex-shrink-0" />
-                      {!isCollapsed && <span>{item.title}</span>}
+                      <item.icon className="h-5 w-5 md:h-4 md:w-4 flex-shrink-0" />
+                      {!isCollapsed && <span className="text-sm md:text-base">{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

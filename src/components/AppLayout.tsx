@@ -20,22 +20,31 @@ export function AppLayout({ children }: AppLayoutProps) {
         
         <div className="flex-1 flex flex-col">
           {/* Header with sidebar trigger */}
-          <header className="h-14 flex items-center border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4">
-            <SidebarTrigger className="mr-2" />
-            <div className="flex-1" />
-            <OfflineIndicator />
+          <header className="h-16 md:h-14 flex items-center justify-between border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-3 md:px-4">
+            <div className="flex items-center gap-2">
+              <SidebarTrigger className="h-10 w-10 md:h-9 md:w-9" />
+            </div>
             
-            {/* Logout button - more prominent on mobile */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={signOut}
-              className="ml-2 md:ml-4"
-              title="Sign Out"
-            >
-              <LogOut className="h-4 w-4" />
-              <span className="ml-2 sm:hidden md:inline">Sign Out</span>
-            </Button>
+            {/* App name on mobile when sidebar closed */}
+            <div className="flex-1 text-center md:hidden">
+              <span className="text-sm font-semibold text-foreground">Port Atlas</span>
+            </div>
+            
+            <div className="flex-1 hidden md:block" />
+            
+            <div className="flex items-center gap-2">
+              <OfflineIndicator />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={signOut}
+                className="h-10 w-10 md:h-9 md:w-auto md:px-3"
+                title="Sign Out"
+              >
+                <LogOut className="h-5 w-5 md:h-4 md:w-4" />
+                <span className="ml-2 hidden md:inline">Sign Out</span>
+              </Button>
+            </div>
           </header>
 
           {/* Main content */}

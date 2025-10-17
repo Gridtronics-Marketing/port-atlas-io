@@ -74,7 +74,7 @@ export const PWAUpdateNotification: React.FC = () => {
   }
 
   return (
-    <Card className="fixed top-4 left-4 right-4 z-50 mx-auto max-w-sm shadow-lg border-primary/20 bg-background/95 backdrop-blur">
+    <Card className="fixed bottom-4 right-4 md:left-auto left-1/2 md:transform-none -translate-x-1/2 md:translate-x-0 z-50 max-w-sm shadow-lg border-primary/20 bg-background/95 backdrop-blur">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">

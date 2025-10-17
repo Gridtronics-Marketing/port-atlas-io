@@ -37,7 +37,7 @@ export const InAppEducationBanner: React.FC = () => {
   }
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 z-50 animate-in slide-in-from-bottom-4">
+    <div className="fixed bottom-20 md:bottom-4 left-4 right-4 z-40 animate-in slide-in-from-bottom-4">
       <Card className="p-4 shadow-lg border-primary/20 bg-gradient-to-br from-background to-primary/5">
         <div className="flex gap-3">
           <div className="flex-shrink-0">

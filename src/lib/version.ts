@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.5.5";
+export const APP_VERSION = "0.5.6";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,23 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "0.5.6",
+    date: "2025-10-17",
+    changes: [
+      "Improved mobile navigation UX with larger touch targets (44px minimum)",
+      "Repositioned PWA update notification to bottom-right (desktop) and bottom-center (mobile)",
+      "Enhanced app header layout with centered 'Port Atlas' branding on mobile devices",
+      "Increased header height on mobile (64px) for better touch accessibility",
+      "Optimized sidebar navigation with larger icons (20px) and better spacing on mobile",
+      "Fixed InApp education banner positioning to avoid overlapping with system UI (bottom-20 on mobile)",
+      "Improved logout button touch target - icon-only (40x40px) on mobile",
+      "Enhanced sidebar menu items with 48px minimum height on mobile devices",
+      "Better z-index management for overlays and notifications (update at z-50, banner at z-40)",
+      "Removed unused Navigation.tsx component to reduce code complexity",
+      "Consistent mobile-first responsive design across all UI components",
+    ],
+  },
   {
     version: "0.5.5",
     date: "2025-10-17",
