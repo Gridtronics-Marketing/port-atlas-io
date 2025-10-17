@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.5.3";
+export const APP_VERSION = "0.5.4";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,20 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "0.5.4",
+    date: "2025-10-17",
+    changes: [
+      "Fixed panoramic camera mode - now properly opens camera with wide aspect ratio (16:9) and higher resolution (3840x2160)",
+      "Added visual 'PANORAMIC MODE' indicator in camera interface when capturing panoramic photos",
+      "Implemented click-to-expand functionality for all photos in Enhanced Photo Gallery",
+      "Added full-screen photo viewer dialog with metadata display (panoramic badge, employee info, date)",
+      "Enhanced photo gallery UX with cursor pointer on hover to indicate clickable images",
+      "Improved panoramic photo constraints for web camera capture with ideal 4K resolution settings",
+      "Added daily log tracking for panoramic photo captures",
+      "Fixed photo expansion modal to show all relevant photo metadata and context",
+    ],
+  },
   {
     version: "0.5.3",
     date: "2025-10-17",
