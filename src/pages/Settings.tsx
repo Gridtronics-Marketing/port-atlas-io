@@ -15,8 +15,11 @@ import { GranularPermissionsManager } from '@/components/GranularPermissionsMana
 import { AuditTrailViewer } from '@/components/AuditTrailViewer';
 import { APIKeysManager } from '@/components/APIKeysManager';
 import { VersionInfo } from '@/components/VersionInfo';
+import { useSearchParams } from 'react-router-dom';
 
 const Settings = () => {
+  const [searchParams] = useSearchParams();
+  const defaultTab = searchParams.get('tab') || 'core';
   return (
     <main className="container mx-auto px-4 py-6 space-y-6">
       <div>
@@ -28,7 +31,7 @@ const Settings = () => {
         </p>
       </div>
 
-      <Tabs defaultValue="core" className="w-full">
+      <Tabs defaultValue={defaultTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2 md:grid-cols-6 gap-2 h-auto p-1">
           <TabsTrigger value="core" className="flex flex-col gap-1 h-auto py-3">
             <Cog className="h-5 w-5" />

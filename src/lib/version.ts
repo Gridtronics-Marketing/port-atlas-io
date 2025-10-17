@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.5.1";
+export const APP_VERSION = "0.5.2";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,22 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "0.5.2",
+    date: "2025-10-17",
+    changes: [
+      "Added mobile touch support for dragging drop points and room views on floor plans",
+      "Enhanced admin permissions - admins can now capture photos without employee record",
+      "Implemented panoramic photo capture with distinct photo type tracking",
+      "Added panoramic photo indicators and badges in photo galleries",
+      "Improved touch event handling with unified mouse/touch coordinate system",
+      "Fixed page scrolling interference during drag operations on mobile devices",
+      "Enhanced database schema with photo_type field for room view photos",
+      "Optimized photo capture workflow for better mobile experience",
+      "Made version number clickable to access changelog directly",
+      "Added 'About & Changelog' quick access in user dropdown menu",
+    ],
+  },
   {
     version: "0.5.1",
     date: "2025-10-12",

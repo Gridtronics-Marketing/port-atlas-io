@@ -16,7 +16,8 @@ import {
   Phone,
   FileText,
   Wrench,
-  Package
+  Package,
+  Info
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { NavLink, useLocation } from "react-router-dom";
@@ -153,12 +154,16 @@ export function AppSidebar() {
           />
         </div>
         
-        {/* Build Version */}
-        <div className={`${isCollapsed ? "text-center" : ""} mb-2`}>
-          <p className="text-xs text-muted-foreground/60">
+        {/* Build Version - Clickable to view changelog */}
+        <NavLink 
+          to="/settings?tab=about" 
+          className={`${isCollapsed ? "text-center" : ""} mb-2 block hover:text-primary transition-colors`}
+          title="View changelog"
+        >
+          <p className="text-xs text-muted-foreground/60 hover:text-muted-foreground">
             {isCollapsed ? `v${APP_VERSION.split('.').slice(0, 2).join('.')}` : `Version ${APP_VERSION}`}
           </p>
-        </div>
+        </NavLink>
         
         <Separator className="mb-4" />
         
@@ -208,6 +213,12 @@ export function AppSidebar() {
               <NavLink to="/settings" className="flex items-center">
                 <Settings className="mr-2 h-4 w-4" />
                 <span>Settings</span>
+              </NavLink>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <NavLink to="/settings?tab=about" className="flex items-center">
+                <Info className="mr-2 h-4 w-4" />
+                <span>About & Changelog</span>
               </NavLink>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
