@@ -402,6 +402,7 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onDe
         onOpenChange={(open) => !open && setSelectedLocation(null)}
         onEditLocation={handleEditLocation}
         onDeleteLocation={handleDeleteLocation}
+        onLocationUpdate={refetchLocations}
       />
 
       <AddLocationModal

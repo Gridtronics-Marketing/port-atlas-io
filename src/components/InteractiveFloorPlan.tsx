@@ -36,6 +36,7 @@ interface InteractiveFloorPlanProps {
   filePath?: string; // Raw storage path
   fileName?: string;
   className?: string;
+  onFloorPlanSaved?: () => void; // Callback when floor plan is saved
 }
 
 export const InteractiveFloorPlan = ({
@@ -44,7 +45,8 @@ export const InteractiveFloorPlan = ({
   fileUrl,
   filePath,
   fileName,
-  className = ""
+  className = "",
+  onFloorPlanSaved
 }: InteractiveFloorPlanProps) => {
   const [scale, setScale] = useState(1.0);
   const [isAddingPoint, setIsAddingPoint] = useState(false);
@@ -539,14 +541,14 @@ export const InteractiveFloorPlan = ({
       setHasSavedDrawing(false);
       
       toast({
-        title: "Success",
-        description: "Your drawing is now the floor plan for this floor!",
+        title: "Floor plan saved!",
+        description: "You can now add drop points or continue editing.",
       });
       
-      // Refresh the page to show new floor plan
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+      // Call the callback to refresh the parent component
+      if (onFloorPlanSaved) {
+        onFloorPlanSaved();
+      }
     } else {
       toast({
         title: "Error",

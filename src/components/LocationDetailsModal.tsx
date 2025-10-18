@@ -68,9 +68,10 @@ interface LocationDetailsModalProps {
   onOpenChange: (open: boolean) => void;
   onEditLocation?: (location: Location) => void;
   onDeleteLocation?: (id: string) => void;
+  onLocationUpdate?: () => void; // Callback to refresh location data
 }
 
-export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocation, onDeleteLocation }: LocationDetailsModalProps) => {
+export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocation, onDeleteLocation, onLocationUpdate }: LocationDetailsModalProps) => {
   const [activeTab, setActiveTab] = useState("details");
   const [selectedFloor, setSelectedFloor] = useState<number>(1);
   const [floorPlanUrls, setFloorPlanUrls] = useState<{ [floorNumber: number]: string }>({});
@@ -117,6 +118,20 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
       loadFloorPlans();
     }
   }, [location, open]);
+
+  // Handle floor plan saved - refresh location data
+  const handleFloorPlanSaved = () => {
+    // Trigger parent to refetch location data if callback is provided
+    if (onLocationUpdate) {
+      onLocationUpdate();
+    }
+    
+    // Force re-render by updating floor plan URLs from location
+    if (location?.floor_plan_files) {
+      const urls = getFloorPlanUrls(location.floor_plan_files);
+      setFloorPlanUrls(urls);
+    }
+  };
 
   const hasFloorPlans = location?.floor_plan_files && Object.keys(location.floor_plan_files).length > 0;
   const currentFloorPlanUrl = floorPlanUrls[selectedFloor];
@@ -446,6 +461,7 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
                     filePath={location.floor_plan_files?.[selectedFloor] || ''}
                     fileName={location.floor_plan_files?.[selectedFloor]?.split('/').pop() || ''}
                     className="min-h-[500px]"
+                    onFloorPlanSaved={handleFloorPlanSaved}
                   />
                 </div>
                 <Tabs defaultValue="diagnostics" className="w-full">

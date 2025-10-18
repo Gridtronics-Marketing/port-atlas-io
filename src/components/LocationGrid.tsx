@@ -6,7 +6,7 @@ import { AddLocationModal } from "@/components/AddLocationModal";
 import { useLocations, type Location } from "@/hooks/useLocations";
 
 export const LocationGrid = () => {
-  const { locations, loading, deleteLocation } = useLocations();
+  const { locations, loading, deleteLocation, fetchLocations } = useLocations();
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
   const [editingLocation, setEditingLocation] = useState<Location | null>(null);
 
@@ -97,6 +97,7 @@ export const LocationGrid = () => {
         onOpenChange={(open) => !open && setSelectedLocation(null)}
         onEditLocation={setEditingLocation}
         onDeleteLocation={deleteLocation}
+        onLocationUpdate={fetchLocations}
       />
       
       <AddLocationModal
