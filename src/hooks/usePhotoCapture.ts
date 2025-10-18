@@ -456,6 +456,11 @@ export function usePhotoCapture() {
     isPanoramic?: boolean
   ): Promise<CapturedPhoto | null> => {
     return new Promise((resolve, reject) => {
+      // Detect if we're on mobile or desktop
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      const facingMode = isMobile ? 'environment' : 'user'; // Use back camera on mobile, front on desktop
+      
+      console.log(`📱 Platform detection: ${isMobile ? 'Mobile' : 'Desktop'}, using ${facingMode} camera`);
       // Create video element
       const video = document.createElement('video');
       const canvas = document.createElement('canvas');
@@ -884,19 +889,21 @@ export function usePhotoCapture() {
       // Get camera stream with panoramic constraints
       const constraints = isPanoramic ? {
         video: {
-          facingMode: 'environment',
+          facingMode: facingMode,
           width: { ideal: 3840 },
           height: { ideal: 2160 },
           aspectRatio: { ideal: 16/9 }
         }
       } : {
         video: {
-          facingMode: 'environment',
+          facingMode: facingMode,
           width: { ideal: 1920 },
           height: { ideal: 1080 },
           aspectRatio: { ideal: 4/3 }
         }
       };
+      
+      console.log(`📷 Camera constraints:`, constraints);
       
       navigator.mediaDevices.getUserMedia(constraints)
         .then(mediaStream => {
@@ -991,7 +998,10 @@ export function usePhotoCapture() {
             name: error.name,
             message: error.message,
             category,
-            constraints: { video: { facingMode: isPanoramic ? 'environment' : 'user' } }
+            platform: isMobile ? 'Mobile' : 'Desktop',
+            facingMode: facingMode,
+            isPanoramic,
+            constraints
           });
           clearTimeout(initTimeout);
           cleanup();
