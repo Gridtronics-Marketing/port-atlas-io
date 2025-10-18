@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.6.0";
+export const APP_VERSION = "0.6.1";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,17 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "0.6.1",
+    date: "2025-01-17",
+    changes: [
+      "Added cable count badges directly on drop point markers for instant visibility without hovering",
+      "Simplified tooltip text - removed verbose labels and redundant text for cleaner display",
+      "Streamlined add drop point form - removed asterisks and 'optional' labels for faster data entry",
+      "Cable counts now display as small numbered badges on markers when count > 1",
+      "Improved UX for quick drop point creation with minimal required fields",
+    ],
+  },
   {
     version: "0.6.0",
     date: "2025-01-17",
