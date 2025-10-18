@@ -232,6 +232,11 @@ export const InteractiveMap = ({ locationId, floors = 1, currentFloor = 1, backg
                     }}
                   >
                     <IconComponent className="h-4 w-4" />
+                    {point.cable_count > 1 && (
+                      <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center border border-background">
+                        {point.cable_count}
+                      </span>
+                    )}
                   </button>
                 </TooltipTrigger>
                 <TooltipContent className="bg-popover border">
@@ -240,7 +245,7 @@ export const InteractiveMap = ({ locationId, floors = 1, currentFloor = 1, backg
                     <p className="text-muted-foreground">{point.room}</p>
                     <p className="text-xs capitalize">
                       {point.type}
-                      {point.cable_count > 1 && ` • ${point.cable_count} cables`}
+                      {point.cable_count > 1 && ` • ${point.cable_count}`}
                     </p>
                   </div>
                 </TooltipContent>

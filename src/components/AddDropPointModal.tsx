@@ -136,7 +136,7 @@ export const AddDropPointModal = ({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="numberOfCables">Number of Cables (Optional)</Label>
+              <Label htmlFor="numberOfCables">Number of Cables</Label>
               <Input
                 id="numberOfCables"
                 type="number"
@@ -148,7 +148,7 @@ export const AddDropPointModal = ({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="cableType">Cable Type *</Label>
+              <Label htmlFor="cableType">Cable Type</Label>
               <ConfigurableSelect
                 category="cable_subtypes"
                 value={formData.cableType}
