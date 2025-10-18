@@ -723,21 +723,26 @@ export function usePhotoCapture() {
           const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
           const filename = `${category}-${timestamp}.jpg`;
           
+          // Select the correct bucket based on category
+          const bucketName = category === 'room_view' ? 'room-views' : 'floor-plans';
+          console.log(`📦 Uploading to bucket: ${bucketName} (category: ${category})`);
+          
           // Upload to Supabase Storage
           const { data: uploadData, error: uploadError } = await supabase.storage
-            .from('floor-plans')
+            .from(bucketName)
             .upload(`photos/${filename}`, blob, {
               contentType: 'image/jpeg',
               upsert: false,
             });
 
           if (uploadError) {
+            console.error(`❌ Upload error to ${bucketName}:`, uploadError);
             throw uploadError;
           }
 
           // Get public URL
           const { data: urlData } = supabase.storage
-            .from('floor-plans')
+            .from(bucketName)
             .getPublicUrl(`photos/${filename}`);
 
           updateStatus('Saving photo record...', true);
@@ -785,7 +790,13 @@ export function usePhotoCapture() {
           }, 1500);
 
         } catch (error) {
-          console.error('Photo processing error:', error);
+          console.error('❌ Photo processing error:', {
+            error,
+            category,
+            bucket: category === 'room_view' ? 'room-views' : 'floor-plans',
+            employeeId,
+            message: error instanceof Error ? error.message : 'Unknown error'
+          });
           updateStatus(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`, false);
           statusMsg.style.color = '#dc3545';
           
@@ -975,7 +986,13 @@ export function usePhotoCapture() {
           cancelBtn.onclick = handleCancel;
         })
         .catch(error => {
-          console.error('Camera stream error:', error);
+          console.error('❌ Camera stream initialization error:', {
+            error,
+            name: error.name,
+            message: error.message,
+            category,
+            constraints: { video: { facingMode: isPanoramic ? 'environment' : 'user' } }
+          });
           clearTimeout(initTimeout);
           cleanup();
           reject(new Error(`Camera access failed: ${error.message}`));
