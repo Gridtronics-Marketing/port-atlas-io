@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.6.1";
+export const APP_VERSION = "0.6.2";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,19 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "0.6.2",
+    date: "2025-01-18",
+    changes: [
+      "Fixed room view photos not appearing on floor plan after save",
+      "Replaced full page reload with smart async data refresh for seamless UX",
+      "Added proper state synchronization between modal and parent component",
+      "Floor plan now stays open after saving with immediate visual updates",
+      "Enhanced floor plan save callback to explicitly refresh room views data",
+      "Added 300ms delay before modal close to ensure parent component refresh completes",
+      "Improved data consistency between AddRoomViewModal and InteractiveFloorPlan components",
+    ],
+  },
   {
     version: "0.6.1",
     date: "2025-01-17",
