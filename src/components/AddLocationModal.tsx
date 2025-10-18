@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Upload, X, MapPin, Plus, Minus, Building2, Users, Phone, FileText, FileImage, Paintbrush, Search, UserPlus } from "lucide-react";
-import { InteractiveFloorPlan } from "@/components/InteractiveFloorPlan";
+import { X, MapPin, Plus, Minus, Building2, Users, Phone, FileText, Search, UserPlus } from "lucide-react";
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import {
   Dialog,
@@ -32,8 +31,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useClients } from "@/hooks/useClients";
 import { useLocations, type Location } from "@/hooks/useLocations";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { convertPDFToImages, isPDFFile, isImageFile, type ConversionProgress } from "@/lib/pdf-converter";
 
 interface AddLocationModalProps {
   open: boolean;
@@ -43,10 +40,7 @@ interface AddLocationModalProps {
 }
 
 export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClientId }: AddLocationModalProps) => {
-  const [layoutFiles, setLayoutFiles] = useState<{ [floorNumber: number]: File | null }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [conversionProgress, setConversionProgress] = useState<{ [floorNumber: number]: ConversionProgress | null }>({});
-  const [drawingMode, setDrawingMode] = useState<{ [floorNumber: number]: boolean }>({});
   const [selectedClientId, setSelectedClientId] = useState<string | null>(preSelectedClientId || null);
   const [showClientCreationForm, setShowClientCreationForm] = useState(false);
   const [clientSearchOpen, setClientSearchOpen] = useState(false);
@@ -84,11 +78,9 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
     zipCode: "",
     building_type: "",
     floors: 1,
-    total_square_feet: "",
     access_instructions: "",
     contact_onsite: "",
     contact_phone: "",
-    status: "Active" as "Active" | "In Progress" | "Completed" | "On Hold",
   });
 
   const [coordinates, setCoordinates] = useState<{
@@ -120,11 +112,9 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
         zipCode: addressParts[4] || "",
         building_type: location.building_type || "",
         floors: location.floors || 1,
-        total_square_feet: location.total_square_feet?.toString() || "",
         access_instructions: location.access_instructions || "",
         contact_onsite: location.contact_onsite || "",
         contact_phone: location.contact_phone || "",
-        status: location.status as any || "Active",
       });
     } else if (!location && open) {
       resetForm();
@@ -144,18 +134,14 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
       zipCode: "",
       building_type: "",
       floors: 1,
-      total_square_feet: "",
       access_instructions: "",
       contact_onsite: "",
       contact_phone: "",
-      status: "Active",
     });
     setCoordinates({
       latitude: null,
       longitude: null,
     });
-    setLayoutFiles({});
-    setConversionProgress({});
     setSelectedClientId(null);
     setShowClientCreationForm(false);
     setClientFormData({
@@ -202,102 +188,6 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
   };
 
 
-  const handleFileChange = async (floorNumber: number, event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    // Validate file type
-    if (!isPDFFile(file) && !isImageFile(file)) {
-      toast({
-        title: "Invalid File Type",
-        description: "Please upload PDF or image files only (PDF, PNG, JPG, WEBP).",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // If it's an image, use it directly
-    if (isImageFile(file)) {
-      setLayoutFiles(prev => ({
-        ...prev,
-        [floorNumber]: file
-      }));
-      return;
-    }
-
-    // If it's a PDF, convert it to images
-    if (isPDFFile(file)) {
-      try {
-        setConversionProgress(prev => ({
-          ...prev,
-          [floorNumber]: { currentPage: 0, totalPages: 0, progress: 0 }
-        }));
-
-        const convertedPages = await convertPDFToImages(file, (progress) => {
-          setConversionProgress(prev => ({
-            ...prev,
-            [floorNumber]: progress
-          }));
-        });
-
-        // For single page PDFs, use the first page directly
-        // For multi-page PDFs, create a combined file or use first page (for now)
-        if (convertedPages.length > 0) {
-          const firstPage = convertedPages[0];
-          const imageFile = new File([firstPage.blob], `floor_${floorNumber}.png`, {
-            type: 'image/png'
-          });
-          
-          setLayoutFiles(prev => ({
-            ...prev,
-            [floorNumber]: imageFile
-          }));
-
-          toast({
-            title: "PDF Converted",
-            description: `Successfully converted PDF to image (${convertedPages.length} page${convertedPages.length > 1 ? 's' : ''} processed).`,
-          });
-        }
-
-      } catch (error) {
-        console.error('PDF conversion error:', error);
-        
-        // Clear conversion progress for this floor
-        setConversionProgress(prev => {
-          const newState = { ...prev };
-          delete newState[floorNumber];
-          return newState;
-        });
-
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-        
-        toast({
-          title: "Conversion Failed",
-          description: `Failed to convert PDF: ${errorMessage}. Please try with a smaller PDF or use an image file (JPG, PNG).`,
-          variant: "destructive",
-        });
-      } finally {
-        setConversionProgress(prev => ({
-          ...prev,
-          [floorNumber]: null
-        }));
-      }
-    }
-  };
-
-  const removeFile = (floorNumber: number) => {
-    setLayoutFiles(prev => {
-      const updated = { ...prev };
-      delete updated[floorNumber];
-      return updated;
-    });
-    setConversionProgress(prev => {
-      const updated = { ...prev };
-      delete updated[floorNumber];
-      return updated;
-    });
-  };
-
   const handleSubmit = async () => {
     // Validate required fields
     const requiredFieldsError = !formData.name.trim() || !formData.street1.trim() || !formData.city.trim() || !formData.state.trim();
@@ -338,79 +228,22 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
         address: addressParts.join(", "),
         building_type: formData.building_type.trim() || null,
         floors: formData.floors,
-        total_square_feet: formData.total_square_feet ? parseInt(formData.total_square_feet) : null,
+        total_square_feet: null,
         access_instructions: formData.access_instructions.trim() || null,
         contact_onsite: formData.contact_onsite.trim() || null,
         contact_phone: formData.contact_phone.trim() || null,
         project_id: null,
         client_id: selectedClientId,
-        status: formData.status,
+        status: "Active" as const,
         completion_percentage: 0,
         latitude: coordinates.latitude,
         longitude: coordinates.longitude,
-        floor_plan_files: {},
       };
 
       // Create or update the location
-      const resultLocation = isEditing 
-        ? await updateLocation(location!.id, locationData)
-        : await addLocation(locationData);
-      
-      // Upload floor plan files to storage if any were selected
-      const uploadedFiles: { [key: number]: string } = {};
-      const uploadPromises = Object.entries(layoutFiles).map(async ([floorStr, file]) => {
-        if (file) {
-          const floorNumber = parseInt(floorStr);
-          const fileExt = file.name.split('.').pop();
-          const fileName = `${resultLocation.id}/floor_${floorNumber}.${fileExt}`;
-          
-          const { data, error } = await supabase.storage
-            .from('floor-plans')
-            .upload(fileName, file, {
-              cacheControl: '3600',
-              upsert: true
-            });
-
-          if (error) {
-            console.error(`Error uploading floor ${floorNumber} plan:`, error);
-            throw error;
-          }
-
-          uploadedFiles[floorNumber] = fileName;
-        }
-      });
-
-      await Promise.all(uploadPromises);
-
-      // Update location with floor plan file paths
-      if (Object.keys(uploadedFiles).length > 0) {
-        console.log('Updating location with floor plan files:', {
-          locationId: resultLocation.id,
-          uploadedFiles
-        });
-        
-        const { data: updateData, error: updateError } = await supabase
-          .from('locations')
-          .update({ floor_plan_files: uploadedFiles })
-          .eq('id', resultLocation.id)
-          .select();
-
-        if (updateError) {
-          console.error('Database update error:', updateError);
-          toast({
-            title: "Database Update Failed",
-            description: `Failed to link floor plans to location: ${updateError.message}`,
-            variant: "destructive",
-          });
-          throw updateError;
-        } else {
-          console.log('Database updated successfully:', updateData);
-          toast({
-            title: "Floor Plans Uploaded",
-            description: `${Object.keys(uploadedFiles).length} floor plan${Object.keys(uploadedFiles).length > 1 ? 's' : ''} uploaded and linked successfully.`,
-          });
-        }
-      }
+      await (isEditing 
+        ? updateLocation(location!.id, locationData)
+        : addLocation(locationData));
 
       resetForm();
       onOpenChange(false);
@@ -435,25 +268,7 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
       ...prev,
       floors: newFloors
     }));
-
-    // Clean up layout files if reducing floors
-    if (!increment && newFloors < formData.floors) {
-      setLayoutFiles(prev => {
-        const updated = { ...prev };
-        // Remove files for floors that no longer exist
-        Object.keys(updated).forEach(floorStr => {
-          const floor = parseInt(floorStr);
-          if (floor > newFloors) {
-            delete updated[floor];
-          }
-        });
-        return updated;
-      });
-    }
   };
-
-  // Generate array of floor numbers for rendering
-  const floorNumbers = Array.from({ length: formData.floors }, (_, i) => i + 1);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -465,8 +280,8 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
           </DialogTitle>
           <DialogDescription className="text-muted-foreground">
             {isEditing 
-                 ? 'Update location details and manage floor plans for your jobsite.'
-                 : 'Create a new jobsite location with floor plans for comprehensive drop point management.'
+                 ? 'Update location details for your jobsite.'
+                 : 'Create a new jobsite location. Floor plans can be added from the Locations tab.'
             }
           </DialogDescription>
         </DialogHeader>
@@ -779,66 +594,41 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="floors" className="text-sm font-medium">Number of Floors *</Label>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => adjustFloors(false)}
-                        disabled={formData.floors <= 1}
-                        className="h-10 w-10 p-0"
-                      >
-                        <Minus className="h-4 w-4" />
-                      </Button>
-                      <Input
-                        id="floors"
-                        type="number"
-                        min="1"
-                        max="50"
-                        value={formData.floors}
-                        onChange={(e) => setFormData({ 
-                          ...formData, 
-                          floors: Math.max(1, parseInt(e.target.value) || 1)
-                        })}
-                        className="text-center h-10 flex-1"
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => adjustFloors(true)}
-                        className="h-10 w-10 p-0"
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="total_square_feet" className="text-sm font-medium">Total Square Feet</Label>
-                    <Input
-                      id="total_square_feet"
-                      type="number"
-                      placeholder="Enter total sq ft"
-                      value={formData.total_square_feet}
-                      onChange={(e) => setFormData({ ...formData, total_square_feet: e.target.value })}
-                      className="h-10"
-                    />
-                  </div>
-                </div>
-
                 <div className="space-y-2">
-                  <Label htmlFor="status" className="text-sm font-medium">Location Status</Label>
-                  <ConfigurableSelect
-                    category="location_statuses"
-                    value={formData.status}
-                    onValueChange={(value: any) => setFormData({ ...formData, status: value })}
-                    placeholder="Select status"
-                    className="h-10 bg-background"
-                  />
+                  <Label htmlFor="floors" className="text-sm font-medium">Number of Floors *</Label>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => adjustFloors(false)}
+                      disabled={formData.floors <= 1}
+                      className="h-10 w-10 p-0"
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                    <Input
+                      id="floors"
+                      type="number"
+                      min="1"
+                      max="50"
+                      value={formData.floors}
+                      onChange={(e) => setFormData({ 
+                        ...formData, 
+                        floors: Math.max(1, parseInt(e.target.value) || 1)
+                      })}
+                      className="text-center h-10 flex-1"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => adjustFloors(true)}
+                      className="h-10 w-10 p-0"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -895,176 +685,6 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
               </CardContent>
             </Card>
 
-            {/* Floor Plans Section */}
-            {formData.floors > 0 && (
-              <Card className="shadow-soft border-border">
-                <CardHeader className="pb-4">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2 text-lg">
-                      <MapPin className="h-5 w-5 text-primary" />
-                      Floor Plans
-                    </CardTitle>
-                    {formData.floors > 1 && (
-                      <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
-                        {formData.floors} Floor{formData.floors > 1 ? 's' : ''}
-                      </Badge>
-                    )}
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Upload floor plans, blueprints, or layout diagrams for each floor
-                  </p>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {floorNumbers.map((floorNumber, index) => {
-                      const file = layoutFiles[floorNumber];
-                      return (
-                        <div key={floorNumber}>
-                          {index > 0 && <Separator className="my-4" />}
-                          <Card className="border-dashed border-2 border-muted-foreground/25 hover:border-primary/40 transition-colors duration-200">
-                            <CardContent className="p-6">
-                              <div className="flex items-center justify-between mb-4">
-                                <div className="flex items-center gap-2">
-                                  <Label className="text-sm font-medium text-foreground">
-                                    {formData.floors === 1 ? 'Floor Plan' : `Floor ${floorNumber}`}
-                                  </Label>
-                                  {formData.floors > 1 && (
-                                    <Badge variant="outline" className="text-xs">
-                                      Level {floorNumber}
-                                    </Badge>
-                                  )}
-                                </div>
-                              </div>
-                              
-                               {file ? (
-                                 <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-                                   <div className="flex items-center gap-3">
-                                     <div className="p-3 bg-primary/10 rounded-lg">
-                                       {isPDFFile(file) ? (
-                                         <FileImage className="h-5 w-5 text-primary" />
-                                       ) : (
-                                         <Upload className="h-5 w-5 text-primary" />
-                                       )}
-                                     </div>
-                                     <div>
-                                       <p className="font-medium text-foreground">{file.name}</p>
-                                       <p className="text-sm text-muted-foreground">
-                                         {(file.size / 1024 / 1024).toFixed(2)} MB • {isPDFFile(file) ? 'Converted to PNG' : 'Ready for upload'}
-                                       </p>
-                                     </div>
-                                   </div>
-                                   <Button
-                                     variant="ghost"
-                                     size="sm"
-                                     onClick={() => removeFile(floorNumber)}
-                                     className="text-muted-foreground hover:text-destructive"
-                                   >
-                                     <X className="h-4 w-4" />
-                                   </Button>
-                                 </div>
-                               ) : conversionProgress[floorNumber] ? (
-                                 <div className="p-4 bg-muted/50 rounded-lg">
-                                   <div className="flex items-center gap-3 mb-3">
-                                     <div className="p-3 bg-primary/10 rounded-lg">
-                                       <FileImage className="h-5 w-5 text-primary animate-pulse" />
-                                     </div>
-                                     <div>
-                                       <p className="font-medium text-foreground">Converting PDF...</p>
-                                       <p className="text-sm text-muted-foreground">
-                                         Page {conversionProgress[floorNumber]!.currentPage} of {conversionProgress[floorNumber]!.totalPages}
-                                       </p>
-                                     </div>
-                                   </div>
-                                   <div className="w-full bg-muted rounded-full h-2">
-                                     <div 
-                                       className="bg-primary h-2 rounded-full transition-all duration-300"
-                                       style={{ width: `${conversionProgress[floorNumber]!.progress}%` }}
-                                     />
-                                   </div>
-                                 </div>
-                              ) : (
-                                 <div className="text-center py-8">
-                                   <div className="mx-auto w-12 h-12 bg-muted rounded-full flex items-center justify-center mb-3">
-                                     <Upload className="h-6 w-6 text-muted-foreground" />
-                                   </div>
-                                   <div className="space-y-2">
-                                     <p className="text-sm font-medium text-foreground">
-                                       Upload {formData.floors === 1 ? 'Floor Plan' : `Floor ${floorNumber} Plan`}
-                                     </p>
-                                       <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                                         Drop files here or click to browse. Supports images (JPG, PNG, WEBP) and PDFs (converted to images)
-                                       </p>
-                                     <div className="flex items-center gap-3 justify-center mt-4">
-                                       <input
-                                         type="file"
-                                         accept="image/*,.pdf"
-                                         onChange={(e) => handleFileChange(floorNumber, e)}
-                                         className="hidden"
-                                         id={`layout-upload-${floorNumber}`}
-                                       />
-                                       <Label htmlFor={`layout-upload-${floorNumber}`} className="cursor-pointer">
-                                         <Button variant="outline" size="sm" asChild>
-                                           <span className="bg-background hover:bg-muted">
-                                             <Upload className="h-4 w-4 mr-2" />
-                                             Choose File
-                                           </span>
-                                         </Button>
-                                       </Label>
-                                       
-                                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                         <div className="h-px bg-border flex-1"></div>
-                                         <span>or</span>
-                                         <div className="h-px bg-border flex-1"></div>
-                                       </div>
-                                       
-                                         <Button 
-                                           variant="outline" 
-                                           size="sm"
-                                           onClick={() => setDrawingMode(prev => ({ ...prev, [floorNumber]: !prev[floorNumber] }))}
-                                           className="bg-background hover:bg-muted"
-                                         >
-                                           <FileImage className="h-4 w-4 mr-2" />
-                                           {drawingMode[floorNumber] ? 'Exit Draw Mode' : 'Draw Map'}
-                                         </Button>
-                                     </div>
-                                   </div>
-                                  </div>
-                               )}
-                               
-                                   {drawingMode[floorNumber] && (
-                                    <div className="mt-4 border-t pt-4">
-                                      <div className="flex items-center justify-between py-2 px-3 bg-primary/10 rounded-md border border-primary/20 mb-3">
-                                        <span className="text-sm font-medium">
-                                          {location?.id ? "Editing floor plan" : "Drawing mode active - Your work is auto-saved"}
-                                        </span>
-                                        <Button
-                                          type="button"
-                                          size="sm"
-                                          variant="outline"
-                                          onClick={() => setDrawingMode(prev => ({ ...prev, [floorNumber]: false }))}
-                                        >
-                                          Exit Drawing
-                                        </Button>
-                                      </div>
-                                      <div className="min-h-[500px] border-2 border-primary/20 rounded-lg overflow-hidden bg-background shadow-lg">
-                                        <InteractiveFloorPlan
-                                          locationId={location?.id || ""}
-                                          floorNumber={floorNumber}
-                                          fileUrl={file ? URL.createObjectURL(file) : undefined}
-                                          className="w-full h-full"
-                                        />
-                                      </div>
-                                   </div>
-                                 )}
-                             </CardContent>
-                           </Card>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
           </div>
         </div>
 
