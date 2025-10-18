@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.5.9";
+export const APP_VERSION = "0.6.0";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,19 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "0.6.0",
+    date: "2025-01-17",
+    changes: [
+      "Enhanced drop point visualization with color-coded status system for better scalability",
+      "Removed auto-generated labels - labels are now truly optional for cleaner floor plan views",
+      "Implemented industry-standard color coding: Gray (Planned), Blue (Roughed In), Orange (Terminated), Green (Tested)",
+      "Added new 'Roughed In' and 'Terminated' status options to track installation workflow stages",
+      "Simplified tooltips to show only essential information (label if present, room, type, cable count)",
+      "Updated status filters in drop point list to include new workflow stages",
+      "Improved map readability for locations with 50+ drop points through color-based status recognition",
+    ],
+  },
   {
     version: "0.5.9",
     date: "2025-01-17",
