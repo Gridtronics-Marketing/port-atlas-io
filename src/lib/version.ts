@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.5.8";
+export const APP_VERSION = "0.5.9";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,17 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "0.5.9",
+    date: "2025-01-17",
+    changes: [
+      "Streamlined Add Location dialog by removing floor plan upload section",
+      "Removed 'Total Square Feet' and 'Status' fields from Basic Information section",
+      "Simplified location creation workflow - floor plans can now be added from the All Locations tab",
+      "Improved form performance by removing PDF conversion and file upload logic from Add Location modal",
+      "Updated dialog description to guide users on where to manage floor plans",
+    ],
+  },
   {
     version: "0.5.8",
     date: "2025-01-17",
