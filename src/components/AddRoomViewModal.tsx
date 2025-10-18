@@ -199,13 +199,15 @@ export const AddRoomViewModal = ({
         description: "Room view added successfully!",
       });
 
-      // Call success callback to refresh parent component immediately
+      // Wait for parent refresh to complete before closing modal
       if (onSuccess) {
-        onSuccess();
+        await Promise.resolve(onSuccess());
       }
 
-      // Close modal immediately - no delay needed
-      handleClose();
+      // Small delay to ensure parent component updates before modal closes
+      setTimeout(() => {
+        handleClose();
+      }, 300);
       
     } catch (error) {
       console.error('Error adding room view:', error);

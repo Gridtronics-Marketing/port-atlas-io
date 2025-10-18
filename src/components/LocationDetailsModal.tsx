@@ -120,10 +120,10 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
   }, [location, open]);
 
   // Handle floor plan saved - refresh location data
-  const handleFloorPlanSaved = () => {
+  const handleFloorPlanSaved = async () => {
     // Trigger parent to refetch location data if callback is provided
     if (onLocationUpdate) {
-      onLocationUpdate();
+      await Promise.resolve(onLocationUpdate());
     }
     
     // Force re-render by updating floor plan URLs from location

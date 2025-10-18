@@ -545,6 +545,11 @@ export const InteractiveFloorPlan = ({
         description: "You can now add drop points or continue editing.",
       });
       
+      // Refresh room views to ensure they're up to date
+      if (validLocationId) {
+        fetchRoomViews();
+      }
+      
       // Call the callback to refresh the parent component
       if (onFloorPlanSaved) {
         onFloorPlanSaved();
