@@ -77,7 +77,7 @@ export const AddDropPointModal = ({
     try {
       const dropPointData = {
         location_id: locationId,
-        label: formData.label.trim() || `DP-TBD-${Date.now().toString().slice(-6)}`,
+        label: formData.label.trim() || null,
         room: null,
         point_type: "data" as const,
         status: "planned" as const,
@@ -130,7 +130,7 @@ export const AddDropPointModal = ({
               id="label"
               value={formData.label}
               onChange={(e) => setFormData(prev => ({ ...prev, label: e.target.value }))}
-              placeholder="Auto-generated if left blank"
+              placeholder="Leave blank for cleaner map view"
             />
           </div>
 

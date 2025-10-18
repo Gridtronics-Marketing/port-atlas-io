@@ -70,17 +70,21 @@ export const InteractiveMap = ({ locationId, floors = 1, currentFloor = 1, backg
   const getDropPointColor = (status: string) => {
     switch (status) {
       case "tested":
-        return "text-success bg-success/10 border-success/20";
-      case "installed":
-        return "text-warning bg-warning/10 border-warning/20";
+        return "text-success bg-success/20 border-success/40";
+      case "terminated":
+        return "text-warning bg-warning/20 border-warning/40";
+      case "roughed_in":
+        return "text-info bg-info/20 border-info/40";
+      case "planned":
+        return "text-muted-foreground bg-muted/50 border-muted-foreground/30";
       case "active":
         return "text-success bg-success/20 border-success/40";
+      case "installed":
+        return "text-warning bg-warning/20 border-warning/40";
       case "inactive":
         return "text-destructive bg-destructive/10 border-destructive/20";
-      case "planned":
-        return "text-muted-foreground bg-muted border-border";
       default:
-        return "text-muted-foreground bg-muted border-border";
+        return "text-muted-foreground bg-muted/50 border-muted-foreground/30";
     }
   };
 
@@ -232,10 +236,10 @@ export const InteractiveMap = ({ locationId, floors = 1, currentFloor = 1, backg
                 </TooltipTrigger>
                 <TooltipContent className="bg-popover border">
                   <div className="text-sm">
-                    <p className="font-medium">{point.label}</p>
+                    {point.label && <p className="font-medium">{point.label}</p>}
                     <p className="text-muted-foreground">{point.room}</p>
                     <p className="text-xs capitalize">
-                      {point.type} • {point.status}
+                      {point.type}
                       {point.cable_count > 1 && ` • ${point.cable_count} cables`}
                     </p>
                   </div>

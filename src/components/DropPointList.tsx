@@ -51,14 +51,20 @@ export const DropPointList = ({ locationId }: DropPointListProps) => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
+      case "tested":
+        return "bg-success/20 text-success border-success/40";
+      case "terminated":
+        return "bg-warning/20 text-warning border-warning/40";
+      case "roughed_in":
+        return "bg-info/20 text-info border-info/40";
+      case "planned":
+        return "bg-muted/50 text-muted-foreground border-muted-foreground/30";
       case "active":
         return "bg-success text-success-foreground";
-      case "tested":
-        return "bg-primary text-primary-foreground";
       case "installed":
         return "bg-warning text-warning-foreground";
-      case "planned":
-        return "bg-muted text-muted-foreground";
+      case "inactive":
+        return "bg-destructive/10 text-destructive border-destructive/20";
       default:
         return "bg-secondary text-secondary-foreground";
     }
@@ -119,9 +125,11 @@ export const DropPointList = ({ locationId }: DropPointListProps) => {
           <SelectContent className="bg-popover border">
             <SelectItem value="all">All Status</SelectItem>
             <SelectItem value="planned">Planned</SelectItem>
-            <SelectItem value="installed">Installed</SelectItem>
+            <SelectItem value="roughed_in">Roughed In</SelectItem>
+            <SelectItem value="terminated">Terminated</SelectItem>
             <SelectItem value="tested">Tested</SelectItem>
             <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="installed">Installed</SelectItem>
             <SelectItem value="inactive">Inactive</SelectItem>
           </SelectContent>
         </Select>
