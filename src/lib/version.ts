@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.6.2";
+export const APP_VERSION = "0.6.3";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,26 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "0.6.3",
+    date: "2025-01-23",
+    changes: [
+      "Simplified drop point labels - removed status text ('Planned', 'Installed', 'Tested'), now color-only indicators",
+      "Added DropPointColorLegend component with compact status guide (Gray=Planned, Blue=Installed, Yellow=Tested, Green=Active, Red=Inactive)",
+      "Enhanced draw mode with 500ms auto-save for instant real-time feedback (reduced from 2000ms)",
+      "Implemented real-time collaborative editing with Supabase channel subscription for canvas_drawings table",
+      "Restored upload functionality alongside draw mode - users can now upload base maps and draw annotations in same interface",
+      "Added FloorPlanUploadDialog with file validation (PNG/JPG/SVG, max 10MB, 400x400 to 4000x4000px)",
+      "Fixed save/sync persistence - both 'Save' and 'Use as Floor Plan' now persist changes atomically with instant UI refresh",
+      "Implemented debounced save with 500ms delay to prevent double-submit and duplicate writes",
+      "Added loading states and disabled buttons during save operations for better UX",
+      "Enhanced error handling with inline error messages and optimistic UI with rollback on failure",
+      "Implemented FLOORPLAN_SAVED and DROPS_UPDATED event emission for tracking and integration",
+      "Added 'Floorplan updated' success toast notifications with consistent messaging",
+      "Improved data refetch after save operations to ensure UI displays latest persisted state",
+      "Enhanced 'Use as Floor Plan' to automatically refresh drop points and room views after conversion",
+    ],
+  },
   {
     version: "0.6.2",
     date: "2025-01-18",
