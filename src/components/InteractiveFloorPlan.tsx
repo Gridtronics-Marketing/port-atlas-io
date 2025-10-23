@@ -90,7 +90,7 @@ export const InteractiveFloorPlan = ({
   const validLocationId = locationId && isValidUUID(locationId) ? locationId : undefined;
   const { dropPoints, loading: dropPointsLoading, updateDropPoint, fetchDropPoints } = useDropPoints(validLocationId);
   const { roomViews, loading: roomViewsLoading, updateRoomView, fetchRoomViews } = useRoomViews(validLocationId);
-  const { getDrawingForFloor, saveDrawing } = useCanvasDrawings(validLocationId);
+  const { getDrawingForFloor, saveDrawing, refetch: refetchDrawings } = useCanvasDrawings(validLocationId);
 
   // Temporary storage for drawings when location doesn't exist yet
   const [tempDrawingData, setTempDrawingData] = useState<any>(() => {
@@ -147,6 +147,16 @@ export const InteractiveFloorPlan = ({
     
     return () => window.removeEventListener('resize', updateDimensions);
   }, [actualFileUrl]);
+
+  // Cleanup save timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, []);
+
 
   const handleContainerClick = (e: React.MouseEvent) => {
     // Don't handle clicks in drawing mode or when dragging
@@ -400,37 +410,98 @@ export const InteractiveFloorPlan = ({
     setCanRedo(canRedoValue);
   };
 
+  const [isSaving, setIsSaving] = useState(false);
+  const saveTimeoutRef = useRef<NodeJS.Timeout>();
+
   const handleDrawingSave = async (data: string) => {
-    console.log('💾 Saving drawing data...');
-    setDrawingData(data);
-    
-    if (!locationId || !isValidUUID(locationId)) {
-      // Store temporarily in state and localStorage
-      const parsedData = JSON.parse(data);
-      setTempDrawingData(parsedData);
-      
-      const storageKey = `temp-drawing-${floorNumber}`;
-      localStorage.setItem(storageKey, data);
-      
-      console.log('💾 Drawing saved to localStorage');
-      setHasSavedDrawing(true);
-      return;
+    // Debounce to prevent double submit
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
     }
-    
-    // Save to database
-    const result = await saveDrawing({
-      location_id: locationId,
-      floor_number: floorNumber,
-      canvas_data: JSON.parse(data)
-    });
-    
-    if (result) {
-      // Clear temporary storage after successful save
-      const storageKey = `temp-drawing-${floorNumber}`;
-      localStorage.removeItem(storageKey);
-      setHasSavedDrawing(true);
-      console.log('💾 Drawing saved to database');
-    }
+
+    saveTimeoutRef.current = setTimeout(async () => {
+      if (isSaving) {
+        console.log('⏳ Save already in progress, skipping...');
+        return;
+      }
+
+      console.log('💾 Saving drawing data...');
+      setIsSaving(true);
+      setDrawingData(data);
+      
+      if (!locationId || !isValidUUID(locationId)) {
+        // Store temporarily in state and localStorage
+        const parsedData = JSON.parse(data);
+        setTempDrawingData(parsedData);
+        
+        const storageKey = `temp-drawing-${floorNumber}`;
+        localStorage.setItem(storageKey, data);
+        
+        console.log('💾 Drawing saved to localStorage');
+        setHasSavedDrawing(true);
+        setIsSaving(false);
+        
+        toast({
+          title: "Floorplan updated",
+          description: "Drawing saved locally",
+        });
+        
+        // Emit event
+        window.dispatchEvent(new CustomEvent('FLOORPLAN_SAVED', { 
+          detail: { locationId, floorNumber, local: true } 
+        }));
+        return;
+      }
+      
+      try {
+        // Save to database
+        const result = await saveDrawing({
+          location_id: locationId,
+          floor_number: floorNumber,
+          canvas_data: JSON.parse(data)
+        });
+        
+        if (result) {
+          // Clear temporary storage after successful save
+          const storageKey = `temp-drawing-${floorNumber}`;
+          localStorage.removeItem(storageKey);
+          setHasSavedDrawing(true);
+          
+          // Refetch latest data to ensure UI is in sync
+          await refetchDrawings();
+          
+          console.log('💾 Drawing saved to database');
+          
+          toast({
+            title: "Floorplan updated",
+            description: "Drawing saved successfully",
+          });
+          
+          // Emit events
+          window.dispatchEvent(new CustomEvent('FLOORPLAN_SAVED', { 
+            detail: { locationId, floorNumber, drawingId: result.id } 
+          }));
+          window.dispatchEvent(new CustomEvent('DROPS_UPDATED', { 
+            detail: { locationId, floorNumber } 
+          }));
+        } else {
+          throw new Error('Save operation returned no result');
+        }
+      } catch (error) {
+        console.error('❌ Error saving drawing:', error);
+        
+        toast({
+          title: "Save failed",
+          description: error instanceof Error ? error.message : "Failed to save drawing. Please try again.",
+          variant: "destructive",
+        });
+        
+        // Rollback optimistic UI update if needed
+        // Drawing data already set, but we can show error state
+      } finally {
+        setIsSaving(false);
+      }
+    }, 500);
   };
 
   const handleDrawingLoad = () => {
@@ -543,6 +614,11 @@ export const InteractiveFloorPlan = ({
   };
 
   const confirmUseAsFloorPlan = async () => {
+    if (isSaving) {
+      console.log('⏳ Save already in progress, skipping...');
+      return;
+    }
+
     if (!drawingCanvasRef.current?.drawingActions || !validLocationId) {
       toast({
         title: "Error",
@@ -552,54 +628,75 @@ export const InteractiveFloorPlan = ({
       return;
     }
     
-    const pngDataURL = drawingCanvasRef.current.drawingActions.exportToPNG();
-    if (!pngDataURL) {
+    setIsSaving(true);
+    
+    try {
+      const pngDataURL = drawingCanvasRef.current.drawingActions.exportToPNG();
+      if (!pngDataURL) {
+        toast({
+          title: "Error",
+          description: "Failed to export drawing. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       toast({
-        title: "Error",
-        description: "Failed to export drawing. Please try again.",
+        title: "Converting to floor plan",
+        description: "Please wait...",
+      });
+
+      const result = await saveDrawingAsFloorPlan(validLocationId, floorNumber, pngDataURL);
+      
+      if (result.success) {
+        // Delete the canvas drawing since it's now a permanent floor plan
+        await deleteCanvasDrawing(validLocationId, floorNumber);
+        
+        // Refetch latest data to ensure UI is in sync
+        await refetchDrawings();
+        await fetchDropPoints();
+        
+        // Exit drawing mode and refresh
+        setIsDrawingMode(false);
+        setHasSavedDrawing(false);
+        
+        toast({
+          title: "Floorplan updated",
+          description: "Floor plan saved successfully. You can now add drop points or continue editing.",
+        });
+        
+        // Refresh room views to ensure they're up to date
+        if (validLocationId) {
+          fetchRoomViews();
+        }
+        
+        // Emit events
+        window.dispatchEvent(new CustomEvent('FLOORPLAN_SAVED', { 
+          detail: { locationId: validLocationId, floorNumber, filePath: result.filePath } 
+        }));
+        window.dispatchEvent(new CustomEvent('DROPS_UPDATED', { 
+          detail: { locationId: validLocationId, floorNumber } 
+        }));
+        
+        // Call the callback to refresh the parent component
+        if (onFloorPlanSaved) {
+          onFloorPlanSaved();
+        }
+      } else {
+        throw new Error(result.error || 'Failed to save as floor plan');
+      }
+    } catch (error) {
+      console.error('❌ Error converting to floor plan:', error);
+      
+      toast({
+        title: "Save failed",
+        description: error instanceof Error ? error.message : "Failed to save as floor plan. Please try again.",
         variant: "destructive",
       });
-      return;
+    } finally {
+      setIsSaving(false);
+      setShowUseAsFloorPlanDialog(false);
     }
-
-    toast({
-      title: "Converting to floor plan",
-      description: "Please wait...",
-    });
-
-    const result = await saveDrawingAsFloorPlan(validLocationId, floorNumber, pngDataURL);
-    
-    if (result.success) {
-      // Delete the canvas drawing since it's now a permanent floor plan
-      await deleteCanvasDrawing(validLocationId, floorNumber);
-      
-      // Exit drawing mode and refresh
-      setIsDrawingMode(false);
-      setHasSavedDrawing(false);
-      
-      toast({
-        title: "Floor plan saved!",
-        description: "You can now add drop points or continue editing.",
-      });
-      
-      // Refresh room views to ensure they're up to date
-      if (validLocationId) {
-        fetchRoomViews();
-      }
-      
-      // Call the callback to refresh the parent component
-      if (onFloorPlanSaved) {
-        onFloorPlanSaved();
-      }
-    } else {
-      toast({
-        title: "Error",
-        description: result.error || "Failed to save as floor plan. Please try again.",
-        variant: "destructive",
-      });
-    }
-    
-    setShowUseAsFloorPlanDialog(false);
   };
 
   const handleUploadSuccess = (newFileUrl: string) => {
@@ -885,6 +982,7 @@ export const InteractiveFloorPlan = ({
             onBrushSizeChange={setBrushSize}
             onUseAsFloorPlan={validLocationId ? handleUseAsFloorPlan : undefined}
             hasSavedDrawing={hasSavedDrawing}
+            isSaving={isSaving}
           />
         )}
         <div 

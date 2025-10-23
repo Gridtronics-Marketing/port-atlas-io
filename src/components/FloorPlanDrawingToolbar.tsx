@@ -35,6 +35,7 @@ interface FloorPlanDrawingToolbarProps {
   onBrushSizeChange: (size: number) => void;
   onUseAsFloorPlan?: () => void;
   hasSavedDrawing?: boolean;
+  isSaving?: boolean;
 }
 
 const colors = [
@@ -59,7 +60,8 @@ export const FloorPlanDrawingToolbar = ({
   brushSize,
   onBrushSizeChange,
   onUseAsFloorPlan,
-  hasSavedDrawing = false
+  hasSavedDrawing = false,
+  isSaving = false
 }: FloorPlanDrawingToolbarProps) => {
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showBrushSizes, setShowBrushSizes] = useState(false);
@@ -204,16 +206,19 @@ export const FloorPlanDrawingToolbar = ({
               variant="outline"
               size="sm"
               onClick={onSave}
+              disabled={isSaving}
               className="h-8 px-2"
+              data-testid="btn-save-floorplan"
             >
               <Download className="h-4 w-4 mr-1" />
-              Save
+              {isSaving ? 'Saving...' : 'Save'}
             </Button>
             
             <Button
               variant="outline"
               size="sm"
               onClick={onLoad}
+              disabled={isSaving}
               className="h-8 px-2"
             >
               <Upload className="h-4 w-4 mr-1" />
@@ -224,6 +229,7 @@ export const FloorPlanDrawingToolbar = ({
               variant="outline"
               size="sm"
               onClick={onClear}
+              disabled={isSaving}
               className="h-8 w-8 p-0 text-destructive hover:text-destructive"
             >
               <Trash2 className="h-4 w-4" />
@@ -237,10 +243,12 @@ export const FloorPlanDrawingToolbar = ({
                 variant="default"
                 size="sm"
                 onClick={onUseAsFloorPlan}
+                disabled={isSaving}
                 className="h-8 px-3"
+                data-testid="btn-used-for-design"
               >
                 <Image className="h-4 w-4 mr-1" />
-                Use as Floor Plan
+                {isSaving ? 'Saving...' : 'Use as Floor Plan'}
               </Button>
             </>
           )}
