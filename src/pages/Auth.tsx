@@ -20,7 +20,7 @@ import portAtlasLogo from "@/assets/port-atlas-logo.png";
 import { OfflineIndicator } from '@/components/OfflineIndicator';
 
 const Auth = () => {
-  const { user, loading: authLoading, signIn, signUp, resetPassword } = useAuth();
+  const { user, loading: authLoading, signIn, signUp, resetPassword, updatePassword } = useAuth();
   const { 
     isOnline, 
     downloadInProgress, 
@@ -32,12 +32,25 @@ const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [workOffline, setWorkOffline] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [showResetPassword, setShowResetPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     confirmPassword: '',
   });
+
+  // Check for password reset token in URL
+  useEffect(() => {
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const type = hashParams.get('type');
+    
+    if (type === 'recovery') {
+      setShowResetPassword(true);
+    }
+  }, []);
 
   // Redirect if already authenticated
   if (user) {
@@ -99,6 +112,23 @@ const Auth = () => {
     setIsLoading(false);
     setShowForgotPassword(false);
     setResetEmail('');
+  };
+
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPassword || newPassword !== confirmNewPassword) return;
+    
+    setIsLoading(true);
+    const result = await updatePassword(newPassword);
+    setIsLoading(false);
+    
+    if (!result.error) {
+      setShowResetPassword(false);
+      setNewPassword('');
+      setConfirmNewPassword('');
+      // Clear the hash from URL
+      window.history.replaceState(null, '', window.location.pathname);
+    }
   };
 
   if (authLoading) {
@@ -310,6 +340,58 @@ const Auth = () => {
                 </>
               ) : (
                 'Send Reset Link'
+              )}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showResetPassword} onOpenChange={setShowResetPassword}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Set New Password</DialogTitle>
+            <DialogDescription>
+              Enter your new password below.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleUpdatePassword} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="new-password">New Password</Label>
+              <Input
+                id="new-password"
+                type="password"
+                placeholder="Enter new password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirm-new-password">Confirm New Password</Label>
+              <Input
+                id="confirm-new-password"
+                type="password"
+                placeholder="Confirm new password"
+                value={confirmNewPassword}
+                onChange={(e) => setConfirmNewPassword(e.target.value)}
+                required
+              />
+            </div>
+            {newPassword !== confirmNewPassword && confirmNewPassword && (
+              <p className="text-sm text-destructive">Passwords do not match</p>
+            )}
+            <Button 
+              type="submit" 
+              className="w-full"
+              disabled={isLoading || newPassword !== confirmNewPassword}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                'Update Password'
               )}
             </Button>
           </form>
