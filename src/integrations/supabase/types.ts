@@ -1023,8 +1023,8 @@ export type Database = {
           id: string
           installed_by: string | null
           installed_date: string | null
-          ip_address: unknown | null
-          label: string
+          ip_address: unknown
+          label: string | null
           location_id: string | null
           mac_address: string | null
           notes: string | null
@@ -1049,8 +1049,8 @@ export type Database = {
           id?: string
           installed_by?: string | null
           installed_date?: string | null
-          ip_address?: unknown | null
-          label: string
+          ip_address?: unknown
+          label?: string | null
           location_id?: string | null
           mac_address?: string | null
           notes?: string | null
@@ -1075,8 +1075,8 @@ export type Database = {
           id?: string
           installed_by?: string | null
           installed_date?: string | null
-          ip_address?: unknown | null
-          label?: string
+          ip_address?: unknown
+          label?: string | null
           location_id?: string | null
           mac_address?: string | null
           notes?: string | null
@@ -1666,7 +1666,7 @@ export type Database = {
           device_type: string
           firmware_version: string | null
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           location_id: string | null
           mac_address: string | null
           management_url: string | null
@@ -1687,7 +1687,7 @@ export type Database = {
           device_type: string
           firmware_version?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           location_id?: string | null
           mac_address?: string | null
           management_url?: string | null
@@ -1708,7 +1708,7 @@ export type Database = {
           device_type?: string
           firmware_version?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           location_id?: string | null
           mac_address?: string | null
           management_url?: string | null
@@ -3622,7 +3622,7 @@ export type Database = {
           is_active: boolean | null
           location_id: string | null
           security_zone: string | null
-          subnet: unknown | null
+          subnet: unknown
           updated_at: string | null
           vlan_id: number
           vlan_name: string
@@ -3634,7 +3634,7 @@ export type Database = {
           is_active?: boolean | null
           location_id?: string | null
           security_zone?: string | null
-          subnet?: unknown | null
+          subnet?: unknown
           updated_at?: string | null
           vlan_id: number
           vlan_name: string
@@ -3646,7 +3646,7 @@ export type Database = {
           is_active?: boolean | null
           location_id?: string | null
           security_zone?: string | null
-          subnet?: unknown | null
+          subnet?: unknown
           updated_at?: string | null
           vlan_id?: number
           vlan_name?: string
@@ -3791,20 +3791,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      generate_po_number: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      get_current_user_client_id: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      get_current_user_email: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      generate_po_number: { Args: never; Returns: string }
+      get_current_user_client_id: { Args: never; Returns: string }
+      get_current_user_email: { Args: never; Returns: string }
       get_employee_directory: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           created_at: string
           department: string
@@ -3816,10 +3807,7 @@ export type Database = {
           updated_at: string
         }[]
       }
-      get_user_room_ids: {
-        Args: Record<PropertyKey, never>
-        Returns: string[]
-      }
+      get_user_room_ids: { Args: never; Returns: string[] }
       has_any_role: {
         Args: { _roles: Database["public"]["Enums"]["app_role"][] }
         Returns: boolean
