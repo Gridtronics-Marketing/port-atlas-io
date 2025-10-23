@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.6.3";
+export const APP_VERSION = "0.6.4";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,26 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "0.6.4",
+    date: "2025-01-23",
+    changes: [
+      "Fixed Drop Point tab white screen with comprehensive error handling and loading states",
+      "Added ErrorBoundary component to catch and display React rendering errors gracefully",
+      "Implemented skeleton loaders for better perceived performance during data fetch",
+      "Added retry logic with exponential backoff (2 retries, 800ms delay) for failed requests",
+      "Implemented 15-second timeout for drop point fetch operations to prevent hanging",
+      "Added defensive null/undefined guards throughout drop point filtering and rendering",
+      "Enhanced error state UI with 'Try Again' button and clear error messages",
+      "Implemented telemetry events for debugging: droppoint_tab_open, fetch_start, fetch_success, fetch_error",
+      "Added request timeout wrapper to fail fast instead of showing blank screen",
+      "Improved empty state UI with helpful guidance for users",
+      "Added data validation to ensure safe defaults for missing fields (label: 'TBD', cable_count: 0)",
+      "Wrapped DropPointList in ErrorBoundary for production-grade error recovery",
+      "Added test IDs for automated testing: tab-droppoints, skeleton-droppoints, error-droppoints, list-droppoints",
+      "Memoized fetch operations to prevent unnecessary re-renders and improve performance",
+    ],
+  },
   {
     version: "0.6.3",
     date: "2025-01-23",

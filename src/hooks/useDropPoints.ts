@@ -1,7 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { isValidUUID } from '@/lib/uuid-utils';
+
+const FETCH_TIMEOUT_MS = 15000;
+const MAX_RETRIES = 2;
+const RETRY_DELAY_MS = 800;
 
 export interface DropPoint {
   id: string;
@@ -42,44 +46,129 @@ export interface DropPoint {
 export const useDropPoints = (locationId?: string) => {
   const [dropPoints, setDropPoints] = useState<DropPoint[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const fetchDropPoints = async () => {
+  // Timeout wrapper for fetch operations
+  const withTimeout = useCallback(<T,>(promise: Promise<T>, timeoutMs: number): Promise<T> => {
+    return Promise.race([
+      promise,
+      new Promise<T>((_, reject) =>
+        setTimeout(() => reject(new Error('Request timeout')), timeoutMs)
+      ),
+    ]);
+  }, []);
+
+  // Retry logic with exponential backoff
+  const retryFetch = useCallback(async <T,>(
+    fn: () => Promise<T>,
+    retries: number = MAX_RETRIES
+  ): Promise<T> => {
+    try {
+      return await fn();
+    } catch (err) {
+      if (retries > 0) {
+        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS));
+        return retryFetch(fn, retries - 1);
+      }
+      throw err;
+    }
+  }, []);
+
+  const fetchDropPoints = useCallback(async () => {
     if (locationId && !isValidUUID(locationId)) {
       setDropPoints([]);
       setLoading(false);
+      setError(null);
       return;
     }
 
     try {
       setLoading(true);
-      let query = supabase
-        .from('drop_points')
-        .select(`
-          *,
-          installer:employees!drop_points_installed_by_fkey(first_name, last_name),
-          tester:employees!drop_points_tested_by_fkey(first_name, last_name)
-        `);
+      setError(null);
 
-      if (locationId) {
-        query = query.eq('location_id', locationId);
+      // Emit telemetry event
+      window.dispatchEvent(new CustomEvent('droppoint_fetch_start', {
+        detail: { locationId, timestamp: Date.now() }
+      }));
+
+      const fetchOperation = async () => {
+        let query = supabase
+          .from('drop_points')
+          .select(`
+            *,
+            installer:employees!drop_points_installed_by_fkey(first_name, last_name),
+            tester:employees!drop_points_tested_by_fkey(first_name, last_name)
+          `);
+
+        if (locationId) {
+          query = query.eq('location_id', locationId);
+        }
+
+        return query.order('label', { ascending: true });
+      };
+
+      // Apply timeout and retry logic
+      const { data, error: queryError } = await withTimeout(
+        retryFetch(fetchOperation),
+        FETCH_TIMEOUT_MS
+      );
+
+      if (queryError) throw queryError;
+
+      // Validate response shape
+      if (!Array.isArray(data)) {
+        console.warn('Invalid response shape for drop points:', data);
+        setDropPoints([]);
+      } else {
+        // Defensive mapping with safe defaults
+        const validatedData = data.map(point => ({
+          ...point,
+          label: point.label || 'TBD',
+          room: point.room ?? null,
+          floor: point.floor ?? null,
+          cable_count: point.cable_count ?? 0,
+          notes: point.notes ?? null,
+          test_results: point.test_results ?? null,
+        })) as DropPoint[];
+        
+        setDropPoints(validatedData);
       }
 
-      const { data, error } = await query.order('label', { ascending: true });
+      // Emit success event
+      window.dispatchEvent(new CustomEvent('droppoint_fetch_success', {
+        detail: { 
+          locationId, 
+          count: data?.length || 0,
+          latency_ms: Date.now() - performance.now(),
+        }
+      }));
 
-      if (error) throw error;
-      setDropPoints((data || []) as DropPoint[]);
-    } catch (error) {
-      console.error('Error fetching drop points:', error);
+    } catch (err: any) {
+      const errorMessage = err?.message || 'Failed to fetch drop points';
+      console.error('Error fetching drop points:', err);
+      
+      setError(errorMessage);
+      setDropPoints([]);
+
+      // Emit error event
+      window.dispatchEvent(new CustomEvent('droppoint_fetch_error', {
+        detail: { 
+          locationId, 
+          error_code: err?.code,
+          error: errorMessage,
+        }
+      }));
+
       toast({
         title: "Error",
-        description: "Failed to fetch drop points",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
-  };
+  }, [locationId, toast, withTimeout, retryFetch]);
 
   const addDropPoint = async (dropPointData: Omit<DropPoint, 'id' | 'created_at' | 'updated_at' | 'installer' | 'tester'>) => {
     try {
@@ -168,6 +257,7 @@ export const useDropPoints = (locationId?: string) => {
   return {
     dropPoints,
     loading,
+    error,
     fetchDropPoints,
     addDropPoint,
     updateDropPoint,

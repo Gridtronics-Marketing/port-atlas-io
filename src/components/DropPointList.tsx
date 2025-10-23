@@ -1,10 +1,12 @@
-import { useState } from "react";
-import { Search, Filter, Cable, Shield, Wifi, Zap, Eye, Edit, Trash2, MoreHorizontal, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, Filter, Cable, Shield, Wifi, Zap, Eye, Edit, Trash2, MoreHorizontal, Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { DropPointDetailsModal } from "./DropPointDetailsModal";
+import { ErrorBoundary } from "./ErrorBoundary";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -32,17 +34,30 @@ interface DropPointListProps {
   locationId: string;
 }
 
-export const DropPointList = ({ locationId }: DropPointListProps) => {
-  const { dropPoints, loading, deleteDropPoint } = useDropPoints(locationId);
+const DropPointListContent = ({ locationId }: DropPointListProps) => {
+  const { dropPoints, loading, error, fetchDropPoints, deleteDropPoint } = useDropPoints(locationId);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [selectedDropPoint, setSelectedDropPoint] = useState<any>(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
 
-  const filteredDropPoints = dropPoints.filter((point) => {
-    const matchesSearch = point.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (point.room?.toLowerCase().includes(searchTerm.toLowerCase()) || false);
+  // Emit telemetry when tab opens
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('droppoint_tab_open', {
+      detail: { locationId, timestamp: Date.now() }
+    }));
+  }, [locationId]);
+
+  // Safe filtering with defensive checks
+  const filteredDropPoints = (dropPoints || []).filter((point) => {
+    if (!point) return false;
+    
+    const label = point.label || 'TBD';
+    const room = point.room || '';
+    
+    const matchesSearch = label.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         room.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = filterType === "all" || point.point_type === filterType;
     const matchesStatus = filterStatus === "all" || point.status === filterStatus;
     
@@ -81,17 +96,71 @@ export const DropPointList = ({ locationId }: DropPointListProps) => {
     }
   };
 
+  // Skeleton loader while loading
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-8">
-        <Loader2 className="h-6 w-6 animate-spin text-primary" />
-        <span className="ml-2 text-muted-foreground">Loading drop points...</span>
+      <div className="space-y-4" data-testid="skeleton-droppoints">
+        <div className="flex flex-col sm:flex-row gap-4">
+          <Skeleton className="h-10 flex-1" />
+          <Skeleton className="h-10 w-[140px]" />
+          <Skeleton className="h-10 w-[140px]" />
+        </div>
+        <Card className="shadow-soft">
+          <CardHeader>
+            <Skeleton className="h-6 w-48" />
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {[...Array(5)].map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
+  // Error state with retry
+  if (error) {
+    return (
+      <Card className="border-destructive/50" data-testid="error-droppoints">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-destructive">
+            <AlertCircle className="h-5 w-5" />
+            Unable to load Drop Points
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            {error || "An error occurred while loading drop points. Please try again."}
+          </p>
+          <Button onClick={fetchDropPoints} variant="outline">
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Try Again
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Empty state
+  if (!dropPoints || dropPoints.length === 0) {
+    return (
+      <Card className="shadow-soft">
+        <CardContent className="py-8 text-center">
+          <Cable className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
+          <p className="text-muted-foreground">No drop points found for this location.</p>
+          <p className="text-sm text-muted-foreground mt-2">
+            Add drop points using the floor plan or interactive map.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" data-testid="list-droppoints">
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
@@ -232,5 +301,13 @@ export const DropPointList = ({ locationId }: DropPointListProps) => {
         locationId={locationId}
       />
     </div>
+  );
+};
+
+export const DropPointList = ({ locationId }: DropPointListProps) => {
+  return (
+    <ErrorBoundary onReset={() => window.location.reload()}>
+      <DropPointListContent locationId={locationId} />
+    </ErrorBoundary>
   );
 };
