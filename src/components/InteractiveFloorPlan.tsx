@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Plus, Minus, RotateCcw, ZoomIn, ZoomOut, RefreshCw, Camera, Paintbrush, Save, FileImage } from 'lucide-react';
+import { Plus, Minus, RotateCcw, ZoomIn, ZoomOut, RefreshCw, Camera, Paintbrush, Save, FileImage, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,6 +21,8 @@ import { RoomViewModal } from './RoomViewModal';
 import { FloorPlanDrawingToolbar, type DrawingTool } from './FloorPlanDrawingToolbar';
 import { FloorPlanDrawingCanvas, type DrawingCanvasRef } from './FloorPlanDrawingCanvas';
 import { FloorPlanDrawingViewer } from './FloorPlanDrawingViewer';
+import { DropPointColorLegend } from './DropPointColorLegend';
+import { FloorPlanUploadDialog } from './FloorPlanUploadDialog';
 import { useDropPoints } from '@/hooks/useDropPoints';
 import { useRoomViews } from '@/hooks/useRoomViews';
 import { useCanvasDrawings } from '@/hooks/useCanvasDrawings';
@@ -28,6 +30,7 @@ import { getStorageUrl, repairFloorPlanFiles } from '@/lib/storage-utils';
 import { saveDrawingAsFloorPlan, deleteCanvasDrawing } from '@/lib/floor-plan-utils';
 import { useToast } from '@/hooks/use-toast';
 import { isValidUUID } from '@/lib/uuid-utils';
+import { supabase } from '@/integrations/supabase/client';
 
 interface InteractiveFloorPlanProps {
   locationId: string;
@@ -77,6 +80,8 @@ export const InteractiveFloorPlan = ({
   const [showLabels, setShowLabels] = useState(true);
   const [hasSavedDrawing, setHasSavedDrawing] = useState(false);
   const [showUseAsFloorPlanDialog, setShowUseAsFloorPlanDialog] = useState(false);
+  const [showUploadDialog, setShowUploadDialog] = useState(false);
+  const [uploadedFileUrl, setUploadedFileUrl] = useState<string | undefined>(undefined);
   const containerRef = useRef<HTMLDivElement>(null);
   const drawingCanvasRef = useRef<DrawingCanvasRef>(null);
   const { toast } = useToast();
@@ -99,7 +104,7 @@ export const InteractiveFloorPlan = ({
   const drawingDataLoadedRef = useRef(false);
   
   // Generate the actual file URL from path or use provided URL
-  const actualFileUrl = fileUrl || (filePath ? getStorageUrl('floor-plans', filePath) : undefined);
+  const actualFileUrl = uploadedFileUrl || fileUrl || (filePath ? getStorageUrl('floor-plans', filePath) : undefined);
 
   // Filter drop points and room views for current floor
   const floorDropPoints = dropPoints.filter(dp => dp.floor === floorNumber);
@@ -479,6 +484,38 @@ export const InteractiveFloorPlan = ({
     drawingDataLoadedRef.current = false;
   }, [floorNumber]);
 
+  // Real-time subscription for canvas drawings
+  useEffect(() => {
+    if (!validLocationId) return;
+    
+    const channel = supabase
+      .channel('canvas-drawing-changes')
+      .on('postgres_changes', 
+        { 
+          event: 'UPDATE', 
+          schema: 'public', 
+          table: 'canvas_drawings', 
+          filter: `location_id=eq.${validLocationId}` 
+        },
+        (payload) => {
+          if (payload.new.floor_number === floorNumber) {
+            const newData = JSON.stringify(payload.new.canvas_data);
+            setDrawingData(newData);
+            
+            // Auto-load into canvas if in draw mode
+            if (isDrawingMode && drawingCanvasRef.current?.drawingActions) {
+              drawingCanvasRef.current.drawingActions.load(newData);
+            }
+          }
+        }
+      )
+      .subscribe();
+      
+    return () => { 
+      supabase.removeChannel(channel); 
+    };
+  }, [validLocationId, floorNumber, isDrawingMode]);
+
   const handleRepairFiles = async () => {
     setIsRepairing(true);
     try {
@@ -565,6 +602,12 @@ export const InteractiveFloorPlan = ({
     setShowUseAsFloorPlanDialog(false);
   };
 
+  const handleUploadSuccess = (newFileUrl: string) => {
+    setUploadedFileUrl(newFileUrl);
+    setIsDrawingMode(true);
+    setActiveTool('pencil');
+  };
+
   const getDropPointIcon = (type: string) => {
     const icons = {
       data: '📡',
@@ -618,6 +661,14 @@ export const InteractiveFloorPlan = ({
             Floor {floorNumber} - Interactive Plan
           </CardTitle>
           <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowUploadDialog(true)}
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              Upload Map
+            </Button>
             <Button
               variant={showLabels ? "default" : "outline"}
               size="sm"
@@ -800,12 +851,17 @@ export const InteractiveFloorPlan = ({
           </div>
         </div>
         {(floorDropPoints.length > 0 || floorRoomViews.length > 0) && (
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+              {floorDropPoints.length > 0 && (
+                <span>{floorDropPoints.length} drop points on this floor</span>
+              )}
+              {floorRoomViews.length > 0 && (
+                <span>{floorRoomViews.length} room views on this floor</span>
+              )}
+            </div>
             {floorDropPoints.length > 0 && (
-              <span>{floorDropPoints.length} drop points on this floor</span>
-            )}
-            {floorRoomViews.length > 0 && (
-              <span>{floorRoomViews.length} room views on this floor</span>
+              <DropPointColorLegend />
             )}
           </div>
         )}
@@ -975,12 +1031,9 @@ export const InteractiveFloorPlan = ({
                                 zIndex: 5,
                               }}
                             >
-                              <div className="bg-black/80 backdrop-blur-sm text-white px-2 py-1 rounded-md text-xs whitespace-nowrap shadow-lg border border-white/20">
+                            <div className="bg-black/80 backdrop-blur-sm text-white px-2 py-1 rounded-md text-xs whitespace-nowrap shadow-lg border border-white/20">
                                 <div className="font-medium text-blue-300 text-[10px]">
                                   {point.cable_count ? `${point.cable_count} Cable${point.cable_count > 1 ? 's' : ''}` : 'TBD'}
-                                </div>
-                                <div className={`text-xs capitalize ${getStatusTextColor(point.status)} filter brightness-200`}>
-                                  {point.status}
                                 </div>
                                 <div className="font-medium">{point.label || 'TBD'}</div>
                               </div>
@@ -1174,6 +1227,15 @@ export const InteractiveFloorPlan = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Upload Floor Plan Dialog */}
+      <FloorPlanUploadDialog
+        isOpen={showUploadDialog}
+        onClose={() => setShowUploadDialog(false)}
+        locationId={locationId}
+        floorNumber={floorNumber}
+        onUploadSuccess={handleUploadSuccess}
+      />
     </Card>
   );
 };

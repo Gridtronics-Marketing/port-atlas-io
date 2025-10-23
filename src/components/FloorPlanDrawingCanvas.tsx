@@ -14,7 +14,7 @@ interface FloorPlanDrawingCanvasProps {
   onSave: (data: string) => void;
   savedData?: string;
   className?: string;
-  autoSaveDelay?: number; // Delay in ms before auto-saving, default 2000
+  autoSaveDelay?: number; // Delay in ms before auto-saving, default 500
 }
 
 export interface DrawingCanvasRef {
@@ -38,7 +38,7 @@ export const FloorPlanDrawingCanvas = forwardRef<DrawingCanvasRef, FloorPlanDraw
   onSave,
   savedData,
   className = "",
-  autoSaveDelay = 2000
+  autoSaveDelay = 500
 }, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [fabricCanvas, setFabricCanvas] = useState<FabricCanvas | null>(null);
@@ -258,6 +258,7 @@ export const FloorPlanDrawingCanvas = forwardRef<DrawingCanvasRef, FloorPlanDraw
 
     const handlePathCreated = () => {
       if (activeTool === 'pencil' || activeTool === 'eraser') {
+        fabricCanvas.renderAll(); // Immediate visual feedback
         saveToHistory(fabricCanvas);
         triggerAutoSave();
       }
@@ -280,7 +281,7 @@ export const FloorPlanDrawingCanvas = forwardRef<DrawingCanvasRef, FloorPlanDraw
         clearTimeout(autoSaveTimerRef.current);
       }
       
-      // Set new timer with longer delay to reduce frequency
+      // Set new timer for responsive auto-save
       autoSaveTimerRef.current = setTimeout(() => {
         try {
           const data = JSON.stringify(fabricCanvas.toJSON());
@@ -289,7 +290,7 @@ export const FloorPlanDrawingCanvas = forwardRef<DrawingCanvasRef, FloorPlanDraw
         } catch (error) {
           console.error('❌ Auto-save failed:', error);
         }
-      }, 5000); // Increased from 2000ms to 5000ms
+      }, autoSaveDelay);
     };
 
     fabricCanvas.on('mouse:down', handleMouseDown);
