@@ -93,7 +93,13 @@ export const DropPointDetailsModal: React.FC<DropPointDetailsModalProps> = ({
     if (!dropPoint) return;
     
     try {
-      await updateDropPoint(dropPoint.id, editData);
+      // Ensure cable_count is valid before saving
+      const dataToSave = {
+        ...editData,
+        cable_count: Math.max(1, parseInt(editData.cable_count as any) || 1)
+      };
+      
+      await updateDropPoint(dropPoint.id, dataToSave);
       setIsEditing(false);
       toast({
         title: "Drop Point Updated",
@@ -342,8 +348,15 @@ export const DropPointDetailsModal: React.FC<DropPointDetailsModalProps> = ({
                       id="cable_count"
                       type="number"
                       min="1"
-                      value={editData.cable_count || 1}
-                      onChange={(e) => setEditData({ ...editData, cable_count: parseInt(e.target.value) || 1 })}
+                      value={editData.cable_count?.toString() || '1'}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        // Allow empty temporarily but store as 1, or parse the number
+                        setEditData({ 
+                          ...editData, 
+                          cable_count: value === '' ? 1 : Math.max(1, parseInt(value) || 1)
+                        });
+                      }}
                     />
                   ) : (
                     <p className="text-sm">{dropPoint.cable_count || 1}</p>
