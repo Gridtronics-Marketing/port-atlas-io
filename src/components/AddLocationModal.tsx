@@ -545,6 +545,7 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
                         ...formData,
                         address: components.fullAddress,
                         street1: components.street,
+                        street2: '', // Clear unit field when autocomplete is used
                         city: components.city,
                         state: components.state,
                         zipCode: components.zip,
@@ -557,6 +558,19 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
                     placeholder="Start typing an address..."
                     required
                   />
+
+                  <div className="space-y-2">
+                    <Label htmlFor="street2" className="text-sm font-medium">
+                      Address Line 2 (Unit, Suite, Apt)
+                    </Label>
+                    <Input
+                      id="street2"
+                      placeholder="Unit 200, Suite B, Apt 5, etc."
+                      value={formData.street2}
+                      onChange={(e) => setFormData({ ...formData, street2: e.target.value })}
+                      className="h-10"
+                    />
+                  </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">

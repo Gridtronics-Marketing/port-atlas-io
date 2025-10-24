@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.6.5";
+export const APP_VERSION = "0.6.6";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,15 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "0.6.6",
+    date: "2025-01-23",
+    changes: [
+      "Added Address Line 2 (Unit) field to location creation and editing forms",
+      "Improved address input with dedicated unit/suite/apt field",
+      "Enhanced address autocomplete to clear unit field when selecting new address"
+    ]
+  },
   {
     version: "0.6.5",
     date: "2025-01-23",
