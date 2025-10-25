@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.6.8";
+export const APP_VERSION = "0.6.9";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,14 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "0.6.9",
+    date: "2025-01-25",
+    changes: [
+      "Cable count field in drop point edit can now be cleared",
+      "Empty cable count displays as 'Not specified' to indicate TBD"
+    ]
+  },
   {
     version: "0.6.8",
     date: "2025-01-25",

@@ -93,10 +93,12 @@ export const DropPointDetailsModal: React.FC<DropPointDetailsModalProps> = ({
     if (!dropPoint) return;
     
     try {
-      // Ensure cable_count is valid before saving
+      // Allow cable_count to be null for "to be determined"
       const dataToSave = {
         ...editData,
-        cable_count: Math.max(1, parseInt(editData.cable_count as any) || 1)
+        cable_count: editData.cable_count === null || editData.cable_count === undefined 
+          ? null 
+          : parseInt(editData.cable_count as any)
       };
       
       await updateDropPoint(dropPoint.id, dataToSave);
@@ -347,19 +349,24 @@ export const DropPointDetailsModal: React.FC<DropPointDetailsModalProps> = ({
                     <Input
                       id="cable_count"
                       type="number"
-                      min="1"
-                      value={editData.cable_count?.toString() || '1'}
+                      min="0"
+                      value={editData.cable_count?.toString() || ''}
                       onChange={(e) => {
                         const value = e.target.value;
-                        // Allow empty temporarily but store as 1, or parse the number
-                        setEditData({ 
-                          ...editData, 
-                          cable_count: value === '' ? 1 : Math.max(1, parseInt(value) || 1)
-                        });
+                        // Allow empty string, store as null for "to be determined"
+                        if (value === '') {
+                          setEditData({ ...editData, cable_count: null });
+                        } else {
+                          const numValue = parseInt(value);
+                          setEditData({ 
+                            ...editData, 
+                            cable_count: isNaN(numValue) ? null : Math.max(0, numValue)
+                          });
+                        }
                       }}
                     />
                   ) : (
-                    <p className="text-sm">{dropPoint.cable_count || 1}</p>
+                    <p className="text-sm">{dropPoint.cable_count || 'Not specified'}</p>
                   )}
                 </div>
               </div>
