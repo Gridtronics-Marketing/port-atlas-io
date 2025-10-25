@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.6.6";
+export const APP_VERSION = "0.6.7";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,18 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "0.6.7",
+    date: "2025-01-23",
+    changes: [
+      "Fixed drag-and-drop functionality for floor plan uploads",
+      "Added full PDF upload support with automatic conversion to images",
+      "Fixed floor plan persistence - uploaded maps now save to database",
+      "Improved upload UI with visual drag feedback and progress indicators",
+      "Enhanced error handling with specific messages for different failure scenarios",
+      "Added conversion progress display for PDF files"
+    ]
+  },
   {
     version: "0.6.6",
     date: "2025-01-23",
