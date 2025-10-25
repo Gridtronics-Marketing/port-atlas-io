@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.6.7";
+export const APP_VERSION = "0.6.8";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,15 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "0.6.8",
+    date: "2025-01-25",
+    changes: [
+      "Fixed floor plan not displaying immediately after upload",
+      "Added real-time event listener to sync floor plan state",
+      "Floor plans now appear instantly without page refresh"
+    ]
+  },
   {
     version: "0.6.7",
     date: "2025-01-23",

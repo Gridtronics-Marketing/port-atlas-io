@@ -49,7 +49,7 @@ import { FloorPlanEditor } from "@/components/FloorPlanEditor";
 import { FloorPlanRepairTool } from "@/components/FloorPlanRepairTool";
 import { FloorPlanFileManager } from "@/components/FloorPlanFileManager";
 import { InteractiveFloorPlan } from "@/components/InteractiveFloorPlan";
-import { getFloorPlanUrls } from "@/lib/storage-utils";
+import { getFloorPlanUrls, getStorageUrl } from "@/lib/storage-utils";
 import { useLocationTeam } from "@/hooks/useLocationTeam";
 import { useLocationNotes } from "@/hooks/useLocationNotes";
 import {
@@ -117,7 +117,40 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
     if (open && location) {
       loadFloorPlans();
     }
-  }, [location, open]);
+  }, [location, location?.floor_plan_files, open]);
+
+  // Listen for floor plan upload events for real-time updates
+  useEffect(() => {
+    const handleFloorPlanSavedEvent = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const { locationId, floorNumber, filePath } = customEvent.detail;
+      
+      // Only update if it's for this location
+      if (locationId === location?.id && filePath) {
+        console.log('Floor plan saved event received:', { locationId, floorNumber, filePath });
+        
+        // Generate the public URL for the new file
+        const newUrl = getStorageUrl('floor-plans', filePath);
+        
+        // Update the floorPlanUrls state with the new URL
+        setFloorPlanUrls(prev => ({
+          ...prev,
+          [floorNumber]: newUrl
+        }));
+        
+        // If parent provided a callback, trigger it to refetch location data
+        if (onLocationUpdate) {
+          onLocationUpdate();
+        }
+      }
+    };
+    
+    window.addEventListener('FLOORPLAN_SAVED', handleFloorPlanSavedEvent);
+    
+    return () => {
+      window.removeEventListener('FLOORPLAN_SAVED', handleFloorPlanSavedEvent);
+    };
+  }, [location?.id, onLocationUpdate]);
 
   // Handle floor plan saved - refresh location data
   const handleFloorPlanSaved = async () => {
