@@ -191,6 +191,16 @@ export const FloorPlanDrawingCanvas = forwardRef<DrawingCanvasRef, FloorPlanDraw
       case 'select':
         fabricCanvas.selection = true;
         fabricCanvas.defaultCursor = 'default';
+        // Make all objects selectable in select mode
+        fabricCanvas.getObjects().forEach(obj => {
+          obj.set({
+            selectable: true,
+            evented: true,
+            hasControls: true,
+            hasBorders: true,
+          });
+        });
+        fabricCanvas.renderAll();
         break;
       
       case 'pencil':
@@ -198,6 +208,10 @@ export const FloorPlanDrawingCanvas = forwardRef<DrawingCanvasRef, FloorPlanDraw
         fabricCanvas.freeDrawingBrush.color = brushColor;
         fabricCanvas.freeDrawingBrush.width = brushSize;
         fabricCanvas.defaultCursor = 'crosshair';
+        // Ensure objects remain selectable for later editing
+        fabricCanvas.getObjects().forEach(obj => {
+          obj.set({ selectable: true, evented: true });
+        });
         console.log('Pencil mode enabled, drawing mode:', fabricCanvas.isDrawingMode); // Debug
         break;
       
@@ -256,8 +270,17 @@ export const FloorPlanDrawingCanvas = forwardRef<DrawingCanvasRef, FloorPlanDraw
       }
     };
 
-    const handlePathCreated = () => {
+    const handlePathCreated = (e: any) => {
       if (activeTool === 'pencil' || activeTool === 'eraser') {
+        // Make the newly created path selectable and movable
+        if (e.path) {
+          e.path.set({
+            selectable: true,
+            evented: true,
+            hasControls: true,
+            hasBorders: true,
+          });
+        }
         fabricCanvas.renderAll(); // Immediate visual feedback
         saveToHistory(fabricCanvas);
         triggerAutoSave();
@@ -270,6 +293,11 @@ export const FloorPlanDrawingCanvas = forwardRef<DrawingCanvasRef, FloorPlanDraw
     };
 
     const handleTextEdited = () => {
+      saveToHistory(fabricCanvas);
+      triggerAutoSave();
+    };
+
+    const handleObjectRemoved = () => {
       saveToHistory(fabricCanvas);
       triggerAutoSave();
     };
@@ -298,6 +326,7 @@ export const FloorPlanDrawingCanvas = forwardRef<DrawingCanvasRef, FloorPlanDraw
     fabricCanvas.on('path:created', handlePathCreated);
     fabricCanvas.on('object:modified', handleObjectModified);
     fabricCanvas.on('text:changed', handleTextEdited);
+    fabricCanvas.on('object:removed', handleObjectRemoved);
 
     return () => {
       fabricCanvas.off('mouse:down', handleMouseDown);
@@ -305,8 +334,63 @@ export const FloorPlanDrawingCanvas = forwardRef<DrawingCanvasRef, FloorPlanDraw
       fabricCanvas.off('path:created', handlePathCreated);
       fabricCanvas.off('object:modified', handleObjectModified);
       fabricCanvas.off('text:changed', handleTextEdited);
+      fabricCanvas.off('object:removed', handleObjectRemoved);
     };
   }, [fabricCanvas, activeTool, brushColor, brushSize, saveToHistory]);
+
+  // Handle keyboard events for deleting selected objects
+  useEffect(() => {
+    if (!fabricCanvas) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Delete or Backspace key pressed
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        const activeObjects = fabricCanvas.getActiveObjects();
+        if (activeObjects && activeObjects.length > 0) {
+          // Prevent default browser behavior (like going back in history)
+          e.preventDefault();
+          
+          // Remove all selected objects
+          activeObjects.forEach(obj => {
+            fabricCanvas.remove(obj);
+          });
+          
+          // Discard active selection
+          fabricCanvas.discardActiveObject();
+          fabricCanvas.renderAll();
+          
+          // Save to history and trigger auto-save
+          saveToHistory(fabricCanvas);
+          
+          // Auto-save after deletion
+          if (autoSaveTimerRef.current) {
+            clearTimeout(autoSaveTimerRef.current);
+          }
+          autoSaveTimerRef.current = setTimeout(() => {
+            try {
+              const data = JSON.stringify(fabricCanvas.toJSON());
+              onSave(data);
+              console.log('💾 Auto-save after deletion');
+            } catch (error) {
+              console.error('❌ Auto-save failed:', error);
+            }
+          }, autoSaveDelay);
+
+          toast({
+            title: "Object Deleted",
+            description: `Deleted ${activeObjects.length} object(s)`,
+          });
+        }
+      }
+    };
+
+    // Add global keyboard listener
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [fabricCanvas, saveToHistory, onSave, autoSaveDelay, toast]);
 
   // Undo function
   const undo = useCallback(() => {

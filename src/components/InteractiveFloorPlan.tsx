@@ -1248,9 +1248,10 @@ export const InteractiveFloorPlan = ({
             <li>• <strong>Add Drop Point:</strong> Click the button above, then click on the plan</li>
             <li>• <strong>Add Room View:</strong> Click the camera button above, then click on the plan to capture a photo</li>
             <li>• <strong>Move Drop Point:</strong> Click and drag existing points to reposition them</li>
+            <li>• <strong>Drawing Mode:</strong> Use pencil, text, or eraser tools to annotate the floor plan</li>
+            <li>• <strong>Edit Drawings:</strong> Use select tool to click, move, resize or delete drawn elements (Delete/Backspace key)</li>
             <li>• <strong>Zoom:</strong> Use the zoom controls or mouse wheel</li>
             <li>• <strong>View Details:</strong> Click on existing drop points or room view cameras</li>
-            <li>• <strong>Scale:</strong> Adjust view scale with zoom controls</li>
           </ul>
         </div>
       </CardContent>

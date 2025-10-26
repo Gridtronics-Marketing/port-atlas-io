@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.6.9";
+export const APP_VERSION = "0.7.0";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,16 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "0.7.0",
+    date: "2025-01-25",
+    changes: [
+      "Floor plan drawings now fully layered - each element is selectable and movable",
+      "Added Delete/Backspace key support to remove selected drawing elements",
+      "Improved select tool with visual feedback and controls for all drawn objects",
+      "Drawing elements can now be repositioned after creation"
+    ]
+  },
   {
     version: "0.6.9",
     date: "2025-01-25",

@@ -16,6 +16,12 @@ import {
   Palette,
   Image
 } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export type DrawingTool = 'select' | 'pencil' | 'text' | 'eraser';
 
@@ -72,14 +78,24 @@ export const FloorPlanDrawingToolbar = ({
         <div className="flex items-center gap-2 flex-wrap">
           {/* Tool Selection */}
           <div className="flex items-center gap-1">
-            <Button
-              variant={activeTool === 'select' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => onToolChange('select')}
-              className="h-8 w-8 p-0"
-            >
-              <MousePointer className="h-4 w-4" />
-            </Button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant={activeTool === 'select' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => onToolChange('select')}
+                    className="h-8 w-8 p-0"
+                  >
+                    <MousePointer className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Select, Move & Delete</p>
+                  <p className="text-xs text-muted-foreground mt-1">Press Delete/Backspace to remove selected</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
             
             <Button
               variant={activeTool === 'pencil' ? 'default' : 'outline'}
