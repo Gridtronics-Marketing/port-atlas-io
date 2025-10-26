@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.7.0";
+export const APP_VERSION = "0.7.1";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,19 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "0.7.1",
+    date: "2025-01-26",
+    changes: [
+      "Added dedicated panoramic photo viewer with horizontal scrolling and pan/zoom support",
+      "Panoramic photos now open in specialized full-screen viewer on mobile and desktop",
+      "Implemented touch gestures for mobile (swipe to pan, drag to move when zoomed)",
+      "Added zoom controls (1x to 3x) with pinch-to-zoom support on mobile devices",
+      "Enhanced panoramic photo indicators in photo galleries",
+      "Improved viewing experience with smooth scrolling and drag navigation",
+      "Added visual pan indicators showing scrollable content in panoramic mode"
+    ]
+  },
   {
     version: "0.7.0",
     date: "2025-01-25",

@@ -14,6 +14,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { PanoramicPhotoViewer } from './PanoramicPhotoViewer';
 
 interface PhotoItem {
   id: string;
@@ -141,48 +142,50 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = ({
       ))}
     </div>
 
-    <Dialog open={!!expandedPhoto} onOpenChange={() => setExpandedPhoto(null)}>
-      <DialogContent className="max-w-4xl max-h-[90vh]">
-        {expandedPhoto && (
-          <>
-            <DialogHeader>
-              <DialogTitle>
-                {expandedPhoto.description || 'Photo'}
-              </DialogTitle>
-            </DialogHeader>
-            
-            <div className="relative w-full h-full overflow-auto">
-              <img
-                src={expandedPhoto.photo_url}
-                alt={expandedPhoto.description || "Photo"}
-                className="w-full h-auto"
-              />
-            </div>
-            
-            <div className="flex flex-wrap gap-2 mt-4">
-              {expandedPhoto.photo_type === 'panoramic' && (
+    {/* Panoramic Photo Viewer or Standard Dialog */}
+    {expandedPhoto?.photo_type === 'panoramic' ? (
+      <PanoramicPhotoViewer
+        photoUrl={expandedPhoto.photo_url}
+        description={expandedPhoto.description}
+        onClose={() => setExpandedPhoto(null)}
+      />
+    ) : (
+      <Dialog open={!!expandedPhoto} onOpenChange={() => setExpandedPhoto(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh]">
+          {expandedPhoto && (
+            <>
+              <DialogHeader>
+                <DialogTitle>
+                  {expandedPhoto.description || 'Photo'}
+                </DialogTitle>
+              </DialogHeader>
+              
+              <div className="relative w-full h-full overflow-auto">
+                <img
+                  src={expandedPhoto.photo_url}
+                  alt={expandedPhoto.description || "Photo"}
+                  className="w-full h-auto"
+                />
+              </div>
+              
+              <div className="flex flex-wrap gap-2 mt-4">
+                {expandedPhoto.employee && (
+                  <Badge variant="secondary">
+                    <User className="w-3 h-3 mr-1" />
+                    {`${expandedPhoto.employee.first_name} ${expandedPhoto.employee.last_name}`}
+                  </Badge>
+                )}
+                
                 <Badge variant="outline">
-                  <Maximize2 className="w-3 h-3 mr-1" />
-                  Panoramic Photo
+                  <Calendar className="w-3 h-3 mr-1" />
+                  {new Date(expandedPhoto.created_at).toLocaleDateString()}
                 </Badge>
-              )}
-              
-              {expandedPhoto.employee && (
-                <Badge variant="secondary">
-                  <User className="w-3 h-3 mr-1" />
-                  {`${expandedPhoto.employee.first_name} ${expandedPhoto.employee.last_name}`}
-                </Badge>
-              )}
-              
-              <Badge variant="outline">
-                <Calendar className="w-3 h-3 mr-1" />
-                {new Date(expandedPhoto.created_at).toLocaleDateString()}
-              </Badge>
-            </div>
-          </>
-        )}
-      </DialogContent>
-    </Dialog>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+    )}
     </>
   );
 };

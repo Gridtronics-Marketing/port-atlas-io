@@ -28,6 +28,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useState } from 'react';
+import { PanoramicPhotoViewer } from './PanoramicPhotoViewer';
 
 interface PhotoItem {
   id: string;
@@ -297,71 +298,72 @@ export const EnhancedPhotoGallery: React.FC<EnhancedPhotoGalleryProps> = ({
         )}
       </CardContent>
       
-      {/* Expanded Photo Dialog */}
-      <Dialog open={!!expandedPhoto} onOpenChange={() => setExpandedPhoto(null)}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
-          {expandedPhoto && (
-            <>
-              <DialogHeader>
-                <DialogTitle>
-                  {expandedPhoto.description || 'Photo'}
-                </DialogTitle>
-              </DialogHeader>
-              
-              <div className="relative w-full">
-                <img
-                  src={expandedPhoto.photo_url}
-                  alt={expandedPhoto.description || "Photo"}
-                  className="w-full h-auto rounded-lg"
-                />
-              </div>
-              
-              {/* Photo Metadata */}
-              <div className="flex flex-wrap gap-2 mt-4">
-                {expandedPhoto.photo_type === 'panoramic' && (
-                  <Badge variant="outline" className="bg-yellow-500/10 border-yellow-500">
-                    <Maximize2 className="w-3 h-3 mr-1" />
-                    Panoramic Photo
-                  </Badge>
-                )}
+      {/* Panoramic Photo Viewer or Standard Dialog */}
+      {expandedPhoto?.photo_type === 'panoramic' ? (
+        <PanoramicPhotoViewer
+          photoUrl={expandedPhoto.photo_url}
+          description={expandedPhoto.description}
+          onClose={() => setExpandedPhoto(null)}
+        />
+      ) : (
+        <Dialog open={!!expandedPhoto} onOpenChange={() => setExpandedPhoto(null)}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
+            {expandedPhoto && (
+              <>
+                <DialogHeader>
+                  <DialogTitle>
+                    {expandedPhoto.description || 'Photo'}
+                  </DialogTitle>
+                </DialogHeader>
                 
-                {expandedPhoto.drop_point && (
+                <div className="relative w-full">
+                  <img
+                    src={expandedPhoto.photo_url}
+                    alt={expandedPhoto.description || "Photo"}
+                    className="w-full h-auto rounded-lg"
+                  />
+                </div>
+                
+                {/* Photo Metadata */}
+                <div className="flex flex-wrap gap-2 mt-4">
+                  {expandedPhoto.drop_point && (
+                    <Badge variant="outline">
+                      <Tag className="w-3 h-3 mr-1" />
+                      {expandedPhoto.drop_point.label}
+                      {expandedPhoto.drop_point.room && ` - ${expandedPhoto.drop_point.room}`}
+                    </Badge>
+                  )}
+                  
+                  {expandedPhoto.room_view && (
+                    <Badge variant="outline">
+                      <Tag className="w-3 h-3 mr-1" />
+                      {expandedPhoto.room_view.name}
+                    </Badge>
+                  )}
+                  
+                  {expandedPhoto.drop_point?.point_type && (
+                    <Badge variant="secondary">
+                      {expandedPhoto.drop_point.point_type}
+                    </Badge>
+                  )}
+                  
+                  {expandedPhoto.employee && (
+                    <Badge variant="secondary">
+                      <User className="w-3 h-3 mr-1" />
+                      {`${expandedPhoto.employee.first_name} ${expandedPhoto.employee.last_name}`}
+                    </Badge>
+                  )}
+                  
                   <Badge variant="outline">
-                    <Tag className="w-3 h-3 mr-1" />
-                    {expandedPhoto.drop_point.label}
-                    {expandedPhoto.drop_point.room && ` - ${expandedPhoto.drop_point.room}`}
+                    <Calendar className="w-3 h-3 mr-1" />
+                    {new Date(expandedPhoto.created_at).toLocaleDateString()}
                   </Badge>
-                )}
-                
-                {expandedPhoto.room_view && (
-                  <Badge variant="outline">
-                    <Tag className="w-3 h-3 mr-1" />
-                    {expandedPhoto.room_view.name}
-                  </Badge>
-                )}
-                
-                {expandedPhoto.drop_point?.point_type && (
-                  <Badge variant="secondary">
-                    {expandedPhoto.drop_point.point_type}
-                  </Badge>
-                )}
-                
-                {expandedPhoto.employee && (
-                  <Badge variant="secondary">
-                    <User className="w-3 h-3 mr-1" />
-                    {`${expandedPhoto.employee.first_name} ${expandedPhoto.employee.last_name}`}
-                  </Badge>
-                )}
-                
-                <Badge variant="outline">
-                  <Calendar className="w-3 h-3 mr-1" />
-                  {new Date(expandedPhoto.created_at).toLocaleDateString()}
-                </Badge>
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+                </div>
+              </>
+            )}
+          </DialogContent>
+        </Dialog>
+      )}
     </Card>
   );
 };
