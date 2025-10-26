@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.7.1";
+export const APP_VERSION = "0.7.2";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,15 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "0.7.2",
+    date: "2025-01-26",
+    changes: [
+      "Fixed photo gallery click handling on mobile - photos now open correctly when tapped",
+      "Added stopPropagation to prevent event conflicts with parent modals",
+      "Improved touch target handling for better mobile photo viewing experience"
+    ]
+  },
   {
     version: "0.7.1",
     date: "2025-01-26",

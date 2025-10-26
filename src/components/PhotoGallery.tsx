@@ -68,7 +68,10 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = ({
           <div 
             key={photo.id} 
             className="relative group cursor-pointer"
-            onClick={() => setExpandedPhoto(photo)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setExpandedPhoto(photo);
+            }}
           >
           <div className="aspect-square rounded-lg overflow-hidden border">
             <img

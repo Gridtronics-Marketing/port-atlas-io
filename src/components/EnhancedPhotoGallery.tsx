@@ -188,10 +188,16 @@ export const EnhancedPhotoGallery: React.FC<EnhancedPhotoGalleryProps> = ({
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {filteredPhotos.map((photo) => (
-              <div key={photo.id} className="relative group">
+              <div 
+                key={photo.id} 
+                className="relative group cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setExpandedPhoto(photo);
+                }}
+              >
                 <div 
-                  className="aspect-square rounded-lg overflow-hidden border cursor-pointer hover:ring-2 hover:ring-primary transition-all"
-                  onClick={() => setExpandedPhoto(photo)}
+                  className="aspect-square rounded-lg overflow-hidden border hover:ring-2 hover:ring-primary transition-all"
                 >
                   <img
                     src={photo.photo_url}
@@ -209,6 +215,7 @@ export const EnhancedPhotoGallery: React.FC<EnhancedPhotoGalleryProps> = ({
                           variant="destructive"
                           size="sm"
                           className="h-8 w-8 p-0"
+                          onClick={(e) => e.stopPropagation()}
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
