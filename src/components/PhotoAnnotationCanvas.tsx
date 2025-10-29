@@ -494,13 +494,13 @@ export const PhotoAnnotationCanvas = ({
             ref={imageRef}
             src={photoUrl}
             alt="Photo to annotate"
-            className="max-w-full max-h-[calc(100vh-200px)] block"
+            className="max-w-full max-h-[calc(100vh-200px)] block pointer-events-none"
             crossOrigin="anonymous"
           />
           <canvas
             ref={canvasRef}
-            className="absolute top-0 left-0 cursor-crosshair"
-            style={{ touchAction: "none" }}
+            className="absolute top-0 left-0 cursor-crosshair z-10"
+            style={{ touchAction: "none", pointerEvents: "auto" }}
           />
         </div>
       </div>
