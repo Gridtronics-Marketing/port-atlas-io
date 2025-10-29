@@ -13,12 +13,17 @@ import {
   Download,
   Save,
   X,
+  Ruler,
+  Triangle,
+  Square,
 } from "lucide-react";
 import { useState } from "react";
 
+export type AnnotationTool = "select" | "pencil" | "eraser" | "text" | "measure-distance" | "measure-angle" | "measure-area" | "calibrate-scale";
+
 interface PhotoAnnotationToolbarProps {
-  activeTool: "select" | "pencil" | "eraser" | "text";
-  onToolChange: (tool: "select" | "pencil" | "eraser" | "text") => void;
+  activeTool: AnnotationTool;
+  onToolChange: (tool: AnnotationTool) => void;
   activeColor: string;
   onColorChange: (color: string) => void;
   brushSize: number;
@@ -32,6 +37,7 @@ interface PhotoAnnotationToolbarProps {
   canUndo: boolean;
   canRedo: boolean;
   isSaving?: boolean;
+  hasScale?: boolean;
 }
 
 const colorPresets = [
@@ -62,8 +68,10 @@ export const PhotoAnnotationToolbar = ({
   canUndo,
   canRedo,
   isSaving,
+  hasScale = false,
 }: PhotoAnnotationToolbarProps) => {
   const [showColorPicker, setShowColorPicker] = useState(false);
+  const [showMeasurementTools, setShowMeasurementTools] = useState(false);
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t shadow-lg z-50 p-4">
@@ -103,6 +111,73 @@ export const PhotoAnnotationToolbar = ({
             >
               <Type className="h-4 w-4" />
             </Button>
+          </div>
+
+          <Separator orientation="vertical" className="h-10 hidden md:block" />
+
+          {/* Measurement Tools */}
+          <div className="flex items-center gap-1 relative">
+            <Button
+              variant={activeTool === "calibrate-scale" ? "default" : "outline"}
+              size="sm"
+              onClick={() => onToolChange("calibrate-scale")}
+              className="h-10 w-10 p-0"
+            >
+              <Ruler className="h-4 w-4" />
+            </Button>
+            <div className="relative">
+              <Button
+                variant={activeTool.startsWith("measure-") ? "default" : "outline"}
+                size="sm"
+                onClick={() => setShowMeasurementTools(!showMeasurementTools)}
+                className="h-10 px-3"
+              >
+                <Triangle className="h-4 w-4 mr-1" />
+                <span className="hidden sm:inline text-xs">Measure</span>
+              </Button>
+              {showMeasurementTools && (
+                <div className="absolute bottom-full mb-2 left-0 bg-popover border rounded-lg shadow-lg p-2 flex flex-col gap-1 min-w-[140px]">
+                  <Button
+                    variant={activeTool === "measure-distance" ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => {
+                      onToolChange("measure-distance");
+                      setShowMeasurementTools(false);
+                    }}
+                    className="justify-start h-9"
+                  >
+                    <Ruler className="h-4 w-4 mr-2" />
+                    Distance
+                  </Button>
+                  <Button
+                    variant={activeTool === "measure-angle" ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => {
+                      onToolChange("measure-angle");
+                      setShowMeasurementTools(false);
+                    }}
+                    className="justify-start h-9"
+                  >
+                    <Triangle className="h-4 w-4 mr-2" />
+                    Angle
+                  </Button>
+                  <Button
+                    variant={activeTool === "measure-area" ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => {
+                      onToolChange("measure-area");
+                      setShowMeasurementTools(false);
+                    }}
+                    className="justify-start h-9"
+                    disabled={!hasScale}
+                    title={!hasScale ? "Set scale calibration first" : ""}
+                  >
+                    <Square className="h-4 w-4 mr-2" />
+                    Area
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
 
           <Separator orientation="vertical" className="h-10 hidden md:block" />

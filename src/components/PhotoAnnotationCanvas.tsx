@@ -1,8 +1,18 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Canvas as FabricCanvas, PencilBrush, IText } from "fabric";
-import { PhotoAnnotationToolbar } from "./PhotoAnnotationToolbar";
+import { Canvas as FabricCanvas, PencilBrush, IText, Line, Circle, Polygon, FabricText } from "fabric";
+import { PhotoAnnotationToolbar, type AnnotationTool } from "./PhotoAnnotationToolbar";
+import { ScaleCalibrationDialog } from "./ScaleCalibrationDialog";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import {
+  type Measurement,
+  type MeasurementScale,
+  calculateDistance,
+  calculateAngle,
+  calculatePolygonArea,
+  convertDistance,
+  convertArea,
+} from "@/lib/measurement-utils";
 
 interface PhotoAnnotationCanvasProps {
   photoUrl: string;
@@ -30,7 +40,7 @@ export const PhotoAnnotationCanvas = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
   const [fabricCanvas, setFabricCanvas] = useState<FabricCanvas | null>(null);
-  const [activeTool, setActiveTool] = useState<"select" | "pencil" | "eraser" | "text">("select");
+  const [activeTool, setActiveTool] = useState<AnnotationTool>("select");
   const [activeColor, setActiveColor] = useState("#ef4444");
   const [brushSize, setBrushSize] = useState(5);
   const [isLoading, setIsLoading] = useState(true);
@@ -41,6 +51,13 @@ export const PhotoAnnotationCanvas = ({
   const historyRef = useRef<string[]>([]);
   const historyStepRef = useRef(0);
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Measurement state
+  const [measurements, setMeasurements] = useState<Measurement[]>([]);
+  const [scale, setScale] = useState<MeasurementScale | null>(null);
+  const [measurementPoints, setMeasurementPoints] = useState<{ x: number; y: number }[]>([]);
+  const [showScaleDialog, setShowScaleDialog] = useState(false);
+  const [calibrationLine, setCalibrationLine] = useState<{ distance: number } | null>(null);
 
   // Initialize canvas when image loads
   useEffect(() => {
@@ -106,12 +123,43 @@ export const PhotoAnnotationCanvas = ({
     };
   }, [photoUrl]);
 
+  // Handle measurement tool interactions
+  useEffect(() => {
+    if (!fabricCanvas) return;
+
+    const handleCanvasClick = (e: any) => {
+      if (!e.pointer) return;
+
+      const pointer = e.pointer;
+
+      if (activeTool === "measure-distance") {
+        handleDistanceMeasurement(pointer.x, pointer.y);
+      } else if (activeTool === "measure-angle") {
+        handleAngleMeasurement(pointer.x, pointer.y);
+      } else if (activeTool === "measure-area") {
+        handleAreaMeasurement(pointer.x, pointer.y);
+      } else if (activeTool === "calibrate-scale") {
+        handleScaleCalibration(pointer.x, pointer.y);
+      }
+    };
+
+    if (activeTool.startsWith("measure-") || activeTool === "calibrate-scale") {
+      fabricCanvas.on("mouse:down", handleCanvasClick);
+    }
+
+    return () => {
+      fabricCanvas.off("mouse:down", handleCanvasClick);
+    };
+  }, [fabricCanvas, activeTool, measurementPoints, scale]);
+
   // Update tool when activeTool changes
   useEffect(() => {
     if (!fabricCanvas) return;
 
+    const isMeasurementTool = activeTool.startsWith("measure-") || activeTool === "calibrate-scale";
+    
     fabricCanvas.isDrawingMode = activeTool === "pencil" || activeTool === "eraser";
-    fabricCanvas.selection = activeTool === "select";
+    fabricCanvas.selection = activeTool === "select" && !isMeasurementTool;
 
     if (activeTool === "pencil") {
       const pencilBrush = new PencilBrush(fabricCanvas);
@@ -153,7 +201,140 @@ export const PhotoAnnotationCanvas = ({
         fabricCanvas.freeDrawingBrush.width = brushSize;
       }
     }
+
+    // Reset measurement points when changing tools
+    if (!activeTool.startsWith("measure-") && activeTool !== "calibrate-scale") {
+      setMeasurementPoints([]);
+    }
   }, [activeColor, brushSize, fabricCanvas, activeTool]);
+
+  const handleDistanceMeasurement = (x: number, y: number) => {
+    const newPoints = [...measurementPoints, { x, y }];
+    setMeasurementPoints(newPoints);
+
+    if (newPoints.length === 2) {
+      const [p1, p2] = newPoints;
+      const pixelDistance = calculateDistance(p1.x, p1.y, p2.x, p2.y);
+      
+      const line = new Line([p1.x, p1.y, p2.x, p2.y], {
+        stroke: activeColor,
+        strokeWidth: 2,
+        selectable: false,
+      });
+      
+      const text = new FabricText(convertDistance(pixelDistance, scale || undefined), {
+        left: (p1.x + p2.x) / 2,
+        top: (p1.y + p2.y) / 2 - 20,
+        fontSize: 16,
+        fill: activeColor,
+        backgroundColor: "rgba(255, 255, 255, 0.8)",
+        selectable: false,
+      });
+
+      fabricCanvas?.add(line, text);
+      fabricCanvas?.renderAll();
+      
+      setMeasurementPoints([]);
+      saveHistory();
+      toast.success("Distance measured");
+    }
+  };
+
+  const handleAngleMeasurement = (x: number, y: number) => {
+    const newPoints = [...measurementPoints, { x, y }];
+    setMeasurementPoints(newPoints);
+
+    if (newPoints.length === 3) {
+      const [p1, p2, p3] = newPoints;
+      const angle = calculateAngle(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y);
+      
+      const line1 = new Line([p2.x, p2.y, p1.x, p1.y], {
+        stroke: activeColor,
+        strokeWidth: 2,
+        selectable: false,
+      });
+      
+      const line2 = new Line([p2.x, p2.y, p3.x, p3.y], {
+        stroke: activeColor,
+        strokeWidth: 2,
+        selectable: false,
+      });
+      
+      const text = new FabricText(`${angle}°`, {
+        left: p2.x + 10,
+        top: p2.y - 25,
+        fontSize: 16,
+        fill: activeColor,
+        backgroundColor: "rgba(255, 255, 255, 0.8)",
+        selectable: false,
+      });
+
+      fabricCanvas?.add(line1, line2, text);
+      fabricCanvas?.renderAll();
+      
+      setMeasurementPoints([]);
+      saveHistory();
+      toast.success(`Angle measured: ${angle}°`);
+    }
+  };
+
+  const handleAreaMeasurement = (x: number, y: number) => {
+    if (!scale) {
+      toast.error("Set scale calibration first");
+      return;
+    }
+
+    const newPoints = [...measurementPoints, { x, y }];
+    setMeasurementPoints(newPoints);
+
+    // Draw temporary point
+    const point = new Circle({
+      left: x - 3,
+      top: y - 3,
+      radius: 3,
+      fill: activeColor,
+      selectable: false,
+    });
+    fabricCanvas?.add(point);
+    fabricCanvas?.renderAll();
+
+    // If we have at least 3 points, allow closing the polygon
+    if (newPoints.length >= 3) {
+      toast.info("Click first point to finish, or continue adding points");
+    }
+  };
+
+  const handleScaleCalibration = (x: number, y: number) => {
+    const newPoints = [...measurementPoints, { x, y }];
+    setMeasurementPoints(newPoints);
+
+    if (newPoints.length === 2) {
+      const [p1, p2] = newPoints;
+      const pixelDistance = calculateDistance(p1.x, p1.y, p2.x, p2.y);
+      
+      const line = new Line([p1.x, p1.y, p2.x, p2.y], {
+        stroke: "#3b82f6",
+        strokeWidth: 3,
+        strokeDashArray: [5, 5],
+        selectable: false,
+      });
+      
+      fabricCanvas?.add(line);
+      fabricCanvas?.renderAll();
+      
+      setCalibrationLine({ distance: pixelDistance });
+      setShowScaleDialog(true);
+    }
+  };
+
+  const handleSetScale = (pixelDistance: number, realDistance: number, unit: string) => {
+    const pixelsPerUnit = pixelDistance / realDistance;
+    setScale({ pixelsPerUnit, unit });
+    setMeasurementPoints([]);
+    setCalibrationLine(null);
+    saveHistory();
+    toast.success(`Scale set: 1 ${unit} = ${pixelsPerUnit.toFixed(2)} pixels`);
+  };
 
   const saveHistory = useCallback(() => {
     if (!fabricCanvas) return;
@@ -236,7 +417,9 @@ export const PhotoAnnotationCanvas = ({
       const annotationMetadata = {
         ...metadata,
         modified_at: new Date().toISOString(),
-        tool_version: "1.0",
+        tool_version: "2.0",
+        measurements,
+        scale,
       };
 
       await onSave(annotationData, annotationMetadata);
@@ -340,8 +523,21 @@ export const PhotoAnnotationCanvas = ({
           canUndo={canUndo}
           canRedo={canRedo}
           isSaving={isSaving}
+          hasScale={!!scale}
         />
       )}
+
+      {/* Scale Calibration Dialog */}
+      <ScaleCalibrationDialog
+        open={showScaleDialog}
+        onClose={() => {
+          setShowScaleDialog(false);
+          setMeasurementPoints([]);
+          setCalibrationLine(null);
+        }}
+        onSetScale={handleSetScale}
+        pixelDistance={calibrationLine?.distance || 0}
+      />
     </div>
   );
 };

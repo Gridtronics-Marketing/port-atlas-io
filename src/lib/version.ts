@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.8.0";
+export const APP_VERSION = "0.9.0";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,21 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "0.9.0",
+    date: "2025-01-29",
+    changes: [
+      "Added measurement tools to photo annotation system",
+      "Implemented distance measurement with line tool",
+      "Added angle measurement (3-point) tool",
+      "Created area measurement with polygon tool",
+      "Built scale calibration system for real-world measurements",
+      "Added unit conversion (mm, cm, m, in, ft)",
+      "Created measurement data storage in annotation metadata",
+      "Enhanced toolbar with measurement tool dropdown",
+      "Improved measurement visualization on canvas"
+    ]
+  },
   {
     version: "0.8.0",
     date: "2025-01-26",
