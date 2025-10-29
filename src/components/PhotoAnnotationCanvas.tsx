@@ -106,13 +106,6 @@ export const PhotoAnnotationCanvas = ({
           fabricImg.scaleToWidth(displayWidth);
           fabricImg.scaleToHeight(displayHeight);
           canvas.backgroundImage = fabricImg;
-          canvas.renderAll();
-          
-          // Initialize brushes after canvas is ready
-          const pencilBrush = new PencilBrush(canvas);
-          pencilBrush.color = activeColor;
-          pencilBrush.width = brushSize;
-          canvas.freeDrawingBrush = pencilBrush;
           
           // Load existing annotations if any
           if (existingAnnotations) {
@@ -133,10 +126,21 @@ export const PhotoAnnotationCanvas = ({
           canvas.on("object:added", handleCanvasChange);
           canvas.on("object:modified", handleCanvasChange);
           canvas.on("object:removed", handleCanvasChange);
+          canvas.on("path:created", () => {
+            console.log("Path created - drawing worked!");
+            canvas.renderAll();
+          });
           
+          // Initialize the drawing brush
+          const brush = new PencilBrush(canvas);
+          brush.color = "#ef4444";
+          brush.width = 5;
+          canvas.freeDrawingBrush = brush;
+          
+          canvas.renderAll();
           setFabricCanvas(canvas);
           setIsLoading(false);
-          toast.success("Ready to annotate!");
+          toast.success("Ready to annotate! Click pencil to draw");
         }).catch((error) => {
           console.error("Error loading background image:", error);
           toast.error("Failed to load image");
@@ -195,18 +199,21 @@ export const PhotoAnnotationCanvas = ({
   useEffect(() => {
     if (!fabricCanvas) return;
 
+    console.log("Tool changed to:", activeTool);
     const isMeasurementTool = activeTool.startsWith("measure-") || activeTool === "calibrate-scale";
     
     fabricCanvas.isDrawingMode = activeTool === "pencil" || activeTool === "eraser";
     fabricCanvas.selection = activeTool === "select" && !isMeasurementTool;
+    
+    console.log("Drawing mode:", fabricCanvas.isDrawingMode);
 
     if (activeTool === "pencil") {
       const pencilBrush = new PencilBrush(fabricCanvas);
       pencilBrush.color = activeColor;
       pencilBrush.width = brushSize;
       fabricCanvas.freeDrawingBrush = pencilBrush;
+      console.log("Pencil brush configured:", { color: activeColor, width: brushSize });
     } else if (activeTool === "eraser") {
-      // For eraser, use white color pencil brush
       const eraserBrush = new PencilBrush(fabricCanvas);
       eraserBrush.color = "rgba(255, 255, 255, 1)";
       eraserBrush.width = brushSize * 2;
@@ -225,6 +232,8 @@ export const PhotoAnnotationCanvas = ({
       fabricCanvas.renderAll();
       setActiveTool("select");
     }
+    
+    fabricCanvas.renderAll();
   }, [activeTool, fabricCanvas, activeColor, brushSize]);
 
   // Update brush color and size
