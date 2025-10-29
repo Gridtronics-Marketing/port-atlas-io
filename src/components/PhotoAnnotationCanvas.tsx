@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Canvas as FabricCanvas, PencilBrush, IText, Line, Circle, Polygon, FabricText } from "fabric";
+import { Canvas as FabricCanvas, PencilBrush, IText, Line, Circle, Polygon, FabricText, FabricImage } from "fabric";
 import { PhotoAnnotationToolbar, type AnnotationTool } from "./PhotoAnnotationToolbar";
 import { ScaleCalibrationDialog } from "./ScaleCalibrationDialog";
 import { toast } from "sonner";
@@ -38,7 +38,6 @@ export const PhotoAnnotationCanvas = ({
 }: PhotoAnnotationCanvasProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const imageRef = useRef<HTMLImageElement>(null);
   const [fabricCanvas, setFabricCanvas] = useState<FabricCanvas | null>(null);
   const [activeTool, setActiveTool] = useState<AnnotationTool>("select");
   const [activeColor, setActiveColor] = useState("#ef4444");
@@ -59,62 +58,99 @@ export const PhotoAnnotationCanvas = ({
   const [showScaleDialog, setShowScaleDialog] = useState(false);
   const [calibrationLine, setCalibrationLine] = useState<{ distance: number } | null>(null);
 
-  // Initialize canvas when image loads
+  // Initialize canvas with photo as background
   useEffect(() => {
-    if (!imageRef.current || !canvasRef.current) return;
+    if (!canvasRef.current || !containerRef.current) return;
 
-    const img = imageRef.current;
-    
     const initCanvas = () => {
       if (!canvasRef.current) return;
       
-      const displayWidth = img.width;
-      const displayHeight = img.height;
+      // Load the image first to get dimensions
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.src = photoUrl;
       
-      const canvas = new FabricCanvas(canvasRef.current, {
-        width: displayWidth,
-        height: displayHeight,
-        backgroundColor: "transparent",
-        isDrawingMode: false,
-      });
-
-      // Initialize brushes
-      const pencilBrush = new PencilBrush(canvas);
-      pencilBrush.color = activeColor;
-      pencilBrush.width = brushSize;
-
-      canvas.freeDrawingBrush = pencilBrush;
-
-      // Load existing annotations
-      if (existingAnnotations) {
-        try {
-          canvas.loadFromJSON(existingAnnotations, () => {
-            canvas.renderAll();
-            saveHistory();
-          });
-        } catch (error) {
-          console.error("Error loading annotations:", error);
-          toast.error("Failed to load existing annotations");
+      img.onload = () => {
+        const maxWidth = window.innerWidth - 100;
+        const maxHeight = window.innerHeight - 200;
+        
+        let displayWidth = img.width;
+        let displayHeight = img.height;
+        
+        // Scale down if image is too large
+        if (displayWidth > maxWidth) {
+          const scale = maxWidth / displayWidth;
+          displayWidth = maxWidth;
+          displayHeight = img.height * scale;
         }
-      } else {
-        saveHistory();
-      }
-
-      // Set up event listeners
-      canvas.on("object:added", handleCanvasChange);
-      canvas.on("object:modified", handleCanvasChange);
-      canvas.on("object:removed", handleCanvasChange);
-
-      setFabricCanvas(canvas);
-      setIsLoading(false);
-      toast.success("Annotation canvas ready!");
+        
+        if (displayHeight > maxHeight) {
+          const scale = maxHeight / displayHeight;
+          displayHeight = maxHeight;
+          displayWidth = displayWidth * scale;
+        }
+        
+        // Create canvas with calculated dimensions
+        const canvas = new FabricCanvas(canvasRef.current, {
+          width: displayWidth,
+          height: displayHeight,
+          backgroundColor: "#f0f0f0",
+          isDrawingMode: false,
+        });
+        
+        // Calculate scale for background image
+        const imageScale = displayWidth / img.width;
+        
+        // Load the photo as the canvas background image using Fabric.js v6 API
+        FabricImage.fromURL(photoUrl, { crossOrigin: "anonymous" }).then((fabricImg) => {
+          fabricImg.scaleToWidth(displayWidth);
+          fabricImg.scaleToHeight(displayHeight);
+          canvas.backgroundImage = fabricImg;
+          canvas.renderAll();
+          
+          // Initialize brushes after canvas is ready
+          const pencilBrush = new PencilBrush(canvas);
+          pencilBrush.color = activeColor;
+          pencilBrush.width = brushSize;
+          canvas.freeDrawingBrush = pencilBrush;
+          
+          // Load existing annotations if any
+          if (existingAnnotations) {
+            try {
+              canvas.loadFromJSON(existingAnnotations, () => {
+                canvas.renderAll();
+                saveHistory();
+              });
+            } catch (error) {
+              console.error("Error loading annotations:", error);
+              toast.error("Failed to load existing annotations");
+            }
+          } else {
+            saveHistory();
+          }
+          
+          // Set up event listeners
+          canvas.on("object:added", handleCanvasChange);
+          canvas.on("object:modified", handleCanvasChange);
+          canvas.on("object:removed", handleCanvasChange);
+          
+          setFabricCanvas(canvas);
+          setIsLoading(false);
+          toast.success("Ready to annotate!");
+        }).catch((error) => {
+          console.error("Error loading background image:", error);
+          toast.error("Failed to load image");
+          setIsLoading(false);
+        });
+      };
+      
+      img.onerror = () => {
+        toast.error("Failed to load image");
+        setIsLoading(false);
+      };
     };
 
-    if (img.complete) {
-      initCanvas();
-    } else {
-      img.onload = initCanvas;
-    }
+    initCanvas();
 
     return () => {
       if (fabricCanvas) {
@@ -439,42 +475,22 @@ export const PhotoAnnotationCanvas = ({
   }, [fabricCanvas, metadata, onSave, readOnly]);
 
   const handleExport = useCallback(() => {
-    if (!fabricCanvas || !imageRef.current) return;
+    if (!fabricCanvas) return;
 
     try {
-      // Create a temporary canvas to combine image and annotations
-      const tempCanvas = document.createElement("canvas");
-      const img = imageRef.current;
-      tempCanvas.width = img.naturalWidth;
-      tempCanvas.height = img.naturalHeight;
-      
-      const ctx = tempCanvas.getContext("2d");
-      if (!ctx) return;
-
-      // Draw the original photo
-      ctx.drawImage(img, 0, 0);
-
-      // Scale and draw annotations
-      const scale = img.naturalWidth / fabricCanvas.width!;
-      const annotationDataUrl = fabricCanvas.toDataURL({
+      // Export canvas with background image and annotations
+      const dataURL = fabricCanvas.toDataURL({
         format: "png",
         quality: 1.0,
-        multiplier: scale,
+        multiplier: 2, // Export at 2x resolution for quality
       });
-
-      const annotationImg = new Image();
-      annotationImg.onload = () => {
-        ctx.drawImage(annotationImg, 0, 0);
-        
-        // Download the combined image
-        const link = document.createElement("a");
-        link.download = `annotated-${photoId}.png`;
-        link.href = tempCanvas.toDataURL("image/png");
-        link.click();
-        
-        toast.success("Annotated photo exported");
-      };
-      annotationImg.src = annotationDataUrl;
+      
+      const link = document.createElement("a");
+      link.download = `annotated-${photoId}.png`;
+      link.href = dataURL;
+      link.click();
+      
+      toast.success("Annotated photo exported");
     } catch (error) {
       console.error("Error exporting photo:", error);
       toast.error("Failed to export annotated photo");
@@ -484,31 +500,22 @@ export const PhotoAnnotationCanvas = ({
   return (
     <div className="fixed inset-0 bg-background/95 z-50 flex flex-col">
       {/* Canvas Container */}
-      <div ref={containerRef} className="flex-1 overflow-auto p-4 flex items-center justify-center">
+      <div ref={containerRef} className="flex-1 overflow-auto p-4 flex items-center justify-center bg-muted/50">
         {isLoading && (
           <div className="flex items-center gap-2 text-muted-foreground">
             <Loader2 className="h-6 w-6 animate-spin" />
-            <span>Loading annotation canvas...</span>
+            <span>Loading photo...</span>
           </div>
         )}
         
-        <div className="relative inline-block">
-          <img
-            ref={imageRef}
-            src={photoUrl}
-            alt="Photo to annotate"
-            className="max-w-full max-h-[calc(100vh-200px)] block pointer-events-none"
-            crossOrigin="anonymous"
-          />
-          <canvas
-            ref={canvasRef}
-            className="absolute top-0 left-0 cursor-crosshair z-10"
-            style={{ 
-              touchAction: "none", 
-              pointerEvents: "auto",
-            }}
-          />
-        </div>
+        <canvas
+          ref={canvasRef}
+          className="shadow-lg rounded-lg border border-border"
+          style={{ 
+            display: isLoading ? 'none' : 'block',
+            touchAction: "none",
+          }}
+        />
       </div>
 
       {/* Toolbar */}
