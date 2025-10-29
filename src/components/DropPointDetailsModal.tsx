@@ -67,7 +67,7 @@ export const DropPointDetailsModal: React.FC<DropPointDetailsModalProps> = ({
   const [editData, setEditData] = useState<Partial<DropPoint>>({});
   
   const { updateDropPoint, deleteDropPoint } = useDropPoints(locationId);
-  const { photos, loading: photosLoading, addPhoto, deletePhoto } = useDropPointPhotos(dropPoint?.id);
+  const { photos, loading: photosLoading, addPhoto, updatePhoto, deletePhoto } = useDropPointPhotos(dropPoint?.id);
   const { employee: currentEmployee } = useCurrentEmployee();
   const { capturePhoto, selectFromGallery } = usePhotoCapture();
   const { toast } = useToast();
@@ -213,6 +213,13 @@ export const DropPointDetailsModal: React.FC<DropPointDetailsModalProps> = ({
     } catch (error) {
       console.error('Error deleting photo:', error);
     }
+  };
+
+  const handleUpdatePhoto = async (
+    photoId: string,
+    updates: { annotation_data?: string; annotation_metadata?: Record<string, any> }
+  ) => {
+    await updatePhoto(photoId, updates);
   };
 
   if (!dropPoint) return null;
@@ -469,12 +476,15 @@ export const DropPointDetailsModal: React.FC<DropPointDetailsModalProps> = ({
                 id: photo.id,
                 photo_url: photo.photo_url,
                 description: photo.description,
+                annotation_data: photo.annotation_data,
+                annotation_metadata: photo.annotation_metadata,
                 created_at: photo.created_at,
                 employee: photo.employee,
                 drop_point: photo.drop_point,
                 photo_type: photo.photo_type,
               }))}
               onDeletePhoto={handleDeletePhoto}
+              onUpdatePhoto={handleUpdatePhoto}
               loading={photosLoading}
               emptyMessage="No photos for this drop point yet"
               title={`Photos for ${dropPoint.label}`}
