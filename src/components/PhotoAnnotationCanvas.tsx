@@ -47,7 +47,6 @@ export const PhotoAnnotationCanvas = ({
   const [isSaving, setIsSaving] = useState(false);
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
-  const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(null);
   
   const historyRef = useRef<string[]>([]);
   const historyStepRef = useRef(0);
@@ -71,8 +70,6 @@ export const PhotoAnnotationCanvas = ({
       
       const displayWidth = img.width;
       const displayHeight = img.height;
-      
-      setImageDimensions({ width: displayWidth, height: displayHeight });
       
       const canvas = new FabricCanvas(canvasRef.current, {
         width: displayWidth,
@@ -509,8 +506,6 @@ export const PhotoAnnotationCanvas = ({
             style={{ 
               touchAction: "none", 
               pointerEvents: "auto",
-              width: imageDimensions ? `${imageDimensions.width}px` : undefined,
-              height: imageDimensions ? `${imageDimensions.height}px` : undefined,
             }}
           />
         </div>
