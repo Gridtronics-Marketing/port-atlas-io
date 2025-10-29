@@ -9,6 +9,8 @@ export interface DropPointPhoto {
   description?: string;
   employee_id?: string;
   photo_type?: 'standard' | 'panoramic';
+  annotation_data?: string;
+  annotation_metadata?: Record<string, any>;
   created_at: string;
   updated_at: string;
   employee?: {
@@ -172,6 +174,8 @@ export const useDropPointPhotos = (dropPointId?: string, locationId?: string) =>
 
   const updatePhoto = async (id: string, updates: {
     description?: string;
+    annotation_data?: string;
+    annotation_metadata?: Record<string, any>;
   }) => {
     try {
       const { error } = await supabase

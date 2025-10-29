@@ -1,22 +1,32 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { X, ZoomIn, ZoomOut, Move, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, ZoomIn, ZoomOut, Move, ChevronLeft, ChevronRight, Pen } from 'lucide-react';
+import { PhotoAnnotationCanvas } from './PhotoAnnotationCanvas';
 
 interface PanoramicPhotoViewerProps {
   photoUrl: string;
   description?: string;
+  photoId?: string;
+  existingAnnotations?: string;
+  annotationMetadata?: Record<string, any>;
+  onAnnotationSave?: (annotationData: string, metadata: any) => Promise<void>;
   onClose: () => void;
 }
 
 export const PanoramicPhotoViewer: React.FC<PanoramicPhotoViewerProps> = ({
   photoUrl,
   description,
+  photoId,
+  existingAnnotations,
+  annotationMetadata,
+  onAnnotationSave,
   onClose
 }) => {
   const [zoom, setZoom] = useState(1);
   const [isDragging, setIsDragging] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [isAnnotating, setIsAnnotating] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
 
@@ -107,6 +117,20 @@ export const PanoramicPhotoViewer: React.FC<PanoramicPhotoViewerProps> = ({
     }
   }, []);
 
+  // Render annotation canvas if annotating
+  if (isAnnotating && photoId && onAnnotationSave) {
+    return (
+      <PhotoAnnotationCanvas
+        photoUrl={photoUrl}
+        photoId={photoId}
+        existingAnnotations={existingAnnotations}
+        metadata={annotationMetadata}
+        onSave={onAnnotationSave}
+        onClose={() => setIsAnnotating(false)}
+      />
+    );
+  }
+
   return (
     <div className="fixed inset-0 z-[9999] bg-background/95 backdrop-blur-sm">
       {/* Header */}
@@ -121,14 +145,25 @@ export const PanoramicPhotoViewer: React.FC<PanoramicPhotoViewerProps> = ({
               {zoom > 1 ? 'Drag to pan' : 'Scroll horizontally to view • Pinch to zoom on mobile'}
             </p>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            className="shrink-0"
-          >
-            <X className="w-5 h-5" />
-          </Button>
+          <div className="flex items-center gap-2 shrink-0">
+            {photoId && onAnnotationSave && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsAnnotating(true)}
+              >
+                <Pen className="w-4 h-4 mr-2" />
+                {existingAnnotations ? 'Edit Annotations' : 'Annotate'}
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+            >
+              <X className="w-5 h-5" />
+            </Button>
+          </div>
         </div>
       </div>
 

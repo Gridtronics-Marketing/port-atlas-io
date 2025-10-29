@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.7.2";
+export const APP_VERSION = "0.8.0";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,26 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "0.8.0",
+    date: "2025-01-26",
+    changes: [
+      "Added comprehensive photo annotation system with drawing tools",
+      "Draw on photos with pencil tool, add text annotations, and highlight areas",
+      "Eraser tool to remove unwanted annotations",
+      "Select and move tool to reposition annotations",
+      "Color picker with preset palette for customizable annotation colors",
+      "Adjustable brush size (2-20px) for fine or bold annotations",
+      "Auto-save functionality - annotations save automatically after 1 second of inactivity",
+      "Undo/redo support with 50-state history on desktop, 25 on mobile for performance",
+      "Export annotated photos as PNG combining original photo with annotations",
+      "Annotation indicator badges on photo thumbnails showing which photos have annotations",
+      "Mobile-optimized touch controls for smooth drawing experience",
+      "Support for annotating both standard and panoramic photos",
+      "Annotations persist with photos and can be edited later",
+      "Database schema updated to store annotation data and metadata"
+    ]
+  },
   {
     version: "0.7.2",
     date: "2025-01-26",

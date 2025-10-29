@@ -2,7 +2,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Trash2, User, Calendar, FileText, MapPin, Tag, Filter, Maximize2 } from 'lucide-react';
+import { Trash2, User, Calendar, FileText, MapPin, Tag, Filter, Maximize2, Pen } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,6 +17,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -29,6 +30,7 @@ import {
 } from '@/components/ui/select';
 import { useState } from 'react';
 import { PanoramicPhotoViewer } from './PanoramicPhotoViewer';
+import { PhotoAnnotationCanvas } from './PhotoAnnotationCanvas';
 
 interface PhotoItem {
   id: string;
@@ -36,6 +38,8 @@ interface PhotoItem {
   description?: string;
   created_at: string;
   photo_type?: 'standard' | 'panoramic';
+  annotation_data?: string;
+  annotation_metadata?: Record<string, any>;
   employee?: {
     first_name: string;
     last_name: string;
@@ -54,6 +58,7 @@ interface PhotoItem {
 interface EnhancedPhotoGalleryProps {
   photos: PhotoItem[];
   onDeletePhoto: (photoId: string, photoUrl: string) => Promise<void>;
+  onUpdatePhoto?: (photoId: string, updates: { annotation_data?: string; annotation_metadata?: Record<string, any> }) => Promise<void>;
   loading?: boolean;
   emptyMessage?: string;
   title?: string;
@@ -65,6 +70,7 @@ interface EnhancedPhotoGalleryProps {
 export const EnhancedPhotoGallery: React.FC<EnhancedPhotoGalleryProps> = ({
   photos,
   onDeletePhoto,
+  onUpdatePhoto,
   loading = false,
   emptyMessage = "No photos available",
   title = "Photos",
@@ -75,6 +81,7 @@ export const EnhancedPhotoGallery: React.FC<EnhancedPhotoGalleryProps> = ({
   const [filterType, setFilterType] = useState<string>('all');
   const [filterRoom, setFilterRoom] = useState<string>('all');
   const [expandedPhoto, setExpandedPhoto] = useState<PhotoItem | null>(null);
+  const [isAnnotating, setIsAnnotating] = useState(false);
 
   // Get unique types and rooms for filtering
   const uniqueTypes = [...new Set(photos.map(p => p.drop_point?.point_type || p.room_view ? 'room_view' : 'unknown').filter(Boolean))];
@@ -204,6 +211,13 @@ export const EnhancedPhotoGallery: React.FC<EnhancedPhotoGalleryProps> = ({
                     alt={photo.description || "Photo"}
                     className="w-full h-full object-cover"
                   />
+                  
+                  {/* Annotation indicator badge */}
+                  {photo.annotation_data && (
+                    <div className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full p-1.5 shadow-lg">
+                      <Pen className="w-3 h-3" />
+                    </div>
+                  )}
                 </div>
                 
                 {/* Photo overlay with info and delete button */}
@@ -305,11 +319,41 @@ export const EnhancedPhotoGallery: React.FC<EnhancedPhotoGalleryProps> = ({
         )}
       </CardContent>
       
-      {/* Panoramic Photo Viewer or Standard Dialog */}
-      {expandedPhoto?.photo_type === 'panoramic' ? (
+      {/* Photo Viewer - Annotation Canvas, Panoramic Viewer, or Standard Dialog */}
+      {isAnnotating && expandedPhoto ? (
+        <PhotoAnnotationCanvas
+          photoUrl={expandedPhoto.photo_url}
+          photoId={expandedPhoto.id}
+          existingAnnotations={expandedPhoto.annotation_data}
+          metadata={expandedPhoto.annotation_metadata}
+          onSave={async (annotationData, metadata) => {
+            if (onUpdatePhoto) {
+              await onUpdatePhoto(expandedPhoto.id, {
+                annotation_data: annotationData,
+                annotation_metadata: metadata,
+              });
+            }
+          }}
+          onClose={() => {
+            setIsAnnotating(false);
+            setExpandedPhoto(null);
+          }}
+        />
+      ) : expandedPhoto?.photo_type === 'panoramic' ? (
         <PanoramicPhotoViewer
           photoUrl={expandedPhoto.photo_url}
           description={expandedPhoto.description}
+          photoId={expandedPhoto.id}
+          existingAnnotations={expandedPhoto.annotation_data}
+          annotationMetadata={expandedPhoto.annotation_metadata}
+          onAnnotationSave={async (annotationData, metadata) => {
+            if (onUpdatePhoto) {
+              await onUpdatePhoto(expandedPhoto.id, {
+                annotation_data: annotationData,
+                annotation_metadata: metadata,
+              });
+            }
+          }}
           onClose={() => setExpandedPhoto(null)}
         />
       ) : (
@@ -317,10 +361,26 @@ export const EnhancedPhotoGallery: React.FC<EnhancedPhotoGalleryProps> = ({
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
             {expandedPhoto && (
               <>
-                <DialogHeader>
-                  <DialogTitle>
-                    {expandedPhoto.description || 'Photo'}
-                  </DialogTitle>
+                <DialogHeader className="flex flex-row items-center justify-between space-y-0">
+                  <div>
+                    <DialogTitle>
+                      {expandedPhoto.description || 'Photo'}
+                    </DialogTitle>
+                    <DialogDescription>
+                      Click "Annotate" to draw on this photo
+                    </DialogDescription>
+                  </div>
+                  {onUpdatePhoto && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsAnnotating(true)}
+                      className="shrink-0"
+                    >
+                      <Pen className="w-4 h-4 mr-2" />
+                      {expandedPhoto.annotation_data ? 'Edit Annotations' : 'Annotate'}
+                    </Button>
+                  )}
                 </DialogHeader>
                 
                 <div className="relative w-full">
@@ -365,6 +425,13 @@ export const EnhancedPhotoGallery: React.FC<EnhancedPhotoGalleryProps> = ({
                     <Calendar className="w-3 h-3 mr-1" />
                     {new Date(expandedPhoto.created_at).toLocaleDateString()}
                   </Badge>
+                  
+                  {expandedPhoto.annotation_data && (
+                    <Badge variant="default">
+                      <Pen className="w-3 h-3 mr-1" />
+                      Has Annotations
+                    </Badge>
+                  )}
                 </div>
               </>
             )}

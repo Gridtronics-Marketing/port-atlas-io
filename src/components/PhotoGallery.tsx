@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Trash2, User, Calendar, FileText, Maximize2 } from 'lucide-react';
+import { Trash2, User, Calendar, FileText, Maximize2, Pen } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,14 +13,17 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { PanoramicPhotoViewer } from './PanoramicPhotoViewer';
+import { PhotoAnnotationCanvas } from './PhotoAnnotationCanvas';
 
 interface PhotoItem {
   id: string;
   photo_url: string;
   description?: string;
   photo_type?: 'standard' | 'panoramic';
+  annotation_data?: string;
+  annotation_metadata?: Record<string, any>;
   created_at: string;
   employee?: {
     first_name: string;
@@ -31,6 +34,7 @@ interface PhotoItem {
 interface PhotoGalleryProps {
   photos: PhotoItem[];
   onDeletePhoto: (photoId: string, photoUrl: string) => Promise<void>;
+  onUpdatePhoto?: (photoId: string, updates: { annotation_data?: string; annotation_metadata?: Record<string, any> }) => Promise<void>;
   loading?: boolean;
   emptyMessage?: string;
 }
@@ -38,10 +42,12 @@ interface PhotoGalleryProps {
 export const PhotoGallery: React.FC<PhotoGalleryProps> = ({
   photos,
   onDeletePhoto,
+  onUpdatePhoto,
   loading = false,
   emptyMessage = "No photos available"
 }) => {
   const [expandedPhoto, setExpandedPhoto] = React.useState<PhotoItem | null>(null);
+  const [isAnnotating, setIsAnnotating] = React.useState(false);
   if (loading) {
     return (
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -79,8 +85,14 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = ({
               alt={photo.description || "Photo"}
               className="w-full h-full object-cover"
             />
+            {photo.annotation_data && (
+              <div className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full p-1.5 shadow-lg">
+                <Pen className="w-3 h-3" />
+              </div>
+            )}
             {photo.photo_type === 'panoramic' && (
               <Badge className="absolute top-2 left-2" variant="secondary">
+                <Maximize2 className="w-3 h-3 mr-1" />
                 Panoramic
               </Badge>
             )}
@@ -145,11 +157,39 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = ({
       ))}
     </div>
 
-    {/* Panoramic Photo Viewer or Standard Dialog */}
-    {expandedPhoto?.photo_type === 'panoramic' ? (
+    {/* Annotation Canvas, Panoramic Photo Viewer, or Standard Dialog */}
+    {isAnnotating && expandedPhoto ? (
+      <PhotoAnnotationCanvas
+        photoUrl={expandedPhoto.photo_url}
+        photoId={expandedPhoto.id}
+        existingAnnotations={expandedPhoto.annotation_data}
+        metadata={expandedPhoto.annotation_metadata}
+        onSave={async (annotationData, metadata) => {
+          if (onUpdatePhoto) {
+            await onUpdatePhoto(expandedPhoto.id, {
+              annotation_data: annotationData,
+              annotation_metadata: metadata,
+            });
+          }
+        }}
+        onClose={() => {
+          setIsAnnotating(false);
+          setExpandedPhoto(null);
+        }}
+      />
+    ) : expandedPhoto?.photo_type === 'panoramic' ? (
       <PanoramicPhotoViewer
         photoUrl={expandedPhoto.photo_url}
         description={expandedPhoto.description}
+        photoId={expandedPhoto.id}
+        existingAnnotations={expandedPhoto.annotation_data}
+        annotationMetadata={expandedPhoto.annotation_metadata}
+        onAnnotationSave={onUpdatePhoto ? async (annotationData, metadata) => {
+          await onUpdatePhoto(expandedPhoto.id, {
+            annotation_data: annotationData,
+            annotation_metadata: metadata,
+          });
+        } : undefined}
         onClose={() => setExpandedPhoto(null)}
       />
     ) : (
@@ -157,18 +197,21 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = ({
         <DialogContent className="max-w-4xl max-h-[90vh]">
           {expandedPhoto && (
             <>
-              <DialogHeader>
-                <DialogTitle>
-                  {expandedPhoto.description || 'Photo'}
-                </DialogTitle>
+              <DialogHeader className="flex flex-row items-center justify-between space-y-0">
+                <div>
+                  <DialogTitle>{expandedPhoto.description || 'Photo'}</DialogTitle>
+                  <DialogDescription>Click "Annotate" to draw on this photo</DialogDescription>
+                </div>
+                {onUpdatePhoto && (
+                  <Button variant="outline" size="sm" onClick={() => setIsAnnotating(true)} className="shrink-0">
+                    <Pen className="w-4 h-4 mr-2" />
+                    {expandedPhoto.annotation_data ? 'Edit Annotations' : 'Annotate'}
+                  </Button>
+                )}
               </DialogHeader>
               
               <div className="relative w-full h-full overflow-auto">
-                <img
-                  src={expandedPhoto.photo_url}
-                  alt={expandedPhoto.description || "Photo"}
-                  className="w-full h-auto"
-                />
+                <img src={expandedPhoto.photo_url} alt={expandedPhoto.description || "Photo"} className="w-full h-auto" />
               </div>
               
               <div className="flex flex-wrap gap-2 mt-4">
@@ -178,11 +221,16 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = ({
                     {`${expandedPhoto.employee.first_name} ${expandedPhoto.employee.last_name}`}
                   </Badge>
                 )}
-                
                 <Badge variant="outline">
                   <Calendar className="w-3 h-3 mr-1" />
                   {new Date(expandedPhoto.created_at).toLocaleDateString()}
                 </Badge>
+                {expandedPhoto.annotation_data && (
+                  <Badge variant="default">
+                    <Pen className="w-3 h-3 mr-1" />
+                    Has Annotations
+                  </Badge>
+                )}
               </div>
             </>
           )}

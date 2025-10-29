@@ -968,6 +968,8 @@ export type Database = {
       }
       drop_point_photos: {
         Row: {
+          annotation_data: Json | null
+          annotation_metadata: Json | null
           created_at: string
           description: string | null
           drop_point_id: string
@@ -978,6 +980,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          annotation_data?: Json | null
+          annotation_metadata?: Json | null
           created_at?: string
           description?: string | null
           drop_point_id: string
@@ -988,6 +992,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          annotation_data?: Json | null
+          annotation_metadata?: Json | null
           created_at?: string
           description?: string | null
           drop_point_id?: string
