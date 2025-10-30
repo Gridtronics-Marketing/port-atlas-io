@@ -98,6 +98,14 @@ export const PhotoAnnotationCanvas = ({
           isDrawingMode: false,
         });
         
+        // Explicitly set canvas element dimensions to match Fabric.js dimensions
+        if (canvasRef.current) {
+          canvasRef.current.width = displayWidth;
+          canvasRef.current.height = displayHeight;
+          canvasRef.current.style.width = `${displayWidth}px`;
+          canvasRef.current.style.height = `${displayHeight}px`;
+        }
+        
         // Calculate scale for background image
         const imageScale = displayWidth / img.width;
         
@@ -129,6 +137,21 @@ export const PhotoAnnotationCanvas = ({
           canvas.on("path:created", () => {
             console.log("Path created - drawing worked!");
             canvas.renderAll();
+          });
+          
+          // Add mouse event logging for debugging
+          canvas.on('mouse:down', (e) => {
+            console.log('Canvas mouse down:', { 
+              isDrawingMode: canvas.isDrawingMode, 
+              tool: activeTool,
+              pointer: e.pointer 
+            });
+          });
+
+          canvas.on('mouse:move', (e) => {
+            if (canvas.isDrawingMode) {
+              console.log('Drawing in progress...');
+            }
           });
           
           // Initialize the drawing brush
@@ -229,8 +252,10 @@ export const PhotoAnnotationCanvas = ({
       });
       fabricCanvas.add(text);
       fabricCanvas.setActiveObject(text);
+      text.enterEditing();  // Enter edit mode immediately
+      text.selectAll();     // Select all text for easy replacement
       fabricCanvas.renderAll();
-      setActiveTool("select");
+      // Don't switch to select tool - let user finish editing first
     }
     
     fabricCanvas.renderAll();
@@ -523,6 +548,7 @@ export const PhotoAnnotationCanvas = ({
           style={{ 
             display: isLoading ? 'none' : 'block',
             touchAction: "none",
+            pointerEvents: "auto",
           }}
         />
       </div>
