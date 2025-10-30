@@ -60,10 +60,23 @@ export const PhotoAnnotationCanvas = ({
 
   // Initialize canvas with photo as background
   useEffect(() => {
-    if (!canvasRef.current || !containerRef.current) return;
+    console.log("🎨 PhotoAnnotationCanvas: Initializing with photo:", photoUrl);
+    
+    if (!canvasRef.current || !containerRef.current) {
+      console.error("❌ PhotoAnnotationCanvas: Missing refs", {
+        canvasRef: !!canvasRef.current,
+        containerRef: !!containerRef.current
+      });
+      return;
+    }
 
     const initCanvas = () => {
-      if (!canvasRef.current) return;
+      if (!canvasRef.current) {
+        console.error("❌ PhotoAnnotationCanvas: canvasRef lost during init");
+        return;
+      }
+      
+      console.log("🎨 PhotoAnnotationCanvas: Starting canvas initialization...");
       
       // Load the image first to get dimensions
       const img = new Image();
@@ -71,6 +84,11 @@ export const PhotoAnnotationCanvas = ({
       img.src = photoUrl;
       
       img.onload = () => {
+        console.log("🖼️ Photo loaded successfully:", { 
+          width: img.width, 
+          height: img.height 
+        });
+        
         const maxWidth = window.innerWidth - 100;
         const maxHeight = window.innerHeight - 200;
         
@@ -91,12 +109,20 @@ export const PhotoAnnotationCanvas = ({
         }
         
         // Create canvas with calculated dimensions
+        console.log("🎨 Creating FabricCanvas with dimensions:", { displayWidth, displayHeight });
+        
         // Note: FabricCanvas will set the HTML canvas width/height internally
         const canvas = new FabricCanvas(canvasRef.current, {
           width: displayWidth,
           height: displayHeight,
           backgroundColor: "#f0f0f0",
           isDrawingMode: false,
+        });
+        
+        console.log("✅ FabricCanvas created successfully", {
+          canvasWidth: canvas.width,
+          canvasHeight: canvas.height,
+          isDrawingMode: canvas.isDrawingMode
         });
         
         // Calculate scale for background image
@@ -163,6 +189,13 @@ export const PhotoAnnotationCanvas = ({
           canvas.requestRenderAll();
           setFabricCanvas(canvas);
           setIsLoading(false);
+          
+          console.log("✅ PhotoAnnotationCanvas fully initialized and ready!", {
+            hasBrush: !!canvas.freeDrawingBrush,
+            brushColor: canvas.freeDrawingBrush?.color,
+            canvasSize: { width: canvas.width, height: canvas.height }
+          });
+          
           toast.success("Ready to annotate! Click pencil to draw");
         }).catch((error) => {
           console.error("Error loading background image:", error);

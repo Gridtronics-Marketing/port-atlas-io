@@ -48,6 +48,15 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = ({
 }) => {
   const [expandedPhoto, setExpandedPhoto] = React.useState<PhotoItem | null>(null);
   const [isAnnotating, setIsAnnotating] = React.useState(false);
+  
+  React.useEffect(() => {
+    if (expandedPhoto) {
+      console.log("📸 Photo opened:", { id: expandedPhoto.id, isAnnotating });
+    }
+    if (isAnnotating) {
+      console.log("✏️ Entering annotation mode for photo:", expandedPhoto?.id);
+    }
+  }, [expandedPhoto, isAnnotating]);
   if (loading) {
     return (
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -203,7 +212,15 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = ({
                   <DialogDescription>Click "Annotate" to draw on this photo</DialogDescription>
                 </div>
                 {onUpdatePhoto && (
-                  <Button variant="outline" size="sm" onClick={() => setIsAnnotating(true)} className="shrink-0">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => {
+                      console.log("🖊️ Annotate button clicked");
+                      setIsAnnotating(true);
+                    }} 
+                    className="shrink-0"
+                  >
                     <Pen className="w-4 h-4 mr-2" />
                     {expandedPhoto.annotation_data ? 'Edit Annotations' : 'Annotate'}
                   </Button>
