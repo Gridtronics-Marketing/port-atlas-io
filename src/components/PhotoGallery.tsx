@@ -16,6 +16,7 @@ import {
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { PanoramicPhotoViewer } from './PanoramicPhotoViewer';
 import { PhotoAnnotationCanvas } from './PhotoAnnotationCanvas';
+import { PhotoAnnotationViewer } from './PhotoAnnotationViewer';
 
 interface PhotoItem {
   id: string;
@@ -227,8 +228,16 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = ({
                 )}
               </DialogHeader>
               
-              <div className="relative w-full h-full overflow-auto">
-                <img src={expandedPhoto.photo_url} alt={expandedPhoto.description || "Photo"} className="w-full h-auto" />
+              <div className="relative w-full" style={{ minHeight: '400px', maxHeight: '70vh' }}>
+                {expandedPhoto.annotation_data ? (
+                  <PhotoAnnotationViewer
+                    photoUrl={expandedPhoto.photo_url}
+                    annotationData={expandedPhoto.annotation_data}
+                    className="h-full"
+                  />
+                ) : (
+                  <img src={expandedPhoto.photo_url} alt={expandedPhoto.description || "Photo"} className="w-full h-auto" />
+                )}
               </div>
               
               <div className="flex flex-wrap gap-2 mt-4">
