@@ -308,19 +308,22 @@ export const PhotoAnnotationCanvas = ({
       fabricCanvas.freeDrawingBrush = eraserBrush;
     } else if (activeTool === "text") {
       fabricCanvas.isDrawingMode = false;
-      const text = new IText("Click to edit text", {
+      const text = new IText("Double click to edit", {
         left: fabricCanvas.width! / 2 - 100,
         top: fabricCanvas.height! / 2 - 20,
         fill: activeColor,
         fontSize: 20,
         fontFamily: "Arial",
+        editable: true,
       });
       fabricCanvas.add(text);
       fabricCanvas.setActiveObject(text);
-      text.enterEditing();  // Enter edit mode immediately
-      text.selectAll();     // Select all text for easy replacement
+      // Enter editing on next tick to ensure object is fully added
+      setTimeout(() => {
+        text.enterEditing();
+        text.selectAll();
+      }, 10);
       fabricCanvas.renderAll();
-      // Don't switch to select tool - let user finish editing first
     }
     
     fabricCanvas.requestRenderAll();
@@ -496,6 +499,7 @@ export const PhotoAnnotationCanvas = ({
   }, [fabricCanvas]);
 
   const handleCanvasChange = useCallback(() => {
+    console.log("🔄 Canvas changed, saving to history and scheduling auto-save");
     saveHistory();
     
     // Debounced auto-save
@@ -504,8 +508,9 @@ export const PhotoAnnotationCanvas = ({
     }
     
     autoSaveTimeoutRef.current = setTimeout(() => {
+      console.log("💾 Auto-save triggered");
       handleSave(true);
-    }, 1000);
+    }, 2000); // Increased to 2 seconds for better batching
   }, [saveHistory]);
 
   const handleUndo = useCallback(() => {
@@ -547,8 +552,12 @@ export const PhotoAnnotationCanvas = ({
   }, [fabricCanvas, saveHistory]);
 
   const handleSave = useCallback(async (isAutoSave = false) => {
-    if (!fabricCanvas || readOnly) return;
+    if (!fabricCanvas || readOnly) {
+      console.log("⚠️ Save skipped:", { hasFabricCanvas: !!fabricCanvas, readOnly });
+      return;
+    }
 
+    console.log(`💾 Starting ${isAutoSave ? 'auto-' : 'manual '}save...`);
     setIsSaving(true);
     try {
       const annotationData = JSON.stringify(fabricCanvas.toJSON());
@@ -560,18 +569,22 @@ export const PhotoAnnotationCanvas = ({
         scale,
       };
 
+      console.log("📤 Calling onSave callback with annotation data");
       await onSave(annotationData, annotationMetadata);
+      console.log("✅ Save completed successfully");
       
       if (!isAutoSave) {
         toast.success("Annotations saved successfully");
+      } else {
+        console.log("💾 Auto-save completed silently");
       }
     } catch (error) {
-      console.error("Error saving annotations:", error);
+      console.error("❌ Error saving annotations:", error);
       toast.error("Failed to save annotations");
     } finally {
       setIsSaving(false);
     }
-  }, [fabricCanvas, metadata, onSave, readOnly]);
+  }, [fabricCanvas, metadata, onSave, readOnly, measurements, scale]);
 
   const handleExport = useCallback(() => {
     if (!fabricCanvas) return;
