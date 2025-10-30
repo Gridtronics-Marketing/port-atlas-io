@@ -70,6 +70,12 @@ export const PhotoAnnotationCanvas = ({
       return;
     }
 
+    // Prevent double initialization
+    if (fabricCanvas) {
+      console.log("⚠️ Canvas already initialized, skipping...");
+      return;
+    }
+
     const initCanvas = () => {
       if (!canvasRef.current) {
         console.error("❌ PhotoAnnotationCanvas: canvasRef lost during init");
@@ -164,28 +170,6 @@ export const PhotoAnnotationCanvas = ({
           brush.width = 5;
           canvas.freeDrawingBrush = brush;
           
-          // Add debugging event listeners
-          canvas.on('mouse:down', (e) => {
-            console.log('Canvas mouse down:', { 
-              isDrawingMode: canvas.isDrawingMode,
-              hasBrush: !!canvas.freeDrawingBrush,
-              brushColor: canvas.freeDrawingBrush?.color,
-              pointer: e.pointer 
-            });
-          });
-
-          canvas.on('mouse:move', (e) => {
-            if (canvas.isDrawingMode && e.pointer) {
-              console.log('Drawing at:', e.pointer.x, e.pointer.y);
-            }
-          });
-          
-          canvas.on('mouse:up', () => {
-            if (canvas.isDrawingMode) {
-              console.log('Mouse up - path should be created');
-            }
-          });
-          
           canvas.requestRenderAll();
           setFabricCanvas(canvas);
           setIsLoading(false);
@@ -220,7 +204,47 @@ export const PhotoAnnotationCanvas = ({
         clearTimeout(autoSaveTimeoutRef.current);
       }
     };
-  }, [photoUrl]);
+  }, [photoUrl, fabricCanvas]);
+
+  // Add persistent mouse event listeners separately
+  useEffect(() => {
+    if (!fabricCanvas) return;
+
+    const handleMouseDown = (e: any) => {
+      console.log('✋ Canvas mouse down:', { 
+        isDrawingMode: fabricCanvas.isDrawingMode,
+        hasBrush: !!fabricCanvas.freeDrawingBrush,
+        brushColor: fabricCanvas.freeDrawingBrush?.color,
+        pointer: e.pointer,
+        target: e.target 
+      });
+    };
+
+    const handleMouseMove = (e: any) => {
+      if (fabricCanvas.isDrawingMode && e.pointer) {
+        console.log('✏️ Drawing at:', e.pointer.x, e.pointer.y);
+      }
+    };
+    
+    const handleMouseUp = () => {
+      if (fabricCanvas.isDrawingMode) {
+        console.log('🖱️ Mouse up - path should be created');
+      }
+    };
+
+    fabricCanvas.on('mouse:down', handleMouseDown);
+    fabricCanvas.on('mouse:move', handleMouseMove);
+    fabricCanvas.on('mouse:up', handleMouseUp);
+
+    console.log("🎯 Event listeners attached to canvas");
+
+    return () => {
+      fabricCanvas.off('mouse:down', handleMouseDown);
+      fabricCanvas.off('mouse:move', handleMouseMove);
+      fabricCanvas.off('mouse:up', handleMouseUp);
+      console.log("🗑️ Event listeners removed from canvas");
+    };
+  }, [fabricCanvas]);
 
   // Handle measurement tool interactions
   useEffect(() => {
