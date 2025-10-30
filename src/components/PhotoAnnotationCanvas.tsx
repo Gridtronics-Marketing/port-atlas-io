@@ -599,7 +599,11 @@ export const PhotoAnnotationCanvas = ({
   return (
     <div className="fixed inset-0 bg-background/95 z-50 flex flex-col">
       {/* Canvas Container */}
-      <div ref={containerRef} className="flex-1 overflow-auto p-4 flex items-center justify-center bg-muted/50">
+      <div 
+        ref={containerRef} 
+        className="flex-1 p-4 flex items-center justify-center bg-muted/50"
+        style={{ overflow: 'hidden' }}
+      >
         {isLoading && (
           <div className="flex items-center gap-2 text-muted-foreground">
             <Loader2 className="h-6 w-6 animate-spin" />
@@ -607,15 +611,24 @@ export const PhotoAnnotationCanvas = ({
           </div>
         )}
         
-        <canvas
-          ref={canvasRef}
-          className="shadow-lg rounded-lg border border-border"
+        <div 
           style={{ 
             display: isLoading ? 'none' : 'block',
-            touchAction: "none",
-            pointerEvents: "auto",
+            position: 'relative',
           }}
-        />
+        >
+          <canvas
+            ref={canvasRef}
+            className="shadow-lg rounded-lg border border-border"
+            style={{ 
+              touchAction: "none",
+              userSelect: "none",
+              cursor: activeTool === "pencil" ? "crosshair" : activeTool === "eraser" ? "crosshair" : "default",
+            }}
+            onMouseDown={(e) => console.log("🖱️ NATIVE mouse down on canvas element", e)}
+            onTouchStart={(e) => console.log("👆 NATIVE touch start on canvas element", e)}
+          />
+        </div>
       </div>
 
       {/* Toolbar */}
