@@ -91,20 +91,13 @@ export const PhotoAnnotationCanvas = ({
         }
         
         // Create canvas with calculated dimensions
+        // Note: FabricCanvas will set the HTML canvas width/height internally
         const canvas = new FabricCanvas(canvasRef.current, {
           width: displayWidth,
           height: displayHeight,
           backgroundColor: "#f0f0f0",
           isDrawingMode: false,
         });
-        
-        // Explicitly set canvas element dimensions to match Fabric.js dimensions
-        if (canvasRef.current) {
-          canvasRef.current.width = displayWidth;
-          canvasRef.current.height = displayHeight;
-          canvasRef.current.style.width = `${displayWidth}px`;
-          canvasRef.current.style.height = `${displayHeight}px`;
-        }
         
         // Calculate scale for background image
         const imageScale = displayWidth / img.width;
@@ -139,28 +132,35 @@ export const PhotoAnnotationCanvas = ({
             canvas.renderAll();
           });
           
-          // Add mouse event logging for debugging
-          canvas.on('mouse:down', (e) => {
-            console.log('Canvas mouse down:', { 
-              isDrawingMode: canvas.isDrawingMode, 
-              tool: activeTool,
-              pointer: e.pointer 
-            });
-          });
-
-          canvas.on('mouse:move', (e) => {
-            if (canvas.isDrawingMode) {
-              console.log('Drawing in progress...');
-            }
-          });
-          
-          // Initialize the drawing brush
+          // Initialize the drawing brush FIRST
           const brush = new PencilBrush(canvas);
           brush.color = "#ef4444";
           brush.width = 5;
           canvas.freeDrawingBrush = brush;
           
-          canvas.renderAll();
+          // Add debugging event listeners
+          canvas.on('mouse:down', (e) => {
+            console.log('Canvas mouse down:', { 
+              isDrawingMode: canvas.isDrawingMode,
+              hasBrush: !!canvas.freeDrawingBrush,
+              brushColor: canvas.freeDrawingBrush?.color,
+              pointer: e.pointer 
+            });
+          });
+
+          canvas.on('mouse:move', (e) => {
+            if (canvas.isDrawingMode && e.pointer) {
+              console.log('Drawing at:', e.pointer.x, e.pointer.y);
+            }
+          });
+          
+          canvas.on('mouse:up', () => {
+            if (canvas.isDrawingMode) {
+              console.log('Mouse up - path should be created');
+            }
+          });
+          
+          canvas.requestRenderAll();
           setFabricCanvas(canvas);
           setIsLoading(false);
           toast.success("Ready to annotate! Click pencil to draw");
@@ -228,7 +228,15 @@ export const PhotoAnnotationCanvas = ({
     fabricCanvas.isDrawingMode = activeTool === "pencil" || activeTool === "eraser";
     fabricCanvas.selection = activeTool === "select" && !isMeasurementTool;
     
-    console.log("Drawing mode:", fabricCanvas.isDrawingMode);
+    console.log("Drawing mode set:", {
+      isDrawingMode: fabricCanvas.isDrawingMode,
+      tool: activeTool,
+      hasBrush: !!fabricCanvas.freeDrawingBrush,
+      brushDetails: fabricCanvas.freeDrawingBrush ? {
+        color: fabricCanvas.freeDrawingBrush.color,
+        width: fabricCanvas.freeDrawingBrush.width
+      } : null
+    });
 
     if (activeTool === "pencil") {
       const pencilBrush = new PencilBrush(fabricCanvas);
@@ -258,7 +266,7 @@ export const PhotoAnnotationCanvas = ({
       // Don't switch to select tool - let user finish editing first
     }
     
-    fabricCanvas.renderAll();
+    fabricCanvas.requestRenderAll();
   }, [activeTool, fabricCanvas, activeColor, brushSize]);
 
   // Update brush color and size
