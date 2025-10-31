@@ -158,7 +158,7 @@ const Auth = () => {
       </video>
       
       {/* Overlay for better readability */}
-      <div className="fixed inset-0 bg-background/70" style={{ zIndex: 1 }}></div>
+      <div className="fixed inset-0 bg-background/10" style={{ zIndex: 1 }}></div>
       
       <div className="fixed top-4 right-4" style={{ zIndex: 50 }}>
         <OfflineIndicator />
