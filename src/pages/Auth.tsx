@@ -140,10 +140,11 @@ const Auth = () => {
   }
 
   return (
-    <div className="min-h-screen relative flex items-center justify-center p-4">
+    <div className="min-h-screen relative flex items-center justify-center p-4 overflow-hidden">
       {/* Animated Background Video */}
       <video 
-        className="fixed inset-0 w-full h-full object-cover -z-10 opacity-30"
+        className="fixed inset-0 w-full h-full object-contain opacity-50"
+        style={{ zIndex: 0 }}
         autoPlay 
         loop 
         muted 
@@ -157,12 +158,12 @@ const Auth = () => {
       </video>
       
       {/* Overlay for better readability */}
-      <div className="fixed inset-0 bg-background/80 -z-5"></div>
+      <div className="fixed inset-0 bg-background/70" style={{ zIndex: 1 }}></div>
       
-      <div className="fixed top-4 right-4 z-50">
+      <div className="fixed top-4 right-4" style={{ zIndex: 50 }}>
         <OfflineIndicator />
       </div>
-      <Card className="w-full max-w-md shadow-medium backdrop-blur-md bg-card/95">
+      <Card className="w-full max-w-md shadow-medium backdrop-blur-md bg-card/95 relative" style={{ zIndex: 10 }}>
         <CardHeader className="text-center space-y-4">
           <div className="flex justify-center">
             <img 
