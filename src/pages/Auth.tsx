@@ -146,7 +146,6 @@ const Auth = () => {
         className="fixed inset-0 w-full h-full object-contain opacity-50"
         style={{ zIndex: 0 }}
         autoPlay 
-        loop 
         muted 
         playsInline
         preload="auto"
@@ -156,9 +155,6 @@ const Auth = () => {
       >
         <source src="/videos/port-atlas-background.mp4" type="video/mp4" />
       </video>
-      
-      {/* Overlay for better readability */}
-      <div className="fixed inset-0 bg-background/10" style={{ zIndex: 1 }}></div>
       
       <div className="fixed top-4 right-4" style={{ zIndex: 50 }}>
         <OfflineIndicator />
