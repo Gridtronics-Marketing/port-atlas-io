@@ -173,6 +173,7 @@ export const useDropPointPhotos = (dropPointId?: string, locationId?: string) =>
   };
 
   const updatePhoto = async (id: string, updates: {
+    photo_url?: string;
     description?: string;
     annotation_data?: string;
     annotation_metadata?: Record<string, any>;

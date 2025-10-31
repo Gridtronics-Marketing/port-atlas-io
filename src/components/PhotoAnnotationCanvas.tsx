@@ -4,6 +4,7 @@ import { PhotoAnnotationToolbar, type AnnotationTool } from "./PhotoAnnotationTo
 import { ScaleCalibrationDialog } from "./ScaleCalibrationDialog";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import {
   type Measurement,
   type MeasurementScale,
@@ -23,6 +24,7 @@ interface PhotoAnnotationCanvasProps {
     created_at?: string;
   };
   onSave: (annotationData: string, metadata: any) => Promise<void>;
+  onReupload?: (newPhotoUrl: string, annotationData: string) => Promise<void>;
   onClose: () => void;
   readOnly?: boolean;
 }
@@ -33,6 +35,7 @@ export const PhotoAnnotationCanvas = ({
   existingAnnotations,
   metadata,
   onSave,
+  onReupload,
   onClose,
   readOnly = false,
 }: PhotoAnnotationCanvasProps) => {
@@ -44,6 +47,7 @@ export const PhotoAnnotationCanvas = ({
   const [brushSize, setBrushSize] = useState(5);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isReuploading, setIsReuploading] = useState(false);
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
   
@@ -586,28 +590,63 @@ export const PhotoAnnotationCanvas = ({
     }
   }, [fabricCanvas, metadata, onSave, readOnly, measurements, scale]);
 
-  const handleExport = useCallback(() => {
-    if (!fabricCanvas) return;
+  const handleReupload = useCallback(async () => {
+    if (!fabricCanvas || !onReupload) return;
 
     try {
-      // Export canvas with background image and annotations
+      setIsReuploading(true);
+
+      // Generate composite image with annotations
       const dataURL = fabricCanvas.toDataURL({
         format: "png",
         quality: 1.0,
         multiplier: 2, // Export at 2x resolution for quality
       });
-      
-      const link = document.createElement("a");
-      link.download = `annotated-${photoId}.png`;
-      link.href = dataURL;
-      link.click();
-      
-      toast.success("Annotated photo exported");
+
+      // Convert data URL to blob
+      const response = await fetch(dataURL);
+      const blob = await response.blob();
+
+      // Extract original filename and create new filename
+      const originalFileName = photoUrl.split('/').pop()?.split('?')[0] || 'photo';
+      const baseName = originalFileName.replace(/\.[^/.]+$/, ''); // Remove extension
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T').join('_').split('_')[0] + '_' + new Date().toISOString().replace(/[:.]/g, '-').split('T')[1].split('Z')[0];
+      const newFileName = `${baseName}_modified_${timestamp}.png`;
+
+      // Upload to Supabase Storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('room-views')
+        .upload(newFileName, blob, {
+          contentType: 'image/png',
+          upsert: false,
+        });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('room-views')
+        .getPublicUrl(newFileName);
+
+      // Get current annotation data
+      const annotationData = JSON.stringify(fabricCanvas.toJSON());
+
+      // Call onReupload to update the photo URL in the database
+      await onReupload(publicUrl, annotationData);
+
+      toast.success(`Photo re-uploaded as ${newFileName}`);
+
+      // Close the annotation canvas after successful upload
+      setTimeout(() => {
+        onClose();
+      }, 500);
     } catch (error) {
-      console.error("Error exporting photo:", error);
-      toast.error("Failed to export annotated photo");
+      console.error('Error re-uploading photo:', error);
+      toast.error("Failed to re-upload the annotated photo");
+    } finally {
+      setIsReuploading(false);
     }
-  }, [fabricCanvas, photoId]);
+  }, [fabricCanvas, onReupload, photoUrl, onClose]);
 
   return (
     <div className="fixed inset-0 bg-background/95 z-50 flex flex-col">
@@ -657,11 +696,12 @@ export const PhotoAnnotationCanvas = ({
           onRedo={handleRedo}
           onClear={handleClear}
           onSave={() => handleSave(false)}
-          onExport={handleExport}
+          onReupload={handleReupload}
           onClose={onClose}
           canUndo={canUndo}
           canRedo={canRedo}
           isSaving={isSaving}
+          isReuploading={isReuploading}
           hasScale={!!scale}
         />
       )}

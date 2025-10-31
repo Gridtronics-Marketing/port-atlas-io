@@ -58,7 +58,7 @@ interface PhotoItem {
 interface EnhancedPhotoGalleryProps {
   photos: PhotoItem[];
   onDeletePhoto: (photoId: string, photoUrl: string) => Promise<void>;
-  onUpdatePhoto?: (photoId: string, updates: { annotation_data?: string; annotation_metadata?: Record<string, any> }) => Promise<void>;
+  onUpdatePhoto?: (photoId: string, updates: { photo_url?: string; annotation_data?: string; annotation_metadata?: Record<string, any> }) => Promise<void>;
   loading?: boolean;
   emptyMessage?: string;
   title?: string;
@@ -331,6 +331,18 @@ export const EnhancedPhotoGallery: React.FC<EnhancedPhotoGalleryProps> = ({
               await onUpdatePhoto(expandedPhoto.id, {
                 annotation_data: annotationData,
                 annotation_metadata: metadata,
+              });
+            }
+          }}
+          onReupload={async (newPhotoUrl, annotationData) => {
+            if (onUpdatePhoto) {
+              await onUpdatePhoto(expandedPhoto.id, {
+                photo_url: newPhotoUrl,
+                annotation_data: annotationData,
+                annotation_metadata: {
+                  ...expandedPhoto.annotation_metadata,
+                  last_modified: new Date().toISOString(),
+                },
               });
             }
           }}

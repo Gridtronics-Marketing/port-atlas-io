@@ -10,7 +10,7 @@ import {
   Undo2,
   Redo2,
   Trash2,
-  Download,
+  Upload,
   Save,
   X,
   Ruler,
@@ -32,11 +32,12 @@ interface PhotoAnnotationToolbarProps {
   onRedo: () => void;
   onClear: () => void;
   onSave: () => void;
-  onExport: () => void;
+  onReupload: () => void;
   onClose: () => void;
   canUndo: boolean;
   canRedo: boolean;
   isSaving?: boolean;
+  isReuploading?: boolean;
   hasScale?: boolean;
 }
 
@@ -63,11 +64,12 @@ export const PhotoAnnotationToolbar = ({
   onRedo,
   onClear,
   onSave,
-  onExport,
+  onReupload,
   onClose,
   canUndo,
   canRedo,
   isSaving,
+  isReuploading,
   hasScale = false,
 }: PhotoAnnotationToolbarProps) => {
   const [showColorPicker, setShowColorPicker] = useState(false);
@@ -271,11 +273,12 @@ export const PhotoAnnotationToolbar = ({
             <Button
               variant="outline"
               size="sm"
-              onClick={onExport}
+              onClick={onReupload}
+              disabled={isReuploading}
               className="h-10 px-3"
             >
-              <Download className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">Export</span>
+              <Upload className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">{isReuploading ? "Uploading..." : "Re-upload"}</span>
             </Button>
             <Button
               variant="outline"
