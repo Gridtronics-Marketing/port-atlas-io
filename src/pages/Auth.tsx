@@ -16,7 +16,7 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { useEnhancedOfflineSync } from '@/hooks/useEnhancedOfflineSync';
 import { Loader2, Shield, Wifi, Download } from 'lucide-react';
-import portAtlasLogo from "@/assets/port-atlas-logo.png";
+import portAtlasLogo from "@/assets/port-atlas-logo-new.png";
 import { OfflineIndicator } from '@/components/OfflineIndicator';
 
 const Auth = () => {
@@ -140,17 +140,35 @@ const Auth = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-screen relative flex items-center justify-center p-4">
+      {/* Animated Background Video */}
+      <video 
+        className="fixed inset-0 w-full h-full object-cover -z-10 opacity-30"
+        autoPlay 
+        loop 
+        muted 
+        playsInline
+        preload="auto"
+        onError={(e) => {
+          e.currentTarget.style.display = 'none';
+        }}
+      >
+        <source src="/videos/port-atlas-background.mp4" type="video/mp4" />
+      </video>
+      
+      {/* Overlay for better readability */}
+      <div className="fixed inset-0 bg-background/80 -z-5"></div>
+      
       <div className="fixed top-4 right-4 z-50">
         <OfflineIndicator />
       </div>
-      <Card className="w-full max-w-md shadow-medium">
+      <Card className="w-full max-w-md shadow-medium backdrop-blur-md bg-card/95">
         <CardHeader className="text-center space-y-4">
           <div className="flex justify-center">
             <img 
               src={portAtlasLogo} 
               alt="Port Atlas" 
-              className="h-12 w-auto"
+              className="h-16 w-auto"
             />
           </div>
           <div>
