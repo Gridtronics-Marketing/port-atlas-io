@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.9.0";
+export const APP_VERSION = "0.9.1";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,17 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "0.9.1",
+    date: "2025-01-31",
+    changes: [
+      "Replaced photo annotation Export button with Re-upload functionality",
+      "Annotated photos now automatically save back to the database with '_modified_' timestamp in filename",
+      "Enhanced splash screen with animated background video featuring Port Atlas mascot",
+      "Updated Port Atlas logo to new branded version on login page",
+      "Improved visual design of authentication page with video overlay and enhanced backdrop blur"
+    ]
+  },
   {
     version: "0.9.0",
     date: "2025-01-29",
