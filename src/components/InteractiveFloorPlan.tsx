@@ -82,6 +82,12 @@ export const InteractiveFloorPlan = ({
   const [showUseAsFloorPlanDialog, setShowUseAsFloorPlanDialog] = useState(false);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [uploadedFileUrl, setUploadedFileUrl] = useState<string | undefined>(undefined);
+  const [showMoveConfirmation, setShowMoveConfirmation] = useState(false);
+  const [pendingMove, setPendingMove] = useState<{
+    item: any;
+    type: 'dropPoint' | 'roomView';
+    originalPosition: { x: number; y: number };
+  } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const drawingCanvasRef = useRef<DrawingCanvasRef>(null);
   const { toast } = useToast();
@@ -247,47 +253,91 @@ export const InteractiveFloorPlan = ({
   const handleMouseUp = async () => {
     if (!isMouseDown) return;
 
-    // If we were dragging, save the position
+    // If we were dragging, show confirmation dialog
     if (isDragging && draggedPoint) {
-      try {
-        await updateDropPoint(draggedPoint.id, {
-          x_coordinate: draggedPoint.x_coordinate,
-          y_coordinate: draggedPoint.y_coordinate
-        });
-        toast({
-          title: "Drop Point Moved",
-          description: `${draggedPoint.label} has been repositioned.`,
-        });
-      } catch (error) {
-        console.error('Error updating drop point position:', error);
-        toast({
-          title: "Error",
-          description: "Failed to update drop point position.",
-          variant: "destructive",
-        });
-      }
+      const originalPoint = dropPoints.find(dp => dp.id === draggedPoint.id);
+      setPendingMove({
+        item: draggedPoint,
+        type: 'dropPoint',
+        originalPosition: {
+          x: originalPoint?.x_coordinate || draggedPoint.x_coordinate,
+          y: originalPoint?.y_coordinate || draggedPoint.y_coordinate
+        }
+      });
+      setShowMoveConfirmation(true);
     } else if (isDragging && draggedRoomView) {
-      try {
-        await updateRoomView(draggedRoomView.id, {
-          x_coordinate: draggedRoomView.x_coordinate,
-          y_coordinate: draggedRoomView.y_coordinate
-        });
-        toast({
-          title: "Room View Moved",
-          description: `${draggedRoomView.room_name || 'Room view'} has been repositioned.`,
-        });
-      } catch (error) {
-        console.error('Error updating room view position:', error);
-        toast({
-          title: "Error",
-          description: "Failed to update room view position.",
-          variant: "destructive",
-        });
-      }
+      const originalView = roomViews.find(rv => rv.id === draggedRoomView.id);
+      setPendingMove({
+        item: draggedRoomView,
+        type: 'roomView',
+        originalPosition: {
+          x: originalView?.x_coordinate || draggedRoomView.x_coordinate,
+          y: originalView?.y_coordinate || draggedRoomView.y_coordinate
+        }
+      });
+      setShowMoveConfirmation(true);
     }
 
     setIsMouseDown(false);
     setIsDragging(false);
+  };
+
+  const handleConfirmMove = async () => {
+    if (!pendingMove) return;
+    
+    try {
+      if (pendingMove.type === 'dropPoint') {
+        await updateDropPoint(pendingMove.item.id, {
+          x_coordinate: pendingMove.item.x_coordinate,
+          y_coordinate: pendingMove.item.y_coordinate
+        });
+        toast({
+          title: "Drop Point Moved",
+          description: `${pendingMove.item.label} has been repositioned.`,
+        });
+      } else if (pendingMove.type === 'roomView') {
+        await updateRoomView(pendingMove.item.id, {
+          x_coordinate: pendingMove.item.x_coordinate,
+          y_coordinate: pendingMove.item.y_coordinate
+        });
+        toast({
+          title: "Room View Moved",
+          description: `${pendingMove.item.room_name || 'Room view'} has been repositioned.`,
+        });
+      }
+    } catch (error) {
+      console.error('Error updating position:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update position.",
+        variant: "destructive",
+      });
+      // Refresh to revert to original position
+      if (pendingMove.type === 'dropPoint') {
+        await fetchDropPoints();
+      } else {
+        await fetchRoomViews();
+      }
+    } finally {
+      setShowMoveConfirmation(false);
+      setPendingMove(null);
+      setDraggedPoint(null);
+      setDraggedRoomView(null);
+      setDragOffset({ x: 0, y: 0 });
+      setMouseDownPosition({ x: 0, y: 0 });
+    }
+  };
+
+  const handleCancelMove = async () => {
+    // Refresh data to revert to original positions
+    if (pendingMove?.type === 'dropPoint') {
+      await fetchDropPoints();
+    } else if (pendingMove?.type === 'roomView') {
+      await fetchRoomViews();
+    }
+    
+    setShowMoveConfirmation(false);
+    setPendingMove(null);
     setDraggedPoint(null);
     setDraggedRoomView(null);
     setDragOffset({ x: 0, y: 0 });
@@ -1304,6 +1354,25 @@ export const InteractiveFloorPlan = ({
           roomView={selectedRoomView}
           locationId={locationId}
         />
+
+      {/* Move Confirmation Dialog */}
+      <AlertDialog open={showMoveConfirmation} onOpenChange={setShowMoveConfirmation}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Move</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to move this {pendingMove?.type === 'dropPoint' ? 'drop point' : 'room view'}?
+              {pendingMove?.type === 'dropPoint' && pendingMove.item?.label && 
+                ` (${pendingMove.item.label})`
+              }
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelMove}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmMove}>Confirm</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Use As Floor Plan Confirmation Dialog */}
       <AlertDialog open={showUseAsFloorPlanDialog} onOpenChange={setShowUseAsFloorPlanDialog}>
