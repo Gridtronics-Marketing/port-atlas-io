@@ -1,4 +1,4 @@
-export const APP_VERSION = "1.0.0";
+export const APP_VERSION = "1.1.0";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,18 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "1.1.0",
+    date: "2025-02-01",
+    changes: [
+      "Added user profiles system with automatic creation on signup",
+      "Enhanced role management with batch assignment capability",
+      "Multiple roles can now be assigned to users simultaneously",
+      "Improved role management UI with checkboxes for multi-select",
+      "Added profiles table linked to auth.users for better user management",
+      "Created useProfiles hook for managing user profiles with roles"
+    ]
+  },
   {
     version: "1.0.0",
     date: "2025-02-01",
