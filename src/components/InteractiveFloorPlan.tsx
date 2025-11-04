@@ -23,6 +23,8 @@ import { FloorPlanDrawingCanvas, type DrawingCanvasRef } from './FloorPlanDrawin
 import { FloorPlanDrawingViewer } from './FloorPlanDrawingViewer';
 import { DropPointColorLegend } from './DropPointColorLegend';
 import { FloorPlanUploadDialog } from './FloorPlanUploadDialog';
+import { FloorPlanFilterDialog, type FloorPlanFilters } from './FloorPlanFilterDialog';
+import { WalkThroughNotesPanel } from './WalkThroughNotesPanel';
 import { useDropPoints } from '@/hooks/useDropPoints';
 import { useRoomViews } from '@/hooks/useRoomViews';
 import { useCanvasDrawings } from '@/hooks/useCanvasDrawings';
@@ -77,7 +79,12 @@ export const InteractiveFloorPlan = ({
   const [canRedo, setCanRedo] = useState(false);
   const [drawingData, setDrawingData] = useState<string>('');
   const [containerDimensions, setContainerDimensions] = useState({ width: 0, height: 0 });
-  const [showLabels, setShowLabels] = useState(true);
+  const [filters, setFilters] = useState<FloorPlanFilters>({
+    showDropPointLabels: true,
+    showRoomViewDots: true,
+    dropPointTypes: ['data', 'wifi', 'camera', 'mdf_idf', 'access_control', 'av', 'other'],
+    dropPointStatuses: ['planned', 'roughed_in', 'finished', 'tested'],
+  });
   const [hasSavedDrawing, setHasSavedDrawing] = useState(false);
   const [showUseAsFloorPlanDialog, setShowUseAsFloorPlanDialog] = useState(false);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
@@ -115,6 +122,15 @@ export const InteractiveFloorPlan = ({
   // Filter drop points and room views for current floor
   const floorDropPoints = dropPoints.filter(dp => dp.floor === floorNumber);
   const floorRoomViews = roomViews.filter(rv => rv.floor === floorNumber);
+
+  // Filter drop points and room views based on filters
+  const filteredDropPoints = floorDropPoints.filter(dp => {
+    const typeMatch = filters.dropPointTypes.includes(dp.point_type || 'data');
+    const statusMatch = filters.dropPointStatuses.includes(dp.status || 'planned');
+    return typeMatch && statusMatch;
+  });
+
+  const filteredRoomViews = filters.showRoomViewDots ? floorRoomViews : [];
 
   const getFileExtension = (url?: string, path?: string, name?: string) => {
     if (!url && !path && !name) return '';
@@ -769,34 +785,44 @@ export const InteractiveFloorPlan = ({
   const getDropPointColor = (status: string) => {
     switch (status) {
       case 'planned':
-        return 'bg-gray-500 border-gray-600';
+        return 'bg-red-500 border-red-600';
+      case 'roughed_in':
+        return 'bg-yellow-500 border-yellow-600';
+      case 'finished':
+        return 'bg-green-500 border-green-600';
+      case 'tested':
+        return 'bg-green-500 border-green-600';
+      // Legacy status support
       case 'installed':
         return 'bg-blue-500 border-blue-600';
-      case 'tested':
-        return 'bg-yellow-500 border-yellow-600';
       case 'active':
         return 'bg-green-500 border-green-600';
       case 'inactive':
         return 'bg-red-500 border-red-600';
       default:
-        return 'bg-gray-500 border-gray-600';
+        return 'bg-red-500 border-red-600';
     }
   };
 
   const getStatusTextColor = (status: string) => {
     switch (status) {
       case 'planned':
-        return 'text-gray-600';
+        return 'text-red-600';
+      case 'roughed_in':
+        return 'text-yellow-600';
+      case 'finished':
+        return 'text-green-600';
+      case 'tested':
+        return 'text-green-600';
+      // Legacy status support
       case 'installed':
         return 'text-blue-600';
-      case 'tested':
-        return 'text-yellow-600';
       case 'active':
         return 'text-green-600';
       case 'inactive':
         return 'text-red-600';
       default:
-        return 'text-gray-600';
+        return 'text-red-600';
     }
   };
 
@@ -816,15 +842,11 @@ export const InteractiveFloorPlan = ({
               <Upload className="h-4 w-4 mr-2" />
               Upload Map
             </Button>
-            <Button
-              variant={showLabels ? "default" : "outline"}
-              size="sm"
-              onClick={() => setShowLabels(!showLabels)}
-              disabled={isDrawingMode}
-            >
-              <span className="text-xs mr-2">🏷️</span>
-              {showLabels ? 'Hide Labels' : 'Show Labels'}
-            </Button>
+            <FloorPlanFilterDialog
+              filters={filters}
+              onFiltersChange={setFilters}
+              isDrawingMode={isDrawingMode}
+            />
             <Button
               variant={isDrawingMode ? "default" : "outline"}
               size="sm"
@@ -1133,7 +1155,7 @@ export const InteractiveFloorPlan = ({
           {/* Drop Points Overlay - Only show for valid locations */}
           {validLocationId && (
             <TooltipProvider>
-              {floorDropPoints.map((point) => {
+              {filteredDropPoints.map((point) => {
                 // Use dragged point coordinates if this point is being dragged
                 const displayPoint = draggedPoint && draggedPoint.id === point.id ? draggedPoint : point;
                 
@@ -1141,12 +1163,12 @@ export const InteractiveFloorPlan = ({
                   <Tooltip key={point.id}>
                     <TooltipTrigger asChild>
                        <>
-                         <div
-                           className={`absolute transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full border-2 flex items-center justify-center text-white font-bold hover:scale-110 transition-transform shadow-lg ${
-                             draggedPoint && draggedPoint.id === point.id 
-                               ? `cursor-grabbing scale-110 ${getDropPointColor(point.status)}` 
-                               : `cursor-grab ${getDropPointColor(point.status)}`
-                           }`}
+                          <div
+                            className={`absolute transform -translate-x-1/2 -translate-y-1/2 w-6 h-6 rounded-full border-2 flex items-center justify-center text-white font-bold hover:scale-110 transition-transform shadow-lg ${
+                              draggedPoint && draggedPoint.id === point.id 
+                                ? `cursor-grabbing scale-110 ${getDropPointColor(point.status)}` 
+                                : `cursor-grab ${getDropPointColor(point.status)}`
+                            }`}
                            onMouseDown={(e) => !isDrawingMode && handlePointerDown(e, point, 'dropPoint')}
                            onTouchStart={(e) => !isDrawingMode && handlePointerDown(e, point, 'dropPoint')}
                            onClick={(e) => {
@@ -1165,11 +1187,14 @@ export const InteractiveFloorPlan = ({
                              pointerEvents: isDrawingMode ? 'none' : 'auto'
                            }}
                          >
-                           <span className="text-xs">{getDropPointIcon(point.point_type)}</span>
+                            <span className="text-[10px]">{getDropPointIcon(point.point_type)}</span>
+                            {point.status === 'tested' && (
+                              <div className="absolute inset-0 flex items-center justify-center text-white text-[8px] font-bold">✓</div>
+                            )}
                          </div>
-                         
-                          {/* Persistent Label for Drop Point - Updated with Cable Count */}
-                          {showLabels && (
+                          
+                           {/* Persistent Label for Drop Point - Updated with Cable Count */}
+                           {filters.showDropPointLabels && (
                             <div
                               className="absolute pointer-events-none select-none"
                               style={{
@@ -1179,7 +1204,7 @@ export const InteractiveFloorPlan = ({
                                 zIndex: 5,
                               }}
                             >
-                            <div className="bg-black/80 backdrop-blur-sm text-white px-2 py-1 rounded-md text-xs whitespace-nowrap shadow-lg border border-white/20">
+                            <div className="bg-black/80 backdrop-blur-sm text-white px-1.5 py-0.5 rounded-md text-[10px] whitespace-nowrap shadow-md border border-white/20">
                                 <div className="font-medium text-blue-300 text-[10px]">
                                   {point.cable_count ? `${point.cable_count} Cable${point.cable_count > 1 ? 's' : ''}` : 'TBD'}
                                 </div>
@@ -1233,33 +1258,9 @@ export const InteractiveFloorPlan = ({
                          }}
                        >
                          <Camera className="h-4 w-4" />
-                       </div>
-                       
-                       {/* Persistent Label for Room View */}
-                       {showLabels && (
-                         <div
-                           className="absolute pointer-events-none select-none"
-                           style={{
-                             left: `${displayRoomView.x_coordinate || 50}%`,
-                             top: `${displayRoomView.y_coordinate || 50}%`,
-                             transform: 'translate(20px, -50%)',
-                             zIndex: 5,
-                           }}
-                         >
-                           <div className="bg-black/80 backdrop-blur-sm text-white px-2 py-1 rounded-md text-xs whitespace-nowrap shadow-lg border border-white/20">
-                             <div className="font-medium text-blue-300">
-                               📷 {roomView.room_name || 'Room View'}
-                             </div>
-                             {roomView.employee && (
-                               <div className="text-xs text-gray-300">
-                                 By {roomView.employee.first_name} {roomView.employee.last_name}
-                               </div>
-                             )}
-                           </div>
-                         </div>
-                       )}
-                     </>
-                </TooltipTrigger>
+                        </div>
+                      </>
+                 </TooltipTrigger>
                 <TooltipContent className="bg-popover border">
                   <div className="text-sm">
                     <p className="font-medium">{roomView.room_name || 'Room View'}</p>
@@ -1404,6 +1405,11 @@ export const InteractiveFloorPlan = ({
         floorNumber={floorNumber}
         onUploadSuccess={handleUploadSuccess}
       />
+
+      {/* Walk-Through Notes Panel */}
+      {validLocationId && (
+        <WalkThroughNotesPanel locationId={locationId} floor={floorNumber} />
+      )}
     </Card>
   );
 };

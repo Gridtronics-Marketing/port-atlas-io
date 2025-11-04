@@ -1030,18 +1030,25 @@ export type Database = {
           installed_by: string | null
           installed_date: string | null
           ip_address: unknown
+          is_locked: boolean | null
           label: string | null
           location_id: string | null
+          locked_at: string | null
+          locked_by: string | null
+          locking_mechanism: string | null
           mac_address: string | null
           notes: string | null
+          patch_panel_config: Json | null
           patch_panel_port: string | null
           point_type: string | null
+          rex_devices: string[] | null
           room: string | null
           status: string | null
           switch_port: string | null
           test_results: Json | null
           tested_by: string | null
           tested_date: string | null
+          type_specific_data: Json | null
           updated_at: string
           vlan: string | null
           x_coordinate: number | null
@@ -1056,18 +1063,25 @@ export type Database = {
           installed_by?: string | null
           installed_date?: string | null
           ip_address?: unknown
+          is_locked?: boolean | null
           label?: string | null
           location_id?: string | null
+          locked_at?: string | null
+          locked_by?: string | null
+          locking_mechanism?: string | null
           mac_address?: string | null
           notes?: string | null
+          patch_panel_config?: Json | null
           patch_panel_port?: string | null
           point_type?: string | null
+          rex_devices?: string[] | null
           room?: string | null
           status?: string | null
           switch_port?: string | null
           test_results?: Json | null
           tested_by?: string | null
           tested_date?: string | null
+          type_specific_data?: Json | null
           updated_at?: string
           vlan?: string | null
           x_coordinate?: number | null
@@ -1082,18 +1096,25 @@ export type Database = {
           installed_by?: string | null
           installed_date?: string | null
           ip_address?: unknown
+          is_locked?: boolean | null
           label?: string | null
           location_id?: string | null
+          locked_at?: string | null
+          locked_by?: string | null
+          locking_mechanism?: string | null
           mac_address?: string | null
           notes?: string | null
+          patch_panel_config?: Json | null
           patch_panel_port?: string | null
           point_type?: string | null
+          rex_devices?: string[] | null
           room?: string | null
           status?: string | null
           switch_port?: string | null
           test_results?: Json | null
           tested_by?: string | null
           tested_date?: string | null
+          type_specific_data?: Json | null
           updated_at?: string
           vlan?: string | null
           x_coordinate?: number | null
@@ -3660,6 +3681,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "vlans_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      walk_through_notes: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          floor: number
+          id: string
+          location_id: string | null
+          note_text: string | null
+          updated_at: string | null
+          voice_recording_url: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          floor: number
+          id?: string
+          location_id?: string | null
+          note_text?: string | null
+          updated_at?: string | null
+          voice_recording_url?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          floor?: number
+          id?: string
+          location_id?: string | null
+          note_text?: string | null
+          updated_at?: string | null
+          voice_recording_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "walk_through_notes_location_id_fkey"
             columns: ["location_id"]
             isOneToOne: false
             referencedRelation: "locations"
