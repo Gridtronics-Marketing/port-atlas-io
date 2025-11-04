@@ -306,10 +306,26 @@ export const PhotoAnnotationCanvas = ({
       fabricCanvas.freeDrawingBrush = pencilBrush;
       console.log("Pencil brush configured:", { color: activeColor, width: brushSize });
     } else if (activeTool === "eraser") {
-      const eraserBrush = new PencilBrush(fabricCanvas);
-      eraserBrush.color = "rgba(255, 255, 255, 1)";
-      eraserBrush.width = brushSize * 2;
-      fabricCanvas.freeDrawingBrush = eraserBrush;
+      // Instead of drawing white, enable selection mode for eraser
+      fabricCanvas.isDrawingMode = false;
+      fabricCanvas.selection = true;
+      
+      // Set up click-to-delete behavior
+      const handleEraserClick = (e: any) => {
+        if (e.target && e.target !== fabricCanvas.backgroundImage) {
+          fabricCanvas.remove(e.target);
+          fabricCanvas.renderAll();
+          saveHistory();
+          toast.success("Object removed");
+        }
+      };
+      
+      fabricCanvas.on('mouse:down', handleEraserClick);
+      
+      // Clean up on tool change
+      return () => {
+        fabricCanvas.off('mouse:down', handleEraserClick);
+      };
     } else if (activeTool === "text") {
       fabricCanvas.isDrawingMode = false;
       const text = new IText("Double click to edit", {
@@ -489,17 +505,20 @@ export const PhotoAnnotationCanvas = ({
     // Limit history size (25 on mobile, 50 on desktop)
     const maxHistory = window.innerWidth < 768 ? 25 : 50;
     
+    // Remove any future history when making a new change
     historyRef.current = historyRef.current.slice(0, historyStepRef.current + 1);
     historyRef.current.push(json);
     
+    // Maintain max history size
     if (historyRef.current.length > maxHistory) {
       historyRef.current.shift();
     } else {
       historyStepRef.current++;
     }
 
+    // Update undo/redo button states
     setCanUndo(historyStepRef.current > 0);
-    setCanRedo(false);
+    setCanRedo(historyStepRef.current < historyRef.current.length - 1);
   }, [fabricCanvas]);
 
   const handleCanvasChange = useCallback(() => {

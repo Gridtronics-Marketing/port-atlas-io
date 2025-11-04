@@ -128,14 +128,38 @@ export const FloorPlanUploadDialog = ({
           setPreviewUrl(null);
           return;
         }
+        
+        // Auto-resize if image is too large
         if (img.width > 4000 || img.height > 4000) {
-          toast({
-            title: "Image Too Large",
-            description: "Please select an image smaller than 4000x4000 pixels.",
-            variant: "destructive",
-          });
-          setSelectedFile(null);
-          setPreviewUrl(null);
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          
+          let newWidth = img.width;
+          let newHeight = img.height;
+          
+          if (img.width > img.height) {
+            newWidth = 4000;
+            newHeight = (img.height / img.width) * 4000;
+          } else {
+            newHeight = 4000;
+            newWidth = (img.width / img.height) * 4000;
+          }
+          
+          canvas.width = newWidth;
+          canvas.height = newHeight;
+          ctx?.drawImage(img, 0, 0, newWidth, newHeight);
+          
+          canvas.toBlob((blob) => {
+            if (blob) {
+              const resizedFile = new File([blob], file.name, { type: 'image/png' });
+              setSelectedFile(resizedFile);
+              toast({
+                title: "Image Resized",
+                description: `Image was automatically resized from ${img.width}x${img.height} to ${Math.round(newWidth)}x${Math.round(newHeight)}`,
+              });
+            }
+          }, 'image/png', 0.95);
+          
           return;
         }
       };

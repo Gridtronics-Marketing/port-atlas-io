@@ -1,4 +1,4 @@
-export const APP_VERSION = "0.9.1";
+export const APP_VERSION = "1.0.0";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,22 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "1.0.0",
+    date: "2025-02-01",
+    changes: [
+      "Added Field Photographer permission role for photo-only access",
+      "Fixed annotation eraser to properly remove objects instead of painting white",
+      "Fixed undo/redo functionality with improved history management",
+      "Enhanced offline photo queue with IndexedDB for automatic sync on reconnection",
+      "Added automatic image resize for photos larger than 4000px",
+      "Implemented 7 distinct drop point types with type-specific data fields",
+      "Added lock/unlock system to prevent accidental movement of drop points",
+      "New status visualization: red (planned), yellow (installed), green (tested), green+checkmark (passed)",
+      "Created walk-through notes panel for location-specific field notes",
+      "Enhanced filter system with collapsible sections and better organization"
+    ]
+  },
   {
     version: "0.9.1",
     date: "2025-01-31",

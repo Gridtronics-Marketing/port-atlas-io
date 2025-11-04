@@ -72,7 +72,8 @@ const DEFAULT_RESOURCES = [
   'user_management',
   'capacity_management',
   'change_logs',
-  'canvas_drawings'
+  'canvas_drawings',
+  'field_photographer'
 ];
 
 export const GranularPermissionsManager = () => {
@@ -137,6 +138,17 @@ export const GranularPermissionsManager = () => {
       
       if (readWriteResources.includes(resource)) return true;
       if (readOnlyResources.includes(resource) && action === 'read') return true;
+      return false;
+    }
+    
+    // Field Photographer gets photo-only permissions
+    if (roles.includes('field_photographer')) {
+      const photoResources = ['photo_uploads', 'room_views', 'drop_point_photos'];
+      if (photoResources.includes(resource)) {
+        return ['create', 'read', 'update'].includes(action); // No delete
+      }
+      // Read-only access to locations and drop points to know where to upload
+      if (['locations', 'drop_points'].includes(resource) && action === 'read') return true;
       return false;
     }
     
