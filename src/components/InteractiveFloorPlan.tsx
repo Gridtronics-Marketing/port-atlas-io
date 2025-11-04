@@ -205,6 +205,16 @@ export const InteractiveFloorPlan = ({
     e.preventDefault(); // Prevent scrolling on touch
     if (!containerRef.current) return;
 
+    // Prevent dragging locked drop points
+    if (type === 'dropPoint' && (item as any).is_locked) {
+      toast({
+        title: "Drop Point Locked",
+        description: "This drop point is locked. Unlock it in the details modal to move it.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const { clientX, clientY } = getEventCoordinates(e);
     const rect = containerRef.current.getBoundingClientRect();
     const pointX = (item.x_coordinate / 100) * rect.width;

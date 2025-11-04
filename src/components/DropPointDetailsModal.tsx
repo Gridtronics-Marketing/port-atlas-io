@@ -48,6 +48,10 @@ import { useToast } from '@/hooks/use-toast';
 import { EnhancedPhotoGallery } from './EnhancedPhotoGallery';
 import { PhotoCaptureCard } from './PhotoCaptureCard';
 import { TestResultsUpload } from './TestResultsUpload';
+import { DropPointTypeSpecificFields } from './DropPointTypeSpecificFields';
+import { Lock, Unlock } from 'lucide-react';
+import { useUserRoles } from '@/hooks/useUserRoles';
+import { supabase } from '@/integrations/supabase/client';
 
 interface DropPointDetailsModalProps {
   open: boolean;
@@ -65,12 +69,15 @@ export const DropPointDetailsModal: React.FC<DropPointDetailsModalProps> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState('details');
   const [editData, setEditData] = useState<Partial<DropPoint>>({});
+  const [typeSpecificData, setTypeSpecificData] = useState<any>({});
+  const [isTogglingLock, setIsTogglingLock] = useState(false);
   
   const { updateDropPoint, deleteDropPoint } = useDropPoints(locationId);
   const { photos, loading: photosLoading, addPhoto, updatePhoto, deletePhoto } = useDropPointPhotos(dropPoint?.id);
   const { employee: currentEmployee } = useCurrentEmployee();
   const { capturePhoto, selectFromGallery } = usePhotoCapture();
   const { toast } = useToast();
+  const { hasAnyRole } = useUserRoles();
 
   React.useEffect(() => {
     if (dropPoint) {
@@ -82,6 +89,7 @@ export const DropPointDetailsModal: React.FC<DropPointDetailsModalProps> = ({
         point_type: dropPoint.point_type,
         status: dropPoint.status,
       });
+      setTypeSpecificData((dropPoint as any).type_specific_data || {});
     }
   }, [dropPoint]);
 
@@ -98,7 +106,8 @@ export const DropPointDetailsModal: React.FC<DropPointDetailsModalProps> = ({
         ...editData,
         cable_count: editData.cable_count === null || editData.cable_count === undefined 
           ? null 
-          : parseInt(editData.cable_count as any)
+          : parseInt(editData.cable_count as any),
+        type_specific_data: typeSpecificData,
       };
       
       await updateDropPoint(dropPoint.id, dataToSave);
@@ -118,6 +127,54 @@ export const DropPointDetailsModal: React.FC<DropPointDetailsModalProps> = ({
         description: "Failed to update drop point. Please try again.",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleToggleLock = async () => {
+    if (!dropPoint) return;
+
+    // Check permissions
+    const canLock = await hasAnyRole(['admin', 'hr_manager', 'project_manager']);
+    if (!canLock) {
+      toast({
+        title: "Permission Denied",
+        description: "You don't have permission to lock/unlock drop points.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsTogglingLock(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      const newLockState = !(dropPoint as any).is_locked;
+      await updateDropPoint(dropPoint.id, {
+        is_locked: newLockState,
+        locked_by: newLockState ? user?.id : null,
+        locked_at: newLockState ? new Date().toISOString() : null,
+      } as any);
+
+      toast({
+        title: newLockState ? "Drop Point Locked" : "Drop Point Unlocked",
+        description: newLockState 
+          ? "This drop point is now locked and cannot be moved." 
+          : "This drop point can now be moved on the floor plan.",
+      });
+
+      // Refresh to show updated data
+      if (onOpenChange) {
+        onOpenChange(false);
+      }
+    } catch (error) {
+      console.error('Error toggling lock:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update lock status.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsTogglingLock(false);
     }
   };
 
@@ -233,11 +290,35 @@ export const DropPointDetailsModal: React.FC<DropPointDetailsModalProps> = ({
             Drop Point Details: {dropPoint.label}
           </DialogTitle>
           <div className="flex items-center gap-2 pt-2">
+            {(dropPoint as any).is_locked && (
+              <Badge variant="secondary" className="flex items-center gap-1">
+                <Lock className="w-3 h-3" />
+                Locked
+              </Badge>
+            )}
             {!isEditing ? (
               <>
                 <Button variant="outline" size="sm" onClick={handleEdit}>
                   <Edit className="w-4 h-4 mr-2" />
                   Edit
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleToggleLock}
+                  disabled={isTogglingLock}
+                >
+                  {(dropPoint as any).is_locked ? (
+                    <>
+                      <Unlock className="w-4 h-4 mr-2" />
+                      Unlock
+                    </>
+                  ) : (
+                    <>
+                      <Lock className="w-4 h-4 mr-2" />
+                      Lock
+                    </>
+                  )}
                 </Button>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
@@ -321,14 +402,30 @@ export const DropPointDetailsModal: React.FC<DropPointDetailsModalProps> = ({
                       onChange={(e) => setEditData({ ...editData, point_type: e.target.value as any })}
                     >
                       <option value="data">Data</option>
-                      <option value="voice">Voice</option>
-                      <option value="fiber">Fiber</option>
-                      <option value="power">Power</option>
-                      <option value="security">Security</option>
-                      <option value="wireless">Wireless</option>
+                      <option value="wifi">WiFi</option>
+                      <option value="camera">Camera</option>
+                      <option value="mdf_idf">MDF/IDF</option>
+                      <option value="access_control">Access Control</option>
+                      <option value="av">A/V</option>
+                      <option value="other">Other</option>
                     </select>
                   ) : (
                     <Badge variant="outline">{dropPoint.point_type}</Badge>
+                  )}
+                </div>
+
+                <div>
+                  <Label htmlFor="cable_count">Number of Cables</Label>
+                  {isEditing ? (
+                    <Input
+                      id="cable_count"
+                      type="number"
+                      min="1"
+                      value={editData.cable_count || ''}
+                      onChange={(e) => setEditData({ ...editData, cable_count: parseInt(e.target.value) || null })}
+                    />
+                  ) : (
+                    <p className="text-sm">{dropPoint.cable_count || 'Not specified'}</p>
                   )}
                 </div>
 
@@ -436,6 +533,18 @@ export const DropPointDetailsModal: React.FC<DropPointDetailsModalProps> = ({
               ) : (
                 <p className="text-sm">{dropPoint.notes || 'No notes available'}</p>
               )}
+            </div>
+
+            {/* Type-Specific Fields */}
+            <Separator className="my-4" />
+            <div>
+              <h3 className="text-sm font-medium mb-3">Type-Specific Configuration</h3>
+              <DropPointTypeSpecificFields
+                pointType={editData.point_type as string || dropPoint.point_type}
+                typeSpecificData={typeSpecificData}
+                onDataChange={setTypeSpecificData}
+                isEditing={isEditing}
+              />
             </div>
 
             <Separator className="my-6" />
