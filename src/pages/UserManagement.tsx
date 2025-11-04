@@ -1,13 +1,18 @@
 import { useState } from "react";
-import { Plus, Shield, Users, Mail, Calendar, UserCheck, UserCog } from "lucide-react";
+import { Plus, Shield, Users, Mail, Activity, UserCog, CheckSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AddUserModal } from "@/components/AddUserModal";
 import { RoleManagementModal } from "@/components/RoleManagementModal";
 import { ManualRoleAssignmentModal } from "@/components/ManualRoleAssignmentModal";
+import { BulkRoleAssignmentModal } from "@/components/BulkRoleAssignmentModal";
+import { UserActivityLogViewer } from "@/components/UserActivityLogViewer";
 import { useUserRoles } from "@/hooks/useUserRoles";
+import { useProfiles } from "@/hooks/useProfiles";
 import { useAuth } from "@/hooks/useAuth";
 import {
   Table,
@@ -24,15 +29,18 @@ const UserManagement = () => {
   const [selectedUserEmail, setSelectedUserEmail] = useState<string>("");
   const [showRoleModal, setShowRoleModal] = useState(false);
   const [showManualRoleModal, setShowManualRoleModal] = useState(false);
+  const [showBulkRoleModal, setShowBulkRoleModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
   
   const { userRoles, loading, hasRole, fetchAllUserRoles } = useUserRoles();
+  const { profiles, loading: profilesLoading, getProfileByUserId } = useProfiles();
   const { user } = useAuth();
 
   const isAdmin = hasRole('admin');
 
   // Show loading state while roles are being fetched
-  if (loading) {
+  if (loading || profilesLoading) {
     return (
       <main className="container mx-auto px-4 py-6">
         <Card className="max-w-md mx-auto mt-20">
@@ -64,9 +72,46 @@ const UserManagement = () => {
     );
   }
 
-  const filteredUsers = userRoles.filter(userRole =>
-    userRole.user_id.toLowerCase().includes(searchTerm.toLowerCase())
+  // Get unique user IDs with their profiles
+  const uniqueUsers = Array.from(new Set(userRoles.map(ur => ur.user_id))).map(userId => {
+    const profile = getProfileByUserId?.(userId);
+    return {
+      id: userId,
+      email: profile?.email || null,
+      roles: userRoles.filter(ur => ur.user_id === userId),
+      created_at: userRoles.find(ur => ur.user_id === userId)?.created_at || ''
+    };
+  });
+
+  const filteredUsers = uniqueUsers.filter(user =>
+    user.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (user.email && user.email.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  const toggleUserSelection = (userId: string) => {
+    const newSelection = new Set(selectedUsers);
+    if (newSelection.has(userId)) {
+      newSelection.delete(userId);
+    } else {
+      newSelection.add(userId);
+    }
+    setSelectedUsers(newSelection);
+  };
+
+  const toggleAllUsers = () => {
+    if (selectedUsers.size === filteredUsers.length) {
+      setSelectedUsers(new Set());
+    } else {
+      setSelectedUsers(new Set(filteredUsers.map(u => u.id)));
+    }
+  };
+
+  const getSelectedUsersData = () => {
+    return filteredUsers.filter(u => selectedUsers.has(u.id)).map(u => ({
+      id: u.id,
+      email: u.email
+    }));
+  };
 
   const getRoleColor = (role: string) => {
     switch (role) {
@@ -83,16 +128,16 @@ const UserManagement = () => {
     }
   };
 
-  const handleManageRoles = (userId: string, userEmail: string) => {
+  const handleManageRoles = (userId: string, userEmail: string | null) => {
     setSelectedUserId(userId);
-    setSelectedUserEmail(userEmail);
+    setSelectedUserEmail(userEmail || userId);
     setShowRoleModal(true);
   };
 
   return (
     <main className="container mx-auto px-4 py-6 space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-between items-start">
+      <Tabs defaultValue="users" className="w-full">
+        <div className="flex flex-col sm:flex-row gap-4 justify-between items-start mb-6">
           <div>
             <h1 className="text-3xl font-bold flex items-center gap-3">
               <Users className="h-8 w-8 text-primary" />
@@ -102,7 +147,21 @@ const UserManagement = () => {
               Manage system users, roles, and permissions
             </p>
           </div>
-          <div className="flex gap-2">
+          <TabsList>
+            <TabsTrigger value="users" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Users
+            </TabsTrigger>
+            <TabsTrigger value="activity" className="flex items-center gap-2">
+              <Activity className="h-4 w-4" />
+              Activity Log
+            </TabsTrigger>
+          </TabsList>
+        </div>
+
+        <TabsContent value="users" className="space-y-6">
+          {/* Action Buttons */}
+          <div className="flex gap-2 flex-wrap">
             <Button 
               variant="outline"
               onClick={() => setShowManualRoleModal(true)}
@@ -118,118 +177,154 @@ const UserManagement = () => {
               <Plus className="h-4 w-4 mr-2" />
               Add New User
             </Button>
+            {selectedUsers.size > 0 && (
+              <Button 
+                variant="secondary"
+                onClick={() => setShowBulkRoleModal(true)}
+                className="flex items-center gap-2"
+              >
+                <CheckSquare className="h-4 w-4" />
+                Bulk Assign Roles ({selectedUsers.size})
+              </Button>
+            )}
           </div>
-        </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <Users className="h-8 w-8 text-primary" />
-                <div>
-                  <p className="text-2xl font-bold">{new Set(userRoles.map(ur => ur.user_id)).size}</p>
-                  <p className="text-sm text-muted-foreground">Total Users</p>
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <Users className="h-8 w-8 text-primary" />
+                  <div>
+                    <p className="text-2xl font-bold">{uniqueUsers.length}</p>
+                    <p className="text-sm text-muted-foreground">Total Users</p>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <Shield className="h-8 w-8 text-destructive" />
-                <div>
-                  <p className="text-2xl font-bold">{userRoles.filter(ur => ur.role === 'admin').length}</p>
-                  <p className="text-sm text-muted-foreground">Administrators</p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <Shield className="h-8 w-8 text-destructive" />
+                  <div>
+                    <p className="text-2xl font-bold">{userRoles.filter(ur => ur.role === 'admin').length}</p>
+                    <p className="text-sm text-muted-foreground">Administrators</p>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <UserCheck className="h-8 w-8 text-secondary" />
-                <div>
-                  <p className="text-2xl font-bold">{userRoles.filter(ur => ur.role === 'hr_manager').length}</p>
-                  <p className="text-sm text-muted-foreground">HR Managers</p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <UserCog className="h-8 w-8 text-secondary" />
+                  <div>
+                    <p className="text-2xl font-bold">{userRoles.filter(ur => ur.role === 'hr_manager').length}</p>
+                    <p className="text-sm text-muted-foreground">HR Managers</p>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <Calendar className="h-8 w-8 text-primary" />
-                <div>
-                  <p className="text-2xl font-bold">{userRoles.filter(ur => ur.role === 'technician').length}</p>
-                  <p className="text-sm text-muted-foreground">Technicians</p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <Activity className="h-8 w-8 text-primary" />
+                  <div>
+                    <p className="text-2xl font-bold">{userRoles.filter(ur => ur.role === 'technician').length}</p>
+                    <p className="text-sm text-muted-foreground">Technicians</p>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+              </CardContent>
+            </Card>
+          </div>
 
-        {/* User List */}
-        <Card>
-          <CardHeader>
-            <div className="flex justify-between items-center">
-              <div>
-                <CardTitle>System Users</CardTitle>
-                <CardDescription>
-                  Manage user accounts and role assignments
-                  {userRoles.length === 0 && (
-                    <span className="block text-orange-600 text-sm mt-1">
-                      ⚠️ No users with roles found. If users exist without roles, use "Add User" to assign roles.
-                    </span>
-                  )}
-                </CardDescription>
+          {/* User List */}
+          <Card>
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle>System Users</CardTitle>
+                  <CardDescription>
+                    Manage user accounts and role assignments
+                    {selectedUsers.size > 0 && (
+                      <span className="block text-primary text-sm mt-1">
+                        {selectedUsers.size} user(s) selected
+                      </span>
+                    )}
+                  </CardDescription>
+                </div>
+                <div className="w-72">
+                  <Input
+                    placeholder="Search by email or ID..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
               </div>
-              <div className="w-72">
-                <Input
-                  placeholder="Search by user ID..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground">Loading users...</p>
-              </div>
-            ) : (
+            </CardHeader>
+            <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>User ID</TableHead>
+                    <TableHead className="w-12">
+                      <Checkbox
+                        checked={selectedUsers.size === filteredUsers.length && filteredUsers.length > 0}
+                        onCheckedChange={toggleAllUsers}
+                        aria-label="Select all users"
+                      />
+                    </TableHead>
+                    <TableHead>Email / User ID</TableHead>
                     <TableHead>Roles</TableHead>
                     <TableHead>Created</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {/* Group users by user_id */}
-                  {Array.from(new Set(filteredUsers.map(ur => ur.user_id))).map((userId) => {
-                    const userRolesList = filteredUsers.filter(ur => ur.user_id === userId);
-                    const createdDate = userRolesList[0]?.created_at;
-                    
-                    return (
-                      <TableRow key={userId}>
+                  {filteredUsers.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-8">
+                        <div className="space-y-2">
+                          <p className="text-muted-foreground">No users found</p>
+                          <p className="text-sm text-orange-600">
+                            Use the "Add User" button to create users with roles
+                          </p>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredUsers.map((user) => (
+                      <TableRow key={user.id}>
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedUsers.has(user.id)}
+                            onCheckedChange={() => toggleUserSelection(user.id)}
+                            aria-label={`Select ${user.email || user.id}`}
+                          />
+                        </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            <Mail className="h-4 w-4 text-muted-foreground" />
-                            <code className="text-sm bg-muted px-2 py-1 rounded">
-                              {userId.slice(0, 8)}...
-                            </code>
+                            <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
+                            <div className="flex flex-col">
+                              {user.email ? (
+                                <>
+                                  <span className="text-sm font-medium">{user.email}</span>
+                                  <code className="text-xs text-muted-foreground">
+                                    {user.id.slice(0, 8)}...
+                                  </code>
+                                </>
+                              ) : (
+                                <code className="text-sm bg-muted px-2 py-1 rounded">
+                                  {user.id.slice(0, 8)}...
+                                </code>
+                              )}
+                            </div>
                           </div>
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-wrap gap-1">
-                            {userRolesList.map((userRole) => (
+                            {user.roles.map((userRole) => (
                               <Badge 
                                 key={userRole.id} 
                                 variant={getRoleColor(userRole.role)}
@@ -242,63 +337,62 @@ const UserManagement = () => {
                         </TableCell>
                         <TableCell>
                           <span className="text-sm text-muted-foreground">
-                            {new Date(createdDate).toLocaleDateString()}
+                            {new Date(user.created_at).toLocaleDateString()}
                           </span>
                         </TableCell>
                         <TableCell>
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleManageRoles(userId, userId)}
+                            onClick={() => handleManageRoles(user.id, user.email)}
                           >
                             <Shield className="h-4 w-4 mr-2" />
                             Manage Roles
                           </Button>
                         </TableCell>
                       </TableRow>
-                    );
-                  })}
-                  
-                  {filteredUsers.length === 0 && (
-                     <TableRow>
-                       <TableCell colSpan={4} className="text-center py-8">
-                         <div className="space-y-2">
-                           <p className="text-muted-foreground">No users with roles found</p>
-                           <p className="text-sm text-orange-600">
-                             If there are users without roles in Supabase Auth, they won't appear here.
-                             <br />
-                             Use the "Add User" button to create users with roles, or manually assign roles to existing users.
-                           </p>
-                         </div>
-                       </TableCell>
-                     </TableRow>
-                   )}
+                    ))
+                  )}
                 </TableBody>
               </Table>
-            )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-        {/* Modals */}
-        <AddUserModal 
-          open={showAddUser} 
-          onOpenChange={setShowAddUser}
-          onUserCreated={fetchAllUserRoles}
-        />
-        
-        <RoleManagementModal
-          isOpen={showRoleModal}
-          onClose={() => setShowRoleModal(false)}
-          userId={selectedUserId}
-          userEmail={selectedUserEmail}
-        />
+        <TabsContent value="activity" className="space-y-6">
+          <UserActivityLogViewer />
+        </TabsContent>
+      </Tabs>
 
-        <ManualRoleAssignmentModal
-          open={showManualRoleModal}
-          onOpenChange={setShowManualRoleModal}
-          onRoleAssigned={fetchAllUserRoles}
-        />
-      </main>
+      {/* Modals */}
+      <AddUserModal 
+        open={showAddUser} 
+        onOpenChange={setShowAddUser}
+        onUserCreated={fetchAllUserRoles}
+      />
+      
+      <RoleManagementModal
+        isOpen={showRoleModal}
+        onClose={() => setShowRoleModal(false)}
+        userId={selectedUserId}
+        userEmail={selectedUserEmail}
+      />
+
+      <ManualRoleAssignmentModal
+        open={showManualRoleModal}
+        onOpenChange={setShowManualRoleModal}
+        onRoleAssigned={fetchAllUserRoles}
+      />
+
+      <BulkRoleAssignmentModal
+        isOpen={showBulkRoleModal}
+        onClose={() => {
+          setShowBulkRoleModal(false);
+          setSelectedUsers(new Set());
+        }}
+        selectedUsers={getSelectedUsersData()}
+      />
+    </main>
   );
 };
 

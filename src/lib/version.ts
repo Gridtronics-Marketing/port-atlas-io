@@ -1,4 +1,4 @@
-export const APP_VERSION = "1.1.0";
+export const APP_VERSION = "1.2.0";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,21 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "1.2.0",
+    date: "2025-02-01",
+    changes: [
+      "Added bulk role assignment - select multiple users and assign roles at once",
+      "Created comprehensive user activity log showing role changes and actions",
+      "Activity log automatically tracks all role assignments and removals",
+      "Added email addresses to user management table from profiles",
+      "Implemented checkbox-based user selection for bulk operations",
+      "New activity log viewer with real-time updates and filtering",
+      "Enhanced user table with email display and improved search (by email or ID)",
+      "Created dedicated Activity Log tab in user management",
+      "Added automated activity logging with database triggers"
+    ]
+  },
   {
     version: "1.1.0",
     date: "2025-02-01",

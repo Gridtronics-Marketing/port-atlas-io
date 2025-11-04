@@ -66,6 +66,10 @@ export const useProfiles = () => {
     }
   };
 
+  const getProfileByUserId = (userId: string): ProfileWithRoles | undefined => {
+    return profiles.find(p => p.id === userId);
+  };
+
   const updateProfile = async (profileId: string, updates: Partial<Profile>) => {
     try {
       const { error } = await supabase
@@ -103,5 +107,6 @@ export const useProfiles = () => {
     loading,
     fetchProfiles,
     updateProfile,
+    getProfileByUserId,
   };
 };

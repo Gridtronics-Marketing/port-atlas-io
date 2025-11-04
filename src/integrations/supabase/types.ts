@@ -3644,6 +3644,42 @@ export type Database = {
         }
         Relationships: []
       }
+      user_activity_log: {
+        Row: {
+          activity_description: string
+          activity_type: string
+          actor_id: string | null
+          created_at: string
+          id: string
+          ip_address: unknown
+          metadata: Json | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          activity_description: string
+          activity_type: string
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: unknown
+          metadata?: Json | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          activity_description?: string
+          activity_type?: string
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: unknown
+          metadata?: Json | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
