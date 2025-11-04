@@ -31,6 +31,23 @@ const UserManagement = () => {
 
   const isAdmin = hasRole('admin');
 
+  // Show loading state while roles are being fetched
+  if (loading) {
+    return (
+      <main className="container mx-auto px-4 py-6">
+        <Card className="max-w-md mx-auto mt-20">
+          <CardContent className="p-6 text-center">
+            <Shield className="h-12 w-12 mx-auto mb-4 text-muted-foreground animate-pulse" />
+            <h2 className="text-xl font-semibold mb-2">Loading...</h2>
+            <p className="text-muted-foreground">
+              Checking your permissions
+            </p>
+          </CardContent>
+        </Card>
+      </main>
+    );
+  }
+
   if (!isAdmin) {
     return (
       <main className="container mx-auto px-4 py-6">
