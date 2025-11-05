@@ -1,4 +1,4 @@
-export const APP_VERSION = "1.2.0";
+export const APP_VERSION = "1.2.1";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,20 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "1.2.1",
+    date: "2025-02-05",
+    changes: [
+      "Streamlined drop point status workflow to 4 essential stages: Planned, Roughed In, Finished, Tested",
+      "Removed redundant statuses (Active, Inactive, Installed, Terminated) for clearer workflow",
+      "Updated color coding: Red (Planned), Yellow (Roughed In), Green (Finished/Tested)",
+      "Added checkmark indicator for Tested status on map markers and badges",
+      "Reorganized Walk Through Notes into collapsible sidebar tab on floor plans",
+      "New tabbed interface on floor plan viewer with Notes tab for better space utilization",
+      "Improved floor plan layout with main map area and right sidebar for contextual tools",
+      "Enhanced UI extensibility - sidebar ready for additional tabs (Layers, Legend, etc.)"
+    ]
+  },
   {
     version: "1.2.0",
     date: "2025-02-01",
