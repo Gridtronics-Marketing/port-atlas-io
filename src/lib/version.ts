@@ -1,4 +1,4 @@
-export const APP_VERSION = "1.2.1";
+export const APP_VERSION = "1.2.2";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,17 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "1.2.2",
+    date: "2025-02-05",
+    changes: [
+      "Added collapsible Notes sidebar on floor plans with floating toggle button",
+      "Notes panel can now be hidden/shown for maximum floor plan viewing space",
+      "Toggle button positioned in bottom-right with smooth slide animation",
+      "Fixed drop point type constraint - now supports all 7 types (data, wifi, camera, mdf_idf, access_control, av, other)",
+      "Migrated legacy drop point types (security→camera, wireless→wifi) for consistency"
+    ]
+  },
   {
     version: "1.2.1",
     date: "2025-02-05",
