@@ -32,7 +32,7 @@ const Index = () => {
     wo.status !== 'Completed'
   ).length;
   const completionRate = dropPoints.length > 0 ? 
-    Math.round((dropPoints.filter(dp => dp.status === 'tested' || dp.status === 'active').length / dropPoints.length) * 100) : 0;
+    Math.round((dropPoints.filter(dp => dp.status === 'tested' || dp.status === 'finished').length / dropPoints.length) * 100) : 0;
 
   return (
     <main className="container mx-auto px-4 py-6 space-y-8">

@@ -69,20 +69,14 @@ export const InteractiveMap = ({ locationId, floors = 1, currentFloor = 1, backg
 
   const getDropPointColor = (status: string) => {
     switch (status) {
-      case "tested":
-        return "text-success bg-success/20 border-success/40";
-      case "terminated":
-        return "text-warning bg-warning/20 border-warning/40";
-      case "roughed_in":
-        return "text-info bg-info/20 border-info/40";
       case "planned":
-        return "text-muted-foreground bg-muted/50 border-muted-foreground/30";
-      case "active":
-        return "text-success bg-success/20 border-success/40";
-      case "installed":
-        return "text-warning bg-warning/20 border-warning/40";
-      case "inactive":
-        return "text-destructive bg-destructive/10 border-destructive/20";
+        return "bg-red-500 border-red-600 text-white";
+      case "roughed_in":
+        return "bg-yellow-500 border-yellow-600 text-white";
+      case "finished":
+        return "bg-green-500 border-green-600 text-white";
+      case "tested":
+        return "bg-green-500 border-green-600 text-white";
       default:
         return "text-muted-foreground bg-muted/50 border-muted-foreground/30";
     }
@@ -231,7 +225,11 @@ export const InteractiveMap = ({ locationId, floors = 1, currentFloor = 1, backg
                       setSelectedPoint(point);
                     }}
                   >
-                    <IconComponent className="h-4 w-4" />
+                    {point.status === 'tested' ? (
+                      <span className="text-white text-xs font-bold">✓</span>
+                    ) : (
+                      <IconComponent className="h-4 w-4" />
+                    )}
                     {point.cable_count > 1 && (
                       <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center border border-background">
                         {point.cable_count}

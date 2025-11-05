@@ -16,7 +16,7 @@ export interface DropPoint {
   point_type: 'data' | 'fiber' | 'security' | 'wireless' | 'power';
   x_coordinate: number | null;
   y_coordinate: number | null;
-  status: 'planned' | 'roughed' | 'terminated' | 'tested' | 'active' | 'inactive';
+  status: 'planned' | 'roughed_in' | 'finished' | 'tested';
   cable_id: string | null;
   cable_count: number;
   patch_panel_port: string | null;

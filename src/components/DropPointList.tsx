@@ -66,20 +66,14 @@ const DropPointListContent = ({ locationId }: DropPointListProps) => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "tested":
-        return "bg-success/20 text-success border-success/40";
-      case "terminated":
-        return "bg-warning/20 text-warning border-warning/40";
-      case "roughed_in":
-        return "bg-info/20 text-info border-info/40";
       case "planned":
-        return "bg-muted/50 text-muted-foreground border-muted-foreground/30";
-      case "active":
-        return "bg-success text-success-foreground";
-      case "installed":
-        return "bg-warning text-warning-foreground";
-      case "inactive":
-        return "bg-destructive/10 text-destructive border-destructive/20";
+        return "bg-red-500/20 text-red-700 border-red-500/40";
+      case "roughed_in":
+        return "bg-yellow-500/20 text-yellow-700 border-yellow-500/40";
+      case "finished":
+        return "bg-green-500/20 text-green-700 border-green-500/40";
+      case "tested":
+        return "bg-green-500/20 text-green-700 border-green-500/40";
       default:
         return "bg-secondary text-secondary-foreground";
     }
@@ -195,11 +189,8 @@ const DropPointListContent = ({ locationId }: DropPointListProps) => {
             <SelectItem value="all">All Status</SelectItem>
             <SelectItem value="planned">Planned</SelectItem>
             <SelectItem value="roughed_in">Roughed In</SelectItem>
-            <SelectItem value="terminated">Terminated</SelectItem>
+            <SelectItem value="finished">Finished</SelectItem>
             <SelectItem value="tested">Tested</SelectItem>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="installed">Installed</SelectItem>
-            <SelectItem value="inactive">Inactive</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -243,11 +234,12 @@ const DropPointListContent = ({ locationId }: DropPointListProps) => {
                          <span className="capitalize">{point.point_type}</span>
                        </div>
                      </TableCell>
-                    <TableCell>
-                      <Badge className={getStatusColor(point.status)}>
-                        {point.status}
-                      </Badge>
-                    </TableCell>
+                     <TableCell>
+                       <Badge className={getStatusColor(point.status)}>
+                         {point.status === 'tested' && <span className="mr-1">✓</span>}
+                         {point.status}
+                       </Badge>
+                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground">
                       {point.cable_id || "—"}
                     </TableCell>

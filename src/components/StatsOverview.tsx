@@ -13,7 +13,7 @@ export const StatsOverview = () => {
 
   const activeLocations = locations.filter(loc => loc.status === 'Active').length;
   const totalDropPoints = dropPoints.length;
-  const completedDropPoints = dropPoints.filter(dp => dp.status === 'tested' || dp.status === 'active').length;
+  const completedDropPoints = dropPoints.filter(dp => dp.status === 'tested' || dp.status === 'finished').length;
   const completionRate = totalDropPoints > 0 ? Math.round((completedDropPoints / totalDropPoints) * 100) : 0;
 
   const stats = [
