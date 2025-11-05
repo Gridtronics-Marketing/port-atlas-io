@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Plus, Minus, RotateCcw, ZoomIn, ZoomOut, RefreshCw, Camera, Paintbrush, Save, FileImage, Upload, StickyNote } from 'lucide-react';
+import { Plus, Minus, RotateCcw, ZoomIn, ZoomOut, RefreshCw, Camera, Paintbrush, Save, FileImage, Upload, StickyNote, ChevronRight, ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -96,6 +96,7 @@ export const InteractiveFloorPlan = ({
     type: 'dropPoint' | 'roomView';
     originalPosition: { x: number; y: number };
   } | null>(null);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const drawingCanvasRef = useRef<DrawingCanvasRef>(null);
   const { toast } = useToast();
@@ -1422,8 +1423,8 @@ export const InteractiveFloorPlan = ({
       </Card>
 
       {/* Right Sidebar with Tabs */}
-      {validLocationId && (
-        <div className="w-80 border-l bg-background">
+      {validLocationId && !isSidebarCollapsed && (
+        <div className="w-80 border-l bg-background transition-all duration-300">
           <Tabs defaultValue="notes" orientation="vertical" className="h-full flex flex-col">
             <TabsList className="w-full rounded-none border-b bg-muted/30">
               <TabsTrigger value="notes" className="flex-1">
@@ -1436,6 +1437,29 @@ export const InteractiveFloorPlan = ({
             </TabsContent>
           </Tabs>
         </div>
+      )}
+
+      {/* Sidebar Toggle Button */}
+      {validLocationId && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+          className="fixed right-4 bottom-20 z-50 shadow-lg"
+          title={isSidebarCollapsed ? "Show Notes" : "Hide Notes"}
+        >
+          {isSidebarCollapsed ? (
+            <>
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              Notes
+            </>
+          ) : (
+            <>
+              Notes
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </>
+          )}
+        </Button>
       )}
     </div>
   );
