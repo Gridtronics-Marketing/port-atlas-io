@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
-import { Plus, Minus, RotateCcw, ZoomIn, ZoomOut, RefreshCw, Camera, Paintbrush, Save, FileImage, Upload } from 'lucide-react';
+import { Plus, Minus, RotateCcw, ZoomIn, ZoomOut, RefreshCw, Camera, Paintbrush, Save, FileImage, Upload, StickyNote } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -837,8 +838,10 @@ export const InteractiveFloorPlan = ({
   };
 
   return (
-    <Card className={`${className}`}>
-      <CardHeader>
+    <div className={`flex flex-row gap-0 w-full ${className}`}>
+      {/* Main Floor Plan Area */}
+      <Card className="flex-1">
+        <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg">
             Floor {floorNumber} - Interactive Plan
@@ -1416,10 +1419,24 @@ export const InteractiveFloorPlan = ({
         onUploadSuccess={handleUploadSuccess}
       />
 
-      {/* Walk-Through Notes Panel */}
+      </Card>
+
+      {/* Right Sidebar with Tabs */}
       {validLocationId && (
-        <WalkThroughNotesPanel locationId={locationId} floor={floorNumber} />
+        <div className="w-80 border-l bg-background">
+          <Tabs defaultValue="notes" orientation="vertical" className="h-full flex flex-col">
+            <TabsList className="w-full rounded-none border-b bg-muted/30">
+              <TabsTrigger value="notes" className="flex-1">
+                <StickyNote className="mr-2 h-4 w-4" />
+                Notes
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="notes" className="flex-1 m-0 p-0">
+              <WalkThroughNotesPanel locationId={locationId} floor={floorNumber} />
+            </TabsContent>
+          </Tabs>
+        </div>
       )}
-    </Card>
+    </div>
   );
 };
