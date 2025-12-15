@@ -198,7 +198,7 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto bg-card border">
+        <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto bg-card border lg:max-w-[95vw] lg:w-[95vw] lg:h-[90vh]">
           <DialogHeader>
             <div className="flex items-start justify-between">
               <div>
