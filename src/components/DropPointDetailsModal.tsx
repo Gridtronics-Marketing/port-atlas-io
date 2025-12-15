@@ -283,7 +283,7 @@ export const DropPointDetailsModal: React.FC<DropPointDetailsModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto lg:max-w-[95vw] lg:w-[95vw] lg:h-[90vh]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Tag className="w-5 h-5" />
