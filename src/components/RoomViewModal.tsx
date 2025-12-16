@@ -46,7 +46,8 @@ export const RoomViewModal: React.FC<RoomViewModalProps> = ({
   const handleEdit = () => {
     setEditData({
       room_name: roomView.room_name || '',
-      description: roomView.description || ''
+      description: roomView.description || '',
+      ceiling_height: roomView.ceiling_height || ''
     });
     setIsEditing(true);
   };
@@ -253,24 +254,44 @@ export const RoomViewModal: React.FC<RoomViewModalProps> = ({
           </TabsList>
 
           <TabsContent value="details" className="space-y-6">
-            {/* Room Name */}
-            <div>
-              <Label htmlFor="room_name" className="text-sm font-medium">
-                Room Name
-              </Label>
-              {isEditing ? (
-                <Input
-                  id="room_name"
-                  value={editData.room_name || ''}
-                  onChange={(e) => setEditData({ ...editData, room_name: e.target.value })}
-                  placeholder="Enter room name"
-                  className="mt-1"
-                />
-              ) : (
-                <p className="mt-1 text-sm">
-                  {roomView?.room_name || 'Not specified'}
-                </p>
-              )}
+            {/* Room Name and Ceiling Height */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="room_name" className="text-sm font-medium">
+                  Room Name
+                </Label>
+                {isEditing ? (
+                  <Input
+                    id="room_name"
+                    value={editData.room_name || ''}
+                    onChange={(e) => setEditData({ ...editData, room_name: e.target.value })}
+                    placeholder="Enter room name"
+                    className="mt-1"
+                  />
+                ) : (
+                  <p className="mt-1 text-sm">
+                    {roomView?.room_name || 'Not specified'}
+                  </p>
+                )}
+              </div>
+              <div>
+                <Label htmlFor="ceiling_height" className="text-sm font-medium">
+                  Ceiling Height
+                </Label>
+                {isEditing ? (
+                  <Input
+                    id="ceiling_height"
+                    value={editData.ceiling_height || ''}
+                    onChange={(e) => setEditData({ ...editData, ceiling_height: e.target.value })}
+                    placeholder="e.g., 9ft, 2.7m"
+                    className="mt-1"
+                  />
+                ) : (
+                  <p className="mt-1 text-sm">
+                    {roomView?.ceiling_height || 'Not specified'}
+                  </p>
+                )}
+              </div>
             </div>
 
             {/* Description */}
