@@ -30,6 +30,7 @@ export const AddRoomViewModal = ({
   onSuccess,
 }: AddRoomViewModalProps) => {
   const [roomName, setRoomName] = useState('');
+  const [ceilingHeight, setCeilingHeight] = useState('');
   const [description, setDescription] = useState('');
   const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -186,6 +187,7 @@ export const AddRoomViewModal = ({
         x_coordinate: coordinates?.x || 50, // Default position if no coordinates
         y_coordinate: coordinates?.y || 50,
         room_name: roomName || `Room View ${Date.now()}`,
+        ceiling_height: ceilingHeight || null,
         description: description || 'Room view',
         photo_url: photoUrl,
         employee_id: currentEmployee?.id || null,
@@ -241,6 +243,7 @@ export const AddRoomViewModal = ({
     }
     
     setRoomName('');
+    setCeilingHeight('');
     setDescription('');
     setCapturedPhoto(null);
     setShowPhotoOptions(false);
@@ -314,14 +317,25 @@ export const AddRoomViewModal = ({
               />
             </div>
 
-            <div>
-              <Label htmlFor="roomName">Room Name (Optional)</Label>
-              <Input
-                id="roomName"
-                value={roomName}
-                onChange={(e) => setRoomName(e.target.value)}
-                placeholder="Enter room name..."
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="roomName">Room Name (Optional)</Label>
+                <Input
+                  id="roomName"
+                  value={roomName}
+                  onChange={(e) => setRoomName(e.target.value)}
+                  placeholder="Enter room name..."
+                />
+              </div>
+              <div>
+                <Label htmlFor="ceilingHeight">Ceiling Height (Optional)</Label>
+                <Input
+                  id="ceilingHeight"
+                  value={ceilingHeight}
+                  onChange={(e) => setCeilingHeight(e.target.value)}
+                  placeholder="e.g., 9ft, 2.7m"
+                />
+              </div>
             </div>
 
             <div>

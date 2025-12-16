@@ -2673,6 +2673,7 @@ export type Database = {
       }
       room_views: {
         Row: {
+          ceiling_height: string | null
           created_at: string
           description: string | null
           employee_id: string | null
@@ -2686,6 +2687,7 @@ export type Database = {
           y_coordinate: number
         }
         Insert: {
+          ceiling_height?: string | null
           created_at?: string
           description?: string | null
           employee_id?: string | null
@@ -2699,6 +2701,7 @@ export type Database = {
           y_coordinate: number
         }
         Update: {
+          ceiling_height?: string | null
           created_at?: string
           description?: string | null
           employee_id?: string | null
