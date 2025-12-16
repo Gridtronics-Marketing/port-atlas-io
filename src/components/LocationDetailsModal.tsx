@@ -45,6 +45,8 @@ import { CreateRiserDiagramModal } from "@/components/CreateRiserDiagramModal";
 import { ScheduleAssignmentModal } from "@/components/ScheduleAssignmentModal";
 import { AddLocationNoteModal } from "@/components/AddLocationNoteModal";
 import { FloorPlanEditor } from "@/components/FloorPlanEditor";
+import { WalkThroughNotesList } from "@/components/WalkThroughNotesList";
+import { CustomerNotesPanel } from "@/components/CustomerNotesPanel";
 
 import { FloorPlanRepairTool } from "@/components/FloorPlanRepairTool";
 import { FloorPlanFileManager } from "@/components/FloorPlanFileManager";
@@ -546,96 +548,113 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
               {/* Team & Notes Tab */}
               <TabsContent value="team" className="mt-6">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <Card className="shadow-soft">
-                    <CardHeader>
-                      <CardTitle>Assigned Team</CardTitle>
-                      <CardDescription>Personnel assigned to this location</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        {teamLoading ? (
-                          <div className="text-sm text-muted-foreground">Loading team members...</div>
-                        ) : teamMembers.length > 0 ? (
-                          teamMembers.map((member) => (
-                            <div key={member.id} className="flex items-center gap-3 p-3 border border-border rounded-lg">
-                              <div className="h-10 w-10 bg-primary/10 rounded-full flex items-center justify-center">
-                                <span className="text-sm font-medium text-primary">
-                                  {member.first_name.charAt(0)}{member.last_name.charAt(0)}
-                                </span>
+                  {/* Left Column: Team and Walk-Through Notes */}
+                  <div className="space-y-6">
+                    {/* Assigned Team */}
+                    <Card className="shadow-soft">
+                      <CardHeader>
+                        <CardTitle>Assigned Team</CardTitle>
+                        <CardDescription>Personnel assigned to this location</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-3">
+                          {teamLoading ? (
+                            <div className="text-sm text-muted-foreground">Loading team members...</div>
+                          ) : teamMembers.length > 0 ? (
+                            teamMembers.map((member) => (
+                              <div key={member.id} className="flex items-center gap-3 p-3 border border-border rounded-lg">
+                                <div className="h-10 w-10 bg-primary/10 rounded-full flex items-center justify-center">
+                                  <span className="text-sm font-medium text-primary">
+                                    {member.first_name.charAt(0)}{member.last_name.charAt(0)}
+                                  </span>
+                                </div>
+                                <div>
+                                  <p className="font-medium text-foreground">{member.first_name} {member.last_name}</p>
+                                  <p className="text-sm text-muted-foreground">{member.role}</p>
+                                </div>
                               </div>
-                              <div>
-                                <p className="font-medium text-foreground">{member.first_name} {member.last_name}</p>
-                                <p className="text-sm text-muted-foreground">{member.role}</p>
-                              </div>
-                            </div>
-                          ))
-                        ) : (
-                          <div className="text-sm text-muted-foreground">No team members currently assigned to this location.</div>
-                        )}
-                        <Button 
-                          variant="outline" 
-                          className="w-full"
-                          onClick={() => setShowScheduleModal(true)}
-                        >
-                          <Plus className="h-4 w-4 mr-2" />
-                          Assign Team Member
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
+                            ))
+                          ) : (
+                            <div className="text-sm text-muted-foreground">No team members currently assigned to this location.</div>
+                          )}
+                          <Button 
+                            variant="outline" 
+                            className="w-full"
+                            onClick={() => setShowScheduleModal(true)}
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Assign Team Member
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
 
-                  <Card className="shadow-soft">
-                    <CardHeader>
-                      <CardTitle>Project Notes</CardTitle>
-                      <CardDescription>Important notes and observations</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3 text-sm">
-                        {location.access_instructions && (
+                    {/* Walk-Through Notes */}
+                    <WalkThroughNotesList 
+                      locationId={location.id}
+                      totalFloors={location.floors || 1}
+                    />
+                  </div>
+
+                  {/* Right Column: Project Notes and Customer Notes */}
+                  <div className="space-y-6">
+                    {/* Project Notes */}
+                    <Card className="shadow-soft">
+                      <CardHeader>
+                        <CardTitle>Project Notes</CardTitle>
+                        <CardDescription>Important notes and observations</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-3 text-sm">
+                          {location.access_instructions && (
+                            <div className="p-3 bg-muted rounded-lg">
+                              <p className="text-foreground">
+                                <strong>Access Requirements:</strong> {location.access_instructions}
+                              </p>
+                            </div>
+                          )}
+                          
                           <div className="p-3 bg-muted rounded-lg">
                             <p className="text-foreground">
-                              <strong>Access Requirements:</strong> {location.access_instructions}
+                              <strong>Building Details:</strong> {location.floors} floor{location.floors > 1 ? 's' : ''}, 
+                              {location.building_type && ` ${location.building_type} building,`}
+                              {location.total_square_feet && ` ${location.total_square_feet.toLocaleString()} sq ft total`}
                             </p>
                           </div>
-                        )}
-                        
-                        <div className="p-3 bg-muted rounded-lg">
-                          <p className="text-foreground">
-                            <strong>Building Details:</strong> {location.floors} floor{location.floors > 1 ? 's' : ''}, 
-                            {location.building_type && ` ${location.building_type} building,`}
-                            {location.total_square_feet && ` ${location.total_square_feet.toLocaleString()} sq ft total`}
-                          </p>
-                        </div>
 
-                        {/* Display existing notes */}
-                        {notesLoading ? (
-                          <div className="text-sm text-muted-foreground">Loading notes...</div>
-                        ) : notes.length > 0 ? (
-                          notes.map((note) => (
-                            <div key={note.id} className="p-3 bg-muted rounded-lg">
-                              <p className="text-foreground">
-                                <strong>{note.title}:</strong> {note.content}
-                              </p>
-                              <p className="text-xs text-muted-foreground mt-1">
-                                By {note.employee_name} • {new Date(note.created_at).toLocaleDateString()}
-                              </p>
-                            </div>
-                          ))
-                        ) : (
-                          <div className="text-sm text-muted-foreground">No project notes yet.</div>
-                        )}
-                        
-                        <Button 
-                          variant="outline" 
-                          className="w-full"
-                          onClick={() => setShowAddNoteModal(true)}
-                        >
-                          <Plus className="h-4 w-4 mr-2" />
-                          Add Note
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
+                          {/* Display existing notes */}
+                          {notesLoading ? (
+                            <div className="text-sm text-muted-foreground">Loading notes...</div>
+                          ) : notes.length > 0 ? (
+                            notes.map((note) => (
+                              <div key={note.id} className="p-3 bg-muted rounded-lg">
+                                <p className="text-foreground">
+                                  <strong>{note.title}:</strong> {note.content}
+                                </p>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  By {note.employee_name} • {new Date(note.created_at).toLocaleDateString()}
+                                </p>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="text-sm text-muted-foreground">No project notes yet.</div>
+                          )}
+                          
+                          <Button 
+                            variant="outline" 
+                            className="w-full"
+                            onClick={() => setShowAddNoteModal(true)}
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Note
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Customer Notes */}
+                    <CustomerNotesPanel locationId={location.id} />
+                  </div>
                 </div>
               </TabsContent>
 
