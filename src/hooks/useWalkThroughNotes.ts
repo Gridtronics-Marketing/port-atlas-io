@@ -19,16 +19,22 @@ export const useWalkThroughNotes = (locationId?: string, floor?: number) => {
   const { toast } = useToast();
 
   const fetchNotes = async () => {
-    if (!locationId || floor === undefined) return;
+    if (!locationId) return;
 
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('walk_through_notes')
         .select('*')
         .eq('location_id', locationId)
-        .eq('floor', floor)
         .order('created_at', { ascending: false });
+
+      // Only filter by floor if specified
+      if (floor !== undefined) {
+        query = query.eq('floor', floor);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       setNotes(data || []);
