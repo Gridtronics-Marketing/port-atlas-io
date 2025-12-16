@@ -1,4 +1,4 @@
-export const APP_VERSION = "1.2.2";
+export const APP_VERSION = "1.2.3";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,14 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "1.2.3",
+    date: "2025-12-16",
+    changes: [
+      "Added Ceiling Height field to Room View details alongside Room Name",
+      "Room views can now store ceiling height information for documentation"
+    ]
+  },
   {
     version: "1.2.2",
     date: "2025-02-05",
