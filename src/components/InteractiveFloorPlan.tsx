@@ -1239,7 +1239,7 @@ export const InteractiveFloorPlan = ({
               })}
 
               {/* Room Views Overlay - Only show for valid locations */}
-              {floorRoomViews.map((roomView) => {
+              {filteredRoomViews.map((roomView) => {
               // Use dragged room view coordinates if this room view is being dragged
               const displayRoomView = draggedRoomView && draggedRoomView.id === roomView.id ? draggedRoomView : roomView;
               
