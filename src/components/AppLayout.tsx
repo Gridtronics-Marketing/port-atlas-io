@@ -5,6 +5,9 @@ import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
+import { OrganizationSwitcher } from "@/components/OrganizationSwitcher";
+import { ViewAsDropdown } from "@/components/ViewAsDropdown";
+import { useOrganization } from "@/contexts/OrganizationContext";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -12,10 +15,11 @@ interface AppLayoutProps {
 
 export function AppLayout({ children }: AppLayoutProps) {
   const { signOut } = useAuth();
+  const { isImpersonating } = useOrganization();
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full">
+      <div className={`min-h-screen flex w-full ${isImpersonating ? 'pt-10' : ''}`}>
         <AppSidebar />
         
         <div className="flex-1 flex flex-col">
@@ -23,6 +27,7 @@ export function AppLayout({ children }: AppLayoutProps) {
           <header className="h-16 md:h-14 flex items-center justify-between border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-3 md:px-4">
             <div className="flex items-center gap-2">
               <SidebarTrigger className="h-10 w-10 md:h-9 md:w-9" />
+              <OrganizationSwitcher />
             </div>
             
             {/* App name on mobile when sidebar closed */}
@@ -33,6 +38,7 @@ export function AppLayout({ children }: AppLayoutProps) {
             <div className="flex-1 hidden md:block" />
             
             <div className="flex items-center gap-2">
+              <ViewAsDropdown />
               <OfflineIndicator />
               <Button
                 variant="ghost"

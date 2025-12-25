@@ -17,7 +17,8 @@ import {
   FileText,
   Wrench,
   Package,
-  Info
+  Info,
+  Building2
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { NavLink, useLocation } from "react-router-dom";
@@ -46,10 +47,12 @@ import {
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRoles } from "@/hooks/useUserRoles";
+import { useOrganization } from "@/contexts/OrganizationContext";
 import portAtlasLogo from "@/assets/port-atlas-logo.png";
 import { PWAInstallButton } from "@/components/PWAInstallButton";
 import { Separator } from "@/components/ui/separator";
 import { APP_VERSION } from "@/lib/version";
+import { Badge } from "@/components/ui/badge";
 
 const navigationItems = [
   { title: "Dashboard", url: "/", icon: Home },
@@ -76,6 +79,7 @@ export function AppSidebar() {
   const location = useLocation();
   const { user, signOut } = useAuth();
   const { hasRole } = useUserRoles();
+  const { isSuperAdmin } = useOrganization();
   const isMobile = useIsMobile();
   
   const currentPath = location.pathname;
@@ -90,9 +94,14 @@ export function AppSidebar() {
   };
   
   // Add admin-only items
-  const allItems = hasRole('admin') 
+  let allItems = hasRole('admin') 
     ? [...navigationItems, { title: "User Management", url: "/user-management", icon: UserCog }]
     : navigationItems;
+  
+  // Add super admin items
+  if (isSuperAdmin) {
+    allItems = [...allItems, { title: "Organizations", url: "/admin/organizations", icon: Building2 }];
+  }
 
   const getNavClassName = (path: string) => {
     return isActive(path) 
