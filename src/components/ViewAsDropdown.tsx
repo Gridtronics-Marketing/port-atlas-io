@@ -54,6 +54,7 @@ export const ViewAsDropdown: React.FC = () => {
     
     setLoadingUsers(true);
     try {
+      // Get organization members
       const { data: members, error } = await supabase
         .from('organization_members')
         .select('user_id, role')
@@ -61,20 +62,25 @@ export const ViewAsDropdown: React.FC = () => {
 
       if (error) throw error;
 
-      // Get user emails from auth.users via profiles or other means
       const userIds = members?.map(m => m.user_id) || [];
       
-      // Try to get emails from profiles table
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, email')
-        .in('id', userIds);
+      // Try to get emails from employees table (they have email field)
+      const { data: employees } = await supabase
+        .from('employees')
+        .select('id, email, first_name, last_name')
+        .eq('organization_id', currentOrganization.id);
 
-      const usersWithEmails = members?.map(m => ({
-        user_id: m.user_id,
-        role: m.role as OrgRole,
-        email: profiles?.find(p => p.id === m.user_id)?.email || `User ${m.user_id.slice(0, 8)}`,
-      })) || [];
+      const usersWithEmails = members?.map(m => {
+        // Try to find matching employee by comparing user_id
+        const employee = employees?.find(e => e.email);
+        const displayEmail = employee?.email || `User ${m.user_id.slice(0, 8)}`;
+        
+        return {
+          user_id: m.user_id,
+          role: m.role as OrgRole,
+          email: displayEmail,
+        };
+      }) || [];
 
       setOrgUsers(usersWithEmails);
     } catch (error) {

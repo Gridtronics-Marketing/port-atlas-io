@@ -4,12 +4,14 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/components/AuthProvider";
+import { OrganizationProvider } from "@/contexts/OrganizationContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AppLayout } from "@/components/AppLayout";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { PWAUpdateNotification } from "@/components/PWAUpdateNotification";
 import { OfflineStatusIndicator } from "@/components/OfflineStatusIndicator";
 import { InAppEducationBanner } from "@/components/InAppEducationBanner";
+import { ImpersonationBanner } from "@/components/ImpersonationBanner";
 import Index from "./pages/Index";
 import Projects from "./pages/Projects";
 import Contracts from "./pages/Contracts";
@@ -32,12 +34,15 @@ import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import Procurement from "./pages/Procurement";
 import FloorPlanEditor from "./pages/FloorPlanEditor";
+import OrganizationOnboarding from "./pages/OrganizationOnboarding";
+import AdminOrganizations from "./pages/AdminOrganizations";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
+      <OrganizationProvider>
       <TooltipProvider>
         <Toaster />
         <Sonner />
@@ -45,9 +50,22 @@ const App = () => (
         <PWAInstallPrompt />
         <OfflineStatusIndicator />
         <InAppEducationBanner />
+        <ImpersonationBanner />
         <BrowserRouter>
           <Routes>
             <Route path="/auth" element={<Auth />} />
+            <Route path="/onboarding/organization" element={
+              <ProtectedRoute>
+                <OrganizationOnboarding />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/organizations" element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <AdminOrganizations />
+                </AppLayout>
+              </ProtectedRoute>
+            } />
             <Route path="/" element={
               <ProtectedRoute>
                 <AppLayout>
@@ -191,6 +209,7 @@ const App = () => (
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
+      </OrganizationProvider>
     </AuthProvider>
   </QueryClientProvider>
 );
