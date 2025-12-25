@@ -47,19 +47,6 @@ const AdminOrganizations: React.FC = () => {
   const [formData, setFormData] = useState({ name: '', slug: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Redirect if not super admin
-  if (!isSuperAdmin) {
-    return (
-      <div className="container mx-auto p-6">
-        <Card>
-          <CardContent className="py-12 text-center">
-            <p className="text-muted-foreground">You don't have permission to access this page.</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   const fetchOrganizations = async () => {
     try {
       setLoading(true);
@@ -91,9 +78,25 @@ const AdminOrganizations: React.FC = () => {
     }
   };
 
+  // useEffect MUST be before any conditional returns
   useEffect(() => {
-    fetchOrganizations();
-  }, []);
+    if (isSuperAdmin) {
+      fetchOrganizations();
+    }
+  }, [isSuperAdmin]);
+
+  // Redirect if not super admin - AFTER all hooks
+  if (!isSuperAdmin) {
+    return (
+      <div className="container mx-auto p-6">
+        <Card>
+          <CardContent className="py-12 text-center">
+            <p className="text-muted-foreground">You don't have permission to access this page.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const generateSlug = (name: string) => {
     return name
