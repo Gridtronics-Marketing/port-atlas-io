@@ -38,9 +38,6 @@ export const ViewAsDropdown: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [loadingUsers, setLoadingUsers] = useState(false);
 
-  // Only show for super admins
-  if (!isSuperAdmin) return null;
-
   const roles: { value: OrgRole; label: string; description: string }[] = [
     { value: 'owner', label: 'Owner', description: 'Full organization access' },
     { value: 'admin', label: 'Admin', description: 'Manage team & settings' },
@@ -62,8 +59,6 @@ export const ViewAsDropdown: React.FC = () => {
 
       if (error) throw error;
 
-      const userIds = members?.map(m => m.user_id) || [];
-      
       // Try to get emails from employees table (they have email field)
       const { data: employees } = await supabase
         .from('employees')
@@ -90,11 +85,15 @@ export const ViewAsDropdown: React.FC = () => {
     }
   };
 
+  // Move useEffect BEFORE any conditional returns
   useEffect(() => {
-    if (currentOrganization) {
+    if (currentOrganization && isSuperAdmin) {
       fetchOrgUsers();
     }
-  }, [currentOrganization]);
+  }, [currentOrganization, isSuperAdmin]);
+
+  // Only show for super admins - this must be AFTER all hooks
+  if (!isSuperAdmin) return null;
 
   const filteredUsers = orgUsers.filter(u => 
     u.email.toLowerCase().includes(searchQuery.toLowerCase())
