@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useUserRoles } from '@/hooks/useUserRoles';
 import { useAuth } from '@/hooks/useAuth';
+import { useOrganizationData } from '@/hooks/useOrganizationData';
 
 // Full employee data - HR and Admin only
 export interface Employee {
@@ -23,6 +24,7 @@ export interface Employee {
   emergency_contact_name: string | null;
   emergency_contact_phone: string | null;
   client_id: string | null;
+  organization_id?: string;
   created_at: string;
   updated_at: string;
 }
@@ -55,6 +57,7 @@ export const useEmployees = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const { canViewSensitiveData, hasRole, hasAnyRole, loading: rolesLoading } = useUserRoles();
+  const { organizationId } = useOrganizationData();
 
   // Filter employee data based on user role - return Employee but with sensitive fields nullified
   const filterEmployeeData = (employee: Employee): Employee => {
@@ -151,10 +154,17 @@ export const useEmployees = () => {
         setEmployees(directoryData);
       } else {
         // HR/Admin and Project Managers get data from main table with filtering
-        const { data, error } = await supabase
+        let query = supabase
           .from('employees')
           .select('*')
           .order('first_name', { ascending: true });
+
+        // Filter by organization if one is selected
+        if (organizationId) {
+          query = query.eq('organization_id', organizationId);
+        }
+
+        const { data, error } = await query;
 
         if (error) throw error;
         
@@ -178,7 +188,7 @@ export const useEmployees = () => {
     try {
       const { data, error } = await supabase
         .from('employees')
-        .insert([employeeData])
+        .insert([{ ...employeeData, organization_id: organizationId }])
         .select()
         .single();
 
@@ -279,7 +289,7 @@ export const useEmployees = () => {
       console.log('🔐 [useEmployees] User has admin/HR access:', canViewSensitiveData());
       fetchEmployees();
     }
-  }, [user, rolesLoading]);
+  }, [user, rolesLoading, organizationId]);
 
   // Helper function to check if user can view sensitive employee data
   const canViewSensitiveEmployeeData = () => canViewSensitiveData();

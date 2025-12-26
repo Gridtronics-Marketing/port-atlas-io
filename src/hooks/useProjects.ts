@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useOrganizationData } from '@/hooks/useOrganizationData';
 
 export interface Project {
   id: string;
@@ -14,6 +15,7 @@ export interface Project {
   end_date?: string;
   estimated_budget?: number;
   actual_cost?: number;
+  organization_id?: string;
   created_at: string;
   updated_at: string;
 }
@@ -22,13 +24,23 @@ export function useProjects() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { organizationId } = useOrganizationData();
 
   const fetchProjects = async () => {
     try {
-      const { data, error } = await supabase
+      setLoading(true);
+      
+      let query = supabase
         .from('projects')
         .select('*')
         .order('created_at', { ascending: false });
+
+      // Filter by organization if one is selected
+      if (organizationId) {
+        query = query.eq('organization_id', organizationId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       setProjects(data || []);
@@ -48,7 +60,7 @@ export function useProjects() {
     try {
       const { data, error } = await supabase
         .from('projects')
-        .insert([projectData])
+        .insert([{ ...projectData, organization_id: organizationId }])
         .select()
         .single();
 
@@ -131,7 +143,7 @@ export function useProjects() {
 
   useEffect(() => {
     fetchProjects();
-  }, []);
+  }, [organizationId]);
 
   return {
     projects,

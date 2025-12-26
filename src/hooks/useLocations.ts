@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useOrganizationData } from '@/hooks/useOrganizationData';
 
 export interface Location {
   id: string;
@@ -19,6 +20,7 @@ export interface Location {
   status: 'Active' | 'In Progress' | 'Completed' | 'On Hold';
   completion_percentage: number;
   floor_plan_files?: { [floorNumber: number]: string };
+  organization_id?: string;
   created_at: string;
   updated_at: string;
   // Joined data
@@ -38,11 +40,13 @@ export const useLocations = () => {
   const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { organizationId } = useOrganizationData();
 
   const fetchLocations = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      
+      let query = supabase
         .from('locations')
         .select(`
           *,
@@ -53,6 +57,13 @@ export const useLocations = () => {
           )
         `)
         .order('created_at', { ascending: false });
+
+      // Filter by organization if one is selected
+      if (organizationId) {
+        query = query.eq('organization_id', organizationId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       
@@ -88,7 +99,7 @@ export const useLocations = () => {
     try {
       const { data, error } = await supabase
         .from('locations')
-        .insert([locationData])
+        .insert([{ ...locationData, organization_id: organizationId }])
         .select()
         .single();
 
@@ -166,7 +177,7 @@ export const useLocations = () => {
 
   useEffect(() => {
     fetchLocations();
-  }, []);
+  }, [organizationId]);
 
   return {
     locations,
