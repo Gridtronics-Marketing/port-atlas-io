@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useOrganizationData } from '@/hooks/useOrganizationData';
 
 export interface Client {
   id: string;
@@ -11,6 +12,7 @@ export interface Client {
   address: string | null;
   billing_address: string | null;
   status: 'Active' | 'Inactive' | 'Pending';
+  organization_id?: string;
   created_at: string;
   updated_at: string;
 }
@@ -19,14 +21,23 @@ export const useClients = () => {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { organizationId } = useOrganizationData();
 
   const fetchClients = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      
+      let query = supabase
         .from('clients')
         .select('*')
         .order('created_at', { ascending: false });
+
+      // Filter by organization if one is selected
+      if (organizationId) {
+        query = query.eq('organization_id', organizationId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       setClients((data || []) as Client[]);
@@ -46,7 +57,7 @@ export const useClients = () => {
     try {
       const { data, error } = await supabase
         .from('clients')
-        .insert([clientData])
+        .insert([{ ...clientData, organization_id: organizationId }])
         .select()
         .single();
 
@@ -127,7 +138,7 @@ export const useClients = () => {
 
   useEffect(() => {
     fetchClients();
-  }, []);
+  }, [organizationId]);
 
   return {
     clients,

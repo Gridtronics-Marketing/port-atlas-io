@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useOrganizationData } from '@/hooks/useOrganizationData';
 
 export interface WorkOrder {
   id: string;
@@ -18,6 +19,7 @@ export interface WorkOrder {
   estimated_hours?: number;
   actual_hours?: number;
   completion_notes?: string;
+  organization_id?: string;
   created_at: string;
   updated_at: string;
 }
@@ -26,13 +28,23 @@ export function useWorkOrders() {
   const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { organizationId } = useOrganizationData();
 
   const fetchWorkOrders = async () => {
     try {
-      const { data, error } = await supabase
+      setLoading(true);
+      
+      let query = supabase
         .from('work_orders')
         .select('*')
         .order('created_at', { ascending: false });
+
+      // Filter by organization if one is selected
+      if (organizationId) {
+        query = query.eq('organization_id', organizationId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       setWorkOrders(data || []);
@@ -52,7 +64,7 @@ export function useWorkOrders() {
     try {
       const { data, error } = await supabase
         .from('work_orders')
-        .insert([workOrderData])
+        .insert([{ ...workOrderData, organization_id: organizationId }])
         .select()
         .single();
 
@@ -135,7 +147,7 @@ export function useWorkOrders() {
 
   useEffect(() => {
     fetchWorkOrders();
-  }, []);
+  }, [organizationId]);
 
   return {
     workOrders,

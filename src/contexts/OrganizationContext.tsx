@@ -70,6 +70,8 @@ interface OrganizationProviderProps {
   children: ReactNode;
 }
 
+const STORAGE_KEY = 'selectedOrganizationId';
+
 export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ children }) => {
   const { user } = useAuth();
   
@@ -153,9 +155,12 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
         const orgs = (allOrgs || []) as Organization[];
         setOrganizations(orgs);
         
-        // Auto-select first org if none selected
-        if (!currentOrganization && orgs.length > 0) {
-          setCurrentOrganization(orgs[0]);
+        // Restore from localStorage or auto-select first org
+        const savedOrgId = localStorage.getItem(STORAGE_KEY);
+        const savedOrg = savedOrgId ? orgs.find(o => o.id === savedOrgId) : null;
+        
+        if (!currentOrganization) {
+          setCurrentOrganization(savedOrg || orgs[0] || null);
         }
       } else {
         // Fetch only organizations user is a member of
@@ -179,9 +184,12 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
 
           setOrganizations((orgs || []) as Organization[]);
           
-          // Auto-select first org if none selected
+          // Restore from localStorage or auto-select first org
+          const savedOrgId = localStorage.getItem(STORAGE_KEY);
+          const savedOrg = savedOrgId ? orgs?.find(o => o.id === savedOrgId) : null;
+          
           if (!currentOrganization && orgs && orgs.length > 0) {
-            const firstOrg = orgs[0] as Organization;
+            const firstOrg = (savedOrg || orgs[0]) as Organization;
             setCurrentOrganization(firstOrg);
             const membership = memberships.find(m => m.organization_id === firstOrg.id);
             setUserOrgRole(membership?.role as OrgRole || null);
@@ -198,12 +206,12 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
     }
   };
 
-  // Switch to a different organization
   const switchOrganization = async (orgId: string) => {
     const org = organizations.find(o => o.id === orgId);
     if (!org) return;
 
     setCurrentOrganization(org);
+    localStorage.setItem(STORAGE_KEY, orgId);
 
     // Get user's role in this org (if not super admin)
     if (!isSuperAdmin && user) {
