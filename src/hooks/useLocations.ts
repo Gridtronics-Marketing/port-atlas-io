@@ -34,13 +34,6 @@ export interface Location {
     };
   };
   drop_points_count?: number;
-  // Access grant info
-  is_granted?: boolean;
-  granted_by_org?: {
-    id: string;
-    name: string;
-  };
-  access_level?: 'view' | 'edit' | 'full';
 }
 
 export const useLocations = () => {
@@ -53,8 +46,7 @@ export const useLocations = () => {
     try {
       setLoading(true);
       
-      // Fetch owned locations
-      let ownedQuery = supabase
+      let query = supabase
         .from('locations')
         .select(`
           *,
@@ -68,73 +60,16 @@ export const useLocations = () => {
 
       // Filter by organization if one is selected
       if (organizationId) {
-        ownedQuery = ownedQuery.eq('organization_id', organizationId);
+        query = query.eq('organization_id', organizationId);
       }
 
-      const { data: ownedData, error: ownedError } = await ownedQuery;
-      if (ownedError) throw ownedError;
+      const { data, error } = await query;
 
-      // Fetch granted locations (locations shared with this organization)
-      let grantedLocations: Location[] = [];
-      if (organizationId) {
-        const { data: grants, error: grantsError } = await supabase
-          .from('location_access_grants')
-          .select('location_id, access_level')
-          .eq('granted_organization_id', organizationId);
-
-        if (!grantsError && grants && grants.length > 0) {
-          const grantedLocationIds = grants.map(g => g.location_id);
-          const accessMap = new Map(grants.map(g => [g.location_id, g.access_level]));
-
-          const { data: grantedData, error: grantedError } = await supabase
-            .from('locations')
-            .select(`
-              *,
-              client:clients(name),
-              project:projects(
-                name,
-                client:clients(name)
-              )
-            `)
-            .in('id', grantedLocationIds)
-            .order('created_at', { ascending: false });
-
-          if (!grantedError && grantedData) {
-            // Fetch owner organization names
-            const ownerOrgIds = [...new Set(grantedData.map(l => l.organization_id).filter(Boolean))];
-            const { data: orgs } = await supabase
-              .from('organizations')
-              .select('id, name')
-              .in('id', ownerOrgIds);
-
-            const orgMap = new Map((orgs || []).map(o => [o.id, o]));
-
-            grantedLocations = grantedData.map(location => ({
-              ...location,
-              status: location.status as Location['status'],
-              floor_plan_files: location.floor_plan_files as { [floorNumber: number]: string } | undefined,
-              is_granted: true,
-              granted_by_org: location.organization_id ? orgMap.get(location.organization_id) : undefined,
-              access_level: accessMap.get(location.id) as 'view' | 'edit' | 'full',
-            })) as Location[];
-          }
-        }
-      }
-
-      // Combine owned and granted locations
-      const allLocations: Location[] = [
-        ...(ownedData || []).map(l => ({ 
-          ...l, 
-          status: l.status as Location['status'],
-          floor_plan_files: l.floor_plan_files as { [floorNumber: number]: string } | undefined,
-          is_granted: false 
-        })) as Location[],
-        ...grantedLocations
-      ];
+      if (error) throw error;
       
       // Get drop points count for each location
       const locationsWithCounts = await Promise.all(
-        allLocations.map(async (location) => {
+        (data || []).map(async (location) => {
           const { count } = await supabase
             .from('drop_points')
             .select('*', { count: 'exact', head: true })
@@ -240,11 +175,6 @@ export const useLocations = () => {
     }
   };
 
-  // Check if current org is the owner of a location
-  const isLocationOwner = (location: Location) => {
-    return location.organization_id === organizationId;
-  };
-
   useEffect(() => {
     fetchLocations();
   }, [organizationId]);
@@ -256,6 +186,5 @@ export const useLocations = () => {
     addLocation,
     updateLocation,
     deleteLocation,
-    isLocationOwner,
   };
 };

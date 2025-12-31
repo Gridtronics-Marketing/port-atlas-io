@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { MapPin, Cable, Loader2, Share2 } from "lucide-react";
+import { MapPin, Cable, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { LocationDetailsModal } from "@/components/LocationDetailsModal";
 import { AddLocationModal } from "@/components/AddLocationModal";
 import { useLocations, type Location } from "@/hooks/useLocations";
 
 export const LocationGrid = () => {
-  const { locations, loading, deleteLocation, fetchLocations, isLocationOwner } = useLocations();
+  const { locations, loading, deleteLocation, fetchLocations } = useLocations();
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
   const [editingLocation, setEditingLocation] = useState<Location | null>(null);
 
@@ -69,12 +69,6 @@ export const LocationGrid = () => {
                   <Badge className={getStatusColor(location.status)}>
                     {location.status}
                   </Badge>
-                  {location.is_granted && (
-                    <Badge variant="outline" className="flex items-center gap-1 text-xs">
-                      <Share2 className="h-3 w-3" />
-                      Shared by {location.granted_by_org?.name || 'Unknown'}
-                    </Badge>
-                  )}
                 </div>
                 
                 <p className="text-sm text-muted-foreground mb-2">
@@ -101,10 +95,9 @@ export const LocationGrid = () => {
         location={selectedLocation}
         open={!!selectedLocation}
         onOpenChange={(open) => !open && setSelectedLocation(null)}
-        onEditLocation={selectedLocation && isLocationOwner(selectedLocation) ? setEditingLocation : undefined}
-        onDeleteLocation={selectedLocation && isLocationOwner(selectedLocation) ? deleteLocation : undefined}
+        onEditLocation={setEditingLocation}
+        onDeleteLocation={deleteLocation}
         onLocationUpdate={fetchLocations}
-        isOwner={selectedLocation ? isLocationOwner(selectedLocation) : false}
       />
       
       <AddLocationModal

@@ -13,9 +13,7 @@ import {
   Layers,
   Square,
   Info,
-  Trash2,
-  Share2,
-  Shield
+  Trash2
 } from "lucide-react";
 import {
   Dialog,
@@ -49,7 +47,6 @@ import { AddLocationNoteModal } from "@/components/AddLocationNoteModal";
 import { FloorPlanEditor } from "@/components/FloorPlanEditor";
 import { WalkThroughNotesList } from "@/components/WalkThroughNotesList";
 import { CustomerNotesPanel } from "@/components/CustomerNotesPanel";
-import { LocationAccessGrantsModal } from "@/components/LocationAccessGrantsModal";
 
 import { FloorPlanRepairTool } from "@/components/FloorPlanRepairTool";
 import { FloorPlanFileManager } from "@/components/FloorPlanFileManager";
@@ -74,17 +71,15 @@ interface LocationDetailsModalProps {
   onEditLocation?: (location: Location) => void;
   onDeleteLocation?: (id: string) => void;
   onLocationUpdate?: () => void; // Callback to refresh location data
-  isOwner?: boolean; // Whether current org owns this location
 }
 
-export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocation, onDeleteLocation, onLocationUpdate, isOwner = true }: LocationDetailsModalProps) => {
+export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocation, onDeleteLocation, onLocationUpdate }: LocationDetailsModalProps) => {
   const [activeTab, setActiveTab] = useState("details");
   const [selectedFloor, setSelectedFloor] = useState<number>(1);
   const [floorPlanUrls, setFloorPlanUrls] = useState<{ [floorNumber: number]: string }>({});
   const [riserDiagramUrl, setRiserDiagramUrl] = useState<string | null>(null);
   const [showAddFloorPlanModal, setShowAddFloorPlanModal] = useState(false);
   const [showAddRiserModal, setShowAddRiserModal] = useState(false);
-  const [showAccessGrantsModal, setShowAccessGrantsModal] = useState(false);
 
   // Fetch team members for this location
   const { teamMembers, loading: teamLoading, refetch: refetchTeam } = useLocationTeam(location?.id);
@@ -217,28 +212,12 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
                   <Badge className={getStatusColor(location.status)}>
                     {location.status}
                   </Badge>
-                  {location.is_granted && (
-                    <Badge variant="outline" className="flex items-center gap-1">
-                      <Share2 className="h-3 w-3" />
-                      Shared by {location.granted_by_org?.name || 'Unknown'}
-                    </Badge>
-                  )}
                   <span className="text-sm text-muted-foreground">
                     {location.project?.client?.name || 'No Client'} • {location.address}
                   </span>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                {isOwner && (
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowAccessGrantsModal(true)}
-                    className="flex items-center gap-2"
-                  >
-                    <Shield className="h-4 w-4" />
-                    Manage Access
-                  </Button>
-                )}
                 {onEditLocation && (
                   <Button
                     variant="outline"
@@ -773,15 +752,6 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
           }
         }}
       />
-
-      {/* Location Access Grants Modal */}
-      {location && (
-        <LocationAccessGrantsModal
-          open={showAccessGrantsModal}
-          onOpenChange={setShowAccessGrantsModal}
-          location={location}
-        />
-      )}
     </>
   );
 };

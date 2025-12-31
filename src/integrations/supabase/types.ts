@@ -1974,54 +1974,6 @@ export type Database = {
           },
         ]
       }
-      location_access_grants: {
-        Row: {
-          access_level: string
-          created_at: string
-          granted_by: string | null
-          granted_organization_id: string
-          id: string
-          location_id: string
-          notes: string | null
-          updated_at: string
-        }
-        Insert: {
-          access_level?: string
-          created_at?: string
-          granted_by?: string | null
-          granted_organization_id: string
-          id?: string
-          location_id: string
-          notes?: string | null
-          updated_at?: string
-        }
-        Update: {
-          access_level?: string
-          created_at?: string
-          granted_by?: string | null
-          granted_organization_id?: string
-          id?: string
-          location_id?: string
-          notes?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "location_access_grants_granted_organization_id_fkey"
-            columns: ["granted_organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "location_access_grants_location_id_fkey"
-            columns: ["location_id"]
-            isOneToOne: false
-            referencedRelation: "locations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       locations: {
         Row: {
           access_instructions: string | null
@@ -4989,7 +4941,6 @@ export type Database = {
         Args: { _roles: Database["public"]["Enums"]["app_role"][] }
         Returns: boolean
       }
-      has_location_access: { Args: { p_location_id: string }; Returns: boolean }
       has_org_access: {
         Args: { _org_id: string; _user_id: string }
         Returns: boolean
