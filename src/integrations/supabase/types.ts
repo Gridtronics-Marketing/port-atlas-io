@@ -736,6 +736,73 @@ export type Database = {
           },
         ]
       }
+      client_invitations: {
+        Row: {
+          accepted_at: string | null
+          client_id: string | null
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          invitation_token: string | null
+          invited_by: string | null
+          invited_email: string
+          organization_id: string | null
+          organization_id_scope: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          client_id?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          invitation_token?: string | null
+          invited_by?: string | null
+          invited_email: string
+          organization_id?: string | null
+          organization_id_scope?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          accepted_at?: string | null
+          client_id?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          invitation_token?: string | null
+          invited_by?: string | null
+          invited_email?: string
+          organization_id?: string | null
+          organization_id_scope?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_invitations_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_invitations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_invitations_organization_id_scope_fkey"
+            columns: ["organization_id_scope"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           address: string | null
@@ -745,6 +812,7 @@ export type Database = {
           contact_phone: string | null
           created_at: string
           id: string
+          linked_organization_id: string | null
           name: string
           organization_id: string | null
           status: string | null
@@ -758,6 +826,7 @@ export type Database = {
           contact_phone?: string | null
           created_at?: string
           id?: string
+          linked_organization_id?: string | null
           name: string
           organization_id?: string | null
           status?: string | null
@@ -771,12 +840,20 @@ export type Database = {
           contact_phone?: string | null
           created_at?: string
           id?: string
+          linked_organization_id?: string | null
           name?: string
           organization_id?: string | null
           status?: string | null
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "clients_linked_organization_id_fkey"
+            columns: ["linked_organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "clients_organization_id_fkey"
             columns: ["organization_id"]

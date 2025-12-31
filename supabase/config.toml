@@ -1,1 +1,13 @@
 project_id = "mhrekppksiekhstnteyu"
+
+[functions.openphone-webhook]
+verify_jwt = false
+
+[functions.send-twilio-notification]
+verify_jwt = true
+
+[functions.test-twilio-connection]
+verify_jwt = true
+
+[functions.invite-client-user]
+verify_jwt = true
