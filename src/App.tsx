@@ -36,6 +36,7 @@ import Procurement from "./pages/Procurement";
 import FloorPlanEditor from "./pages/FloorPlanEditor";
 import OrganizationOnboarding from "./pages/OrganizationOnboarding";
 import AdminOrganizations from "./pages/AdminOrganizations";
+import OrganizationSettings from "./pages/OrganizationSettings";
 
 const queryClient = new QueryClient();
 
@@ -63,6 +64,13 @@ const App = () => (
               <ProtectedRoute>
                 <AppLayout>
                   <AdminOrganizations />
+              </AppLayout>
+            </ProtectedRoute>
+            } />
+            <Route path="/organization/settings" element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <OrganizationSettings />
                 </AppLayout>
               </ProtectedRoute>
             } />

@@ -19,7 +19,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Building2, User, Mail, Phone, MapPin, Calendar, ExternalLink, Loader2, Edit, Plus, Trash2, Map, Navigation } from "lucide-react";
+import { Building2, User, Mail, Phone, MapPin, Calendar, ExternalLink, Loader2, Edit, Plus, Trash2, Map, Navigation, Users } from "lucide-react";
+import { CreateClientPortalModal } from "@/components/CreateClientPortalModal";
 import { openNavigation } from "@/lib/navigation-utils";
 import { Client } from "@/hooks/useClients";
 import { useClientLocations } from "@/hooks/useClientLocations";
@@ -48,6 +49,7 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onDe
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isAddLocationModalOpen, setIsAddLocationModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
+  const [isPortalModalOpen, setIsPortalModalOpen] = useState(false);
 
   const handleDeleteLocation = async (locationId: string) => {
     try {
@@ -113,14 +115,26 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onDe
                 Complete information for {client.name}
               </DialogDescription>
             </div>
-            <Button
-              variant="outline"
-              onClick={() => setIsEditMode(!isEditMode)}
-              className="flex items-center gap-2"
-            >
-              <Edit className="h-4 w-4" />
-              {isEditMode ? 'Cancel Edit' : 'Edit'}
-            </Button>
+            <div className="flex gap-2">
+              {client.contact_email && !(client as any).linked_organization_id && (
+                <Button
+                  variant="default"
+                  onClick={() => setIsPortalModalOpen(true)}
+                  className="flex items-center gap-2"
+                >
+                  <Users className="h-4 w-4" />
+                  Create Portal
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                onClick={() => setIsEditMode(!isEditMode)}
+                className="flex items-center gap-2"
+              >
+                <Edit className="h-4 w-4" />
+                {isEditMode ? 'Cancel Edit' : 'Edit'}
+              </Button>
+            </div>
           </div>
         </DialogHeader>
 
@@ -442,6 +456,15 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onDe
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <CreateClientPortalModal
+        open={isPortalModalOpen}
+        onOpenChange={setIsPortalModalOpen}
+        client={client}
+        onSuccess={() => {
+          toast({ title: "Success", description: "Portal created and invitation sent!" });
+        }}
+      />
     </Dialog>
   );
 };
