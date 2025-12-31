@@ -11,13 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
 
-interface Client {
-  id: string;
-  name: string;
-  contact_email: string | null;
-  contact_name: string | null;
-  linked_organization_id: string | null;
-}
+import { Client } from '@/hooks/useClients';
 
 interface CreateClientPortalModalProps {
   open: boolean;

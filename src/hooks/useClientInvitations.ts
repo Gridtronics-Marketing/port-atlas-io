@@ -43,13 +43,21 @@ export const useClientInvitations = () => {
         .from('client_invitations')
         .select(`
           *,
-          client:clients(name),
-          organization:organizations(name)
+          client:clients!client_id(name)
         `)
         .eq('organization_id_scope', currentOrganization.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+      
+      // Fetch organization names separately to avoid ambiguity
+      const orgIds = [...new Set((data || []).map(inv => inv.organization_id).filter(Boolean))];
+      const { data: orgs } = await supabase
+        .from('organizations')
+        .select('id, name')
+        .in('id', orgIds);
+      
+      const orgMap = new Map((orgs || []).map(o => [o.id, o.name]));
       
       // Update expired invitations and cast properly
       const now = new Date();
@@ -61,7 +69,7 @@ export const useClientInvitations = () => {
           ...inv,
           status: status as ClientInvitation['status'],
           client: inv.client as { name: string } | undefined,
-          organization: inv.organization as { name: string } | undefined
+          organization: inv.organization_id ? { name: orgMap.get(inv.organization_id) || 'Unknown' } : undefined
         };
       }) as ClientInvitation[];
 
