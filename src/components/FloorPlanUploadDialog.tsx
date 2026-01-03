@@ -286,7 +286,7 @@ export const FloorPlanUploadDialog = ({
           <DialogTitle>Upload Floor Plan Map</DialogTitle>
           <DialogDescription>
             Upload a base image (PNG, JPG, SVG, or PDF) to use as your floor plan background.
-            You'll be able to draw annotations on top of it.
+            You can add annotations after uploading.
           </DialogDescription>
         </DialogHeader>
 
@@ -377,7 +377,7 @@ export const FloorPlanUploadDialog = ({
             ) : (
               <>
                 <Upload className="h-4 w-4 mr-2" />
-                Upload & Draw
+                Upload
               </>
             )}
           </Button>

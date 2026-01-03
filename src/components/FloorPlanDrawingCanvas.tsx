@@ -429,7 +429,7 @@ export const FloorPlanDrawingCanvas = forwardRef<DrawingCanvasRef, FloorPlanDraw
     
     toast({
       title: "Canvas Cleared",
-      description: "All drawings have been removed.",
+      description: "All annotations have been removed.",
     });
   }, [fabricCanvas, saveToHistory, toast]);
 
@@ -441,7 +441,7 @@ export const FloorPlanDrawingCanvas = forwardRef<DrawingCanvasRef, FloorPlanDraw
     onSave(data);
     
     toast({
-      title: "Drawing Saved",
+      title: "Annotations Saved",
       description: "Your floor plan annotations have been saved.",
     });
   }, [fabricCanvas, onSave, toast]);
@@ -454,17 +454,17 @@ export const FloorPlanDrawingCanvas = forwardRef<DrawingCanvasRef, FloorPlanDraw
     }
     
     try {
-      console.log('📂 Loading drawing data into canvas');
+      console.log('📂 Loading annotation data into canvas');
       fabricCanvas.loadFromJSON(data, () => {
         fabricCanvas.renderAll();
         saveToHistory(fabricCanvas);
-        console.log('✅ Drawing loaded successfully');
+        console.log('✅ Annotations loaded successfully');
       });
     } catch (error) {
-      console.error('❌ Error loading drawing data:', error);
+      console.error('❌ Error loading annotation data:', error);
       toast({
         title: "Load Failed",
-        description: "Failed to load drawing data.",
+        description: "Failed to load annotation data.",
         variant: "destructive",
       });
     }

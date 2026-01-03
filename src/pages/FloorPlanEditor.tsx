@@ -17,19 +17,19 @@ export default function FloorPlanEditorPage() {
   const locationId = searchParams.get('locationId') || 'temp-editor-location';
   const riserName = searchParams.get('name') || 'Riser Diagram';
   
-  // Auto-activate drawing mode on mount
+  // Auto-activate annotation mode on mount
   useEffect(() => {
     if (!hasAutoActivated.current) {
       hasAutoActivated.current = true;
       
-      // Give the component time to mount, then auto-activate drawing mode
+      // Give the component time to mount, then auto-activate annotation mode
       setTimeout(() => {
         const drawButton = document.querySelector('[data-draw-mode-button]') as HTMLButtonElement;
         if (drawButton) {
           drawButton.click();
           toast({
-            title: "Drawing Mode Active",
-            description: "Use the toolbar to start drawing on your floor plan",
+            title: "Annotation Mode Active",
+            description: "Use the toolbar to annotate your floor plan",
           });
         }
       }, 500);
@@ -64,7 +64,7 @@ export default function FloorPlanEditorPage() {
             {mode === 'riser' ? riserName : `Floor ${floor} Editor`}
           </h1>
           <p className="text-sm text-muted-foreground">
-            Draw and annotate your floor plan with the advanced drawing tools
+            Annotate your floor plan with the advanced annotation tools
           </p>
         </div>
         <InteractiveFloorPlan

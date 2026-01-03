@@ -144,7 +144,7 @@ export const CreateRiserDiagramModal = ({
             </TabsTrigger>
             <TabsTrigger value="draw" className="flex items-center gap-2">
               <Pencil className="h-4 w-4" />
-              Draw New
+              Annotate New
             </TabsTrigger>
           </TabsList>
 
@@ -216,10 +216,10 @@ export const CreateRiserDiagramModal = ({
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Network className="h-5 w-5" />
-                  Draw New Diagram
+                  Create New Diagram
                 </CardTitle>
                 <CardDescription>
-                  Create a new riser diagram using the built-in drawing tools
+                  Create a new riser diagram using annotation tools
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -247,10 +247,10 @@ export const CreateRiserDiagramModal = ({
                   </div>
 
                   <div className="bg-muted/50 p-4 rounded-lg">
-                    <h4 className="font-medium mb-2">Drawing Features</h4>
+                    <h4 className="font-medium mb-2">Annotation Features</h4>
                     <ul className="text-sm text-muted-foreground space-y-1">
                       <li>• Specialized telecom symbols (MDF, IDF, switches)</li>
-                      <li>• Cable run drawing tools with industry colors</li>
+                      <li>• Cable run annotation tools with industry colors</li>
                       <li>• Floor level markers and pathway indicators</li>
                       <li>• Equipment rack symbols and labeling</li>
                     </ul>
@@ -261,7 +261,7 @@ export const CreateRiserDiagramModal = ({
                       Cancel
                     </Button>
                     <Button type="submit">
-                      Open Drawing Canvas
+                      Open Annotation Canvas
                     </Button>
                   </div>
                 </form>
