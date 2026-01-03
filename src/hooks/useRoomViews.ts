@@ -11,7 +11,8 @@ export interface RoomView {
   y_coordinate: number;
   room_name?: string;
   description?: string;
-  ceiling_height?: string;
+  ceiling_height?: number | null;
+  ceiling_height_unit?: string;
   photo_url: string;
   employee_id: string;
   created_at: string;

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
@@ -47,7 +48,8 @@ export const RoomViewModal: React.FC<RoomViewModalProps> = ({
     setEditData({
       room_name: roomView.room_name || '',
       description: roomView.description || '',
-      ceiling_height: roomView.ceiling_height || ''
+      ceiling_height: roomView.ceiling_height ?? null,
+      ceiling_height_unit: roomView.ceiling_height_unit || 'ft'
     });
     setIsEditing(true);
   };
@@ -279,16 +281,37 @@ export const RoomViewModal: React.FC<RoomViewModalProps> = ({
                   Ceiling Height
                 </Label>
                 {isEditing ? (
-                  <Input
-                    id="ceiling_height"
-                    value={editData.ceiling_height || ''}
-                    onChange={(e) => setEditData({ ...editData, ceiling_height: e.target.value })}
-                    placeholder="e.g., 9ft, 2.7m"
-                    className="mt-1"
-                  />
+                  <div className="flex gap-2 mt-1">
+                    <Input
+                      id="ceiling_height"
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      value={editData.ceiling_height ?? ''}
+                      onChange={(e) => setEditData({ ...editData, ceiling_height: e.target.value ? parseFloat(e.target.value) : null })}
+                      placeholder="e.g., 9.5"
+                      className="flex-1"
+                    />
+                    <Select 
+                      value={editData.ceiling_height_unit || 'ft'} 
+                      onValueChange={(value) => setEditData({ ...editData, ceiling_height_unit: value })}
+                    >
+                      <SelectTrigger className="w-20">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ft">ft</SelectItem>
+                        <SelectItem value="m">m</SelectItem>
+                        <SelectItem value="in">in</SelectItem>
+                        <SelectItem value="cm">cm</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 ) : (
                   <p className="mt-1 text-sm">
-                    {roomView?.ceiling_height || 'Not specified'}
+                    {roomView?.ceiling_height != null 
+                      ? `${roomView.ceiling_height} ${roomView.ceiling_height_unit || 'ft'}`
+                      : 'Not specified'}
                   </p>
                 )}
               </div>
