@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useEnhancedOfflineSync } from './useEnhancedOfflineSync';
-import { useToast } from './use-toast';
+import { useUnifiedOfflineSync } from './useUnifiedOfflineSync';
 
 interface UseOfflineDataOptions {
   tableName: string;
@@ -16,37 +15,30 @@ export const useOfflineDataHook = <T extends { id: string }>(options: UseOffline
   const [data, setData] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  
-  const { 
-    isOnline, 
-    offlineMode, 
-    getOfflineData, 
-    queueOperation 
-  } = useEnhancedOfflineSync();
-  
-  const { toast } = useToast();
+
+  const { isOnline, getOfflineData, queueOperation } = useUnifiedOfflineSync();
 
   const fetchData = async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
-      // If offline or in offline mode, use cached data
-      if (!isOnline || offlineMode) {
+      // If offline, use cached data
+      if (!isOnline) {
         const offlineData = await getOfflineData<T>(tableName, filter);
-        
+
         // Apply ordering if specified
         if (orderBy) {
           offlineData.sort((a: any, b: any) => {
             const aVal = a[orderBy.column];
             const bVal = b[orderBy.column];
-            
+
             if (aVal < bVal) return orderBy.ascending !== false ? -1 : 1;
             if (aVal > bVal) return orderBy.ascending !== false ? 1 : -1;
             return 0;
           });
         }
-        
+
         setData(offlineData);
         return;
       }
@@ -71,28 +63,15 @@ export const useOfflineDataHook = <T extends { id: string }>(options: UseOffline
       if (fetchError) throw fetchError;
 
       setData(fetchedData || []);
-      
-      // Update offline cache with fresh data
-      if (fetchedData && fetchedData.length > 0) {
-        for (const record of fetchedData) {
-          await queueOperation(tableName, record.id, 'insert', record);
-        }
-      }
-
     } catch (err) {
       console.error(`Error fetching ${tableName}:`, err);
       setError(err as Error);
-      
+
       // Fallback to offline data if online fetch fails
       try {
         const fallbackData = await getOfflineData<T>(tableName, filter);
         if (fallbackData.length > 0) {
           setData(fallbackData);
-          toast({
-            title: "Using Cached Data",
-            description: `Loaded ${fallbackData.length} items from cache`,
-            variant: "default",
-          });
         }
       } catch (offlineError) {
         console.error('Error loading offline fallback:', offlineError);
@@ -105,12 +84,12 @@ export const useOfflineDataHook = <T extends { id: string }>(options: UseOffline
   const addItem = async (newData: Omit<T, 'id'>) => {
     const tempId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const itemWithId = { id: tempId, ...newData } as T;
-    
+
     try {
       // Optimistically update local state
-      setData(prev => [itemWithId, ...prev]);
-      
-      if (isOnline && !offlineMode) {
+      setData((prev) => [itemWithId, ...prev]);
+
+      if (isOnline) {
         // Online mode - insert to Supabase
         const { data: insertedData, error } = await (supabase as any)
           .from(tableName)
@@ -121,41 +100,34 @@ export const useOfflineDataHook = <T extends { id: string }>(options: UseOffline
         if (error) throw error;
 
         // Update local state with real data
-        setData(prev => prev.map(item => 
-          item.id === tempId ? insertedData : item
-        ));
+        setData((prev) => prev.map((item) => (item.id === tempId ? insertedData : item)));
       } else {
-        // Offline mode - queue operation
+        // Offline mode - queue operation silently
         await queueOperation(tableName, tempId, 'insert', itemWithId);
       }
 
       return itemWithId;
     } catch (error) {
       // Revert optimistic update on error
-      setData(prev => prev.filter(item => item.id !== tempId));
+      setData((prev) => prev.filter((item) => item.id !== tempId));
       throw error;
     }
   };
 
   const updateItem = async (id: string, updates: Partial<T>) => {
     const originalData = [...data];
-    
+
     try {
       // Optimistically update local state
-      setData(prev => prev.map(item => 
-        item.id === id ? { ...item, ...updates } : item
-      ));
-      
-      if (isOnline && !offlineMode) {
+      setData((prev) => prev.map((item) => (item.id === id ? { ...item, ...updates } : item)));
+
+      if (isOnline) {
         // Online mode - update in Supabase
-        const { error } = await (supabase as any)
-          .from(tableName)
-          .update(updates)
-          .eq('id', id);
+        const { error } = await (supabase as any).from(tableName).update(updates).eq('id', id);
 
         if (error) throw error;
       } else {
-        // Offline mode - queue operation
+        // Offline mode - queue operation silently
         await queueOperation(tableName, id, 'update', updates);
       }
     } catch (error) {
@@ -167,21 +139,18 @@ export const useOfflineDataHook = <T extends { id: string }>(options: UseOffline
 
   const deleteItem = async (id: string) => {
     const originalData = [...data];
-    
+
     try {
       // Optimistically update local state
-      setData(prev => prev.filter(item => item.id !== id));
-      
-      if (isOnline && !offlineMode) {
+      setData((prev) => prev.filter((item) => item.id !== id));
+
+      if (isOnline) {
         // Online mode - delete from Supabase
-        const { error } = await (supabase as any)
-          .from(tableName)
-          .delete()
-          .eq('id', id);
+        const { error } = await (supabase as any).from(tableName).delete().eq('id', id);
 
         if (error) throw error;
       } else {
-        // Offline mode - queue operation
+        // Offline mode - queue operation silently
         await queueOperation(tableName, id, 'delete', {});
       }
     } catch (error) {
@@ -198,7 +167,7 @@ export const useOfflineDataHook = <T extends { id: string }>(options: UseOffline
   // Effect to fetch data when dependencies change
   useEffect(() => {
     fetchData();
-  }, [tableName, JSON.stringify(filter), JSON.stringify(orderBy), isOnline, offlineMode, ...dependencies]);
+  }, [tableName, JSON.stringify(filter), JSON.stringify(orderBy), isOnline, ...dependencies]);
 
   return {
     data,
@@ -208,6 +177,6 @@ export const useOfflineDataHook = <T extends { id: string }>(options: UseOffline
     addItem,
     updateItem,
     deleteItem,
-    isOffline: !isOnline || offlineMode,
+    isOffline: !isOnline,
   };
 };
