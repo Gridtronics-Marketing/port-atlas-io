@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Camera, Upload, X, Maximize2 } from 'lucide-react';
 import { usePhotoCapture } from '@/hooks/usePhotoCapture';
 import { useRoomViews } from '@/hooks/useRoomViews';
@@ -30,7 +31,8 @@ export const AddRoomViewModal = ({
   onSuccess,
 }: AddRoomViewModalProps) => {
   const [roomName, setRoomName] = useState('');
-  const [ceilingHeight, setCeilingHeight] = useState('');
+  const [ceilingHeight, setCeilingHeight] = useState<number | null>(null);
+  const [ceilingHeightUnit, setCeilingHeightUnit] = useState('ft');
   const [description, setDescription] = useState('');
   const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -187,7 +189,8 @@ export const AddRoomViewModal = ({
         x_coordinate: coordinates?.x || 50, // Default position if no coordinates
         y_coordinate: coordinates?.y || 50,
         room_name: roomName || `Room View ${Date.now()}`,
-        ceiling_height: ceilingHeight || null,
+        ceiling_height: ceilingHeight,
+        ceiling_height_unit: ceilingHeightUnit,
         description: description || 'Room view',
         photo_url: photoUrl,
         employee_id: currentEmployee?.id || null,
@@ -243,7 +246,8 @@ export const AddRoomViewModal = ({
     }
     
     setRoomName('');
-    setCeilingHeight('');
+    setCeilingHeight(null);
+    setCeilingHeightUnit('ft');
     setDescription('');
     setCapturedPhoto(null);
     setShowPhotoOptions(false);
@@ -329,12 +333,29 @@ export const AddRoomViewModal = ({
               </div>
               <div>
                 <Label htmlFor="ceilingHeight">Ceiling Height (Optional)</Label>
-                <Input
-                  id="ceilingHeight"
-                  value={ceilingHeight}
-                  onChange={(e) => setCeilingHeight(e.target.value)}
-                  placeholder="e.g., 9ft, 2.7m"
-                />
+                <div className="flex gap-2">
+                  <Input
+                    id="ceilingHeight"
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    value={ceilingHeight ?? ''}
+                    onChange={(e) => setCeilingHeight(e.target.value ? parseFloat(e.target.value) : null)}
+                    placeholder="e.g., 9.5"
+                    className="flex-1"
+                  />
+                  <Select value={ceilingHeightUnit} onValueChange={setCeilingHeightUnit}>
+                    <SelectTrigger className="w-20">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ft">ft</SelectItem>
+                      <SelectItem value="m">m</SelectItem>
+                      <SelectItem value="in">in</SelectItem>
+                      <SelectItem value="cm">cm</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
 
