@@ -32,6 +32,7 @@ interface FloorPlanDrawingToolbarProps {
   onRedo: () => void;
   onClear: () => void;
   onSave: () => void;
+  onLoad: () => void;
   canUndo: boolean;
   canRedo: boolean;
   brushColor: string;
@@ -57,6 +58,7 @@ export const FloorPlanDrawingToolbar = ({
   onRedo,
   onClear,
   onSave,
+  onLoad,
   canUndo,
   canRedo,
   brushColor,
@@ -226,6 +228,17 @@ export const FloorPlanDrawingToolbar = ({
             >
               <Download className="h-4 w-4 mr-1" />
               {isSaving ? 'Saving...' : 'Save'}
+            </Button>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onLoad}
+              disabled={isSaving}
+              className="h-8 px-2"
+            >
+              <Upload className="h-4 w-4 mr-1" />
+              Load
             </Button>
             
             <Button

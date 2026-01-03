@@ -471,13 +471,13 @@ export const InteractiveFloorPlan = ({
       if (!drawingCanvasRef.current) {
         console.warn('⚠️ Drawing canvas not ready, waiting...');
         toast({
-          title: "Annotation Mode",
-          description: "Initializing annotation canvas, please wait a moment...",
+          title: "Drawing Mode",
+          description: "Initializing drawing canvas, please wait a moment...",
         });
         return;
       }
       
-      console.log('✅ Annotation mode activated successfully');
+      console.log('✅ Drawing mode activated successfully');
     }
   };
 
@@ -580,6 +580,14 @@ export const InteractiveFloorPlan = ({
     }, 500);
   };
 
+  const handleDrawingLoad = () => {
+    const savedDrawing = getDrawingForFloor(floorNumber);
+    if (savedDrawing && drawingCanvasRef.current?.drawingActions) {
+      const canvasDataStr = JSON.stringify(savedDrawing.canvas_data);
+      drawingCanvasRef.current.drawingActions.load(canvasDataStr);
+      setDrawingData(canvasDataStr);
+    }
+  };
 
   // Load saved drawing data on mount and when floor changes
   useEffect(() => {
@@ -858,12 +866,12 @@ export const InteractiveFloorPlan = ({
                 const newDrawingMode = !isDrawingMode;
                 setIsDrawingMode(newDrawingMode);
                 
-                // Auto-activate pencil tool when entering annotation mode
+                // Auto-activate pencil tool when entering drawing mode
                 if (newDrawingMode) {
                   setActiveTool('pencil');
                   toast({
-                    title: "Annotation Mode Active",
-                    description: "Use the toolbar to annotate your floor plan",
+                    title: "Drawing Mode Active",
+                    description: "Use the toolbar to start drawing on your floor plan",
                   });
                 } else {
                   setActiveTool('select');
@@ -872,7 +880,7 @@ export const InteractiveFloorPlan = ({
               data-draw-mode-button
             >
               <Paintbrush className="h-4 w-4 mr-2" />
-              {isDrawingMode ? 'Exit Annotate' : 'Annotate'}
+              {isDrawingMode ? 'Exit Draw' : 'Draw Mode'}
             </Button>
             <TooltipProvider>
               <Tooltip>
@@ -1049,6 +1057,7 @@ export const InteractiveFloorPlan = ({
             onRedo={() => drawingCanvasRef.current?.drawingActions?.redo()}
             onClear={() => drawingCanvasRef.current?.drawingActions?.clear()}
             onSave={() => drawingCanvasRef.current?.drawingActions?.save()}
+            onLoad={handleDrawingLoad}
             canUndo={canUndo}
             canRedo={canRedo}
             brushColor={brushColor}
@@ -1114,13 +1123,13 @@ export const InteractiveFloorPlan = ({
                     <>
                       <FileImage className="h-16 w-16 mx-auto mb-4 opacity-50" />
                       <p className="text-lg font-medium">No Floor Plan Uploaded</p>
-                      <p className="text-sm mt-2">Click "Annotate" to add annotations</p>
+                      <p className="text-sm mt-2">Click "Draw Mode" button above to start drawing</p>
                     </>
                   ) : (
                     <>
                       <Paintbrush className="h-16 w-16 mx-auto mb-4 opacity-50" />
                       <p className="text-lg font-medium">Blank Canvas Ready</p>
-                      <p className="text-sm mt-2">Use the toolbar above to annotate your floor plan</p>
+                      <p className="text-sm mt-2">Use the toolbar above to draw your floor plan</p>
                     </>
                   )}
                 </div>
