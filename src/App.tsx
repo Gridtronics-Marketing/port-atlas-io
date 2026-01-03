@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/components/AuthProvider";
 import { OrganizationProvider } from "@/contexts/OrganizationContext";
+import { OfflineSyncProvider } from "@/contexts/OfflineSyncContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AppLayout } from "@/components/AppLayout";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
@@ -43,13 +44,14 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <OrganizationProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <PWAUpdateNotification />
-        <PWAInstallPrompt />
-        <OfflineStatusIndicator />
+      <OfflineSyncProvider>
+        <OrganizationProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <PWAUpdateNotification />
+            <PWAInstallPrompt />
+            <OfflineStatusIndicator />
         <InAppEducationBanner />
         <ImpersonationBanner />
         <BrowserRouter>
@@ -215,9 +217,10 @@ const App = () => (
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-      </OrganizationProvider>
+          </BrowserRouter>
+        </TooltipProvider>
+        </OrganizationProvider>
+      </OfflineSyncProvider>
     </AuthProvider>
   </QueryClientProvider>
 );
