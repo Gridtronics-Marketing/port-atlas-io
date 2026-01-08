@@ -17,6 +17,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useEnhancedOfflineSync } from '@/hooks/useEnhancedOfflineSync';
 import { Loader2, Shield, Wifi, Download } from 'lucide-react';
 import tradeAtlasLogo from "@/assets/trade-atlas-logo.png";
+import tradeAtlasBackground from "@/assets/trade-atlas-background.jpg";
 import { OfflineIndicator } from '@/components/OfflineIndicator';
 
 const Auth = () => {
@@ -141,20 +142,13 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen relative flex items-center justify-center p-4 overflow-hidden">
-      {/* Animated Background Video */}
-      <video 
-        className="fixed inset-0 w-full h-full object-contain opacity-50"
+      {/* Background Image */}
+      <img 
+        src={tradeAtlasBackground}
+        alt=""
+        className="fixed inset-0 w-full h-full object-cover"
         style={{ zIndex: 0 }}
-        autoPlay 
-        muted 
-        playsInline
-        preload="auto"
-        onError={(e) => {
-          e.currentTarget.style.display = 'none';
-        }}
-      >
-        <source src="/videos/port-atlas-background.mp4" type="video/mp4" />
-      </video>
+      />
       
       <div className="fixed top-4 right-4" style={{ zIndex: 50 }}>
         <OfflineIndicator />
