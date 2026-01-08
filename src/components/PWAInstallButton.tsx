@@ -47,7 +47,7 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
         if (outcome === 'accepted') {
           toast({
             title: "Installing...",
-            description: "Port Atlas is being added to your device.",
+            description: "Trade Atlas is being added to your device.",
           });
         }
       } catch (error) {

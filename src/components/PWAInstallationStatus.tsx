@@ -32,8 +32,8 @@ export const PWAInstallationStatus: React.FC = () => {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'Port Atlas App',
-          text: 'Install Port Atlas on your device',
+          title: 'Trade Atlas App',
+          text: 'Install Trade Atlas on your device',
           url: currentUrl,
         });
       } catch (error) {
@@ -50,13 +50,13 @@ export const PWAInstallationStatus: React.FC = () => {
   };
 
   const sendViaEmail = () => {
-    const subject = encodeURIComponent('Install Port Atlas App');
-    const body = encodeURIComponent(`Install Port Atlas on your device:\n\n${currentUrl}\n\nFor iOS: Open in Safari, tap Share, then "Add to Home Screen"\nFor Android: Open in Chrome, tap menu, then "Install app"`);
+    const subject = encodeURIComponent('Install Trade Atlas App');
+    const body = encodeURIComponent(`Install Trade Atlas on your device:\n\n${currentUrl}\n\nFor iOS: Open in Safari, tap Share, then "Add to Home Screen"\nFor Android: Open in Chrome, tap menu, then "Install app"`);
     window.open(`mailto:?subject=${subject}&body=${body}`);
   };
 
   const sendViaSMS = () => {
-    const message = encodeURIComponent(`Install Port Atlas: ${currentUrl}`);
+    const message = encodeURIComponent(`Install Trade Atlas: ${currentUrl}`);
     window.open(`sms:?body=${message}`);
   };
 
@@ -166,7 +166,7 @@ export const PWAInstallationStatus: React.FC = () => {
               </div>
               
               <p className="text-xs text-center text-muted-foreground">
-                Open this URL on your other device to install Port Atlas
+                Open this URL on your other device to install Trade Atlas
               </p>
             </TabsContent>
 
@@ -204,8 +204,8 @@ export const PWAInstallationStatus: React.FC = () => {
                     <p className="font-medium text-sm">Desktop (Chrome/Edge)</p>
                     <ol className="text-xs text-muted-foreground space-y-1 mt-2 list-decimal list-inside">
                       <li>Look for install icon in address bar</li>
-                      <li>Click "Install Port Atlas"</li>
-                      <li>Or use browser menu → "Install Port Atlas"</li>
+                      <li>Click "Install Trade Atlas"</li>
+                      <li>Or use browser menu → "Install Trade Atlas"</li>
                     </ol>
                   </div>
                 </div>

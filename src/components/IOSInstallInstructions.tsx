@@ -26,10 +26,10 @@ export const IOSInstallInstructions: React.FC<IOSInstallInstructionsProps> = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Smartphone className="w-5 h-5" />
-            Install Port Atlas on iOS
+            Install Trade Atlas on iOS
           </DialogTitle>
           <DialogDescription>
-            Follow these steps to add Port Atlas to your home screen
+            Follow these steps to add Trade Atlas to your home screen
           </DialogDescription>
         </DialogHeader>
         
@@ -41,7 +41,7 @@ export const IOSInstallInstructions: React.FC<IOSInstallInstructionsProps> = ({
                 ⚠️ Safari Required
               </p>
               <p className="text-xs text-yellow-600 dark:text-yellow-500">
-                iOS requires Safari browser to install web apps. Please open Port Atlas in Safari to install.
+                iOS requires Safari browser to install web apps. Please open Trade Atlas in Safari to install.
               </p>
             </div>
           )}
@@ -132,7 +132,7 @@ export const IOSInstallInstructions: React.FC<IOSInstallInstructionsProps> = ({
             <ul className="text-xs text-muted-foreground space-y-1">
               <li>• Make sure you're using Safari browser</li>
               <li>• If you don't see the Share button, try rotating your device</li>
-              <li>• Already installed? Check your home screen for the Port Atlas icon</li>
+              <li>• Already installed? Check your home screen for the Trade Atlas icon</li>
             </ul>
           </div>
         </div>

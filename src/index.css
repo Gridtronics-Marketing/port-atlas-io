@@ -8,30 +8,30 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Port Atlas professional theme - inspired by logo */
-    --background: 210 15% 97%;
-    --foreground: 200 25% 15%;
+    /* Trade Atlas professional theme - Gold & Silver premium */
+    --background: 225 20% 97%;
+    --foreground: 225 30% 15%;
 
     --card: 0 0% 100%;
-    --card-foreground: 200 25% 15%;
+    --card-foreground: 225 30% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 200 25% 15%;
+    --popover-foreground: 225 30% 15%;
 
-    /* Port Atlas teal/cyan primary */
-    --primary: 180 100% 42%;
-    --primary-foreground: 0 0% 100%;
-    --primary-hover: 180 100% 38%;
+    /* Trade Atlas gold primary */
+    --primary: 43 70% 50%;
+    --primary-foreground: 225 30% 10%;
+    --primary-hover: 43 75% 45%;
 
-    /* Tech secondary */
-    --secondary: 200 15% 92%;
-    --secondary-foreground: 200 25% 25%;
+    /* Silver secondary */
+    --secondary: 210 15% 92%;
+    --secondary-foreground: 225 30% 25%;
 
-    --muted: 200 15% 94%;
-    --muted-foreground: 200 15% 45%;
+    --muted: 220 15% 94%;
+    --muted-foreground: 220 15% 45%;
 
-    --accent: 180 100% 85%;
-    --accent-foreground: 200 85% 25%;
+    --accent: 43 60% 90%;
+    --accent-foreground: 43 80% 30%;
 
     --destructive: 0 75% 55%;
     --destructive-foreground: 0 0% 100%;
@@ -44,20 +44,20 @@ All colors MUST be HSL.
     --info: 210 100% 50%;
     --info-foreground: 0 0% 100%;
 
-    --border: 200 20% 88%;
-    --input: 200 20% 92%;
-    --ring: 180 100% 42%;
+    --border: 220 20% 88%;
+    --input: 220 20% 92%;
+    --ring: 43 70% 50%;
 
-    /* Port Atlas tech gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(180 100% 42%), hsl(180 100% 52%));
-    --gradient-secondary: linear-gradient(135deg, hsl(200 15% 92%), hsl(200 20% 98%));
-    --gradient-hero: linear-gradient(135deg, hsl(180 100% 42%), hsl(195 100% 50%));
-    --gradient-tech: linear-gradient(135deg, hsl(210 40% 15%), hsl(180 100% 42%));
+    /* Trade Atlas premium gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(43 70% 50%), hsl(43 80% 60%));
+    --gradient-secondary: linear-gradient(135deg, hsl(210 15% 92%), hsl(220 20% 98%));
+    --gradient-hero: linear-gradient(135deg, hsl(43 70% 50%), hsl(48 75% 55%));
+    --gradient-tech: linear-gradient(135deg, hsl(225 30% 12%), hsl(43 70% 50%));
 
     /* Professional shadows */
-    --shadow-soft: 0 2px 8px -2px hsl(215 25% 15% / 0.1);
-    --shadow-medium: 0 4px 16px -4px hsl(215 25% 15% / 0.15);
-    --shadow-strong: 0 8px 32px -8px hsl(215 25% 15% / 0.2);
+    --shadow-soft: 0 2px 8px -2px hsl(225 25% 15% / 0.1);
+    --shadow-medium: 0 4px 16px -4px hsl(225 25% 15% / 0.15);
+    --shadow-strong: 0 8px 32px -8px hsl(225 25% 15% / 0.2);
 
     /* Smooth transitions */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -66,47 +66,40 @@ All colors MUST be HSL.
     --radius: 0.5rem;
 
     --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
+    --sidebar-foreground: 225 10% 26%;
+    --sidebar-primary: 43 70% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 43 20% 95%;
+    --sidebar-accent-foreground: 225 30% 15%;
     --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-ring: 43 70% 50%;
   }
 
   .dark {
-    /* Port Atlas dark theme - matching logo's dark navy background */
-    --background: 210 30% 8%;
-    --foreground: 180 50% 85%;
+    /* Trade Atlas dark theme - Premium metallic look */
+    --background: 225 30% 8%;
+    --foreground: 210 20% 88%;
 
-    --card: 210 25% 10%;
-    --card-foreground: 180 50% 85%;
+    --card: 225 25% 10%;
+    --card-foreground: 210 20% 88%;
 
-    --popover: 210 25% 10%;
-    --popover-foreground: 180 50% 85%;
+    --popover: 225 25% 10%;
+    --popover-foreground: 210 20% 88%;
 
-    --primary: 180 100% 42%;
-    --primary-foreground: 210 30% 8%;
+    --primary: 43 70% 50%;
+    --primary-foreground: 225 30% 8%;
 
-    --secondary: 210 20% 15%;
-    --secondary-foreground: 180 50% 85%;
+    --secondary: 225 20% 15%;
+    --secondary-foreground: 210 20% 88%;
 
-    --muted: 210 20% 12%;
-    --muted-foreground: 180 30% 65%;
+    --muted: 225 20% 12%;
+    --muted-foreground: 210 20% 65%;
 
-    --accent: 180 100% 20%;
-    --accent-foreground: 180 100% 85%;
+    --accent: 43 50% 20%;
+    --accent-foreground: 43 70% 85%;
 
     --destructive: 0 75% 55%;
-    --destructive-foreground: 180 50% 85%;
+    --destructive-foreground: 210 20% 88%;
     
     --success: 142 76% 36%;
     --success-foreground: 0 0% 100%;
@@ -115,17 +108,18 @@ All colors MUST be HSL.
     --info: 210 100% 50%;
     --info-foreground: 0 0% 100%;
 
-    --border: 210 20% 18%;
-    --input: 210 20% 15%;
-    --ring: 180 100% 42%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --border: 225 20% 18%;
+    --input: 225 20% 15%;
+    --ring: 43 70% 50%;
+
+    --sidebar-background: 225 25% 10%;
+    --sidebar-foreground: 210 20% 95%;
+    --sidebar-primary: 43 70% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 225 20% 15%;
+    --sidebar-accent-foreground: 210 20% 95%;
+    --sidebar-border: 225 20% 15%;
+    --sidebar-ring: 43 70% 50%;
   }
 }
 

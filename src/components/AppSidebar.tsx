@@ -48,7 +48,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRoles } from "@/hooks/useUserRoles";
 import { useOrganization } from "@/contexts/OrganizationContext";
-import portAtlasLogo from "@/assets/port-atlas-logo.png";
+import tradeAtlasLogo from "@/assets/trade-atlas-logo.png";
 import { PWAInstallButton } from "@/components/PWAInstallButton";
 import { Separator } from "@/components/ui/separator";
 import { APP_VERSION } from "@/lib/version";
@@ -114,13 +114,13 @@ export function AppSidebar() {
       <SidebarHeader className="p-4">
         <div className="flex items-center gap-3">
           <img 
-            src={portAtlasLogo} 
-            alt="Port Atlas" 
+            src={tradeAtlasLogo} 
+            alt="Trade Atlas" 
             className="h-8 w-8 flex-shrink-0"
           />
           {!isCollapsed && (
             <span className="text-lg font-bold text-foreground">
-              Port Atlas
+              Trade Atlas
             </span>
           )}
         </div>

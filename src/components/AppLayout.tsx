@@ -32,7 +32,7 @@ export function AppLayout({ children }: AppLayoutProps) {
             
             {/* App name on mobile when sidebar closed */}
             <div className="flex-1 text-center md:hidden">
-              <span className="text-sm font-semibold text-foreground">Port Atlas</span>
+              <span className="text-sm font-semibold text-foreground">Trade Atlas</span>
             </div>
             
             <div className="flex-1 hidden md:block" />

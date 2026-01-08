@@ -43,7 +43,7 @@ export const PWASettings: React.FC = () => {
         if (outcome === 'accepted') {
           toast({
             title: "Installing App",
-            description: "Port Atlas is being added to your device.",
+            description: "Trade Atlas is being added to your device.",
           });
         }
       } catch (error) {
@@ -65,7 +65,7 @@ export const PWASettings: React.FC = () => {
       toast({
         title: permission === 'granted' ? "Notifications Enabled" : "Notifications Disabled",
         description: permission === 'granted' 
-          ? "You'll receive important updates from Port Atlas." 
+          ? "You'll receive important updates from Trade Atlas." 
           : "You can enable notifications later in your browser settings.",
         variant: permission === 'granted' ? "default" : "destructive",
       });
@@ -130,7 +130,7 @@ export const PWASettings: React.FC = () => {
           <div className="rounded-lg bg-background/80 p-4 space-y-3">
             <p className="text-sm font-medium">Did you know?</p>
             <p className="text-sm text-muted-foreground">
-              If you installed Port Atlas on your computer, you'll need to install it separately on your phone, tablet, or other devices. PWA installations don't sync across devices - each device needs its own installation.
+              If you installed Trade Atlas on your computer, you'll need to install it separately on your phone, tablet, or other devices. PWA installations don't sync across devices - each device needs its own installation.
             </p>
           </div>
           
@@ -146,7 +146,7 @@ export const PWASettings: React.FC = () => {
             App Installation
           </CardTitle>
           <CardDescription>
-            Install Port Atlas for faster access and offline functionality
+            Install Trade Atlas for faster access and offline functionality
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

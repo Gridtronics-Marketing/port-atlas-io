@@ -16,7 +16,7 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { useEnhancedOfflineSync } from '@/hooks/useEnhancedOfflineSync';
 import { Loader2, Shield, Wifi, Download } from 'lucide-react';
-import portAtlasLogo from "@/assets/port-atlas-logo-new.png";
+import tradeAtlasLogo from "@/assets/trade-atlas-logo.png";
 import { OfflineIndicator } from '@/components/OfflineIndicator';
 
 const Auth = () => {
@@ -163,14 +163,14 @@ const Auth = () => {
         <CardHeader className="text-center space-y-4">
           <div className="flex justify-center">
             <img 
-              src={portAtlasLogo} 
-              alt="Port Atlas" 
+              src={tradeAtlasLogo} 
+              alt="Trade Atlas" 
               className="h-16 w-auto"
             />
           </div>
           <div>
             <CardTitle className="text-2xl font-bold bg-gradient-hero bg-clip-text text-transparent">
-              Port Atlas
+              Trade Atlas
             </CardTitle>
             <CardDescription className="flex items-center justify-center gap-2 mt-2">
               <Shield className="h-4 w-4 text-primary" />
