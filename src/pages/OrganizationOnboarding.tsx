@@ -9,7 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
-import portAtlasLogo from "@/assets/port-atlas-logo-new.png";
+import tradeAtlasLogo from "@/assets/trade-atlas-logo.png";
 
 const OrganizationOnboarding: React.FC = () => {
   const { user } = useAuth();
@@ -110,8 +110,8 @@ const OrganizationOnboarding: React.FC = () => {
         <CardHeader className="text-center space-y-4">
           <div className="flex justify-center">
             <img 
-              src={portAtlasLogo} 
-              alt="Port Atlas" 
+              src={tradeAtlasLogo} 
+              alt="Trade Atlas" 
               className="h-12 w-auto"
             />
           </div>
@@ -141,8 +141,8 @@ const OrganizationOnboarding: React.FC = () => {
             
             <div className="space-y-2">
               <Label htmlFor="org-slug">Organization URL</Label>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">portatlas.app/</span>
+            <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">tradeatlas.app/</span>
                 <Input
                   id="org-slug"
                   placeholder="acme-technologies"

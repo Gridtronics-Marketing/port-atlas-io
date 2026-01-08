@@ -91,7 +91,7 @@ export const PWAUpdateNotification: React.FC = () => {
           </Button>
         </div>
         <CardDescription className="text-xs">
-          A new version of Port Atlas is available with improvements and bug fixes
+          A new version of Trade Atlas is available with improvements and bug fixes
         </CardDescription>
       </CardHeader>
       <CardContent className="pt-0">

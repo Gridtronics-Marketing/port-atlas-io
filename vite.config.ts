@@ -21,10 +21,10 @@ export default defineConfig(({ mode }) => ({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'icon-192.png', 'icon-512.png', 'screenshot-narrow.png', 'screenshot-wide.png'],
       manifest: {
-        name: 'Port Atlas - Field Operations',
-        short_name: 'Port Atlas',
+        name: 'Trade Atlas - Field Operations',
+        short_name: 'Trade Atlas',
         description: 'Mobile-first cable management and field operations platform',
-        theme_color: '#3b82f6',
+        theme_color: '#D4A43E',
         background_color: '#ffffff',
         display: 'standalone',
         orientation: 'portrait-primary',

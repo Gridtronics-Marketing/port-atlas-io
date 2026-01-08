@@ -51,7 +51,7 @@ export const InAppEducationBanner: React.FC = () => {
               <div>
                 <h3 className="font-semibold text-sm">Install on Each Device</h3>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Port Atlas must be installed separately on each device (phone, tablet, computer) for the best experience.
+                  Trade Atlas must be installed separately on each device (phone, tablet, computer) for the best experience.
                 </p>
               </div>
               <Button

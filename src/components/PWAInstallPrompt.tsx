@@ -53,7 +53,7 @@ export const PWAInstallPrompt: React.FC = () => {
       setDeferredPrompt(null);
       toast({
         title: "App Installed!",
-        description: "Port Atlas has been added to your home screen.",
+        description: "Trade Atlas has been added to your home screen.",
       });
     };
 
@@ -76,7 +76,7 @@ export const PWAInstallPrompt: React.FC = () => {
       if (outcome === 'accepted') {
         toast({
           title: "Installing...",
-          description: "Port Atlas is being added to your device.",
+          description: "Trade Atlas is being added to your device.",
         });
       }
       
@@ -112,7 +112,7 @@ export const PWAInstallPrompt: React.FC = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Download className="w-5 h-5 text-primary" />
-            <CardTitle className="text-sm">Install Port Atlas</CardTitle>
+            <CardTitle className="text-sm">Install Trade Atlas</CardTitle>
           </div>
           <Button
             variant="ghost"
