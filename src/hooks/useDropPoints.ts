@@ -172,9 +172,20 @@ export const useDropPoints = (locationId?: string) => {
 
   const addDropPoint = async (dropPointData: Omit<DropPoint, 'id' | 'created_at' | 'updated_at' | 'installer' | 'tester'>) => {
     try {
+      // Get the organization_id from the parent location
+      let orgId = null;
+      if (dropPointData.location_id) {
+        const { data: locationData } = await supabase
+          .from('locations')
+          .select('organization_id')
+          .eq('id', dropPointData.location_id)
+          .single();
+        orgId = locationData?.organization_id;
+      }
+
       const { data, error } = await supabase
         .from('drop_points')
-        .insert([dropPointData])
+        .insert([{ ...dropPointData, organization_id: orgId }])
         .select()
         .single();
 

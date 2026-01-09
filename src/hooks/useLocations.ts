@@ -96,6 +96,16 @@ export const useLocations = () => {
   };
 
   const addLocation = async (locationData: Omit<Location, 'id' | 'created_at' | 'updated_at' | 'drop_points_count'>) => {
+    // Validate organization is selected before adding
+    if (!organizationId) {
+      toast({
+        title: "Organization Required",
+        description: "Please select an organization before adding a location.",
+        variant: "destructive",
+      });
+      throw new Error("No organization selected");
+    }
+
     try {
       const { data, error } = await supabase
         .from('locations')

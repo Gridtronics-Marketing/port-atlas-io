@@ -62,9 +62,20 @@ export const useRoomViews = (locationId?: string) => {
 
   const addRoomView = async (roomViewData: Omit<RoomView, 'id' | 'created_at' | 'updated_at' | 'employee'>) => {
     try {
+      // Get the organization_id from the parent location
+      let orgId = null;
+      if (roomViewData.location_id) {
+        const { data: locationData } = await supabase
+          .from('locations')
+          .select('organization_id')
+          .eq('id', roomViewData.location_id)
+          .single();
+        orgId = locationData?.organization_id;
+      }
+
       const { data, error } = await supabase
         .from('room_views')
-        .insert(roomViewData)
+        .insert({ ...roomViewData, organization_id: orgId })
         .select(`
           *,
           employee:employees(first_name, last_name)
