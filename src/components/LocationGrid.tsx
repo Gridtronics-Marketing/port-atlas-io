@@ -106,6 +106,7 @@ export const LocationGrid = () => {
         location={editingLocation}
         open={!!editingLocation}
         onOpenChange={(open) => !open && setEditingLocation(null)}
+        onLocationUpdated={fetchLocations}
       />
     </>
   );
