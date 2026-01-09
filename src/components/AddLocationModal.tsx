@@ -116,6 +116,13 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
         contact_onsite: location.contact_onsite || "",
         contact_phone: location.contact_phone || "",
       });
+      // FIX: Set the client ID from the location being edited
+      setSelectedClientId(location.client_id || null);
+      // Set coordinates if available
+      setCoordinates({
+        latitude: location.latitude ?? null,
+        longitude: location.longitude ?? null,
+      });
     } else if (!location && open) {
       resetForm();
       setSelectedClientId(preSelectedClientId || null);
@@ -201,8 +208,8 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
       return;
     }
 
-    // For new locations, require client selection (either existing or newly created)
-    if (!isEditing && !selectedClientId && !showClientCreationForm) {
+    // Require client selection for both new and existing locations
+    if (!selectedClientId && !showClientCreationForm) {
       toast({
         title: "Client Required",
         description: "Please select a client or create a new one to continue.",

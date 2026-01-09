@@ -95,6 +95,37 @@ export const useLocations = () => {
     }
   };
 
+  // Helper function to create location access grant for client portal
+  const createLocationAccessGrant = async (locationId: string, clientId: string) => {
+    try {
+      // Get the client's linked organization (portal org)
+      const { data: client } = await supabase
+        .from('clients')
+        .select('linked_organization_id')
+        .eq('id', clientId)
+        .single();
+
+      if (client?.linked_organization_id) {
+        // Grant view access to this location for the client's organization
+        const { data: user } = await supabase.auth.getUser();
+        await supabase
+          .from('location_access_grants')
+          .upsert({
+            location_id: locationId,
+            granted_organization_id: client.linked_organization_id,
+            location_organization_id: organizationId,
+            access_level: 'view',
+            granted_by: user?.user?.id
+          }, {
+            onConflict: 'location_id,granted_organization_id'
+          });
+      }
+    } catch (error) {
+      console.error('Error creating location access grant:', error);
+      // Don't throw - this is a non-critical operation
+    }
+  };
+
   const addLocation = async (locationData: Omit<Location, 'id' | 'created_at' | 'updated_at' | 'drop_points_count'>) => {
     // Validate organization is selected before adding
     if (!organizationId) {
@@ -114,6 +145,11 @@ export const useLocations = () => {
         .single();
 
       if (error) throw error;
+      
+      // Create access grant if client has a portal
+      if (data && locationData.client_id) {
+        await createLocationAccessGrant(data.id, locationData.client_id);
+      }
       
       await fetchLocations(); // Refresh to get joined data
       toast({
@@ -142,6 +178,11 @@ export const useLocations = () => {
         .single();
 
       if (error) throw error;
+      
+      // Create/update access grant if client_id changed and client has a portal
+      if (data && updates.client_id) {
+        await createLocationAccessGrant(id, updates.client_id);
+      }
       
       await fetchLocations(); // Refresh to get updated data
       toast({
