@@ -35,11 +35,12 @@ import { useToast } from "@/hooks/use-toast";
 interface AddLocationModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  location?: Location | null; // Optional location for editing
-  preSelectedClientId?: string; // Optional client ID
+  location?: Location | null;
+  preSelectedClientId?: string;
+  onLocationUpdated?: () => void;
 }
 
-export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClientId }: AddLocationModalProps) => {
+export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClientId, onLocationUpdated }: AddLocationModalProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedClientId, setSelectedClientId] = useState<string | null>(preSelectedClientId || null);
   const [showClientCreationForm, setShowClientCreationForm] = useState(false);
@@ -251,6 +252,9 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
       await (isEditing 
         ? updateLocation(location!.id, locationData)
         : addLocation(locationData));
+
+      // Notify parent to refresh data
+      onLocationUpdated?.();
 
       resetForm();
       onOpenChange(false);
