@@ -58,6 +58,7 @@ const navigationItems = [
   { title: "Dashboard", url: "/", icon: Home },
   { title: "Projects", url: "/projects", icon: FolderOpen },
   { title: "Work Orders", url: "/work-orders", icon: ClipboardList },
+  { title: "Service Requests", url: "/service-requests", icon: MessageSquare },
   { title: "Procurement", url: "/procurement", icon: Package },
   { title: "Contracts", url: "/contracts", icon: FileText },
   { title: "Maintenance", url: "/maintenance", icon: Wrench },
