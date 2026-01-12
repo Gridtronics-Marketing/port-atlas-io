@@ -3860,6 +3860,102 @@ export type Database = {
           },
         ]
       }
+      service_requests: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          drop_point_id: string | null
+          id: string
+          location_id: string | null
+          parent_organization_id: string
+          priority: string | null
+          request_type: string
+          requested_by: string
+          requesting_organization_id: string
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string | null
+          title: string
+          updated_at: string | null
+          work_order_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          drop_point_id?: string | null
+          id?: string
+          location_id?: string | null
+          parent_organization_id: string
+          priority?: string | null
+          request_type?: string
+          requested_by: string
+          requesting_organization_id: string
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string | null
+          work_order_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          drop_point_id?: string | null
+          id?: string
+          location_id?: string | null
+          parent_organization_id?: string
+          priority?: string | null
+          request_type?: string
+          requested_by?: string
+          requesting_organization_id?: string
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+          work_order_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_requests_drop_point_id_fkey"
+            columns: ["drop_point_id"]
+            isOneToOne: false
+            referencedRelation: "drop_points"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_requests_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_requests_parent_organization_id_fkey"
+            columns: ["parent_organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_requests_requesting_organization_id_fkey"
+            columns: ["requesting_organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_requests_work_order_id_fkey"
+            columns: ["work_order_id"]
+            isOneToOne: false
+            referencedRelation: "work_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       signatures: {
         Row: {
           created_at: string
