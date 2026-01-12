@@ -48,6 +48,11 @@ interface OrganizationContextType {
   isImpersonating: boolean;
   effectiveRole: OrgRole | null;
   
+  // Client portal state
+  isClientPortalUser: boolean;
+  parentOrganizationId: string | null;
+  linkedClientId: string | null;
+  
   // Actions
   switchOrganization: (orgId: string) => Promise<void>;
   startRoleImpersonation: (role: OrgRole) => Promise<void>;
@@ -84,6 +89,11 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
   // Super admin state
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [isPlatformAdmin, setIsPlatformAdmin] = useState(false);
+  
+  // Client portal state
+  const [isClientPortalUser, setIsClientPortalUser] = useState(false);
+  const [parentOrganizationId, setParentOrganizationId] = useState<string | null>(null);
+  const [linkedClientId, setLinkedClientId] = useState<string | null>(null);
   
   // Impersonation state (not persisted - resets on refresh)
   const [impersonation, setImpersonation] = useState<ImpersonationState>({
@@ -333,6 +343,29 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
     fetchOrganizations();
   }, [user, isSuperAdmin]);
 
+  // Detect client portal user based on organization settings
+  React.useEffect(() => {
+    if (currentOrganization?.settings?.parentOrganizationId) {
+      setIsClientPortalUser(true);
+      setParentOrganizationId(currentOrganization.settings.parentOrganizationId);
+      
+      // Find linked client record
+      const fetchLinkedClient = async () => {
+        const { data: client } = await supabase
+          .from('clients')
+          .select('id')
+          .eq('linked_organization_id', currentOrganization.id)
+          .maybeSingle();
+        setLinkedClientId(client?.id || null);
+      };
+      fetchLinkedClient();
+    } else {
+      setIsClientPortalUser(false);
+      setParentOrganizationId(null);
+      setLinkedClientId(null);
+    }
+  }, [currentOrganization]);
+
   const value: OrganizationContextType = {
     currentOrganization,
     organizations,
@@ -343,6 +376,9 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
     impersonation,
     isImpersonating,
     effectiveRole,
+    isClientPortalUser,
+    parentOrganizationId,
+    linkedClientId,
     switchOrganization,
     startRoleImpersonation,
     startUserImpersonation,

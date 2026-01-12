@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
+import { ClientPortalSidebar } from "@/components/ClientPortalSidebar";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -15,12 +16,12 @@ interface AppLayoutProps {
 
 export function AppLayout({ children }: AppLayoutProps) {
   const { signOut } = useAuth();
-  const { isImpersonating } = useOrganization();
+  const { isImpersonating, isClientPortalUser } = useOrganization();
 
   return (
     <SidebarProvider>
       <div className={`min-h-screen flex w-full ${isImpersonating ? 'pt-10' : ''}`}>
-        <AppSidebar />
+        {isClientPortalUser ? <ClientPortalSidebar /> : <AppSidebar />}
         
         <div className="flex-1 flex flex-col">
           {/* Header with sidebar trigger */}

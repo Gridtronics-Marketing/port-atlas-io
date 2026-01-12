@@ -13,8 +13,18 @@ import { useClients } from "@/hooks/useClients";
 import { useProjects } from "@/hooks/useProjects";
 import { useDropPoints } from "@/hooks/useDropPoints";
 import { useToast } from "@/hooks/use-toast";
+import { useOrganization } from "@/contexts/OrganizationContext";
+import ClientPortalDashboard from "@/pages/ClientPortalDashboard";
 
 const Index = () => {
+  const { isClientPortalUser } = useOrganization();
+  
+  // If client portal user, show client dashboard
+  if (isClientPortalUser) {
+    return <ClientPortalDashboard />;
+  }
+  
+  const [showAddLocation, setShowAddLocation] = useState(false);
   const [showAddLocation, setShowAddLocation] = useState(false);
   const { locations } = useLocations();
   const { workOrders } = useWorkOrders();
