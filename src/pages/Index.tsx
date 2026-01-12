@@ -18,13 +18,6 @@ import ClientPortalDashboard from "@/pages/ClientPortalDashboard";
 
 const Index = () => {
   const { isClientPortalUser } = useOrganization();
-  
-  // If client portal user, show client dashboard
-  if (isClientPortalUser) {
-    return <ClientPortalDashboard />;
-  }
-  
-  const [showAddLocation, setShowAddLocation] = useState(false);
   const [showAddLocation, setShowAddLocation] = useState(false);
   const { locations } = useLocations();
   const { workOrders } = useWorkOrders();
@@ -32,6 +25,11 @@ const Index = () => {
   const { projects } = useProjects();
   const { dropPoints } = useDropPoints();
   const { toast } = useToast();
+  
+  // If client portal user, show client dashboard
+  if (isClientPortalUser) {
+    return <ClientPortalDashboard />;
+  }
 
   // Calculate key metrics
   const activeLocations = locations.filter(l => l.status === 'Active').length;

@@ -38,6 +38,7 @@ import FloorPlanEditor from "./pages/FloorPlanEditor";
 import OrganizationOnboarding from "./pages/OrganizationOnboarding";
 import AdminOrganizations from "./pages/AdminOrganizations";
 import OrganizationSettings from "./pages/OrganizationSettings";
+import ServiceRequests from "./pages/ServiceRequests";
 
 const queryClient = new QueryClient();
 
@@ -101,6 +102,13 @@ const App = () => (
               <ProtectedRoute>
                 <AppLayout>
                   <Clients />
+                </AppLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/service-requests" element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <ServiceRequests />
                 </AppLayout>
               </ProtectedRoute>
             } />
