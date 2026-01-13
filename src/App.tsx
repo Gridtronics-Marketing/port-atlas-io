@@ -39,6 +39,7 @@ import OrganizationOnboarding from "./pages/OrganizationOnboarding";
 import AdminOrganizations from "./pages/AdminOrganizations";
 import OrganizationSettings from "./pages/OrganizationSettings";
 import ServiceRequests from "./pages/ServiceRequests";
+import ClientLocationDetail from "./pages/ClientLocationDetail";
 
 const queryClient = new QueryClient();
 
@@ -220,6 +221,13 @@ const App = () => (
             <Route path="/floor-plan-editor" element={
               <ProtectedRoute>
                 <FloorPlanEditor />
+              </ProtectedRoute>
+            } />
+            <Route path="/client-locations/:locationId" element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <ClientLocationDetail />
+                </AppLayout>
               </ProtectedRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

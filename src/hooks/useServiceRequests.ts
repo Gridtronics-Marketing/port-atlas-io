@@ -102,6 +102,19 @@ export const useServiceRequests = () => {
 
       if (error) throw error;
 
+      // Trigger notification for new request
+      try {
+        await supabase.functions.invoke('notify-service-request', {
+          body: { 
+            serviceRequestId: newRequest.id, 
+            eventType: 'created' 
+          }
+        });
+      } catch (notifyError) {
+        console.error('Failed to send notification:', notifyError);
+        // Don't fail the request if notification fails
+      }
+
       toast({
         title: "Request Submitted",
         description: "Your service request has been submitted successfully.",
@@ -122,6 +135,10 @@ export const useServiceRequests = () => {
 
   const updateServiceRequest = async (id: string, updates: Partial<ServiceRequest>) => {
     try {
+      // Get the previous status before updating
+      const previousRequest = serviceRequests.find(r => r.id === id);
+      const previousStatus = previousRequest?.status;
+
       const { error } = await supabase
         .from('service_requests')
         .update({
@@ -132,6 +149,22 @@ export const useServiceRequests = () => {
         .eq('id', id);
 
       if (error) throw error;
+
+      // Trigger notification for status change
+      if (updates.status && updates.status !== previousStatus) {
+        try {
+          await supabase.functions.invoke('notify-service-request', {
+            body: { 
+              serviceRequestId: id, 
+              eventType: 'status_changed',
+              newStatus: updates.status,
+              previousStatus
+            }
+          });
+        } catch (notifyError) {
+          console.error('Failed to send notification:', notifyError);
+        }
+      }
 
       toast({
         title: "Request Updated",

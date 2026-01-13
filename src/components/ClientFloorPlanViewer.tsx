@@ -3,13 +3,6 @@ import { FileImage, Layers } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 
-interface FloorPlan {
-  id: string;
-  file_url: string;
-  file_name: string;
-  floor_number: number;
-}
-
 interface DropPoint {
   id: string;
   label: string | null;
@@ -17,6 +10,7 @@ interface DropPoint {
   y_coordinate: number | null;
   status: string | null;
   point_type: string | null;
+  floor: number | null;
 }
 
 interface ClientFloorPlanViewerProps {
@@ -24,30 +18,48 @@ interface ClientFloorPlanViewerProps {
 }
 
 export const ClientFloorPlanViewer = ({ locationId }: ClientFloorPlanViewerProps) => {
-  const [floorPlans, setFloorPlans] = useState<FloorPlan[]>([]);
+  const [floorPlanUrls, setFloorPlanUrls] = useState<Record<number, string>>({});
   const [selectedFloor, setSelectedFloor] = useState<number>(1);
   const [dropPoints, setDropPoints] = useState<DropPoint[]>([]);
   const [loading, setLoading] = useState(true);
+  const [floors, setFloors] = useState<number[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch floor plans
-        const { data: fpData } = await supabase
-          .from("floor_plan_files")
-          .select("id, file_url, file_name, floor_number")
-          .eq("location_id", locationId)
-          .order("floor_number") as { data: FloorPlan[] | null };
+        // Fetch location with floor_plan_files
+        const { data: locationData } = await supabase
+          .from("locations")
+          .select("floor_plan_files, floors")
+          .eq("id", locationId)
+          .single();
 
-        if (fpData && fpData.length > 0) {
-          setFloorPlans(fpData);
-          setSelectedFloor(fpData[0].floor_number);
+        if (locationData?.floor_plan_files) {
+          const floorPlanFiles = locationData.floor_plan_files as Record<string, string>;
+          const urls: Record<number, string> = {};
+          const floorNumbers: number[] = [];
+          
+          for (const [floor, filePath] of Object.entries(floorPlanFiles)) {
+            const floorNum = parseInt(floor, 10);
+            if (!isNaN(floorNum)) {
+              floorNumbers.push(floorNum);
+              // Generate public URL for the floor plan
+              urls[floorNum] = `https://mhrekppksiekhstnteyu.supabase.co/storage/v1/object/public/floor-plans/${filePath}`;
+            }
+          }
+          
+          floorNumbers.sort((a, b) => a - b);
+          setFloors(floorNumbers);
+          setFloorPlanUrls(urls);
+          if (floorNumbers.length > 0) {
+            setSelectedFloor(floorNumbers[0]);
+          }
         }
 
         // Fetch drop points
         const { data: dpData } = await supabase
           .from("drop_points")
-          .select("id, label, x_coordinate, y_coordinate, status, point_type")
+          .select("id, label, x_coordinate, y_coordinate, status, point_type, floor")
           .eq("location_id", locationId);
 
         setDropPoints(dpData || []);
@@ -61,8 +73,10 @@ export const ClientFloorPlanViewer = ({ locationId }: ClientFloorPlanViewerProps
     fetchData();
   }, [locationId]);
 
-  const currentFloorPlan = floorPlans.find(fp => fp.floor_number === selectedFloor);
-  const currentDropPoints = dropPoints.filter(dp => dp.x_coordinate && dp.y_coordinate);
+  const currentFloorPlanUrl = floorPlanUrls[selectedFloor];
+  const currentDropPoints = dropPoints.filter(
+    dp => dp.x_coordinate && dp.y_coordinate && dp.floor === selectedFloor
+  );
 
   const getStatusColor = (status: string | null) => {
     switch (status) {
@@ -86,7 +100,7 @@ export const ClientFloorPlanViewer = ({ locationId }: ClientFloorPlanViewerProps
     );
   }
 
-  if (floorPlans.length === 0) {
+  if (floors.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
         <FileImage className="h-12 w-12 mb-4 opacity-50" />
@@ -98,7 +112,7 @@ export const ClientFloorPlanViewer = ({ locationId }: ClientFloorPlanViewerProps
   return (
     <div className="space-y-4">
       {/* Floor selector */}
-      {floorPlans.length > 1 && (
+      {floors.length > 1 && (
         <div className="flex items-center gap-2">
           <Layers className="h-4 w-4 text-muted-foreground" />
           <Select
@@ -109,9 +123,9 @@ export const ClientFloorPlanViewer = ({ locationId }: ClientFloorPlanViewerProps
               <SelectValue placeholder="Select floor" />
             </SelectTrigger>
             <SelectContent>
-              {floorPlans.map((fp) => (
-                <SelectItem key={fp.id} value={fp.floor_number.toString()}>
-                  Floor {fp.floor_number}
+              {floors.map((floor) => (
+                <SelectItem key={floor} value={floor.toString()}>
+                  Floor {floor}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -121,10 +135,10 @@ export const ClientFloorPlanViewer = ({ locationId }: ClientFloorPlanViewerProps
 
       {/* Floor plan with overlays */}
       <div className="relative border rounded-lg overflow-hidden bg-muted/20">
-        {currentFloorPlan ? (
+        {currentFloorPlanUrl ? (
           <>
             <img
-              src={currentFloorPlan.file_url}
+              src={currentFloorPlanUrl}
               alt={`Floor ${selectedFloor} plan`}
               className="w-full h-auto"
             />

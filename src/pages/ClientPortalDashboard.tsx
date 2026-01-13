@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useClientPortalData } from "@/hooks/useClientPortalData";
 import { useServiceRequests } from "@/hooks/useServiceRequests";
@@ -24,6 +24,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 const ClientPortalDashboard = () => {
   const [showCreateRequest, setShowCreateRequest] = useState(false);
   const { currentOrganization } = useOrganization();
+  const navigate = useNavigate();
   const { accessibleLocations, clientProjects, loading: dataLoading } = useClientPortalData();
   const { serviceRequests, loading: requestsLoading } = useServiceRequests();
 
@@ -173,7 +174,8 @@ const ClientPortalDashboard = () => {
                   {accessibleLocations.slice(0, 4).map((location) => (
                     <div 
                       key={location.id}
-                      className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
+                      className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors cursor-pointer"
+                      onClick={() => navigate(`/client-locations/${location.id}`)}
                     >
                       <div className="flex items-center gap-3">
                         <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -186,9 +188,12 @@ const ClientPortalDashboard = () => {
                           </p>
                         </div>
                       </div>
-                      <Badge variant={location.status === 'Active' ? 'default' : 'secondary'}>
-                        {location.status}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={location.status === 'Active' ? 'default' : 'secondary'}>
+                          {location.status}
+                        </Badge>
+                        <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                      </div>
                     </div>
                   ))}
                   {accessibleLocations.length > 4 && (

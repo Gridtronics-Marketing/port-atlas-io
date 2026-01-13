@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { OrganizationSwitcher } from "@/components/OrganizationSwitcher";
 import { ViewAsDropdown } from "@/components/ViewAsDropdown";
+import { NotificationBell } from "@/components/NotificationBell";
 import { useOrganization } from "@/contexts/OrganizationContext";
 
 interface AppLayoutProps {
@@ -39,6 +40,7 @@ export function AppLayout({ children }: AppLayoutProps) {
             <div className="flex-1 hidden md:block" />
             
             <div className="flex items-center gap-2">
+              <NotificationBell />
               <ViewAsDropdown />
               <OfflineIndicator />
               <Button
