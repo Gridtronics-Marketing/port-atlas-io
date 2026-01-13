@@ -30,28 +30,38 @@ Deno.serve(async (req) => {
 
     // Verify caller is authenticated
     const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
+    if (!authHeader?.startsWith('Bearer ')) {
       return new Response(
         JSON.stringify({ error: 'Missing authorization header' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
+    // Create a client with the user's auth context
+    const supabaseClient = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY')!, {
+      global: { headers: { Authorization: authHeader } },
+      auth: { autoRefreshToken: false, persistSession: false }
+    });
+
     const token = authHeader.replace('Bearer ', '');
-    const { data: { user: callerUser }, error: authError } = await supabaseAdmin.auth.getUser(token);
+    const { data: claimsData, error: authError } = await supabaseClient.auth.getClaims(token);
     
-    if (authError || !callerUser) {
+    if (authError || !claimsData?.claims) {
+      console.error('Auth error:', authError);
       return new Response(
         JSON.stringify({ error: 'Invalid authorization' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
+    const callerUserId = claimsData.claims.sub;
+    const callerEmail = claimsData.claims.email;
+
     // Check if caller is super admin
     const { data: platformAdmin } = await supabaseAdmin
       .from('platform_admins')
       .select('role')
-      .eq('user_id', callerUser.id)
+      .eq('user_id', callerUserId)
       .eq('role', 'super_admin')
       .single();
 
@@ -72,7 +82,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`Admin ${callerUser.email} resetting password for ${email}`);
+    console.log(`Admin ${callerEmail} resetting password for ${email}`);
 
     // Generate password reset link
     const origin = req.headers.get('origin') || 'https://mhrekppksiekhstnteyu.supabase.co';
