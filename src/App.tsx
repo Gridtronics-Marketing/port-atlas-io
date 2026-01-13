@@ -40,6 +40,7 @@ import AdminOrganizations from "./pages/AdminOrganizations";
 import OrganizationSettings from "./pages/OrganizationSettings";
 import ServiceRequests from "./pages/ServiceRequests";
 import ClientLocationDetail from "./pages/ClientLocationDetail";
+import ServiceRequestHistory from "./pages/ServiceRequestHistory";
 
 const queryClient = new QueryClient();
 
@@ -227,6 +228,13 @@ const App = () => (
               <ProtectedRoute>
                 <AppLayout>
                   <ClientLocationDetail />
+                </AppLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/service-request-history" element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <ServiceRequestHistory />
                 </AppLayout>
               </ProtectedRoute>
             } />

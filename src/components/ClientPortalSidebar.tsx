@@ -6,7 +6,8 @@ import {
   User,
   LogOut,
   Settings,
-  Info
+  Info,
+  History
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { NavLink, useLocation } from "react-router-dom";
@@ -45,6 +46,7 @@ const clientNavigationItems = [
   { title: "My Locations", url: "/locations", icon: MapPin },
   { title: "Projects", url: "/projects", icon: FolderOpen },
   { title: "Service Requests", url: "/service-requests", icon: MessageSquare },
+  { title: "Request History", url: "/service-request-history", icon: History },
 ];
 
 export function ClientPortalSidebar() {
