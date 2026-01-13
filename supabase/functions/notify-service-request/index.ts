@@ -114,6 +114,56 @@ serve(async (req) => {
 
     console.log(`Created ${notifications.length} notifications for ${eventType} event`);
 
+    // Send email notifications
+    const resendApiKey = Deno.env.get("RESEND_API_KEY");
+    if (resendApiKey) {
+      try {
+        // Get user emails for notifications
+        for (const notification of notifications) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("email, full_name")
+            .eq("id", notification.user_id)
+            .single();
+
+          if (profile?.email) {
+            // Check notification preferences
+            const { data: prefs } = await supabase
+              .from("notification_preferences")
+              .select("email_on_new_request, email_on_status_change")
+              .eq("user_id", notification.user_id)
+              .single();
+
+            const shouldSendEmail = eventType === "created"
+              ? prefs?.email_on_new_request !== false
+              : prefs?.email_on_status_change !== false;
+
+            if (shouldSendEmail) {
+              // Call the email edge function
+              const emailFunctionUrl = `${supabaseUrl}/functions/v1/send-service-request-email`;
+              await fetch(emailFunctionUrl, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "Authorization": `Bearer ${supabaseServiceKey}`,
+                },
+                body: JSON.stringify({
+                  serviceRequestId,
+                  eventType,
+                  recipientEmail: profile.email,
+                  recipientName: profile.full_name,
+                  newStatus,
+                }),
+              });
+            }
+          }
+        }
+      } catch (emailError) {
+        console.error("Error sending email notifications:", emailError);
+        // Don't fail the whole request if email fails
+      }
+    }
+
     return new Response(
       JSON.stringify({ success: true, notificationCount: notifications.length }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }

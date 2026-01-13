@@ -2299,6 +2299,8 @@ export type Database = {
         Row: {
           created_at: string | null
           email_notifications: boolean | null
+          email_on_new_request: boolean | null
+          email_on_status_change: boolean | null
           id: string
           new_service_request: boolean | null
           organization_id: string | null
@@ -2310,6 +2312,8 @@ export type Database = {
         Insert: {
           created_at?: string | null
           email_notifications?: boolean | null
+          email_on_new_request?: boolean | null
+          email_on_status_change?: boolean | null
           id?: string
           new_service_request?: boolean | null
           organization_id?: string | null
@@ -2321,6 +2325,8 @@ export type Database = {
         Update: {
           created_at?: string | null
           email_notifications?: boolean | null
+          email_on_new_request?: boolean | null
+          email_on_status_change?: boolean | null
           id?: string
           new_service_request?: boolean | null
           organization_id?: string | null
