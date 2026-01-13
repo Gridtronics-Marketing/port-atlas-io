@@ -1,13 +1,22 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
-
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+interface EmailBranding {
+  logo_url: string | null;
+  company_name: string;
+  primary_color: string;
+}
+
+const defaultBranding: EmailBranding = {
+  logo_url: null,
+  company_name: 'Trade Atlas',
+  primary_color: '#1e3a5f'
 };
 
 interface EmailRequest {
@@ -43,7 +52,18 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const resendApiKey = Deno.env.get("RESEND_API_KEY");
+
+    if (!resendApiKey) {
+      console.error("RESEND_API_KEY is not configured");
+      return new Response(
+        JSON.stringify({ error: "Email service not configured" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const supabase = createClient(supabaseUrl, supabaseKey);
+    const resend = new Resend(resendApiKey);
 
     const {
       serviceRequestId,
@@ -52,6 +72,28 @@ const handler = async (req: Request): Promise<Response> => {
       recipientName,
       newStatus,
     }: EmailRequest = await req.json();
+
+    // Fetch branding settings from platform_settings
+    let branding: EmailBranding = { ...defaultBranding };
+    try {
+      const { data: brandingData, error: brandingError } = await supabase
+        .from('platform_settings')
+        .select('setting_value')
+        .eq('setting_key', 'email_branding')
+        .single();
+
+      if (!brandingError && brandingData?.setting_value) {
+        const settingValue = brandingData.setting_value as EmailBranding;
+        branding = {
+          logo_url: settingValue.logo_url || defaultBranding.logo_url,
+          company_name: settingValue.company_name || defaultBranding.company_name,
+          primary_color: settingValue.primary_color || defaultBranding.primary_color
+        };
+      }
+      console.log("Using branding:", branding);
+    } catch (brandingFetchError) {
+      console.warn("Could not fetch branding settings, using defaults:", brandingFetchError);
+    }
 
     // Fetch service request details
     const { data: request, error: requestError } = await supabase
@@ -73,6 +115,10 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    const headerContent = branding.logo_url 
+      ? `<img src="${branding.logo_url}" alt="${branding.company_name}" style="max-height: 50px; width: auto;" />`
+      : `<h1 style="margin: 0; font-size: 24px;">${branding.company_name}</h1>`;
+
     let subject: string;
     let htmlContent: string;
 
@@ -86,7 +132,7 @@ const handler = async (req: Request): Promise<Response> => {
           <style>
             body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
             .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; padding: 20px; border-radius: 8px 8px 0 0; }
+            .header { background: linear-gradient(135deg, ${branding.primary_color}, #2d5a87); color: white; padding: 20px; border-radius: 8px 8px 0 0; }
             .content { background: #f9fafb; padding: 20px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px; }
             .detail-row { display: flex; margin-bottom: 12px; }
             .detail-label { font-weight: 600; width: 120px; color: #6b7280; }
@@ -99,8 +145,8 @@ const handler = async (req: Request): Promise<Response> => {
         <body>
           <div class="container">
             <div class="header">
-              <h1 style="margin: 0; font-size: 24px;">New Service Request</h1>
-              <p style="margin: 8px 0 0 0; opacity: 0.9;">A new request has been submitted</p>
+              ${headerContent}
+              <p style="margin: 8px 0 0 0; opacity: 0.9;">New Service Request</p>
             </div>
             <div class="content">
               <h2 style="margin-top: 0; color: #1f2937;">${request.title}</h2>
@@ -136,6 +182,7 @@ const handler = async (req: Request): Promise<Response> => {
               
               <div class="footer">
                 <p>Log in to review and respond to this request.</p>
+                <p style="margin: 8px 0 0 0; color: #94a3b8; font-size: 12px;">© ${new Date().getFullYear()} ${branding.company_name}</p>
               </div>
             </div>
           </div>
@@ -153,7 +200,7 @@ const handler = async (req: Request): Promise<Response> => {
           <style>
             body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
             .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 20px; border-radius: 8px 8px 0 0; }
+            .header { background: linear-gradient(135deg, ${branding.primary_color}, #2d5a87); color: white; padding: 20px; border-radius: 8px 8px 0 0; }
             .content { background: #f9fafb; padding: 20px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px; }
             .status-badge { display: inline-block; padding: 8px 16px; border-radius: 9999px; font-size: 16px; font-weight: 600; background: #dbeafe; color: #1e40af; }
             .notes-box { background: white; padding: 16px; border-radius: 8px; border: 1px solid #e5e7eb; margin-top: 16px; }
@@ -164,8 +211,8 @@ const handler = async (req: Request): Promise<Response> => {
         <body>
           <div class="container">
             <div class="header">
-              <h1 style="margin: 0; font-size: 24px;">Request Update</h1>
-              <p style="margin: 8px 0 0 0; opacity: 0.9;">Your service request has been updated</p>
+              ${headerContent}
+              <p style="margin: 8px 0 0 0; opacity: 0.9;">Request Update</p>
             </div>
             <div class="content">
               <h2 style="margin-top: 0; color: #1f2937;">${request.title}</h2>
@@ -191,6 +238,7 @@ const handler = async (req: Request): Promise<Response> => {
               
               <div class="footer">
                 <p>Thank you for using our service request system.</p>
+                <p style="margin: 8px 0 0 0; color: #94a3b8; font-size: 12px;">© ${new Date().getFullYear()} ${branding.company_name}</p>
               </div>
             </div>
           </div>
@@ -201,7 +249,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send the email
     const emailResponse = await resend.emails.send({
-      from: "Service Requests <onboarding@resend.dev>",
+      from: `${branding.company_name} <onboarding@resend.dev>`,
       to: [recipientEmail],
       subject,
       html: htmlContent,
