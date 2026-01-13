@@ -14,8 +14,24 @@ interface EmailRequest {
   portalSlug?: string;
 }
 
-const getEmailTemplate = (data: EmailRequest): string => {
+interface EmailBranding {
+  logo_url: string | null;
+  company_name: string;
+  primary_color: string;
+}
+
+const defaultBranding: EmailBranding = {
+  logo_url: null,
+  company_name: 'Trade Atlas',
+  primary_color: '#1e3a5f'
+};
+
+const getEmailTemplate = (data: EmailRequest, branding: EmailBranding): string => {
   const { clientName, organizationName, inviteLink, invitedByEmail, portalSlug } = data;
+  
+  const headerContent = branding.logo_url 
+    ? `<img src="${branding.logo_url}" alt="${branding.company_name}" style="max-height: 60px; width: auto;" />`
+    : `<h1 style="margin: 0; color: #ffffff; font-size: 32px; font-weight: 700; letter-spacing: 1px;">${branding.company_name}</h1>`;
   
   return `
 <!DOCTYPE html>
@@ -23,7 +39,7 @@ const getEmailTemplate = (data: EmailRequest): string => {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>You're Invited to Trade Atlas</title>
+  <title>You're Invited to ${branding.company_name}</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7fa;">
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f4f7fa; padding: 40px 20px;">
@@ -31,16 +47,13 @@ const getEmailTemplate = (data: EmailRequest): string => {
       <td align="center">
         <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); overflow: hidden;">
           
-          <!-- Header with Logo -->
+          <!-- Header with Dynamic Branding -->
           <tr>
-            <td style="background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%); padding: 40px 40px 30px 40px; text-align: center;">
+            <td style="background: linear-gradient(135deg, ${branding.primary_color} 0%, #2d5a87 100%); padding: 40px 40px 30px 40px; text-align: center;">
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
                 <tr>
                   <td align="center">
-                    <!-- Trade Atlas Logo Text -->
-                    <h1 style="margin: 0; color: #ffffff; font-size: 32px; font-weight: 700; letter-spacing: 1px;">
-                      Trade Atlas
-                    </h1>
+                    ${headerContent}
                     <p style="margin: 8px 0 0 0; color: rgba(255, 255, 255, 0.8); font-size: 14px; letter-spacing: 0.5px;">
                       Infrastructure Management Platform
                     </p>
@@ -67,7 +80,7 @@ const getEmailTemplate = (data: EmailRequest): string => {
               </h2>
               
               <p style="margin: 0 0 20px 0; color: #4b5563; font-size: 16px; line-height: 1.6; text-align: center;">
-                You've been invited to join <strong style="color: #1e3a5f;">${clientName}</strong> on Trade Atlas, 
+                You've been invited to join <strong style="color: #1e3a5f;">${clientName}</strong> on ${branding.company_name}, 
                 the comprehensive infrastructure management platform for network documentation, 
                 work orders, and project tracking.
               </p>
@@ -78,7 +91,7 @@ const getEmailTemplate = (data: EmailRequest): string => {
           <tr>
             <td align="center" style="padding: 10px 40px 30px 40px;">
               <a href="${inviteLink}" 
-                 style="display: inline-block; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: #ffffff; text-decoration: none; padding: 16px 48px; border-radius: 8px; font-size: 16px; font-weight: 600; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35); transition: all 0.3s ease;">
+                 style="display: inline-block; background: linear-gradient(135deg, ${branding.primary_color} 0%, #2d5a87 100%); color: #ffffff; text-decoration: none; padding: 16px 48px; border-radius: 8px; font-size: 16px; font-weight: 600; box-shadow: 0 4px 12px rgba(30, 58, 95, 0.35); transition: all 0.3s ease;">
                 Accept Invitation
               </a>
             </td>
@@ -109,7 +122,7 @@ const getEmailTemplate = (data: EmailRequest): string => {
                       <tr>
                         <td style="padding-bottom: 12px;">
                           <span style="color: #64748b; font-size: 13px;">Portal URL:</span>
-                          <span style="color: #3b82f6; font-size: 13px; font-weight: 500; margin-left: 8px;">/p/${portalSlug}</span>
+                          <span style="color: ${branding.primary_color}; font-size: 13px; font-weight: 500; margin-left: 8px;">/p/${portalSlug}</span>
                         </td>
                       </tr>
                       ` : ''}
@@ -137,7 +150,7 @@ const getEmailTemplate = (data: EmailRequest): string => {
                     <table role="presentation" cellspacing="0" cellpadding="0">
                       <tr>
                         <td style="width: 28px; vertical-align: top;">
-                          <div style="width: 24px; height: 24px; background: #dbeafe; border-radius: 50%; text-align: center; line-height: 24px; color: #3b82f6; font-size: 12px; font-weight: 600;">1</div>
+                          <div style="width: 24px; height: 24px; background: #dbeafe; border-radius: 50%; text-align: center; line-height: 24px; color: ${branding.primary_color}; font-size: 12px; font-weight: 600;">1</div>
                         </td>
                         <td style="color: #4b5563; font-size: 14px; line-height: 1.5; padding-left: 12px;">
                           Click "Accept Invitation" to set up your account
@@ -151,7 +164,7 @@ const getEmailTemplate = (data: EmailRequest): string => {
                     <table role="presentation" cellspacing="0" cellpadding="0">
                       <tr>
                         <td style="width: 28px; vertical-align: top;">
-                          <div style="width: 24px; height: 24px; background: #dbeafe; border-radius: 50%; text-align: center; line-height: 24px; color: #3b82f6; font-size: 12px; font-weight: 600;">2</div>
+                          <div style="width: 24px; height: 24px; background: #dbeafe; border-radius: 50%; text-align: center; line-height: 24px; color: ${branding.primary_color}; font-size: 12px; font-weight: 600;">2</div>
                         </td>
                         <td style="color: #4b5563; font-size: 14px; line-height: 1.5; padding-left: 12px;">
                           Create a secure password for your account
@@ -165,7 +178,7 @@ const getEmailTemplate = (data: EmailRequest): string => {
                     <table role="presentation" cellspacing="0" cellpadding="0">
                       <tr>
                         <td style="width: 28px; vertical-align: top;">
-                          <div style="width: 24px; height: 24px; background: #dbeafe; border-radius: 50%; text-align: center; line-height: 24px; color: #3b82f6; font-size: 12px; font-weight: 600;">3</div>
+                          <div style="width: 24px; height: 24px; background: #dbeafe; border-radius: 50%; text-align: center; line-height: 24px; color: ${branding.primary_color}; font-size: 12px; font-weight: 600;">3</div>
                         </td>
                         <td style="color: #4b5563; font-size: 14px; line-height: 1.5; padding-left: 12px;">
                           Access your client portal dashboard
@@ -188,7 +201,7 @@ const getEmailTemplate = (data: EmailRequest): string => {
                       If you didn't expect this invitation, you can safely ignore this email.
                     </p>
                     <p style="margin: 0; color: #94a3b8; font-size: 12px;">
-                      © ${new Date().getFullYear()} Trade Atlas. All rights reserved.
+                      © ${new Date().getFullYear()} ${branding.company_name}. All rights reserved.
                     </p>
                   </td>
                 </tr>
@@ -204,7 +217,7 @@ const getEmailTemplate = (data: EmailRequest): string => {
             <td align="center" style="padding: 24px 40px;">
               <p style="margin: 0; color: #94a3b8; font-size: 12px; line-height: 1.6;">
                 If the button doesn't work, copy and paste this link into your browser:<br>
-                <a href="${inviteLink}" style="color: #3b82f6; word-break: break-all;">${inviteLink}</a>
+                <a href="${inviteLink}" style="color: ${branding.primary_color}; word-break: break-all;">${inviteLink}</a>
               </p>
             </td>
           </tr>
@@ -226,6 +239,8 @@ Deno.serve(async (req) => {
 
   try {
     const resendApiKey = Deno.env.get('RESEND_API_KEY');
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     
     if (!resendApiKey) {
       console.error('RESEND_API_KEY is not configured');
@@ -234,6 +249,16 @@ Deno.serve(async (req) => {
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('Supabase configuration missing');
+      return new Response(
+        JSON.stringify({ error: 'Database service not configured' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
     const body: EmailRequest = await req.json();
     const { email, clientName, organizationName, inviteLink, invitedByEmail, portalSlug } = body;
@@ -247,7 +272,29 @@ Deno.serve(async (req) => {
 
     console.log(`Sending invitation email to: ${email} for organization: ${organizationName}`);
 
-    const htmlContent = getEmailTemplate(body);
+    // Fetch branding settings from platform_settings
+    let branding: EmailBranding = { ...defaultBranding };
+    try {
+      const { data: brandingData, error: brandingError } = await supabaseAdmin
+        .from('platform_settings')
+        .select('setting_value')
+        .eq('setting_key', 'email_branding')
+        .single();
+
+      if (!brandingError && brandingData?.setting_value) {
+        const settingValue = brandingData.setting_value as EmailBranding;
+        branding = {
+          logo_url: settingValue.logo_url || defaultBranding.logo_url,
+          company_name: settingValue.company_name || defaultBranding.company_name,
+          primary_color: settingValue.primary_color || defaultBranding.primary_color
+        };
+      }
+      console.log("Using branding:", branding);
+    } catch (brandingFetchError) {
+      console.warn("Could not fetch branding settings, using defaults:", brandingFetchError);
+    }
+
+    const htmlContent = getEmailTemplate(body, branding);
 
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -256,9 +303,9 @@ Deno.serve(async (req) => {
         'Authorization': `Bearer ${resendApiKey}`,
       },
       body: JSON.stringify({
-        from: 'Trade Atlas <onboarding@resend.dev>',
+        from: `${branding.company_name} <onboarding@resend.dev>`,
         to: [email],
-        subject: `You're invited to join ${organizationName} on Trade Atlas`,
+        subject: `You're invited to join ${organizationName} on ${branding.company_name}`,
         html: htmlContent,
       }),
     });
