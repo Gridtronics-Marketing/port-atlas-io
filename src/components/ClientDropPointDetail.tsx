@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Network, CheckCircle, Calendar, MapPin, FileText, Image } from "lucide-react";
+import { Network, CheckCircle, Calendar, MapPin, Image } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 
 interface DropPoint {
@@ -21,15 +21,14 @@ interface DropPoint {
   notes: string | null;
   installed_date: string | null;
   tested_date: string | null;
-  test_results: Record<string, any> | null;
+  test_results: any;
 }
 
 interface TestResult {
   id: string;
   test_type: string;
-  result_status: string;
+  pass_fail: string;
   test_date: string;
-  test_data: any;
   notes: string | null;
 }
 
@@ -63,14 +62,14 @@ export const ClientDropPointDetail = ({ dropPoint, open, onClose }: ClientDropPo
     
     setLoading(true);
     try {
-      // Fetch test results
+      // Fetch test results from test_results table
       const { data: testData } = await supabase
-        .from("drop_point_test_results")
-        .select("*")
+        .from("test_results")
+        .select("id, test_type, pass_fail, test_date, notes")
         .eq("drop_point_id", dropPoint.id)
-        .order("test_date", { ascending: false }) as { data: TestResult[] | null };
+        .order("test_date", { ascending: false });
 
-      setTestResults(testData || []);
+      setTestResults((testData || []) as TestResult[]);
 
       // Fetch photos
       const { data: photoData } = await supabase
@@ -79,7 +78,7 @@ export const ClientDropPointDetail = ({ dropPoint, open, onClose }: ClientDropPo
         .eq("drop_point_id", dropPoint.id)
         .order("created_at", { ascending: false });
 
-      setPhotos(photoData || []);
+      setPhotos((photoData || []) as Photo[]);
     } catch (error) {
       console.error("Error fetching drop point details:", error);
     } finally {
@@ -175,7 +174,7 @@ export const ClientDropPointDetail = ({ dropPoint, open, onClose }: ClientDropPo
                       <CardContent className="pt-4">
                         <div className="flex items-center justify-between mb-2">
                           <span className="font-medium">{test.test_type}</span>
-                          {getResultBadge(test.result_status)}
+                          {getResultBadge(test.pass_fail)}
                         </div>
                         <p className="text-sm text-muted-foreground">
                           {new Date(test.test_date).toLocaleDateString()}

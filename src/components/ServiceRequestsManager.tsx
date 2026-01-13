@@ -10,6 +10,7 @@ import {
   Building2,
   ChevronDown,
   Loader2,
+  Wrench,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -34,12 +35,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useServiceRequests, ServiceRequest } from "@/hooks/useServiceRequests";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ConvertToWorkOrderModal } from "@/components/ConvertToWorkOrderModal";
 
 export function ServiceRequestsManager() {
-  const { serviceRequests, loading, updateServiceRequest } = useServiceRequests();
+  const { serviceRequests, loading, updateServiceRequest, refetch } = useServiceRequests();
   const [selectedRequest, setSelectedRequest] = useState<ServiceRequest | null>(null);
   const [reviewNotes, setReviewNotes] = useState("");
   const [updating, setUpdating] = useState(false);
+  const [convertRequest, setConvertRequest] = useState<ServiceRequest | null>(null);
 
   const handleStatusUpdate = async (requestId: string, newStatus: string) => {
     setUpdating(true);
@@ -254,6 +257,16 @@ export function ServiceRequestsManager() {
                 </div>
                 <div className="flex items-center gap-2 ml-4">
                   {getStatusBadge(request.status)}
+                  {request.status === 'approved' && !request.work_order_id && (
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setConvertRequest(request)}
+                    >
+                      <Wrench className="h-4 w-4 mr-1" />
+                      Create Work Order
+                    </Button>
+                  )}
                   <Button 
                     variant="outline" 
                     size="sm"
@@ -374,6 +387,14 @@ export function ServiceRequestsManager() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Convert to Work Order Modal */}
+      <ConvertToWorkOrderModal
+        serviceRequest={convertRequest}
+        open={!!convertRequest}
+        onClose={() => setConvertRequest(null)}
+        onSuccess={() => refetch()}
+      />
     </div>
   );
 }
