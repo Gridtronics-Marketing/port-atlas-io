@@ -167,22 +167,24 @@ Deno.serve(async (req) => {
           console.error('Error creating invitation record:', inviteRecordError);
         }
 
-        // Send invitation email using Supabase Auth
-        const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
-          inviteEmail,
-          {
+        // Generate invite link WITHOUT sending Supabase's default email
+        const origin = req.headers.get('origin') || 'https://trade-atlas.lovable.app';
+        const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+          type: 'invite',
+          email: inviteEmail,
+          options: {
             data: {
               organization_id: newOrg.id,
               organization_name: organizationName,
               role: userRole,
               invitation_token: invitationToken
             },
-            redirectTo: `${req.headers.get('origin') || supabaseUrl}/auth`
+            redirectTo: `${origin}/auth`
           }
-        );
+        });
 
-        if (inviteError) {
-          console.error('Error sending invitation:', inviteError);
+        if (linkError) {
+          console.error('Error generating invite link:', linkError);
           
           // Clean up: delete the organization if invite fails
           await supabaseAdmin.from('organizations').delete().eq('id', newOrg.id);
@@ -191,11 +193,48 @@ Deno.serve(async (req) => {
           results.push({
             clientId,
             success: false,
-            error: `Failed to send invitation: ${inviteError.message}`,
+            error: `Failed to generate invitation: ${linkError.message}`,
             status: 'failed'
           });
           continue;
         }
+
+        console.log('Generated invite link for:', inviteEmail);
+
+        // Send branded Trade Atlas invitation email via Resend
+        const inviteLink = linkData.properties.action_link;
+        
+        try {
+          const emailResponse = await fetch(`${supabaseUrl}/functions/v1/send-client-invitation-email`, {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${supabaseServiceKey}`
+            },
+            body: JSON.stringify({
+              email: inviteEmail,
+              clientName,
+              organizationName,
+              inviteLink,
+              invitedByEmail: user.email,
+              portalSlug: organizationSlug
+            })
+          });
+
+          if (!emailResponse.ok) {
+            const emailError = await emailResponse.json();
+            console.error('Error sending branded email:', emailError);
+            // Continue anyway - user was created, just email failed
+          } else {
+            console.log('Branded invitation email sent successfully to:', inviteEmail);
+          }
+        } catch (emailError) {
+          console.error('Error calling email function:', emailError);
+          // Continue anyway - user was created
+        }
+
+        // Store invite data for member creation
+        const inviteData = { user: linkData.user };
 
         console.log('Invitation sent successfully to:', inviteEmail);
 
