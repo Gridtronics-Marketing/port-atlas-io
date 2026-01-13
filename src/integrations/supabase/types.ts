@@ -2295,6 +2295,50 @@ export type Database = {
           },
         ]
       }
+      notification_preferences: {
+        Row: {
+          created_at: string | null
+          email_notifications: boolean | null
+          id: string
+          new_service_request: boolean | null
+          organization_id: string | null
+          request_status_change: boolean | null
+          sms_notifications: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email_notifications?: boolean | null
+          id?: string
+          new_service_request?: boolean | null
+          organization_id?: string | null
+          request_status_change?: boolean | null
+          sms_notifications?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          email_notifications?: boolean | null
+          id?: string
+          new_service_request?: boolean | null
+          organization_id?: string | null
+          request_status_change?: boolean | null
+          sms_notifications?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_preferences_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_templates: {
         Row: {
           body_template: string
@@ -2350,10 +2394,12 @@ export type Database = {
           created_at: string
           data: Json | null
           id: string
+          is_read: boolean | null
           message: string
           organization_id: string | null
           read_at: string | null
           sent_via_twilio: boolean | null
+          service_request_id: string | null
           title: string
           type: string
           user_id: string
@@ -2362,10 +2408,12 @@ export type Database = {
           created_at?: string
           data?: Json | null
           id?: string
+          is_read?: boolean | null
           message: string
           organization_id?: string | null
           read_at?: string | null
           sent_via_twilio?: boolean | null
+          service_request_id?: string | null
           title: string
           type: string
           user_id: string
@@ -2374,10 +2422,12 @@ export type Database = {
           created_at?: string
           data?: Json | null
           id?: string
+          is_read?: boolean | null
           message?: string
           organization_id?: string | null
           read_at?: string | null
           sent_via_twilio?: boolean | null
+          service_request_id?: string | null
           title?: string
           type?: string
           user_id?: string
@@ -2388,6 +2438,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_service_request_id_fkey"
+            columns: ["service_request_id"]
+            isOneToOne: false
+            referencedRelation: "service_requests"
             referencedColumns: ["id"]
           },
         ]
