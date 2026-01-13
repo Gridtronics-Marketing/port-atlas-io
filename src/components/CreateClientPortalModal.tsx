@@ -136,7 +136,7 @@ export const CreateClientPortalModal = ({
                 placeholder="Enter organization name"
               />
               <p className="text-xs text-muted-foreground">
-                Portal URL: /{organizationSlug}
+                Portal URL: /p/{organizationSlug}
               </p>
             </div>
 

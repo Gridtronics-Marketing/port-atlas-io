@@ -101,7 +101,11 @@ export function AppSidebar() {
   
   // Add super admin items
   if (isSuperAdmin) {
-    allItems = [...allItems, { title: "Organizations", url: "/admin/organizations", icon: Building2 }];
+    allItems = [
+      ...allItems, 
+      { title: "Organizations", url: "/admin/organizations", icon: Building2 },
+      { title: "Client Portals", url: "/admin/client-portals", icon: Building2 }
+    ];
   }
 
   const getNavClassName = (path: string) => {

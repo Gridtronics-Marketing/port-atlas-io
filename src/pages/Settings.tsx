@@ -1,5 +1,5 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Cog, Database, FileText, Wrench, Network, Shield, Workflow, Key, Info } from 'lucide-react';
+import { Cog, Database, FileText, Wrench, Network, Shield, Workflow, Key, Info, Mail } from 'lucide-react';
 import { DropPointTypesManager } from '@/components/DropPointTypesManager';
 import { CameraPermissionTest } from '@/components/CameraPermissionTest';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,10 +15,13 @@ import { GranularPermissionsManager } from '@/components/GranularPermissionsMana
 import { AuditTrailViewer } from '@/components/AuditTrailViewer';
 import { APIKeysManager } from '@/components/APIKeysManager';
 import { VersionInfo } from '@/components/VersionInfo';
+import { EmailBrandingSettings } from '@/components/EmailBrandingSettings';
 import { useSearchParams } from 'react-router-dom';
+import { useOrganization } from '@/contexts/OrganizationContext';
 
 const Settings = () => {
   const [searchParams] = useSearchParams();
+  const { isSuperAdmin } = useOrganization();
   const defaultTab = searchParams.get('tab') || 'core';
   return (
     <main className="container mx-auto px-4 py-6 space-y-6">
@@ -53,6 +56,12 @@ const Settings = () => {
             <Key className="h-5 w-5" />
             <span className="text-xs">API Keys</span>
           </TabsTrigger>
+          {isSuperAdmin && (
+            <TabsTrigger value="email-branding" className="flex flex-col gap-1 h-auto py-3">
+              <Mail className="h-5 w-5" />
+              <span className="text-xs">Email Branding</span>
+            </TabsTrigger>
+          )}
           <TabsTrigger value="about" className="flex flex-col gap-1 h-auto py-3">
             <Info className="h-5 w-5" />
             <span className="text-xs">About</span>
@@ -254,6 +263,12 @@ const Settings = () => {
         <TabsContent value="about" className="space-y-6">
           <VersionInfo />
         </TabsContent>
+
+        {isSuperAdmin && (
+          <TabsContent value="email-branding" className="space-y-6">
+            <EmailBrandingSettings />
+          </TabsContent>
+        )}
       </Tabs>
     </main>
   );

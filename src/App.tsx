@@ -41,6 +41,8 @@ import OrganizationSettings from "./pages/OrganizationSettings";
 import ServiceRequests from "./pages/ServiceRequests";
 import ClientLocationDetail from "./pages/ClientLocationDetail";
 import ServiceRequestHistory from "./pages/ServiceRequestHistory";
+import PortalEntry from "./pages/PortalEntry";
+import ClientPortalManagement from "./pages/ClientPortalManagement";
 
 const queryClient = new QueryClient();
 
@@ -238,6 +240,14 @@ const App = () => (
                 </AppLayout>
               </ProtectedRoute>
             } />
+            <Route path="/admin/client-portals" element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <ClientPortalManagement />
+                </AppLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/p/:orgSlug" element={<PortalEntry />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
