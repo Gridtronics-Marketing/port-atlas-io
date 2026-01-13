@@ -19,7 +19,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Building2, User, Mail, Phone, MapPin, Calendar, ExternalLink, Loader2, Edit, Plus, Trash2, Map, Navigation, Users } from "lucide-react";
+import { Building2, User, Mail, Phone, MapPin, Calendar, ExternalLink, Loader2, Edit, Plus, Trash2, Map, Navigation, Users, Globe, Copy, Settings } from "lucide-react";
 import { CreateClientPortalModal } from "@/components/CreateClientPortalModal";
 import { openNavigation } from "@/lib/navigation-utils";
 import { Client } from "@/hooks/useClients";
@@ -31,6 +31,8 @@ import { LocationDetailsModal } from "@/components/LocationDetailsModal";
 import { AddLocationModal } from "@/components/AddLocationModal";
 import { type Location } from "@/hooks/useLocations";
 import { useToast } from "@/hooks/use-toast";
+import { useOrganization } from "@/contexts/OrganizationContext";
+import { useNavigate } from "react-router-dom";
 
 interface ClientDetailsModalProps {
   client: Client | null;
@@ -38,18 +40,35 @@ interface ClientDetailsModalProps {
   onClose: () => void;
   onEditClient?: (client: Client) => void;
   onDeleteClient?: (clientId: string) => void;
+  onRefreshClient?: () => void;
 }
 
-export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onDeleteClient }: ClientDetailsModalProps) => {
+export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onDeleteClient, onRefreshClient }: ClientDetailsModalProps) => {
   const { locations, loading: locationsLoading, refetch: refetchLocations } = useClientLocations(client?.id);
   const { deleteLocation, updateLocation } = useLocations();
   const { toast } = useToast();
+  const { isSuperAdmin, userOrgRole } = useOrganization();
+  const navigate = useNavigate();
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isAddLocationModalOpen, setIsAddLocationModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
   const [isPortalModalOpen, setIsPortalModalOpen] = useState(false);
+
+  // Check if user can manage portals (super admin, owner, or admin)
+  const canManagePortal = isSuperAdmin || userOrgRole === 'owner' || userOrgRole === 'admin';
+
+  const copyPortalUrl = () => {
+    if (client?.linked_organization?.slug) {
+      const url = `${window.location.origin}/p/${client.linked_organization.slug}`;
+      navigator.clipboard.writeText(url);
+      toast({
+        title: "Copied",
+        description: "Portal URL copied to clipboard",
+      });
+    }
+  };
 
   const handleDeleteLocation = async (locationId: string) => {
     try {
@@ -116,16 +135,6 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onDe
               </DialogDescription>
             </div>
             <div className="flex gap-2">
-              {client.contact_email && !(client as any).linked_organization_id && (
-                <Button
-                  variant="default"
-                  onClick={() => setIsPortalModalOpen(true)}
-                  className="flex items-center gap-2"
-                >
-                  <Users className="h-4 w-4" />
-                  Create Portal
-                </Button>
-              )}
               <Button
                 variant="outline"
                 onClick={() => setIsEditMode(!isEditMode)}
@@ -198,6 +207,99 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onDe
                   </div>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Client Portal */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Globe className="h-5 w-5 text-primary" />
+                Client Portal
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {client.linked_organization_id && client.linked_organization ? (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="default" className="bg-success text-success-foreground">
+                      Active
+                    </Badge>
+                    <span className="text-sm text-muted-foreground">
+                      {client.linked_organization.name}
+                    </span>
+                  </div>
+
+                  <div>
+                    <p className="font-medium text-sm text-muted-foreground mb-2">Portal URL</p>
+                    <div className="flex items-center gap-2">
+                      <code className="flex-1 bg-muted px-3 py-2 rounded text-sm font-mono truncate">
+                        {window.location.origin}/p/{client.linked_organization.slug}
+                      </code>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={copyPortalUrl}
+                        className="shrink-0"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2 pt-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => window.open(`/p/${client.linked_organization!.slug}`, '_blank')}
+                      className="flex items-center gap-2"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                      Open Portal
+                    </Button>
+                    {canManagePortal && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          onClose();
+                          navigate('/admin/client-portals');
+                        }}
+                        className="flex items-center gap-2"
+                      >
+                        <Settings className="h-4 w-4" />
+                        Manage Portal
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-4">
+                  <Globe className="h-8 w-8 mx-auto mb-2 text-muted-foreground opacity-50" />
+                  <p className="text-muted-foreground mb-4">
+                    No client portal has been created yet.
+                  </p>
+                  {canManagePortal ? (
+                    <Button
+                      onClick={() => setIsPortalModalOpen(true)}
+                      disabled={!client.contact_email}
+                      className="flex items-center gap-2"
+                    >
+                      <Users className="h-4 w-4" />
+                      Create Portal
+                    </Button>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      Contact an administrator to set up portal access.
+                    </p>
+                  )}
+                  {canManagePortal && !client.contact_email && (
+                    <p className="text-xs text-amber-600 mt-2">
+                      Add a contact email to enable portal creation.
+                    </p>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -463,6 +565,7 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onDe
         client={client}
         onSuccess={() => {
           toast({ title: "Success", description: "Portal created and invitation sent!" });
+          onRefreshClient?.();
         }}
       />
     </Dialog>

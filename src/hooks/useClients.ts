@@ -13,6 +13,12 @@ export interface Client {
   billing_address: string | null;
   status: 'Active' | 'Inactive' | 'Pending';
   organization_id?: string;
+  linked_organization_id?: string | null;
+  linked_organization?: {
+    id: string;
+    name: string;
+    slug: string;
+  } | null;
   created_at: string;
   updated_at: string;
 }
@@ -29,7 +35,14 @@ export const useClients = () => {
       
       let query = supabase
         .from('clients')
-        .select('*')
+        .select(`
+          *,
+          linked_organization:organizations!clients_linked_organization_id_fkey(
+            id,
+            name,
+            slug
+          )
+        `)
         .order('created_at', { ascending: false });
 
       // Filter by organization if one is selected
