@@ -491,6 +491,15 @@ export const ManualDrawModeCanvas = ({
         // Enter editing mode
         e.target.enterEditing();
         e.target.selectAll();
+        
+        // Explicitly focus the hidden textarea after a small delay
+        // to ensure it happens after any dialog focus trap attempts
+        setTimeout(() => {
+          if (e.target.hiddenTextarea) {
+            e.target.hiddenTextarea.focus();
+          }
+        }, 50);
+        
         fabricCanvas.renderAll();
         return;
       }
@@ -562,7 +571,11 @@ export const ManualDrawModeCanvas = ({
     setTimeout(() => {
       text.enterEditing();
       text.selectAll();
-    }, 10);
+      // Explicitly focus the hidden textarea to capture keyboard input
+      if ((text as any).hiddenTextarea) {
+        (text as any).hiddenTextarea.focus();
+      }
+    }, 50);
 
     fabricCanvas.renderAll();
     saveHistory(fabricCanvas);
@@ -736,7 +749,11 @@ export const ManualDrawModeCanvas = ({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-[100vw] w-screen h-screen max-h-screen p-0 gap-0 bg-slate-900">
+        <DialogContent 
+          className="max-w-[100vw] w-screen h-screen max-h-screen p-0 gap-0 bg-slate-900"
+          onOpenAutoFocus={(e) => e.preventDefault()}
+          onCloseAutoFocus={(e) => e.preventDefault()}
+        >
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-2 bg-slate-800 border-b border-slate-600">
             <div className="flex items-center gap-3">
