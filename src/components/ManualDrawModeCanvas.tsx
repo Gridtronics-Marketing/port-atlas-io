@@ -78,71 +78,112 @@ export const ManualDrawModeCanvas = ({
 
   // Initialize canvas
   useEffect(() => {
-    if (!open || !canvasRef.current || !containerRef.current) return;
+    if (!open) return;
     if (fabricCanvas) return; // Prevent re-init
 
+    let retryCount = 0;
+    const maxRetries = 20;
+    let timeoutId: ReturnType<typeof setTimeout>;
+    let disposed = false;
+
     const initCanvas = () => {
-      const container = containerRef.current!;
-      const rect = container.getBoundingClientRect();
-      const width = rect.width || 1200;
-      const height = rect.height - 80 || 700; // Account for toolbar
-
-      const canvas = new FabricCanvas(canvasRef.current, {
-        width,
-        height,
-        backgroundColor: BLUEPRINT_BACKGROUND,
-        isDrawingMode: false,
-        selection: true,
-      });
-
-      // Draw initial grid
-      if (showGrid) {
-        drawGrid(canvas, width, height);
-      }
-
-      // Initialize drawing brush
-      const brush = new PencilBrush(canvas);
-      brush.color = activeColor;
-      brush.width = lineWidth;
-      canvas.freeDrawingBrush = brush;
-
-      // Load existing drawing if available
-      if (existingDrawingData) {
-        try {
-          canvas.loadFromJSON(existingDrawingData, () => {
-            canvas.backgroundColor = BLUEPRINT_BACKGROUND;
-            canvas.renderAll();
-            saveHistory(canvas);
-          });
-        } catch (error) {
-          console.error("Error loading existing drawing:", error);
-          saveHistory(canvas);
+      if (disposed) return;
+      
+      const container = containerRef.current;
+      const canvasEl = canvasRef.current;
+      
+      if (!container || !canvasEl) {
+        if (retryCount < maxRetries) {
+          retryCount++;
+          timeoutId = setTimeout(initCanvas, 100);
+        } else {
+          console.error('Canvas refs not available after retries');
+          setIsLoading(false);
         }
-      } else {
-        saveHistory(canvas);
+        return;
       }
 
-      // Event listeners
-      canvas.on("object:added", () => handleCanvasChange(canvas));
-      canvas.on("object:modified", () => handleCanvasChange(canvas));
-      canvas.on("object:removed", () => handleCanvasChange(canvas));
+      const rect = container.getBoundingClientRect();
+      
+      // If dimensions are zero, retry after a delay
+      if (rect.width === 0 || rect.height === 0) {
+        if (retryCount < maxRetries) {
+          retryCount++;
+          timeoutId = setTimeout(initCanvas, 100);
+          return;
+        }
+      }
 
-      setFabricCanvas(canvas);
-      setIsLoading(false);
+      try {
+        const width = rect.width > 0 ? rect.width : 1200;
+        const height = (rect.height - 80) > 0 ? (rect.height - 80) : 700;
 
-      toast.success("Draw Mode Ready", {
-        description: "Use the tools above to create your floor plan"
-      });
+        const canvas = new FabricCanvas(canvasEl, {
+          width,
+          height,
+          backgroundColor: BLUEPRINT_BACKGROUND,
+          isDrawingMode: false,
+          selection: true,
+        });
+
+        if (disposed) {
+          canvas.dispose();
+          return;
+        }
+
+        // Draw initial grid
+        if (showGrid) {
+          drawGrid(canvas, width, height);
+        }
+
+        // Initialize drawing brush
+        const brush = new PencilBrush(canvas);
+        brush.color = activeColor;
+        brush.width = lineWidth;
+        canvas.freeDrawingBrush = brush;
+
+        // Load existing drawing if available
+        if (existingDrawingData) {
+          try {
+            canvas.loadFromJSON(existingDrawingData, () => {
+              canvas.backgroundColor = BLUEPRINT_BACKGROUND;
+              canvas.renderAll();
+              saveHistory(canvas);
+              setIsLoading(false);
+            });
+          } catch (error) {
+            console.error("Error loading existing drawing:", error);
+            saveHistory(canvas);
+            setIsLoading(false);
+          }
+        } else {
+          saveHistory(canvas);
+          setIsLoading(false);
+        }
+
+        // Event listeners
+        canvas.on("object:added", () => handleCanvasChange(canvas));
+        canvas.on("object:modified", () => handleCanvasChange(canvas));
+        canvas.on("object:removed", () => handleCanvasChange(canvas));
+
+        setFabricCanvas(canvas);
+
+        toast.success("Draw Mode Ready", {
+          description: "Use the tools above to create your floor plan"
+        });
+      } catch (error) {
+        console.error('Canvas initialization failed:', error);
+        setIsLoading(false);
+        toast.error("Failed to initialize canvas");
+      }
     };
 
-    // Small delay to ensure DOM is ready
-    setTimeout(initCanvas, 100);
+    // Delay to ensure DOM is ready
+    timeoutId = setTimeout(initCanvas, 150);
 
     return () => {
-      if (fabricCanvas) {
-        fabricCanvas.dispose();
-        setFabricCanvas(null);
-      }
+      disposed = true;
+      clearTimeout(timeoutId);
     };
   }, [open]);
 
