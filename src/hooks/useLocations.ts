@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganizationData } from '@/hooks/useOrganizationData';
+import { useOrganization } from '@/contexts/OrganizationContext';
 
 export interface Location {
   id: string;
@@ -41,35 +42,87 @@ export const useLocations = () => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { organizationId } = useOrganizationData();
+  const { isClientPortalUser, linkedClientId } = useOrganization();
 
   const fetchLocations = async () => {
     try {
       setLoading(true);
       
-      let query = supabase
-        .from('locations')
-        .select(`
-          *,
-          client:clients(name),
-          project:projects(
-            name,
-            client:clients(name)
-          )
-        `)
-        .order('created_at', { ascending: false });
+      let data: any[] = [];
 
-      // Filter by organization if one is selected
-      if (organizationId) {
-        query = query.eq('organization_id', organizationId);
+      if (isClientPortalUser && linkedClientId) {
+        // CLIENT PORTAL USER: Fetch locations assigned to this client
+        const { data: clientLocations, error: clientError } = await supabase
+          .from('locations')
+          .select(`
+            *,
+            client:clients(name),
+            project:projects(
+              name,
+              client:clients(name)
+            )
+          `)
+          .eq('client_id', linkedClientId)
+          .order('created_at', { ascending: false });
+
+        if (clientError) throw clientError;
+        data = clientLocations || [];
+
+        // Also fetch locations via access grants
+        if (organizationId) {
+          const { data: grantedLocations, error: grantError } = await supabase
+            .from('location_access_grants')
+            .select(`
+              location:locations(
+                *,
+                client:clients(name),
+                project:projects(
+                  name,
+                  client:clients(name)
+                )
+              )
+            `)
+            .eq('granted_organization_id', organizationId);
+
+          if (!grantError && grantedLocations) {
+            const grantedData = grantedLocations
+              .map((g: any) => g.location)
+              .filter(Boolean);
+            // Merge and dedupe
+            const existingIds = new Set(data.map((l: any) => l.id));
+            for (const loc of grantedData) {
+              if (!existingIds.has(loc.id)) {
+                data.push(loc);
+              }
+            }
+          }
+        }
+      } else {
+        // REGULAR USER: Filter by organization
+        let query = supabase
+          .from('locations')
+          .select(`
+            *,
+            client:clients(name),
+            project:projects(
+              name,
+              client:clients(name)
+            )
+          `)
+          .order('created_at', { ascending: false });
+
+        if (organizationId) {
+          query = query.eq('organization_id', organizationId);
+        }
+
+        const { data: orgLocations, error } = await query;
+        if (error) throw error;
+        data = orgLocations || [];
       }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
       
       // Get drop points count for each location
       const locationsWithCounts = await Promise.all(
-        (data || []).map(async (location) => {
+        data.map(async (location: any) => {
           const { count } = await supabase
             .from('drop_points')
             .select('*', { count: 'exact', head: true })
@@ -98,17 +151,26 @@ export const useLocations = () => {
   // Helper function to create location access grant for client portal
   const createLocationAccessGrant = async (locationId: string, clientId: string) => {
     try {
+      console.log('Creating access grant for location:', locationId, 'client:', clientId);
+      
       // Get the client's linked organization (portal org)
-      const { data: client } = await supabase
+      const { data: client, error: clientError } = await supabase
         .from('clients')
         .select('linked_organization_id')
         .eq('id', clientId)
         .single();
 
+      if (clientError) {
+        console.error('Error fetching client for access grant:', clientError);
+        return;
+      }
+
+      console.log('Client linked organization:', client?.linked_organization_id);
+
       if (client?.linked_organization_id) {
         // Grant view access to this location for the client's organization
         const { data: user } = await supabase.auth.getUser();
-        await supabase
+        const { error: grantError } = await supabase
           .from('location_access_grants')
           .upsert({
             location_id: locationId,
@@ -119,6 +181,12 @@ export const useLocations = () => {
           }, {
             onConflict: 'location_id,granted_organization_id'
           });
+
+        if (grantError) {
+          console.error('Error creating access grant:', grantError);
+        } else {
+          console.log('Access grant created successfully for location:', locationId);
+        }
       }
     } catch (error) {
       console.error('Error creating location access grant:', error);
@@ -228,7 +296,7 @@ export const useLocations = () => {
 
   useEffect(() => {
     fetchLocations();
-  }, [organizationId]);
+  }, [organizationId, isClientPortalUser, linkedClientId]);
 
   return {
     locations,
