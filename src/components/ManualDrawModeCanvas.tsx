@@ -39,6 +39,10 @@ const BLUEPRINT_BACKGROUND = "#1e3a5f";
 const GRID_COLOR = "rgba(255, 255, 255, 0.1)";
 const GRID_SIZE = 20;
 
+// Large canvas dimensions for floor plans
+const CANVAS_WIDTH = 3000;
+const CANVAS_HEIGHT = 2000;
+
 export const ManualDrawModeCanvas = ({
   open,
   onOpenChange,
@@ -115,12 +119,10 @@ export const ManualDrawModeCanvas = ({
       }
 
       try {
-        const width = rect.width > 0 ? rect.width : 1200;
-        const height = (rect.height - 80) > 0 ? (rect.height - 80) : 700;
-
+        // Use fixed large canvas dimensions for floor plans
         const canvas = new FabricCanvas(canvasEl, {
-          width,
-          height,
+          width: CANVAS_WIDTH,
+          height: CANVAS_HEIGHT,
           backgroundColor: BLUEPRINT_BACKGROUND,
           isDrawingMode: false,
           selection: true,
@@ -131,9 +133,9 @@ export const ManualDrawModeCanvas = ({
           return;
         }
 
-        // Draw initial grid
+        // Draw initial grid on the full canvas
         if (showGrid) {
-          drawGrid(canvas, width, height);
+          drawGrid(canvas, CANVAS_WIDTH, CANVAS_HEIGHT);
         }
 
         // Initialize drawing brush
@@ -231,7 +233,7 @@ export const ManualDrawModeCanvas = ({
     const gridObjects = fabricCanvas.getObjects().filter((obj: any) => obj.isGrid);
     
     if (showGrid && gridObjects.length === 0) {
-      drawGrid(fabricCanvas, fabricCanvas.width || 1200, fabricCanvas.height || 700);
+      drawGrid(fabricCanvas, CANVAS_WIDTH, CANVAS_HEIGHT);
     } else if (!showGrid) {
       gridObjects.forEach(obj => fabricCanvas.remove(obj));
     }
@@ -560,7 +562,7 @@ export const ManualDrawModeCanvas = ({
     fabricCanvas.loadFromJSON(json, () => {
       fabricCanvas.backgroundColor = BLUEPRINT_BACKGROUND;
       if (showGrid) {
-        drawGrid(fabricCanvas, fabricCanvas.width || 1200, fabricCanvas.height || 700);
+        drawGrid(fabricCanvas, CANVAS_WIDTH, CANVAS_HEIGHT);
       }
       fabricCanvas.renderAll();
     });
@@ -578,7 +580,7 @@ export const ManualDrawModeCanvas = ({
     fabricCanvas.loadFromJSON(json, () => {
       fabricCanvas.backgroundColor = BLUEPRINT_BACKGROUND;
       if (showGrid) {
-        drawGrid(fabricCanvas, fabricCanvas.width || 1200, fabricCanvas.height || 700);
+        drawGrid(fabricCanvas, CANVAS_WIDTH, CANVAS_HEIGHT);
       }
       fabricCanvas.renderAll();
     });
@@ -599,7 +601,7 @@ export const ManualDrawModeCanvas = ({
 
   const handleZoomIn = () => {
     if (!fabricCanvas) return;
-    const newZoom = Math.min(zoom * 1.2, 3);
+    const newZoom = Math.min(zoom * 1.2, 5);
     setZoom(newZoom);
     fabricCanvas.setZoom(newZoom);
     fabricCanvas.renderAll();
@@ -607,9 +609,20 @@ export const ManualDrawModeCanvas = ({
 
   const handleZoomOut = () => {
     if (!fabricCanvas) return;
-    const newZoom = Math.max(zoom / 1.2, 0.5);
+    const newZoom = Math.max(zoom / 1.2, 0.25);
     setZoom(newZoom);
     fabricCanvas.setZoom(newZoom);
+    fabricCanvas.renderAll();
+  };
+
+  const handleFitToView = () => {
+    if (!fabricCanvas || !containerRef.current) return;
+    const container = containerRef.current.getBoundingClientRect();
+    const scaleX = container.width / CANVAS_WIDTH;
+    const scaleY = container.height / CANVAS_HEIGHT;
+    const scale = Math.min(scaleX, scaleY) * 0.9; // 90% padding
+    setZoom(scale);
+    fabricCanvas.setZoom(scale);
     fabricCanvas.renderAll();
   };
 
@@ -721,6 +734,7 @@ export const ManualDrawModeCanvas = ({
             onCancel={handleCancel}
             onZoomIn={handleZoomIn}
             onZoomOut={handleZoomOut}
+            onFitToView={handleFitToView}
             canUndo={canUndo}
             canRedo={canRedo}
             isSaving={isSaving}
@@ -728,30 +742,35 @@ export const ManualDrawModeCanvas = ({
             onTextPresetChange={setTextPreset}
           />
 
-          {/* Canvas Container */}
+          {/* Canvas Container - scrollable for large canvas */}
           <div 
             ref={containerRef} 
-            className="flex-1 overflow-auto bg-slate-900 flex items-center justify-center"
+            className="flex-1 overflow-auto bg-slate-900 relative"
           >
-        {/* Always render canvas, but hide while loading */}
-        <canvas 
-          ref={canvasRef} 
-          className={isLoading ? "opacity-0 absolute" : ""} 
-        />
-        
-        {/* Loading overlay */}
-        {isLoading && (
-          <div className="flex items-center gap-2 text-white absolute">
-            <Loader2 className="h-6 w-6 animate-spin" />
-            <span>Initializing canvas...</span>
-          </div>
-        )}
+            {/* Always render canvas, but hide while loading */}
+            <canvas 
+              ref={canvasRef} 
+              className={isLoading ? "opacity-0" : ""} 
+            />
+            
+            {/* Loading overlay */}
+            {isLoading && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="flex items-center gap-2 text-white">
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                  <span>Initializing canvas...</span>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Status Bar */}
           <div className="px-4 py-2 bg-slate-800 border-t border-slate-600 flex items-center justify-between text-xs text-slate-400">
             <span>Tool: {activeTool.toUpperCase()}</span>
-            <span>Zoom: {Math.round(zoom * 100)}%</span>
+            <div className="flex items-center gap-4">
+              <span>Canvas: {CANVAS_WIDTH}x{CANVAS_HEIGHT}px</span>
+              <span>Zoom: {Math.round(zoom * 100)}%</span>
+            </div>
             <span>Grid: {showGrid ? "ON" : "OFF"}</span>
           </div>
         </DialogContent>

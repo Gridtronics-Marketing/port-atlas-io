@@ -20,6 +20,7 @@ import {
   X,
   ZoomIn,
   ZoomOut,
+  Maximize2,
   Move,
 } from "lucide-react";
 import { useState } from "react";
@@ -59,6 +60,7 @@ interface ManualDrawModeToolbarProps {
   onCancel: () => void;
   onZoomIn: () => void;
   onZoomOut: () => void;
+  onFitToView?: () => void;
   canUndo: boolean;
   canRedo: boolean;
   isSaving?: boolean;
@@ -102,6 +104,7 @@ export const ManualDrawModeToolbar = ({
   onCancel,
   onZoomIn,
   onZoomOut,
+  onFitToView,
   canUndo,
   canRedo,
   isSaving,
@@ -291,7 +294,7 @@ export const ManualDrawModeToolbar = ({
               size="sm"
               onClick={onZoomOut}
               className="h-9 w-9 p-0"
-              title="Zoom Out"
+              title="Zoom Out (-)"
             >
               <ZoomOut className="h-4 w-4" />
             </Button>
@@ -300,10 +303,21 @@ export const ManualDrawModeToolbar = ({
               size="sm"
               onClick={onZoomIn}
               className="h-9 w-9 p-0"
-              title="Zoom In"
+              title="Zoom In (+)"
             >
               <ZoomIn className="h-4 w-4" />
             </Button>
+            {onFitToView && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={onFitToView}
+                className="h-9 w-9 p-0"
+                title="Fit to View (0)"
+              >
+                <Maximize2 className="h-4 w-4" />
+              </Button>
+            )}
           </div>
 
           <Separator orientation="vertical" className="h-8 hidden md:block bg-slate-600" />
