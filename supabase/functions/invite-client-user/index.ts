@@ -169,7 +169,7 @@ Deno.serve(async (req) => {
 
         // Generate invite link WITHOUT sending Supabase's default email
         const origin = req.headers.get('origin') || 'https://trade-atlas.lovable.app';
-        const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+        const { data: linkData, error: inviteLinkError } = await supabaseAdmin.auth.admin.generateLink({
           type: 'invite',
           email: inviteEmail,
           options: {
@@ -183,8 +183,8 @@ Deno.serve(async (req) => {
           }
         });
 
-        if (linkError) {
-          console.error('Error generating invite link:', linkError);
+        if (inviteLinkError) {
+          console.error('Error generating invite link:', inviteLinkError);
           
           // Clean up: delete the organization if invite fails
           await supabaseAdmin.from('organizations').delete().eq('id', newOrg.id);
@@ -193,7 +193,7 @@ Deno.serve(async (req) => {
           results.push({
             clientId,
             success: false,
-            error: `Failed to generate invitation: ${linkError.message}`,
+            error: `Failed to generate invitation: ${inviteLinkError.message}`,
             status: 'failed'
           });
           continue;
