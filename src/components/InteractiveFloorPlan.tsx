@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Plus, RotateCcw, ZoomIn, ZoomOut, RefreshCw, Camera, FileImage, Upload } from 'lucide-react';
+import { Plus, RotateCcw, ZoomIn, ZoomOut, RefreshCw, Camera, FileImage, Upload, PenTool, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,11 +21,14 @@ import { RoomViewModal } from './RoomViewModal';
 import { DropPointColorLegend } from './DropPointColorLegend';
 import { FloorPlanUploadDialog } from './FloorPlanUploadDialog';
 import { FloorPlanFilterDialog, type FloorPlanFilters } from './FloorPlanFilterDialog';
+import { ManualDrawModeCanvas } from './ManualDrawModeCanvas';
 import { useDropPoints } from '@/hooks/useDropPoints';
 import { useRoomViews } from '@/hooks/useRoomViews';
+import { useFloorPlanDrawing, isDrawnFloorPlan, getDrawingData } from '@/hooks/useFloorPlanDrawing';
 import { getStorageUrl } from '@/lib/storage-utils';
 import { useToast } from '@/hooks/use-toast';
 import { isValidUUID } from '@/lib/uuid-utils';
+import { supabase } from '@/integrations/supabase/client';
 
 interface InteractiveFloorPlanProps {
   locationId: string;
@@ -71,13 +74,18 @@ export const InteractiveFloorPlan = ({
     dropPointStatuses: ['planned', 'roughed_in', 'finished', 'tested'],
   });
   const [showUploadDialog, setShowUploadDialog] = useState(false);
+  const [showDrawModeModal, setShowDrawModeModal] = useState(false);
   const [uploadedFileUrl, setUploadedFileUrl] = useState<string | undefined>(undefined);
+  const [floorPlanFiles, setFloorPlanFiles] = useState<Record<string, any> | null>(null);
   const [showMoveConfirmation, setShowMoveConfirmation] = useState(false);
   const [pendingMove, setPendingMove] = useState<{
     item: any;
     type: 'dropPoint' | 'roomView';
     originalPosition: { x: number; y: number };
   } | null>(null);
+  
+  // Floor plan drawing hook
+  const { saveDrawing, isSaving: isDrawingSaving } = useFloorPlanDrawing(locationId, floorNumber);
   
   const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -122,6 +130,25 @@ export const InteractiveFloorPlan = ({
     }
     return { clientX: 0, clientY: 0 };
   };
+
+  // Load floor plan files from location
+  useEffect(() => {
+    if (!validLocationId) return;
+    
+    const loadFloorPlanFiles = async () => {
+      const { data } = await supabase
+        .from('locations')
+        .select('floor_plan_files')
+        .eq('id', locationId)
+        .single();
+      
+      if (data?.floor_plan_files) {
+        setFloorPlanFiles(data.floor_plan_files as Record<string, any>);
+      }
+    };
+    
+    loadFloorPlanFiles();
+  }, [locationId, validLocationId]);
 
   // Update container dimensions
   useEffect(() => {
@@ -495,6 +522,24 @@ export const InteractiveFloorPlan = ({
               <Upload className="h-4 w-4 mr-2" />
               Upload Map
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowDrawModeModal(true)}
+            >
+              <PenTool className="h-4 w-4 mr-2" />
+              Draw Floor Plan
+            </Button>
+            {floorPlanFiles && isDrawnFloorPlan(floorPlanFiles, floorNumber) && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowDrawModeModal(true)}
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                Edit Drawing
+              </Button>
+            )}
             <FloorPlanFilterDialog
               filters={filters}
               onFiltersChange={setFilters}
@@ -934,6 +979,22 @@ export const InteractiveFloorPlan = ({
         locationId={locationId}
         floorNumber={floorNumber}
         onUploadSuccess={handleUploadSuccess}
+      />
+
+      {/* Manual Draw Mode Canvas */}
+      <ManualDrawModeCanvas
+        open={showDrawModeModal}
+        onOpenChange={setShowDrawModeModal}
+        existingDrawingData={floorPlanFiles ? getDrawingData(floorPlanFiles, floorNumber) : null}
+        floorNumber={floorNumber}
+        hasExistingDropPoints={floorDropPoints.length > 0}
+        onSave={async (imageBlob, drawingJson) => {
+          const newUrl = await saveDrawing(imageBlob, drawingJson);
+          if (newUrl) {
+            setUploadedFileUrl(newUrl);
+            onFloorPlanSaved?.();
+          }
+        }}
       />
 
       </Card>

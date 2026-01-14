@@ -1,6 +1,17 @@
 import { supabase } from '@/integrations/supabase/client';
 
 /**
+ * Floor plan configuration object structure
+ */
+export interface FloorPlanConfig {
+  image_path: string;
+  drawing_data?: string;
+  is_drawn: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+/**
  * Generates a public URL for a file in Supabase storage
  */
 export const getStorageUrl = (bucket: string, path: string): string => {
@@ -9,13 +20,85 @@ export const getStorageUrl = (bucket: string, path: string): string => {
 };
 
 /**
- * Generates URLs for floor plan files from location data
+ * Parse floor plan config to handle both legacy string format and new object format
  */
-export const getFloorPlanUrls = (floorPlanFiles: Record<number, string> = {}): Record<number, string> => {
+export const parseFloorPlanConfig = (
+  floorPlanFiles: Record<string, any> | null,
+  floor: number | string
+): FloorPlanConfig | null => {
+  if (!floorPlanFiles || !floorPlanFiles[floor]) {
+    return null;
+  }
+
+  const value = floorPlanFiles[floor];
+
+  // Legacy format: just a string path
+  if (typeof value === 'string') {
+    return {
+      image_path: value,
+      is_drawn: false,
+    };
+  }
+
+  // New format: object with full config
+  if (typeof value === 'object' && value.image_path) {
+    return {
+      image_path: value.image_path,
+      drawing_data: value.drawing_data,
+      is_drawn: value.is_drawn ?? false,
+      created_at: value.created_at,
+      updated_at: value.updated_at,
+    };
+  }
+
+  return null;
+};
+
+/**
+ * Check if a floor plan was drawn (vs uploaded)
+ */
+export const isDrawnFloorPlan = (
+  floorPlanFiles: Record<string, any> | null,
+  floor: number | string
+): boolean => {
+  const config = parseFloorPlanConfig(floorPlanFiles, floor);
+  return config?.is_drawn ?? false;
+};
+
+/**
+ * Get drawing data for a floor plan
+ */
+export const getDrawingData = (
+  floorPlanFiles: Record<string, any> | null,
+  floor: number | string
+): string | null => {
+  const config = parseFloorPlanConfig(floorPlanFiles, floor);
+  return config?.drawing_data ?? null;
+};
+
+/**
+ * Get the image path from floor plan files (handles both formats)
+ */
+export const getFloorPlanImagePath = (
+  floorPlanFiles: Record<string, any> | null,
+  floor: number | string
+): string | null => {
+  const config = parseFloorPlanConfig(floorPlanFiles, floor);
+  return config?.image_path ?? null;
+};
+
+/**
+ * Generates URLs for floor plan files from location data
+ * Handles both legacy string format and new object format
+ */
+export const getFloorPlanUrls = (floorPlanFiles: Record<string, any> = {}): Record<number, string> => {
   const urls: Record<number, string> = {};
   
-  Object.entries(floorPlanFiles).forEach(([floor, path]) => {
-    urls[parseInt(floor)] = getStorageUrl('floor-plans', path);
+  Object.entries(floorPlanFiles).forEach(([floor, value]) => {
+    const path = typeof value === 'string' ? value : value?.image_path;
+    if (path) {
+      urls[parseInt(floor)] = getStorageUrl('floor-plans', path);
+    }
   });
   
   return urls;
@@ -23,10 +106,11 @@ export const getFloorPlanUrls = (floorPlanFiles: Record<number, string> = {}): R
 
 /**
  * Gets the floor plan URL for a specific floor
+ * Handles both legacy string format and new object format
  */
-export const getFloorPlanUrl = (floorPlanFiles: Record<number, string> = {}, floor: number): string | undefined => {
-  const path = floorPlanFiles[floor];
-  return path ? getStorageUrl('floor-plans', path) : undefined;
+export const getFloorPlanUrl = (floorPlanFiles: Record<string, any> = {}, floor: number): string | undefined => {
+  const config = parseFloorPlanConfig(floorPlanFiles, floor);
+  return config?.image_path ? getStorageUrl('floor-plans', config.image_path) : undefined;
 };
 
 /**
