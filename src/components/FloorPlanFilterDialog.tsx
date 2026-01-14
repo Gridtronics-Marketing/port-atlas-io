@@ -23,7 +23,6 @@ export interface FloorPlanFilters {
 interface FloorPlanFilterDialogProps {
   filters: FloorPlanFilters;
   onFiltersChange: (filters: FloorPlanFilters) => void;
-  isDrawingMode?: boolean;
 }
 
 const DROP_POINT_TYPES = [
@@ -46,7 +45,6 @@ const DROP_POINT_STATUSES = [
 export const FloorPlanFilterDialog = ({
   filters,
   onFiltersChange,
-  isDrawingMode = false,
 }: FloorPlanFilterDialogProps) => {
   const [open, setOpen] = useState(false);
 
@@ -94,7 +92,6 @@ export const FloorPlanFilterDialog = ({
         <Button
           variant="outline"
           size="sm"
-          disabled={isDrawingMode}
         >
           <Filter className="h-4 w-4 mr-2" />
           Filter

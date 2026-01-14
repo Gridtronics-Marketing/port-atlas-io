@@ -44,7 +44,6 @@ import { RiserDiagramLibrary } from "@/components/RiserDiagramLibrary";
 import { CreateRiserDiagramModal } from "@/components/CreateRiserDiagramModal";
 import { ScheduleAssignmentModal } from "@/components/ScheduleAssignmentModal";
 import { AddLocationNoteModal } from "@/components/AddLocationNoteModal";
-import { FloorPlanEditor } from "@/components/FloorPlanEditor";
 import { WalkThroughNotesList } from "@/components/WalkThroughNotesList";
 import { CustomerNotesPanel } from "@/components/CustomerNotesPanel";
 

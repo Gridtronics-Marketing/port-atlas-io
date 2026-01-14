@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Plus, Minus, RotateCcw, ZoomIn, ZoomOut, RefreshCw, Camera, Paintbrush, Save, FileImage, Upload } from 'lucide-react';
+import { Plus, RotateCcw, ZoomIn, ZoomOut, RefreshCw, Camera, FileImage, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,20 +18,14 @@ import { AddDropPointModal } from './AddDropPointModal';
 import { DropPointDetailsModal } from './DropPointDetailsModal';
 import { AddRoomViewModal } from './AddRoomViewModal';
 import { RoomViewModal } from './RoomViewModal';
-import { FloorPlanDrawingToolbar, type DrawingTool } from './FloorPlanDrawingToolbar';
-import { FloorPlanDrawingCanvas, type DrawingCanvasRef } from './FloorPlanDrawingCanvas';
-import { FloorPlanDrawingViewer } from './FloorPlanDrawingViewer';
 import { DropPointColorLegend } from './DropPointColorLegend';
 import { FloorPlanUploadDialog } from './FloorPlanUploadDialog';
 import { FloorPlanFilterDialog, type FloorPlanFilters } from './FloorPlanFilterDialog';
 import { useDropPoints } from '@/hooks/useDropPoints';
 import { useRoomViews } from '@/hooks/useRoomViews';
-import { useCanvasDrawings } from '@/hooks/useCanvasDrawings';
-import { getStorageUrl, repairFloorPlanFiles } from '@/lib/storage-utils';
-import { saveDrawingAsFloorPlan, deleteCanvasDrawing } from '@/lib/floor-plan-utils';
+import { getStorageUrl } from '@/lib/storage-utils';
 import { useToast } from '@/hooks/use-toast';
 import { isValidUUID } from '@/lib/uuid-utils';
-import { supabase } from '@/integrations/supabase/client';
 
 interface InteractiveFloorPlanProps {
   locationId: string;
@@ -58,7 +52,6 @@ export const InteractiveFloorPlan = ({
   const [showAddModal, setShowAddModal] = useState(false);
   const [showAddRoomViewModal, setShowAddRoomViewModal] = useState(false);
   const [clickCoordinates, setClickCoordinates] = useState<{ x: number; y: number } | null>(null);
-  const [canvasElement, setCanvasElement] = useState<HTMLCanvasElement | null>(null);
   const [isRepairing, setIsRepairing] = useState(false);
   const [selectedDropPoint, setSelectedDropPoint] = useState<any>(null);
   const [selectedRoomView, setSelectedRoomView] = useState<any>(null);
@@ -70,13 +63,6 @@ export const InteractiveFloorPlan = ({
   const [isMouseDown, setIsMouseDown] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [mouseDownPosition, setMouseDownPosition] = useState({ x: 0, y: 0 });
-  const [isDrawingMode, setIsDrawingMode] = useState(false);
-  const [activeTool, setActiveTool] = useState<DrawingTool>('select');
-  const [brushColor, setBrushColor] = useState('#000000');
-  const [brushSize, setBrushSize] = useState(2);
-  const [canUndo, setCanUndo] = useState(false);
-  const [canRedo, setCanRedo] = useState(false);
-  const [drawingData, setDrawingData] = useState<string>('');
   const [containerDimensions, setContainerDimensions] = useState({ width: 0, height: 0 });
   const [filters, setFilters] = useState<FloorPlanFilters>({
     showDropPointLabels: true,
@@ -84,8 +70,6 @@ export const InteractiveFloorPlan = ({
     dropPointTypes: ['data', 'wifi', 'camera', 'mdf_idf', 'access_control', 'av', 'other'],
     dropPointStatuses: ['planned', 'roughed_in', 'finished', 'tested'],
   });
-  const [hasSavedDrawing, setHasSavedDrawing] = useState(false);
-  const [showUseAsFloorPlanDialog, setShowUseAsFloorPlanDialog] = useState(false);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [uploadedFileUrl, setUploadedFileUrl] = useState<string | undefined>(undefined);
   const [showMoveConfirmation, setShowMoveConfirmation] = useState(false);
@@ -96,26 +80,13 @@ export const InteractiveFloorPlan = ({
   } | null>(null);
   
   const containerRef = useRef<HTMLDivElement>(null);
-  const drawingCanvasRef = useRef<DrawingCanvasRef>(null);
   const { toast } = useToast();
   
   // Only use hooks with valid UUID
   const validLocationId = locationId && isValidUUID(locationId) ? locationId : undefined;
   const { dropPoints, loading: dropPointsLoading, updateDropPoint, fetchDropPoints } = useDropPoints(validLocationId);
   const { roomViews, loading: roomViewsLoading, updateRoomView, fetchRoomViews } = useRoomViews(validLocationId);
-  const { getDrawingForFloor, saveDrawing, refetch: refetchDrawings } = useCanvasDrawings(validLocationId);
 
-  // Temporary storage for drawings when location doesn't exist yet
-  const [tempDrawingData, setTempDrawingData] = useState<any>(() => {
-    // Load from localStorage on init
-    const storageKey = `temp-drawing-${floorNumber}`;
-    const stored = localStorage.getItem(storageKey);
-    return stored ? JSON.parse(stored) : null;
-  });
-  
-  // Track if drawing data has been loaded to prevent infinite loops
-  const drawingDataLoadedRef = useRef(false);
-  
   // Generate the actual file URL from path or use provided URL
   const actualFileUrl = uploadedFileUrl || fileUrl || (filePath ? getStorageUrl('floor-plans', filePath) : undefined);
 
@@ -152,15 +123,14 @@ export const InteractiveFloorPlan = ({
     return { clientX: 0, clientY: 0 };
   };
 
-  // Update container dimensions for drawing canvas
+  // Update container dimensions
   useEffect(() => {
     if (!containerRef.current) return;
     
     const updateDimensions = () => {
       const rect = containerRef.current!.getBoundingClientRect();
-      // Provide fallback dimensions when no floor plan is uploaded
       const width = rect.width || 800;
-      const height = actualFileUrl ? rect.height : 600; // Default height for blank canvas
+      const height = actualFileUrl ? rect.height : 600;
       setContainerDimensions({ width, height });
     };
     
@@ -170,19 +140,8 @@ export const InteractiveFloorPlan = ({
     return () => window.removeEventListener('resize', updateDimensions);
   }, [actualFileUrl]);
 
-  // Cleanup save timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
-    };
-  }, []);
-
-
   const handleContainerClick = (e: React.MouseEvent) => {
-    // Don't handle clicks in drawing mode or when dragging
-    if (isDrawingMode || isDragging) return;
+    if (isDragging) return;
     if ((!isAddingPoint && !isAddingRoomView) || !containerRef.current) return;
 
     const rect = containerRef.current.getBoundingClientRect();
@@ -202,7 +161,7 @@ export const InteractiveFloorPlan = ({
 
   const handlePointerDown = (e: React.MouseEvent | React.TouchEvent, item: any, type: 'dropPoint' | 'roomView') => {
     e.stopPropagation();
-    e.preventDefault(); // Prevent scrolling on touch
+    e.preventDefault();
     if (!containerRef.current) return;
 
     // Prevent dragging locked drop points
@@ -239,13 +198,11 @@ export const InteractiveFloorPlan = ({
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isMouseDown || !draggedPoint || !containerRef.current) return;
 
-    // Calculate distance moved from initial mouse down position
     const distanceMoved = Math.sqrt(
       Math.pow(e.clientX - mouseDownPosition.x, 2) + 
       Math.pow(e.clientY - mouseDownPosition.y, 2)
     );
 
-    // Only start dragging if mouse has moved more than 5 pixels
     if (!isDragging && distanceMoved > 5) {
       setIsDragging(true);
     }
@@ -256,11 +213,9 @@ export const InteractiveFloorPlan = ({
     const x = ((e.clientX - rect.left - dragOffset.x) / rect.width) * 100;
     const y = ((e.clientY - rect.top - dragOffset.y) / rect.height) * 100;
 
-    // Constrain to container bounds
     const constrainedX = Math.max(0, Math.min(100, x));
     const constrainedY = Math.max(0, Math.min(100, y));
 
-    // Update the dragged item's position temporarily
     if (draggedPoint) {
       setDraggedPoint(prev => ({
         ...prev,
@@ -279,7 +234,6 @@ export const InteractiveFloorPlan = ({
   const handleMouseUp = async () => {
     if (!isMouseDown) return;
 
-    // If we were dragging, show confirmation dialog
     if (isDragging && draggedPoint) {
       const originalPoint = dropPoints.find(dp => dp.id === draggedPoint.id);
       setPendingMove({
@@ -338,7 +292,6 @@ export const InteractiveFloorPlan = ({
         description: "Failed to update position.",
         variant: "destructive",
       });
-      // Refresh to revert to original position
       if (pendingMove.type === 'dropPoint') {
         await fetchDropPoints();
       } else {
@@ -355,7 +308,6 @@ export const InteractiveFloorPlan = ({
   };
 
   const handleCancelMove = async () => {
-    // Refresh data to revert to original positions
     if (pendingMove?.type === 'dropPoint') {
       await fetchDropPoints();
     } else if (pendingMove?.type === 'roomView') {
@@ -378,13 +330,11 @@ export const InteractiveFloorPlan = ({
         
         const { clientX, clientY } = getEventCoordinates(e);
         
-        // Calculate distance moved from initial mouse down position
         const distanceMoved = Math.sqrt(
           Math.pow(clientX - mouseDownPosition.x, 2) + 
           Math.pow(clientY - mouseDownPosition.y, 2)
         );
 
-        // Only start dragging if pointer has moved more than 5 pixels
         if (!isDragging && distanceMoved > 5) {
           setIsDragging(true);
         }
@@ -440,238 +390,23 @@ export const InteractiveFloorPlan = ({
 
   const resetScale = () => setScale(1.0);
 
-  // Handle drop point modal close with refresh
   const handleDropPointDetailsClose = (open: boolean) => {
     setDetailsModalOpen(open);
     if (!open) {
       setSelectedDropPoint(null);
-      // Refresh drop points to show any updates
       fetchDropPoints();
     }
   };
 
-  // Drawing functions
-  const handleDrawingToolChange = (tool: DrawingTool) => {
-    console.log('✅ Drawing tool changed to:', tool);
-    
-    setActiveTool(tool);
-    
-    // When switching to select mode, reset adding states and exit drawing mode
-    if (tool === 'select') {
-      setIsAddingPoint(false);
-      setIsAddingRoomView(false);
-      setIsDrawingMode(false);
-    } else {
-      // For any drawing tool, ensure drawing mode is enabled
-      setIsDrawingMode(true);
-      setIsAddingPoint(false);
-      setIsAddingRoomView(false);
-      
-      // Validate drawing canvas is ready
-      if (!drawingCanvasRef.current) {
-        console.warn('⚠️ Drawing canvas not ready, waiting...');
-        toast({
-          title: "Drawing Mode",
-          description: "Initializing drawing canvas, please wait a moment...",
-        });
-        return;
-      }
-      
-      console.log('✅ Drawing mode activated successfully');
-    }
-  };
-
-  const handleDrawingHistoryChange = (canUndoValue: boolean, canRedoValue: boolean) => {
-    setCanUndo(canUndoValue);
-    setCanRedo(canRedoValue);
-  };
-
-  const [isSaving, setIsSaving] = useState(false);
-  const saveTimeoutRef = useRef<NodeJS.Timeout>();
-
-  const handleDrawingSave = async (data: string) => {
-    // Debounce to prevent double submit
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current);
-    }
-
-    saveTimeoutRef.current = setTimeout(async () => {
-      if (isSaving) {
-        console.log('⏳ Save already in progress, skipping...');
-        return;
-      }
-
-      console.log('💾 Saving drawing data...');
-      setIsSaving(true);
-      setDrawingData(data);
-      
-      if (!locationId || !isValidUUID(locationId)) {
-        // Store temporarily in state and localStorage
-        const parsedData = JSON.parse(data);
-        setTempDrawingData(parsedData);
-        
-        const storageKey = `temp-drawing-${floorNumber}`;
-        localStorage.setItem(storageKey, data);
-        
-        console.log('💾 Drawing saved to localStorage');
-        setHasSavedDrawing(true);
-        setIsSaving(false);
-        
-        toast({
-          title: "Floorplan updated",
-          description: "Drawing saved locally",
-        });
-        
-        // Emit event
-        window.dispatchEvent(new CustomEvent('FLOORPLAN_SAVED', { 
-          detail: { locationId, floorNumber, local: true } 
-        }));
-        return;
-      }
-      
-      try {
-        // Save to database
-        const result = await saveDrawing({
-          location_id: locationId,
-          floor_number: floorNumber,
-          canvas_data: JSON.parse(data)
-        });
-        
-        if (result) {
-          // Clear temporary storage after successful save
-          const storageKey = `temp-drawing-${floorNumber}`;
-          localStorage.removeItem(storageKey);
-          setHasSavedDrawing(true);
-          
-          // Refetch latest data to ensure UI is in sync
-          await refetchDrawings();
-          
-          console.log('💾 Drawing saved to database');
-          
-          toast({
-            title: "Floorplan updated",
-            description: "Drawing saved successfully",
-          });
-          
-          // Emit events
-          window.dispatchEvent(new CustomEvent('FLOORPLAN_SAVED', { 
-            detail: { locationId, floorNumber, drawingId: result.id } 
-          }));
-          window.dispatchEvent(new CustomEvent('DROPS_UPDATED', { 
-            detail: { locationId, floorNumber } 
-          }));
-        } else {
-          throw new Error('Save operation returned no result');
-        }
-      } catch (error) {
-        console.error('❌ Error saving drawing:', error);
-        
-        toast({
-          title: "Save failed",
-          description: error instanceof Error ? error.message : "Failed to save drawing. Please try again.",
-          variant: "destructive",
-        });
-        
-        // Rollback optimistic UI update if needed
-        // Drawing data already set, but we can show error state
-      } finally {
-        setIsSaving(false);
-      }
-    }, 500);
-  };
-
-  const handleDrawingLoad = () => {
-    const savedDrawing = getDrawingForFloor(floorNumber);
-    if (savedDrawing && drawingCanvasRef.current?.drawingActions) {
-      const canvasDataStr = JSON.stringify(savedDrawing.canvas_data);
-      drawingCanvasRef.current.drawingActions.load(canvasDataStr);
-      setDrawingData(canvasDataStr);
-    }
-  };
-
-  // Load saved drawing data on mount and when floor changes
-  useEffect(() => {
-    console.log('🔄 Drawing data load effect triggered');
-    
-    // Reset the loaded flag when floor changes
-    if (!drawingDataLoadedRef.current) {
-      if (!isValidUUID(locationId)) {
-        // Load temporary data if available
-        if (tempDrawingData && isDrawingMode && drawingCanvasRef.current?.drawingActions) {
-          console.log('📂 Loading temporary drawing data');
-          const canvasDataStr = JSON.stringify(tempDrawingData);
-          drawingCanvasRef.current.drawingActions.load(canvasDataStr);
-          setDrawingData(canvasDataStr);
-          setHasSavedDrawing(true);
-          drawingDataLoadedRef.current = true;
-        }
-        return;
-      }
-
-      const savedDrawing = getDrawingForFloor(floorNumber);
-      if (savedDrawing) {
-        console.log('📂 Loading saved drawing data from database');
-        const canvasDataStr = JSON.stringify(savedDrawing.canvas_data);
-        setDrawingData(canvasDataStr);
-        setHasSavedDrawing(true);
-        
-        // Auto-load into canvas if drawing mode is active
-        if (isDrawingMode && drawingCanvasRef.current?.drawingActions) {
-          drawingCanvasRef.current.drawingActions.load(canvasDataStr);
-          drawingDataLoadedRef.current = true;
-        }
-      } else {
-        setHasSavedDrawing(false);
-      }
-    }
-  }, [locationId, floorNumber, getDrawingForFloor, isDrawingMode]);
-  
-  // Reset loaded flag when floor changes
-  useEffect(() => {
-    drawingDataLoadedRef.current = false;
-  }, [floorNumber]);
-
-  // Real-time subscription for canvas drawings
-  useEffect(() => {
-    if (!validLocationId) return;
-    
-    const channel = supabase
-      .channel('canvas-drawing-changes')
-      .on('postgres_changes', 
-        { 
-          event: 'UPDATE', 
-          schema: 'public', 
-          table: 'canvas_drawings', 
-          filter: `location_id=eq.${validLocationId}` 
-        },
-        (payload) => {
-          if (payload.new.floor_number === floorNumber) {
-            const newData = JSON.stringify(payload.new.canvas_data);
-            setDrawingData(newData);
-            
-            // Auto-load into canvas if in draw mode
-            if (isDrawingMode && drawingCanvasRef.current?.drawingActions) {
-              drawingCanvasRef.current.drawingActions.load(newData);
-            }
-          }
-        }
-      )
-      .subscribe();
-      
-    return () => { 
-      supabase.removeChannel(channel); 
-    };
-  }, [validLocationId, floorNumber, isDrawingMode]);
-
   const handleRepairFiles = async () => {
     setIsRepairing(true);
     try {
+      const { repairFloorPlanFiles } = await import('@/lib/storage-utils');
       await repairFloorPlanFiles(locationId);
       toast({
         title: "Files Repaired",
         description: "Floor plan files have been repaired and linked to the location.",
       });
-      // Refresh the page to see updated data
       window.location.reload();
     } catch (error) {
       console.error('Error repairing files:', error);
@@ -685,100 +420,8 @@ export const InteractiveFloorPlan = ({
     }
   };
 
-  const handleUseAsFloorPlan = () => {
-    setShowUseAsFloorPlanDialog(true);
-  };
-
-  const confirmUseAsFloorPlan = async () => {
-    if (isSaving) {
-      console.log('⏳ Save already in progress, skipping...');
-      return;
-    }
-
-    if (!drawingCanvasRef.current?.drawingActions || !validLocationId) {
-      toast({
-        title: "Error",
-        description: "Cannot convert drawing to floor plan.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setIsSaving(true);
-    
-    try {
-      const pngDataURL = drawingCanvasRef.current.drawingActions.exportToPNG();
-      if (!pngDataURL) {
-        toast({
-          title: "Error",
-          description: "Failed to export drawing. Please try again.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      toast({
-        title: "Converting to floor plan",
-        description: "Please wait...",
-      });
-
-      const result = await saveDrawingAsFloorPlan(validLocationId, floorNumber, pngDataURL);
-      
-      if (result.success) {
-        // Delete the canvas drawing since it's now a permanent floor plan
-        await deleteCanvasDrawing(validLocationId, floorNumber);
-        
-        // Refetch latest data to ensure UI is in sync
-        await refetchDrawings();
-        await fetchDropPoints();
-        
-        // Exit drawing mode and refresh
-        setIsDrawingMode(false);
-        setHasSavedDrawing(false);
-        
-        toast({
-          title: "Floorplan updated",
-          description: "Floor plan saved successfully. You can now add drop points or continue editing.",
-        });
-        
-        // Refresh room views to ensure they're up to date
-        if (validLocationId) {
-          fetchRoomViews();
-        }
-        
-        // Emit events
-        window.dispatchEvent(new CustomEvent('FLOORPLAN_SAVED', { 
-          detail: { locationId: validLocationId, floorNumber, filePath: result.filePath } 
-        }));
-        window.dispatchEvent(new CustomEvent('DROPS_UPDATED', { 
-          detail: { locationId: validLocationId, floorNumber } 
-        }));
-        
-        // Call the callback to refresh the parent component
-        if (onFloorPlanSaved) {
-          onFloorPlanSaved();
-        }
-      } else {
-        throw new Error(result.error || 'Failed to save as floor plan');
-      }
-    } catch (error) {
-      console.error('❌ Error converting to floor plan:', error);
-      
-      toast({
-        title: "Save failed",
-        description: error instanceof Error ? error.message : "Failed to save as floor plan. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSaving(false);
-      setShowUseAsFloorPlanDialog(false);
-    }
-  };
-
   const handleUploadSuccess = (newFileUrl: string) => {
     setUploadedFileUrl(newFileUrl);
-    setIsDrawingMode(true);
-    setActiveTool('pencil');
   };
 
   const getDropPointIcon = (type: string) => {
@@ -802,7 +445,6 @@ export const InteractiveFloorPlan = ({
         return 'bg-green-500 border-green-600';
       case 'tested':
         return 'bg-green-500 border-green-600';
-      // Legacy status support
       case 'installed':
         return 'bg-blue-500 border-blue-600';
       case 'active':
@@ -824,7 +466,6 @@ export const InteractiveFloorPlan = ({
         return 'text-green-600';
       case 'tested':
         return 'text-green-600';
-      // Legacy status support
       case 'installed':
         return 'text-blue-600';
       case 'active':
@@ -857,31 +498,7 @@ export const InteractiveFloorPlan = ({
             <FloorPlanFilterDialog
               filters={filters}
               onFiltersChange={setFilters}
-              isDrawingMode={isDrawingMode}
             />
-            <Button
-              variant={isDrawingMode ? "default" : "outline"}
-              size="sm"
-              onClick={() => {
-                const newDrawingMode = !isDrawingMode;
-                setIsDrawingMode(newDrawingMode);
-                
-                // Auto-activate pencil tool when entering drawing mode
-                if (newDrawingMode) {
-                  setActiveTool('pencil');
-                  toast({
-                    title: "Drawing Mode Active",
-                    description: "Use the toolbar to start drawing on your floor plan",
-                  });
-                } else {
-                  setActiveTool('select');
-                }
-              }}
-              data-draw-mode-button
-            >
-              <Paintbrush className="h-4 w-4 mr-2" />
-              {isDrawingMode ? 'Exit Draw' : 'Draw Mode'}
-            </Button>
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -892,10 +509,8 @@ export const InteractiveFloorPlan = ({
                       onClick={() => {
                         setIsAddingPoint(!isAddingPoint);
                         setIsAddingRoomView(false);
-                        setIsDrawingMode(false);
-                        setActiveTool('select');
                       }}
-                      disabled={isDrawingMode || !validLocationId}
+                      disabled={!validLocationId}
                     >
                       <Plus className="h-4 w-4 mr-2" />
                       Add Drop Point
@@ -919,10 +534,8 @@ export const InteractiveFloorPlan = ({
                       onClick={() => {
                         setIsAddingRoomView(!isAddingRoomView);
                         setIsAddingPoint(false);
-                        setIsDrawingMode(false);
-                        setActiveTool('select');
                       }}
-                      disabled={isDrawingMode || !validLocationId}
+                      disabled={!validLocationId}
                     >
                       <Camera className="h-4 w-4 mr-2" />
                       Add Room View
@@ -947,14 +560,10 @@ export const InteractiveFloorPlan = ({
                       description: "Creating composite image with all annotations...",
                     });
 
-                    // Get canvas drawing as PNG if in drawing mode
-                    const canvasDrawingUrl = drawingCanvasRef.current?.drawingActions?.exportToPNG();
-                    
                     // Create composite image with all layers
                     const { createCompositeFloorPlan } = await import('@/lib/floor-plan-composite');
                     const compositeUrl = await createCompositeFloorPlan({
                       baseImageUrl: actualFileUrl,
-                      canvasDrawingDataUrl: canvasDrawingUrl,
                       dropPoints: floorDropPoints.map(dp => ({
                         x: dp.x_coordinate || 0,
                         y: dp.y_coordinate || 0,
@@ -1048,39 +657,16 @@ export const InteractiveFloorPlan = ({
         )}
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Drawing Toolbar */}
-        {isDrawingMode && (
-          <FloorPlanDrawingToolbar
-            activeTool={activeTool}
-            onToolChange={handleDrawingToolChange}
-            onUndo={() => drawingCanvasRef.current?.drawingActions?.undo()}
-            onRedo={() => drawingCanvasRef.current?.drawingActions?.redo()}
-            onClear={() => drawingCanvasRef.current?.drawingActions?.clear()}
-            onSave={() => drawingCanvasRef.current?.drawingActions?.save()}
-            onLoad={handleDrawingLoad}
-            canUndo={canUndo}
-            canRedo={canRedo}
-            brushColor={brushColor}
-            onBrushColorChange={setBrushColor}
-            brushSize={brushSize}
-            onBrushSizeChange={setBrushSize}
-            onUseAsFloorPlan={validLocationId ? handleUseAsFloorPlan : undefined}
-            hasSavedDrawing={hasSavedDrawing}
-            isSaving={isSaving}
-          />
-        )}
         <div 
           ref={containerRef}
           className={`relative bg-muted rounded-lg overflow-hidden ${
-            isDragging ? 'cursor-grabbing' : 
-            isDrawingMode ? '' : 'cursor-pointer'
+            isDragging ? 'cursor-grabbing' : 'cursor-pointer'
           }`}
           style={{ 
             transform: `scale(${scale})`,
             transformOrigin: 'top left',
             height: 'auto',
             minHeight: '400px',
-            pointerEvents: isDrawingMode ? 'none' : 'auto',
             touchAction: isDragging ? 'none' : 'auto',
           }}
           onClick={handleContainerClick}
@@ -1119,56 +705,18 @@ export const InteractiveFloorPlan = ({
             <div className="w-full h-96 bg-muted/10 flex items-center justify-center border border-dashed border-muted-foreground/20">
               <div className="text-center space-y-4">
                 <div className="text-muted-foreground">
-                  {!isDrawingMode ? (
-                    <>
-                      <FileImage className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                      <p className="text-lg font-medium">No Floor Plan Uploaded</p>
-                      <p className="text-sm mt-2">Click "Draw Mode" button above to start drawing</p>
-                    </>
-                  ) : (
-                    <>
-                      <Paintbrush className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                      <p className="text-lg font-medium">Blank Canvas Ready</p>
-                      <p className="text-sm mt-2">Use the toolbar above to draw your floor plan</p>
-                    </>
-                  )}
+                  <FileImage className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                  <p className="text-lg font-medium">No Floor Plan Uploaded</p>
+                  <p className="text-sm mt-2">Click "Upload Map" to add a floor plan image</p>
                 </div>
               </div>
             </div>
-          )}
-
-          {/* Drawing Canvas Overlay - Edit Mode */}
-          {containerDimensions.width > 0 && isDrawingMode && (
-            <FloorPlanDrawingCanvas
-              key="drawing-canvas-edit"
-              ref={drawingCanvasRef}
-              width={containerDimensions.width * scale}
-              height={containerDimensions.height * scale}
-              activeTool={activeTool}
-              brushColor={brushColor}
-              brushSize={brushSize}
-              onHistoryChange={handleDrawingHistoryChange}
-              onSave={handleDrawingSave}
-              savedData={drawingData}
-              className="pointer-events-auto"
-            />
-          )}
-
-          {/* Drawing Canvas Overlay - View Mode */}
-          {containerDimensions.width > 0 && !isDrawingMode && drawingData && (
-            <FloorPlanDrawingViewer
-              key="drawing-canvas-view"
-              width={containerDimensions.width * scale}
-              height={containerDimensions.height * scale}
-              drawingData={drawingData}
-            />
           )}
 
           {/* Drop Points Overlay - Only show for valid locations */}
           {validLocationId && (
             <TooltipProvider>
               {filteredDropPoints.map((point) => {
-                // Use dragged point coordinates if this point is being dragged
                 const displayPoint = draggedPoint && draggedPoint.id === point.id ? draggedPoint : point;
                 
                 return (
@@ -1181,22 +729,19 @@ export const InteractiveFloorPlan = ({
                                 ? `cursor-grabbing scale-110 ${getDropPointColor(point.status)}` 
                                 : `cursor-grab ${getDropPointColor(point.status)}`
                             }`}
-                           onMouseDown={(e) => !isDrawingMode && handlePointerDown(e, point, 'dropPoint')}
-                           onTouchStart={(e) => !isDrawingMode && handlePointerDown(e, point, 'dropPoint')}
+                           onMouseDown={(e) => handlePointerDown(e, point, 'dropPoint')}
+                           onTouchStart={(e) => handlePointerDown(e, point, 'dropPoint')}
                            onClick={(e) => {
                              e.stopPropagation();
-                             if (!isDragging && !isDrawingMode) {
+                             if (!isDragging) {
                                setSelectedDropPoint(point);
                                setDetailsModalOpen(true);
                              }
                            }}
                            style={{
-                             ...{
-                               left: `${displayPoint.x_coordinate || 50}%`,
-                               top: `${displayPoint.y_coordinate || 50}%`,
-                               zIndex: draggedPoint && draggedPoint.id === point.id ? 50 : 10,
-                             },
-                             pointerEvents: isDrawingMode ? 'none' : 'auto'
+                             left: `${displayPoint.x_coordinate || 50}%`,
+                             top: `${displayPoint.y_coordinate || 50}%`,
+                             zIndex: draggedPoint && draggedPoint.id === point.id ? 50 : 10,
                            }}
                          >
                             <span className="text-[10px]">{getDropPointIcon(point.point_type)}</span>
@@ -1205,7 +750,7 @@ export const InteractiveFloorPlan = ({
                             )}
                          </div>
                           
-                           {/* Persistent Label for Drop Point - Updated with Cable Count */}
+                           {/* Persistent Label for Drop Point */}
                            {filters.showDropPointLabels && (
                             <div
                               className="absolute pointer-events-none select-none"
@@ -1240,7 +785,6 @@ export const InteractiveFloorPlan = ({
 
               {/* Room Views Overlay - Only show for valid locations */}
               {filteredRoomViews.map((roomView) => {
-              // Use dragged room view coordinates if this room view is being dragged
               const displayRoomView = draggedRoomView && draggedRoomView.id === roomView.id ? draggedRoomView : roomView;
               
               return (
@@ -1257,13 +801,12 @@ export const InteractiveFloorPlan = ({
                            left: `${displayRoomView.x_coordinate || 50}%`,
                            top: `${displayRoomView.y_coordinate || 50}%`,
                            zIndex: draggedRoomView && draggedRoomView.id === roomView.id ? 50 : 15,
-                           pointerEvents: isDrawingMode ? 'none' : 'auto'
                          }}
-                         onMouseDown={(e) => !isDrawingMode && handlePointerDown(e, roomView, 'roomView')}
-                         onTouchStart={(e) => !isDrawingMode && handlePointerDown(e, roomView, 'roomView')}
+                         onMouseDown={(e) => handlePointerDown(e, roomView, 'roomView')}
+                         onTouchStart={(e) => handlePointerDown(e, roomView, 'roomView')}
                          onClick={(e) => {
                            e.stopPropagation();
-                           if (!isDragging && !isDrawingMode) {
+                           if (!isDragging) {
                              setSelectedRoomView(roomView);
                              setRoomViewModalOpen(true);
                            }
@@ -1311,8 +854,6 @@ export const InteractiveFloorPlan = ({
             <li>• <strong>Add Drop Point:</strong> Click the button above, then click on the plan</li>
             <li>• <strong>Add Room View:</strong> Click the camera button above, then click on the plan to capture a photo</li>
             <li>• <strong>Move Drop Point:</strong> Click and drag existing points to reposition them</li>
-            <li>• <strong>Drawing Mode:</strong> Use pencil, text, or eraser tools to annotate the floor plan</li>
-            <li>• <strong>Edit Drawings:</strong> Use select tool to click, move, resize or delete drawn elements (Delete/Backspace key)</li>
             <li>• <strong>Zoom:</strong> Use the zoom controls or mouse wheel</li>
             <li>• <strong>View Details:</strong> Click on existing drop points or room view cameras</li>
           </ul>
@@ -1326,7 +867,7 @@ export const InteractiveFloorPlan = ({
           setShowAddModal(open);
           if (!open) {
             setClickCoordinates(null);
-            fetchDropPoints(); // Refresh drop points after adding
+            fetchDropPoints();
           }
         }}
         locationId={locationId}
@@ -1347,7 +888,6 @@ export const InteractiveFloorPlan = ({
         coordinates={clickCoordinates || undefined}
         floor={floorNumber}
         onSuccess={() => {
-          // Refresh room views after successful addition
           fetchRoomViews();
         }}
       />
@@ -1383,28 +923,6 @@ export const InteractiveFloorPlan = ({
           <AlertDialogFooter>
             <AlertDialogCancel onClick={handleCancelMove}>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirmMove}>Confirm</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Use As Floor Plan Confirmation Dialog */}
-      <AlertDialog open={showUseAsFloorPlanDialog} onOpenChange={setShowUseAsFloorPlanDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Use Drawing as Floor Plan?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will convert your drawing into a permanent floor plan image for Floor {floorNumber}.
-              The current floor plan (if any) will be replaced, and your drawing annotations will become
-              part of the background image.
-              <br /><br />
-              <strong>This action cannot be undone.</strong>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmUseAsFloorPlan}>
-              Confirm & Create Floor Plan
-            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
