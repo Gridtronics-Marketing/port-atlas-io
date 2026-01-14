@@ -22,7 +22,8 @@ export const VERSION_HISTORY: VersionInfo[] = [
       "Enhanced floor plan toolbar with destructive delete action and tooltip",
       "Improved text tool workflow in manual draw mode for consistent label placement",
       "Fixed Fabric.js focus issues that prevented text entry on some browsers",
-      "Added FabricText objects instead of IText to avoid hidden textarea complications"
+      "Added FabricText objects instead of IText to avoid hidden textarea complications",
+      "Fixed mobile sidebar navigation scrolling - menu items now scroll properly on mobile devices"
     ]
   },
   {
