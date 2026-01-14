@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Plus, RotateCcw, ZoomIn, ZoomOut, RefreshCw, Camera, FileImage, Upload, PenTool, Edit } from 'lucide-react';
+import { Plus, RotateCcw, ZoomIn, ZoomOut, RefreshCw, Camera, FileImage, Upload, PenTool, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,7 +25,7 @@ import { ManualDrawModeCanvas } from './ManualDrawModeCanvas';
 import { useDropPoints } from '@/hooks/useDropPoints';
 import { useRoomViews } from '@/hooks/useRoomViews';
 import { useFloorPlanDrawing, isDrawnFloorPlan, getDrawingData } from '@/hooks/useFloorPlanDrawing';
-import { getStorageUrl } from '@/lib/storage-utils';
+import { getStorageUrl, removeFloorPlanFromLocation } from '@/lib/storage-utils';
 import { useToast } from '@/hooks/use-toast';
 import { isValidUUID } from '@/lib/uuid-utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -83,6 +83,8 @@ export const InteractiveFloorPlan = ({
     type: 'dropPoint' | 'roomView';
     originalPosition: { x: number; y: number };
   } | null>(null);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   // Floor plan drawing hook
   const { saveDrawing, isSaving: isDrawingSaving } = useFloorPlanDrawing(locationId, floorNumber);
@@ -451,6 +453,42 @@ export const InteractiveFloorPlan = ({
     setUploadedFileUrl(newFileUrl);
   };
 
+  const handleDeleteFloorPlan = async () => {
+    if (!validLocationId) return;
+    
+    setIsDeleting(true);
+    try {
+      await removeFloorPlanFromLocation(locationId, floorNumber, true);
+      
+      // Clear local state
+      setUploadedFileUrl(undefined);
+      setFloorPlanFiles(prev => {
+        if (!prev) return null;
+        const updated = { ...prev };
+        delete updated[floorNumber];
+        return updated;
+      });
+      
+      // Notify parent component
+      onFloorPlanSaved?.();
+      
+      toast({
+        title: "Floor Plan Deleted",
+        description: `Floor plan for Floor ${floorNumber} has been removed.`,
+      });
+    } catch (error) {
+      console.error('Error deleting floor plan:', error);
+      toast({
+        title: "Delete Failed",
+        description: "Failed to delete floor plan. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteConfirmation(false);
+    }
+  };
+
   const getDropPointIcon = (type: string) => {
     const icons = {
       data: '📡',
@@ -657,6 +695,26 @@ export const InteractiveFloorPlan = ({
                 <FileImage className="h-4 w-4 mr-2" />
                 Export PDF
               </Button>
+            )}
+            {actualFileUrl && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowDeleteConfirmation(true)}
+                      disabled={isDeleting}
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    >
+                      <Trash2 className={`h-4 w-4 ${isDeleting ? 'animate-pulse' : ''}`} />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Delete Floor Plan</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
             {!actualFileUrl && filePath && (
               <Button
@@ -972,7 +1030,29 @@ export const InteractiveFloorPlan = ({
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Upload Floor Plan Dialog */}
+      {/* Delete Floor Plan Confirmation Dialog */}
+      <AlertDialog open={showDeleteConfirmation} onOpenChange={setShowDeleteConfirmation}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Floor Plan</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete the floor plan for Floor {floorNumber}? 
+              This will remove the file from storage and cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteFloorPlan}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <FloorPlanUploadDialog
         isOpen={showUploadDialog}
         onClose={() => setShowUploadDialog(false)}
