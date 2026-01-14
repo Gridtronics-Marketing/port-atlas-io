@@ -1,4 +1,4 @@
-export const APP_VERSION = "1.2.3";
+export const APP_VERSION = "1.3.0";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,24 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "1.3.0",
+    date: "2026-01-14",
+    changes: [
+      "Major rebranding from Port Atlas to Trade Atlas with new logo and visual identity",
+      "Updated login page with Trade Atlas branding and new background imagery",
+      "New Client Portal system for external client access to their locations and service requests",
+      "Client portal users can view floor plans, drop points, and submit service requests",
+      "Added dialog-based label editing for floor plan drawings - replaces unreliable inline editing",
+      "Labels are now entered via a dedicated prompt dialog for reliable text input",
+      "Double-click existing labels opens edit dialog with pre-filled text",
+      "Added Delete Floor Plan button with confirmation dialog to remove floor plans from storage",
+      "Enhanced floor plan toolbar with destructive delete action and tooltip",
+      "Improved text tool workflow in manual draw mode for consistent label placement",
+      "Fixed Fabric.js focus issues that prevented text entry on some browsers",
+      "Added FabricText objects instead of IText to avoid hidden textarea complications"
+    ]
+  },
   {
     version: "1.2.3",
     date: "2025-12-16",
