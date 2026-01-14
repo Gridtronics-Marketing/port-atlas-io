@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { isValidUUID } from '@/lib/uuid-utils';
+import { useOrganizationData } from '@/hooks/useOrganizationData';
 
 const FETCH_TIMEOUT_MS = 15000;
 const MAX_RETRIES = 2;
@@ -48,6 +49,7 @@ export const useDropPoints = (locationId?: string) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const { organizationId } = useOrganizationData();
 
   // Timeout wrapper for fetch operations
   const withTimeout = useCallback(<T,>(promise: Promise<T>, timeoutMs: number): Promise<T> => {
@@ -103,6 +105,9 @@ export const useDropPoints = (locationId?: string) => {
 
         if (locationId) {
           query = query.eq('location_id', locationId);
+        } else if (organizationId) {
+          // Filter by organization when no specific location is provided
+          query = query.eq('organization_id', organizationId);
         }
 
         return query.order('label', { ascending: true });
@@ -168,7 +173,7 @@ export const useDropPoints = (locationId?: string) => {
     } finally {
       setLoading(false);
     }
-  }, [locationId, toast, withTimeout, retryFetch]);
+  }, [locationId, organizationId, toast, withTimeout, retryFetch]);
 
   const addDropPoint = async (dropPointData: Omit<DropPoint, 'id' | 'created_at' | 'updated_at' | 'installer' | 'tester'>) => {
     try {
@@ -263,7 +268,7 @@ export const useDropPoints = (locationId?: string) => {
 
   useEffect(() => {
     fetchDropPoints();
-  }, [locationId]);
+  }, [locationId, organizationId]);
 
   return {
     dropPoints,
