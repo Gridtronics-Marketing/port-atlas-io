@@ -50,7 +50,7 @@ import { CustomerNotesPanel } from "@/components/CustomerNotesPanel";
 import { FloorPlanRepairTool } from "@/components/FloorPlanRepairTool";
 import { FloorPlanFileManager } from "@/components/FloorPlanFileManager";
 import { InteractiveFloorPlan } from "@/components/InteractiveFloorPlan";
-import { getFloorPlanUrls, getStorageUrl } from "@/lib/storage-utils";
+import { getFloorPlanUrls, getStorageUrl, getFloorPlanImagePath } from "@/lib/storage-utils";
 import { useLocationTeam } from "@/hooks/useLocationTeam";
 import { useLocationNotes } from "@/hooks/useLocationNotes";
 import {
@@ -492,8 +492,8 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
                     locationId={location.id}
                     floorNumber={selectedFloor}
                     fileUrl={currentFloorPlanUrl}
-                    filePath={location.floor_plan_files?.[selectedFloor] || ''}
-                    fileName={location.floor_plan_files?.[selectedFloor]?.split('/').pop() || ''}
+                    filePath={getFloorPlanImagePath(location.floor_plan_files, selectedFloor) || ''}
+                    fileName={getFloorPlanImagePath(location.floor_plan_files, selectedFloor)?.split('/').pop() || ''}
                     className="min-h-[500px]"
                     onFloorPlanSaved={handleFloorPlanSaved}
                   />
