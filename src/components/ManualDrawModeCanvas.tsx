@@ -733,14 +733,19 @@ export const ManualDrawModeCanvas = ({
             ref={containerRef} 
             className="flex-1 overflow-auto bg-slate-900 flex items-center justify-center"
           >
-            {isLoading ? (
-              <div className="flex items-center gap-2 text-white">
-                <Loader2 className="h-6 w-6 animate-spin" />
-                <span>Initializing canvas...</span>
-              </div>
-            ) : (
-              <canvas ref={canvasRef} />
-            )}
+        {/* Always render canvas, but hide while loading */}
+        <canvas 
+          ref={canvasRef} 
+          className={isLoading ? "opacity-0 absolute" : ""} 
+        />
+        
+        {/* Loading overlay */}
+        {isLoading && (
+          <div className="flex items-center gap-2 text-white absolute">
+            <Loader2 className="h-6 w-6 animate-spin" />
+            <span>Initializing canvas...</span>
+          </div>
+        )}
           </div>
 
           {/* Status Bar */}
