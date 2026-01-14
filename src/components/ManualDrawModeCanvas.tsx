@@ -261,8 +261,24 @@ export const ManualDrawModeCanvas = ({
       setTempRect(null);
     }
 
+    // Exit any active text editing before switching tools
+    fabricCanvas.getObjects().forEach(obj => {
+      if (obj instanceof IText && obj.isEditing) {
+        obj.exitEditing();
+      }
+    });
+
     fabricCanvas.isDrawingMode = activeTool === "pencil";
     fabricCanvas.selection = activeTool === "select";
+
+    // Ensure IText objects stay editable when in select mode
+    if (activeTool === "select") {
+      fabricCanvas.getObjects().forEach(obj => {
+        if (obj instanceof IText) {
+          obj.set({ selectable: true, editable: true, evented: true });
+        }
+      });
+    }
     
     // Configure cursor
     switch (activeTool) {
@@ -461,6 +477,15 @@ export const ManualDrawModeCanvas = ({
     };
 
     const handleDoubleClick = (e: any) => {
+      // Handle text editing on double-click
+      if (e.target && e.target instanceof IText) {
+        e.target.set({ editable: true, selectable: true, evented: true });
+        e.target.enterEditing();
+        e.target.selectAll();
+        fabricCanvas.renderAll();
+        return;
+      }
+
       if (activeTool === "polygon" && polygonPoints.length >= 3) {
         // Remove temporary markers
         const markers = fabricCanvas.getObjects().filter((obj: any) => obj.isPolygonMarker);
