@@ -247,7 +247,7 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onDe
                     </div>
                   </div>
 
-                  <div className="flex gap-2 pt-2">
+                  <div className="flex gap-2 pt-2 flex-wrap">
                     <Button
                       variant="outline"
                       size="sm"
@@ -258,18 +258,29 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onDe
                       Open Portal
                     </Button>
                     {canManagePortal && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          onClose();
-                          navigate('/admin/client-portals');
-                        }}
-                        className="flex items-center gap-2"
-                      >
-                        <Settings className="h-4 w-4" />
-                        Manage Portal
-                      </Button>
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setIsPortalModalOpen(true)}
+                          className="flex items-center gap-2"
+                        >
+                          <Plus className="h-4 w-4" />
+                          Invite User
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            onClose();
+                            navigate('/admin/client-portals');
+                          }}
+                          className="flex items-center gap-2"
+                        >
+                          <Settings className="h-4 w-4" />
+                          Manage Portal
+                        </Button>
+                      </>
                     )}
                   </div>
                 </div>
