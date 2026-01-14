@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Table, 
   TableBody, 
@@ -40,10 +41,12 @@ import {
   Loader2,
   Copy,
   RefreshCw,
-  Plus
+  Mail
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ClientPortalUserManager } from '@/components/ClientPortalUserManager';
+import { PendingInvitationsManager } from '@/components/PendingInvitationsManager';
+import { useClientInvitations } from '@/hooks/useClientInvitations';
 
 interface ClientPortal {
   id: string;
@@ -65,6 +68,9 @@ const ClientPortalManagement = () => {
   const [showUserManager, setShowUserManager] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [activeTab, setActiveTab] = useState('portals');
+  
+  const { invitations, loading: invitationsLoading, pendingCount, fetchInvitations } = useClientInvitations();
 
   const fetchPortals = async () => {
     setLoading(true);
@@ -198,6 +204,11 @@ const ClientPortalManagement = () => {
     );
   }
 
+  const handleRefresh = () => {
+    fetchPortals();
+    fetchInvitations();
+  };
+
   return (
     <main className="container mx-auto px-4 py-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -209,128 +220,151 @@ const ClientPortalManagement = () => {
             Manage all client portal organizations and their users
           </p>
         </div>
-        <Button onClick={fetchPortals} variant="outline" size="sm">
+        <Button onClick={handleRefresh} variant="outline" size="sm">
           <RefreshCw className="h-4 w-4 mr-2" />
           Refresh
         </Button>
       </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Building2 className="h-5 w-5" />
-                All Client Portals
-              </CardTitle>
-              <CardDescription>
-                {portals.length} portal{portals.length !== 1 ? 's' : ''} configured
-              </CardDescription>
-            </div>
-            <div className="relative w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search portals..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          ) : filteredPortals.length === 0 ? (
-            <div className="text-center py-12">
-              <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2">No Client Portals</h3>
-              <p className="text-muted-foreground">
-                {searchQuery ? 'No portals match your search.' : 'Create a client portal from the Clients page.'}
-              </p>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Portal Name</TableHead>
-                  <TableHead>Client</TableHead>
-                  <TableHead>URL Slug</TableHead>
-                  <TableHead>Users</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead className="w-[50px]"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredPortals.map((portal) => (
-                  <TableRow key={portal.id}>
-                    <TableCell className="font-medium">{portal.name}</TableCell>
-                    <TableCell>{portal.client_name || '—'}</TableCell>
-                    <TableCell>
-                      <code className="bg-muted px-2 py-1 rounded text-sm">/p/{portal.slug}</code>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="gap-1">
-                        <Users className="h-3 w-3" />
-                        {portal.user_count}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={portal.status === 'active' ? 'default' : 'secondary'}>
-                        {portal.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {new Date(portal.created_at).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleCopyUrl(portal.slug)}>
-                            <Copy className="h-4 w-4 mr-2" />
-                            Copy Portal URL
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => window.open(`/p/${portal.slug}`, '_blank')}>
-                            <ExternalLink className="h-4 w-4 mr-2" />
-                            Open Portal
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => {
-                            setSelectedPortal(portal);
-                            setShowUserManager(true);
-                          }}>
-                            <Users className="h-4 w-4 mr-2" />
-                            Manage Users
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            className="text-destructive"
-                            onClick={() => {
-                              setSelectedPortal(portal);
-                              setShowDeleteDialog(true);
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Delete Portal
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="portals" className="flex items-center gap-2">
+            <Building2 className="h-4 w-4" />
+            Portals
+            <Badge variant="secondary" className="ml-1">{portals.length}</Badge>
+          </TabsTrigger>
+          <TabsTrigger value="invitations" className="flex items-center gap-2">
+            <Mail className="h-4 w-4" />
+            Invitations
+            {pendingCount > 0 && (
+              <Badge variant="default" className="ml-1 bg-amber-500 hover:bg-amber-600">{pendingCount}</Badge>
+            )}
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="portals">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Building2 className="h-5 w-5" />
+                    All Client Portals
+                  </CardTitle>
+                  <CardDescription>
+                    {portals.length} portal{portals.length !== 1 ? 's' : ''} configured
+                  </CardDescription>
+                </div>
+                <div className="relative w-64">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search portals..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : filteredPortals.length === 0 ? (
+                <div className="text-center py-12">
+                  <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium mb-2">No Client Portals</h3>
+                  <p className="text-muted-foreground">
+                    {searchQuery ? 'No portals match your search.' : 'Create a client portal from the Clients page.'}
+                  </p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Portal Name</TableHead>
+                      <TableHead>Client</TableHead>
+                      <TableHead>URL Slug</TableHead>
+                      <TableHead>Users</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Created</TableHead>
+                      <TableHead className="w-[50px]"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredPortals.map((portal) => (
+                      <TableRow key={portal.id}>
+                        <TableCell className="font-medium">{portal.name}</TableCell>
+                        <TableCell>{portal.client_name || '—'}</TableCell>
+                        <TableCell>
+                          <code className="bg-muted px-2 py-1 rounded text-sm">/p/{portal.slug}</code>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="gap-1">
+                            <Users className="h-3 w-3" />
+                            {portal.user_count}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={portal.status === 'active' ? 'default' : 'secondary'}>
+                            {portal.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {new Date(portal.created_at).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleCopyUrl(portal.slug)}>
+                                <Copy className="h-4 w-4 mr-2" />
+                                Copy Portal URL
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => window.open(`/p/${portal.slug}`, '_blank')}>
+                                <ExternalLink className="h-4 w-4 mr-2" />
+                                Open Portal
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => {
+                                setSelectedPortal(portal);
+                                setShowUserManager(true);
+                              }}>
+                                <Users className="h-4 w-4 mr-2" />
+                                Manage Users
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                className="text-destructive"
+                                onClick={() => {
+                                  setSelectedPortal(portal);
+                                  setShowDeleteDialog(true);
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete Portal
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="invitations">
+          <PendingInvitationsManager />
+        </TabsContent>
+      </Tabs>
 
       {/* User Manager Modal */}
       {selectedPortal && (
