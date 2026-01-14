@@ -263,8 +263,8 @@ export const ManualDrawModeCanvas = ({
 
     // Exit any active text editing before switching tools
     fabricCanvas.getObjects().forEach(obj => {
-      if (obj instanceof IText && obj.isEditing) {
-        obj.exitEditing();
+      if (obj.type === 'i-text' && (obj as any).isEditing) {
+        (obj as any).exitEditing();
       }
     });
 
@@ -274,7 +274,7 @@ export const ManualDrawModeCanvas = ({
     // Ensure IText objects stay editable when in select mode
     if (activeTool === "select") {
       fabricCanvas.getObjects().forEach(obj => {
-        if (obj instanceof IText) {
+        if (obj.type === 'i-text') {
           obj.set({ selectable: true, editable: true, evented: true });
         }
       });
@@ -477,9 +477,18 @@ export const ManualDrawModeCanvas = ({
     };
 
     const handleDoubleClick = (e: any) => {
-      // Handle text editing on double-click
-      if (e.target && e.target instanceof IText) {
+      // Handle text editing on double-click - use type property for reliable check
+      if (e.target && e.target.type === 'i-text') {
+        // Ensure canvas is in selection mode
+        fabricCanvas.selection = true;
+        
+        // Set properties for editing
         e.target.set({ editable: true, selectable: true, evented: true });
+        
+        // Make this the active object first
+        fabricCanvas.setActiveObject(e.target);
+        
+        // Enter editing mode
         e.target.enterEditing();
         e.target.selectAll();
         fabricCanvas.renderAll();
