@@ -2,16 +2,15 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { 
   Canvas as FabricCanvas, 
   PencilBrush, 
-  IText, 
+  FabricText, 
   Line, 
   Rect,
   Polygon,
-  FabricText,
   Point,
-  util
 } from "fabric";
 import { ManualDrawModeToolbar, type DrawingTool, type TextPreset } from "./ManualDrawModeToolbar";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { LabelPromptDialog } from "@/components/LabelPromptDialog";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import {
@@ -76,6 +75,12 @@ export const ManualDrawModeCanvas = ({
   const [rectStartPoint, setRectStartPoint] = useState<{ x: number; y: number } | null>(null);
   const [tempRect, setTempRect] = useState<Rect | null>(null);
   const [polygonPoints, setPolygonPoints] = useState<{ x: number; y: number }[]>([]);
+
+  // Label dialog state
+  const [isLabelDialogOpen, setIsLabelDialogOpen] = useState(false);
+  const [pendingLabelPosition, setPendingLabelPosition] = useState<{ x: number; y: number } | null>(null);
+  const [labelDefaultText, setLabelDefaultText] = useState("");
+  const [editingTextObject, setEditingTextObject] = useState<FabricText | null>(null);
 
   const historyRef = useRef<string[]>([]);
   const historyStepRef = useRef(0);
@@ -261,21 +266,16 @@ export const ManualDrawModeCanvas = ({
       setTempRect(null);
     }
 
-    // Exit any active text editing before switching tools
-    fabricCanvas.getObjects().forEach(obj => {
-      if (obj.type === 'i-text' && (obj as any).isEditing) {
-        (obj as any).exitEditing();
-      }
-    });
+    // No need to exit text editing since we use non-editable FabricText now
 
     fabricCanvas.isDrawingMode = activeTool === "pencil";
     fabricCanvas.selection = activeTool === "select";
 
-    // Ensure IText objects stay editable when in select mode
+    // Ensure text objects stay selectable in select mode
     if (activeTool === "select") {
       fabricCanvas.getObjects().forEach(obj => {
-        if (obj.type === 'i-text') {
-          obj.set({ selectable: true, editable: true, evented: true });
+        if (obj.type === 'text') {
+          obj.set({ selectable: true, evented: true });
         }
       });
     }
@@ -394,7 +394,7 @@ export const ManualDrawModeCanvas = ({
           break;
 
         case "text":
-          addText(pointer.x, pointer.y);
+          openLabelDialog(pointer.x, pointer.y);
           break;
 
         case "measurement":
@@ -477,30 +477,11 @@ export const ManualDrawModeCanvas = ({
     };
 
     const handleDoubleClick = (e: any) => {
-      // Handle text editing on double-click - use type property for reliable check
-      if (e.target && e.target.type === 'i-text') {
-        // Ensure canvas is in selection mode
-        fabricCanvas.selection = true;
-        
-        // Set properties for editing
-        e.target.set({ editable: true, selectable: true, evented: true });
-        
-        // Make this the active object first
-        fabricCanvas.setActiveObject(e.target);
-        
-        // Enter editing mode
-        e.target.enterEditing();
-        e.target.selectAll();
-        
-        // Explicitly focus the hidden textarea after a small delay
-        // to ensure it happens after any dialog focus trap attempts
-        setTimeout(() => {
-          if (e.target.hiddenTextarea) {
-            e.target.hiddenTextarea.focus();
-          }
-        }, 50);
-        
-        fabricCanvas.renderAll();
+      // Handle text editing on double-click - open dialog to edit
+      if (e.target && e.target.type === 'text') {
+        setEditingTextObject(e.target as FabricText);
+        setLabelDefaultText((e.target as FabricText).text || '');
+        setIsLabelDialogOpen(true);
         return;
       }
 
@@ -536,10 +517,9 @@ export const ManualDrawModeCanvas = ({
     };
   }, [fabricCanvas, activeTool, isDrawingLine, lineStartPoint, tempLine, isDrawingRect, rectStartPoint, tempRect, polygonPoints, activeColor, lineWidth]);
 
-  const addText = (x: number, y: number) => {
-    if (!fabricCanvas) return;
-
-    let defaultText = "DOUBLE CLICK TO EDIT";
+  // Open label dialog for placing new text
+  const openLabelDialog = (x: number, y: number) => {
+    let defaultText = "";
     switch (textPreset) {
       case "room_name":
         defaultText = "ROOM NAME";
@@ -553,32 +533,56 @@ export const ManualDrawModeCanvas = ({
       case "building_name":
         defaultText = locationName?.toUpperCase() || "BUILDING NAME";
         break;
+      default:
+        defaultText = "LABEL";
+    }
+    
+    setPendingLabelPosition({ x, y });
+    setLabelDefaultText(defaultText);
+    setEditingTextObject(null);
+    setIsLabelDialogOpen(true);
+  };
+
+  // Handle saving label from dialog
+  const handleLabelSave = (labelText: string) => {
+    if (!fabricCanvas) return;
+
+    if (editingTextObject) {
+      // Editing existing text
+      editingTextObject.set({ text: labelText });
+      fabricCanvas.renderAll();
+      saveHistory(fabricCanvas);
+      toast.success("Label updated");
+    } else if (pendingLabelPosition) {
+      // Creating new text
+      const text = new FabricText(labelText, {
+        left: pendingLabelPosition.x,
+        top: pendingLabelPosition.y,
+        fill: activeColor,
+        fontSize: 16,
+        fontFamily: "Arial",
+        fontWeight: "bold",
+        selectable: true,
+        evented: true,
+      });
+
+      fabricCanvas.add(text);
+      fabricCanvas.setActiveObject(text);
+      fabricCanvas.renderAll();
+      saveHistory(fabricCanvas);
+      toast.success("Label placed");
     }
 
-    const text = new IText(defaultText, {
-      left: x,
-      top: y,
-      fill: activeColor,
-      fontSize: 16,
-      fontFamily: "Arial",
-      fontWeight: "bold",
-      editable: true,
-    });
+    // Reset state
+    setPendingLabelPosition(null);
+    setEditingTextObject(null);
+    setIsLabelDialogOpen(false);
+  };
 
-    fabricCanvas.add(text);
-    fabricCanvas.setActiveObject(text);
-    
-    setTimeout(() => {
-      text.enterEditing();
-      text.selectAll();
-      // Explicitly focus the hidden textarea to capture keyboard input
-      if ((text as any).hiddenTextarea) {
-        (text as any).hiddenTextarea.focus();
-      }
-    }, 50);
-
-    fabricCanvas.renderAll();
-    saveHistory(fabricCanvas);
+  const handleLabelDialogClose = () => {
+    setPendingLabelPosition(null);
+    setEditingTextObject(null);
+    setIsLabelDialogOpen(false);
   };
 
   const saveHistory = useCallback((canvas: FabricCanvas) => {
@@ -846,6 +850,15 @@ export const ManualDrawModeCanvas = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Label Prompt Dialog */}
+      <LabelPromptDialog
+        isOpen={isLabelDialogOpen}
+        onClose={handleLabelDialogClose}
+        onSave={handleLabelSave}
+        initialText={labelDefaultText}
+        isEditing={!!editingTextObject}
+      />
     </>
   );
 };
