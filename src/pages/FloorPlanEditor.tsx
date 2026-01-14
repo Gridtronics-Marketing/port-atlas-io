@@ -1,40 +1,17 @@
-import { useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { InteractiveFloorPlan } from "@/components/InteractiveFloorPlan";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
-import { useToast } from "@/hooks/use-toast";
 
 export default function FloorPlanEditorPage() {
   const [searchParams] = useSearchParams();
-  const { toast } = useToast();
-  const hasAutoActivated = useRef(false);
   
   const mode = searchParams.get('mode') || 'draw';
   const floor = searchParams.get('floor') || '1';
   const locationId = searchParams.get('locationId') || 'temp-editor-location';
   const riserName = searchParams.get('name') || 'Riser Diagram';
-  
-  // Auto-activate drawing mode on mount
-  useEffect(() => {
-    if (!hasAutoActivated.current) {
-      hasAutoActivated.current = true;
-      
-      // Give the component time to mount, then auto-activate drawing mode
-      setTimeout(() => {
-        const drawButton = document.querySelector('[data-draw-mode-button]') as HTMLButtonElement;
-        if (drawButton) {
-          drawButton.click();
-          toast({
-            title: "Drawing Mode Active",
-            description: "Use the toolbar to start drawing on your floor plan",
-          });
-        }
-      }, 500);
-    }
-  }, [toast]);
 
   if (!mode || !floor) {
     return (
@@ -64,7 +41,7 @@ export default function FloorPlanEditorPage() {
             {mode === 'riser' ? riserName : `Floor ${floor} Editor`}
           </h1>
           <p className="text-sm text-muted-foreground">
-            Draw and annotate your floor plan with the advanced drawing tools
+            View and manage your floor plan with drop points and room views
           </p>
         </div>
         <InteractiveFloorPlan
