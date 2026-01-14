@@ -176,6 +176,68 @@ export const getFileInfo = async (bucket: string, path: string) => {
 /**
  * Repairs orphaned floor plan files by scanning storage and updating database
  */
+/**
+ * Removes a floor plan from a location's floor_plan_files and optionally deletes the file from storage
+ */
+export const removeFloorPlanFromLocation = async (
+  locationId: string,
+  floor: number,
+  deleteFromStorage: boolean = true
+): Promise<void> => {
+  try {
+    // First get the current floor_plan_files
+    const { data: location, error: fetchError } = await supabase
+      .from('locations')
+      .select('floor_plan_files')
+      .eq('id', locationId)
+      .single();
+
+    if (fetchError) {
+      console.error('Error fetching location:', fetchError);
+      throw fetchError;
+    }
+
+    const currentFiles = (location?.floor_plan_files as Record<string, any>) || {};
+    const floorConfig = currentFiles[floor];
+
+    // Get the file path to delete
+    let filePath: string | null = null;
+    if (typeof floorConfig === 'string') {
+      filePath = floorConfig;
+    } else if (floorConfig?.image_path) {
+      filePath = floorConfig.image_path;
+    }
+
+    // Delete from storage if requested and path exists
+    if (deleteFromStorage && filePath) {
+      await deleteFloorPlanFile(filePath);
+    }
+
+    // Remove the floor entry from floor_plan_files
+    const updatedFiles = { ...currentFiles };
+    delete updatedFiles[floor];
+
+    // Update the location record
+    const { error: updateError } = await supabase
+      .from('locations')
+      .update({ floor_plan_files: updatedFiles })
+      .eq('id', locationId);
+
+    if (updateError) {
+      console.error('Error updating location:', updateError);
+      throw updateError;
+    }
+
+    console.log('Successfully removed floor plan for floor', floor, 'from location', locationId);
+  } catch (error) {
+    console.error('Error in removeFloorPlanFromLocation:', error);
+    throw error;
+  }
+};
+
+/**
+ * Repairs orphaned floor plan files by scanning storage and updating database
+ */
 export const repairFloorPlanFiles = async (locationId: string): Promise<{ 
   repairedFiles: Record<number, string>, 
   inaccessibleFiles: string[], 
