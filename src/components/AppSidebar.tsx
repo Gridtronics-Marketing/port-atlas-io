@@ -77,7 +77,7 @@ const navigationItems = [
 ];
 
 export function AppSidebar() {
-  const { state, setOpen } = useSidebar();
+  const { state, setOpen, setOpenMobile } = useSidebar();
   const location = useLocation();
   const { user, signOut } = useAuth();
   const { hasRole } = useUserRoles();
@@ -91,7 +91,7 @@ export function AppSidebar() {
   // Auto-close sidebar on navigation (mobile only)
   const handleNavClick = () => {
     if (isMobile) {
-      setOpen(false);
+      setOpenMobile(false);
     }
   };
   
@@ -132,8 +132,8 @@ export function AppSidebar() {
         </div>
       </SidebarHeader>
 
-      <SidebarContent>
-        <ScrollArea className="flex-1">
+      <SidebarContent className="overflow-hidden">
+        <ScrollArea className="flex-1 min-h-0 h-full">
           <SidebarGroup>
             <SidebarGroupLabel className={isCollapsed ? "sr-only" : ""}>
               Navigation
