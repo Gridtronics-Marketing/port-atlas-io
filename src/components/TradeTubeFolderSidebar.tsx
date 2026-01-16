@@ -359,17 +359,19 @@ export function TradeTubeFolderSidebar({
                       Top-level folder
                     </span>
                   </SelectItem>
-                  {topLevelFolders.map((folder) => {
-                    const Icon = getIcon(folder.icon);
-                    return (
-                      <SelectItem key={folder.id} value={folder.id}>
-                        <span className="flex items-center gap-2">
-                          <Icon className="h-4 w-4" />
-                          Under: {folder.name}
-                        </span>
-                      </SelectItem>
-                    );
-                  })}
+                  {topLevelFolders
+                    .filter(folder => folder.id && folder.id.trim() !== '')
+                    .map((folder) => {
+                      const Icon = getIcon(folder.icon);
+                      return (
+                        <SelectItem key={folder.id} value={folder.id}>
+                          <span className="flex items-center gap-2">
+                            <Icon className="h-4 w-4" />
+                            Under: {folder.name}
+                          </span>
+                        </SelectItem>
+                      );
+                    })}
                 </SelectContent>
               </Select>
             </div>
@@ -432,7 +434,7 @@ export function TradeTubeFolderSidebar({
                     </span>
                   </SelectItem>
                   {topLevelFolders
-                    .filter(f => f.id !== editingFolder?.id) // Can't nest under itself
+                    .filter(f => f.id && f.id.trim() !== '' && f.id !== editingFolder?.id) // Can't nest under itself
                     .map((folder) => {
                       const Icon = getIcon(folder.icon);
                       return (
