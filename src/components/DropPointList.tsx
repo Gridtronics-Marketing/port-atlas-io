@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SwipeableRow } from "@/components/ui/swipeable-row";
 import {
   Select,
   SelectContent,
@@ -29,6 +30,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useDropPoints } from "@/hooks/useDropPoints";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface DropPointListProps {
   locationId: string;
@@ -41,6 +43,7 @@ const DropPointListContent = ({ locationId }: DropPointListProps) => {
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [selectedDropPoint, setSelectedDropPoint] = useState<any>(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   // Emit telemetry when tab opens
   useEffect(() => {
@@ -220,73 +223,88 @@ const DropPointListContent = ({ locationId }: DropPointListProps) => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredDropPoints.map((point) => (
-                  <TableRow 
-                    key={point.id}
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => {
-                      setSelectedDropPoint(point);
-                      setDetailsModalOpen(true);
-                    }}
-                  >
-                    <TableCell className="font-medium">{point.label}</TableCell>
-                    <TableCell>{point.room || "—"}</TableCell>
-                    <TableCell>{point.floor || "—"}</TableCell>
-                     <TableCell>
-                       <div className="flex items-center gap-2">
-                         {(() => {
-                           const IconComponent = getTypeIcon(point.point_type);
-                           return <IconComponent className="h-4 w-4" />;
-                         })()}
-                         <span className="capitalize">{point.point_type}</span>
-                       </div>
-                     </TableCell>
-                     <TableCell>
-                       <Badge className={getStatusColor(point.status)}>
-                         {point.status === 'tested' && <span className="mr-1">✓</span>}
-                         {point.status}
-                       </Badge>
-                     </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {point.cable_id || "—"}
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {point.patch_panel_port || "—"}
-                    </TableCell>
-                    <TableCell onClick={(e) => e.stopPropagation()}>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="bg-popover border">
-                          <DropdownMenuItem onClick={() => {
-                            setSelectedDropPoint(point);
-                            setDetailsModalOpen(true);
-                          }}>
-                            <Eye className="mr-2 h-4 w-4" />
-                            View Details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => {
-                            setSelectedDropPoint(point);
-                            setDetailsModalOpen(true);
-                          }}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit Drop Point
-                          </DropdownMenuItem>
-                          <DropdownMenuItem 
-                            className="text-destructive"
-                            onClick={() => deleteDropPoint(point.id)}
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete Drop Point
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {filteredDropPoints.map((point) => {
+                  const rowContent = (
+                    <TableRow 
+                      key={point.id}
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => {
+                        setSelectedDropPoint(point);
+                        setDetailsModalOpen(true);
+                      }}
+                    >
+                      <TableCell className="font-medium">{point.label}</TableCell>
+                      <TableCell>{point.room || "—"}</TableCell>
+                      <TableCell>{point.floor || "—"}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {(() => {
+                            const IconComponent = getTypeIcon(point.point_type);
+                            return <IconComponent className="h-4 w-4" />;
+                          })()}
+                          <span className="capitalize">{point.point_type}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={getStatusColor(point.status)}>
+                          {point.status === 'tested' && <span className="mr-1">✓</span>}
+                          {point.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {point.cable_id || "—"}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {point.patch_panel_port || "—"}
+                      </TableCell>
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="bg-popover border">
+                            <DropdownMenuItem onClick={() => {
+                              setSelectedDropPoint(point);
+                              setDetailsModalOpen(true);
+                            }}>
+                              <Eye className="mr-2 h-4 w-4" />
+                              View Details
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => {
+                              setSelectedDropPoint(point);
+                              setDetailsModalOpen(true);
+                            }}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Edit Drop Point
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              className="text-destructive"
+                              onClick={() => deleteDropPoint(point.id)}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete Drop Point
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  );
+
+                  if (isMobile) {
+                    return (
+                      <SwipeableRow 
+                        key={point.id} 
+                        onDelete={() => deleteDropPoint(point.id)}
+                      >
+                        {rowContent}
+                      </SwipeableRow>
+                    );
+                  }
+
+                  return rowContent;
+                })}
               </TableBody>
             </Table>
           </div>
