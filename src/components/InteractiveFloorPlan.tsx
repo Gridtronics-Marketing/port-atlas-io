@@ -72,6 +72,7 @@ export const InteractiveFloorPlan = ({
     showRoomViewDots: true,
     dropPointTypes: ['data', 'wifi', 'camera', 'mdf_idf', 'access_control', 'av', 'other'],
     dropPointStatuses: ['planned', 'roughed_in', 'finished', 'tested'],
+    markerScale: 1,
   });
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [showDrawModeModal, setShowDrawModeModal] = useState(false);
@@ -827,7 +828,7 @@ export const InteractiveFloorPlan = ({
                     <TooltipTrigger asChild>
                        <>
                           <div
-                            className={`absolute transform -translate-x-1/2 -translate-y-1/2 w-6 h-6 rounded-full border-2 flex items-center justify-center text-white font-bold hover:scale-110 transition-transform shadow-lg ${
+                            className={`absolute transform -translate-x-1/2 -translate-y-1/2 rounded-full border-2 flex items-center justify-center text-white font-bold hover:scale-110 transition-transform shadow-lg ${
                               draggedPoint && draggedPoint.id === point.id 
                                 ? `cursor-grabbing scale-110 ${getDropPointColor(point.status)}` 
                                 : `cursor-grab ${getDropPointColor(point.status)}`
@@ -845,11 +846,13 @@ export const InteractiveFloorPlan = ({
                              left: `${displayPoint.x_coordinate || 50}%`,
                              top: `${displayPoint.y_coordinate || 50}%`,
                              zIndex: draggedPoint && draggedPoint.id === point.id ? 50 : 10,
+                             width: `${24 * filters.markerScale}px`,
+                             height: `${24 * filters.markerScale}px`,
                            }}
                          >
-                            <span className="text-[10px]">{getDropPointIcon(point.point_type)}</span>
+                            <span style={{ fontSize: `${10 * filters.markerScale}px` }}>{getDropPointIcon(point.point_type)}</span>
                             {point.status === 'tested' && (
-                              <div className="absolute inset-0 flex items-center justify-center text-white text-[8px] font-bold">✓</div>
+                              <div className="absolute inset-0 flex items-center justify-center text-white font-bold" style={{ fontSize: `${8 * filters.markerScale}px` }}>✓</div>
                             )}
                          </div>
                           
@@ -860,12 +863,15 @@ export const InteractiveFloorPlan = ({
                               style={{
                                 left: `${displayPoint.x_coordinate || 50}%`,
                                 top: `${displayPoint.y_coordinate || 50}%`,
-                                transform: 'translate(20px, -50%)',
+                                transform: `translate(${20 * filters.markerScale}px, -50%)`,
                                 zIndex: 5,
                               }}
                             >
-                            <div className="bg-black/80 backdrop-blur-sm text-white px-1.5 py-0.5 rounded-md text-[10px] whitespace-nowrap shadow-md border border-white/20">
-                                <div className="font-medium text-blue-300 text-[10px]">
+                            <div 
+                              className="bg-black/80 backdrop-blur-sm text-white px-1.5 py-0.5 rounded-md whitespace-nowrap shadow-md border border-white/20"
+                              style={{ fontSize: `${10 * filters.markerScale}px` }}
+                            >
+                                <div className="font-medium text-blue-300" style={{ fontSize: `${10 * filters.markerScale}px` }}>
                                   {point.cable_count ? `${point.cable_count} Cable${point.cable_count > 1 ? 's' : ''}` : 'TBD'}
                                 </div>
                                 <div className="font-medium">{point.label || 'TBD'}</div>
@@ -895,15 +901,17 @@ export const InteractiveFloorPlan = ({
                   <TooltipTrigger asChild>
                      <>
                        <div
-                         className={`absolute transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-blue-600 border-2 border-blue-700 flex items-center justify-center text-white hover:scale-110 transition-transform shadow-lg ${
+                         className={`absolute transform -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-600 border-2 border-blue-700 flex items-center justify-center text-white hover:scale-110 transition-transform shadow-lg ${
                            draggedRoomView && draggedRoomView.id === roomView.id 
-                             ? 'cursor-grabbing scale-110' 
+                             ? 'cursor-grabbing scale-110'
                              : 'cursor-grab'
                          }`}
                          style={{
                            left: `${displayRoomView.x_coordinate || 50}%`,
                            top: `${displayRoomView.y_coordinate || 50}%`,
                            zIndex: draggedRoomView && draggedRoomView.id === roomView.id ? 50 : 15,
+                           width: `${32 * filters.markerScale}px`,
+                           height: `${32 * filters.markerScale}px`,
                          }}
                          onMouseDown={(e) => handlePointerDown(e, roomView, 'roomView')}
                          onTouchStart={(e) => handlePointerDown(e, roomView, 'roomView')}
@@ -915,7 +923,7 @@ export const InteractiveFloorPlan = ({
                            }
                          }}
                        >
-                         <Camera className="h-4 w-4" />
+                         <Camera style={{ width: `${16 * filters.markerScale}px`, height: `${16 * filters.markerScale}px` }} />
                         </div>
                       </>
                  </TooltipTrigger>

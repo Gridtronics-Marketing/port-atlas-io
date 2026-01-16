@@ -1,4 +1,4 @@
-export const APP_VERSION = "1.3.6";
+export const APP_VERSION = "1.3.7";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,15 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "1.3.7",
+    date: "2026-01-16",
+    changes: [
+      "Added marker size scaling option to reduce floor plan overcrowding",
+      "Fixed undo/redo functionality in photo annotations (Fabric.js v6 compatibility)",
+      "Made photo annotation prompt more visible with overlay CTA and highlighted button"
+    ]
+  },
   {
     version: "1.3.4",
     date: "2026-01-16",

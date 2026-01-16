@@ -373,18 +373,18 @@ export const EnhancedPhotoGallery: React.FC<EnhancedPhotoGalleryProps> = ({
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
             {expandedPhoto && (
               <>
-                <DialogHeader className="flex flex-row items-center justify-between space-y-0">
+                <DialogHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div>
                     <DialogTitle>
                       {expandedPhoto.description || 'Photo'}
                     </DialogTitle>
-                    <DialogDescription>
+                    <DialogDescription className="text-sm mt-1">
                       Click "Annotate" to draw on this photo
                     </DialogDescription>
                   </div>
                   {onUpdatePhoto && (
                     <Button
-                      variant="outline"
+                      variant="default"
                       size="sm"
                       onClick={() => setIsAnnotating(true)}
                       className="shrink-0"
@@ -395,12 +395,24 @@ export const EnhancedPhotoGallery: React.FC<EnhancedPhotoGalleryProps> = ({
                   )}
                 </DialogHeader>
                 
-                <div className="relative w-full">
+                <div className="relative w-full group">
                   <img
                     src={expandedPhoto.photo_url}
                     alt={expandedPhoto.description || "Photo"}
                     className="w-full h-auto rounded-lg"
                   />
+                  {/* Overlay prompt for unannotated photos */}
+                  {!expandedPhoto.annotation_data && onUpdatePhoto && (
+                    <div 
+                      className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover:opacity-100 cursor-pointer rounded-lg transition-opacity"
+                      onClick={() => setIsAnnotating(true)}
+                    >
+                      <div className="bg-background/90 backdrop-blur-sm px-4 py-3 rounded-lg shadow-lg text-center">
+                        <Pen className="w-6 h-6 mx-auto mb-1 text-primary" />
+                        <p className="text-sm font-medium">Click to Annotate</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 
                 {/* Photo Metadata */}

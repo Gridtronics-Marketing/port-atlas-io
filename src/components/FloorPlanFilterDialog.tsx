@@ -3,6 +3,7 @@ import { Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { Slider } from '@/components/ui/slider';
 import {
   Dialog,
   DialogContent,
@@ -18,6 +19,7 @@ export interface FloorPlanFilters {
   showRoomViewDots: boolean;
   dropPointTypes: string[];
   dropPointStatuses: string[];
+  markerScale: number;
 }
 
 interface FloorPlanFilterDialogProps {
@@ -132,6 +134,32 @@ export const FloorPlanFilterDialog = ({
               <Label htmlFor="showRoomViewDots" className="text-sm">
                 Show Room View Camera Dots
               </Label>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Marker Size Slider */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-medium">Marker Size</h4>
+              <span className="text-xs text-muted-foreground">
+                {filters.markerScale === 0.5 ? 'Small' : filters.markerScale === 1 ? 'Medium' : filters.markerScale === 1.5 ? 'Large' : 'Extra Large'}
+              </span>
+            </div>
+            <Slider
+              value={[filters.markerScale]}
+              onValueChange={([value]) =>
+                onFiltersChange({ ...filters, markerScale: value })
+              }
+              min={0.5}
+              max={2}
+              step={0.25}
+              className="w-full"
+            />
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>Small</span>
+              <span>Large</span>
             </div>
           </div>
 
