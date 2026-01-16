@@ -90,8 +90,8 @@ const TradeTube = () => {
     }
   };
 
-  const handleCreateFolder = async (name: string, description?: string) => {
-    await createFolder({ name, description });
+  const handleCreateFolder = async (name: string, description?: string, parentId?: string) => {
+    await createFolder({ name, description, parent_id: parentId });
   };
 
   const handleDeleteFolder = async (folder: TradeTubeFolder) => {

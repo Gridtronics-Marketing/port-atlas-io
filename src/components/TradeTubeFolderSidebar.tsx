@@ -31,6 +31,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -42,7 +49,7 @@ interface TradeTubeFolderSidebarProps {
   loading: boolean;
   selectedFolderId: string | null;
   onSelectFolder: (folderId: string | null) => void;
-  onCreateFolder?: (name: string, description?: string) => void;
+  onCreateFolder?: (name: string, description?: string, parentId?: string) => void;
   onEditFolder?: (folder: TradeTubeFolder) => void;
   onDeleteFolder?: (folder: TradeTubeFolder) => void;
   canManageFolders?: boolean;
@@ -71,18 +78,83 @@ export function TradeTubeFolderSidebar({
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
   const [newFolderDescription, setNewFolderDescription] = useState('');
+  const [parentFolderId, setParentFolderId] = useState<string>('top-level');
+
+  // Separate top-level and nested folders
+  const topLevelFolders = folders.filter(f => !f.parent_id);
+  const getSubfolders = (parentId: string) => folders.filter(f => f.parent_id === parentId);
 
   const handleCreateFolder = () => {
     if (newFolderName.trim() && onCreateFolder) {
-      onCreateFolder(newFolderName.trim(), newFolderDescription.trim() || undefined);
+      onCreateFolder(
+        newFolderName.trim(),
+        newFolderDescription.trim() || undefined,
+        parentFolderId === 'top-level' ? undefined : parentFolderId
+      );
       setNewFolderName('');
       setNewFolderDescription('');
+      setParentFolderId('top-level');
       setIsCreateDialogOpen(false);
     }
   };
 
   const getIcon = (iconName: string) => {
     return iconMap[iconName] || Folder;
+  };
+
+  const renderFolderButton = (folder: TradeTubeFolder, isNested: boolean = false) => {
+    const Icon = getIcon(folder.icon);
+    const isSelected = selectedFolderId === folder.id;
+
+    return (
+      <div key={folder.id} className={cn("group flex items-center gap-1", isNested && "ml-3")}>
+        {isNested && (
+          <ChevronRight className="h-3 w-3 text-muted-foreground shrink-0" />
+        )}
+        <Button
+          variant={isSelected ? "secondary" : "ghost"}
+          className={cn(
+            "flex-1 justify-start gap-2 h-9 px-2",
+            isSelected && "bg-primary/10 text-primary"
+          )}
+          onClick={() => onSelectFolder(folder.id)}
+        >
+          <Icon className="h-4 w-4 shrink-0" />
+          <span className="truncate">{folder.name}</span>
+        </Button>
+
+        {canManageFolders && (onEditFolder || onDeleteFolder) && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+              >
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {onEditFolder && (
+                <DropdownMenuItem onClick={() => onEditFolder(folder)}>
+                  <Pencil className="h-4 w-4 mr-2" />
+                  Edit
+                </DropdownMenuItem>
+              )}
+              {onDeleteFolder && (
+                <DropdownMenuItem
+                  onClick={() => onDeleteFolder(folder)}
+                  className="text-destructive"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      </div>
+    );
   };
 
   if (loading) {
@@ -128,58 +200,15 @@ export function TradeTubeFolderSidebar({
             <span className="truncate">All Content</span>
           </Button>
 
-          {/* Folder list */}
-          {folders.map((folder) => {
-            const Icon = getIcon(folder.icon);
-            const isSelected = selectedFolderId === folder.id;
-
-            return (
-              <div key={folder.id} className="group flex items-center gap-1">
-                <Button
-                  variant={isSelected ? "secondary" : "ghost"}
-                  className={cn(
-                    "flex-1 justify-start gap-2 h-9 px-2",
-                    isSelected && "bg-primary/10 text-primary"
-                  )}
-                  onClick={() => onSelectFolder(folder.id)}
-                >
-                  <Icon className="h-4 w-4 shrink-0" />
-                  <span className="truncate">{folder.name}</span>
-                </Button>
-
-                {canManageFolders && (onEditFolder || onDeleteFolder) && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
-                      >
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      {onEditFolder && (
-                        <DropdownMenuItem onClick={() => onEditFolder(folder)}>
-                          <Pencil className="h-4 w-4 mr-2" />
-                          Edit
-                        </DropdownMenuItem>
-                      )}
-                      {onDeleteFolder && (
-                        <DropdownMenuItem
-                          onClick={() => onDeleteFolder(folder)}
-                          className="text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Delete
-                        </DropdownMenuItem>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
-              </div>
-            );
-          })}
+          {/* Folder list with hierarchy */}
+          {topLevelFolders.map((folder) => (
+            <div key={folder.id}>
+              {renderFolderButton(folder, false)}
+              {getSubfolders(folder.id).map((subfolder) => 
+                renderFolderButton(subfolder, true)
+              )}
+            </div>
+          ))}
 
           {folders.length === 0 && (
             <p className="text-sm text-muted-foreground text-center py-4">
@@ -199,6 +228,33 @@ export function TradeTubeFolderSidebar({
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="folder-location">Location</Label>
+              <Select value={parentFolderId} onValueChange={setParentFolderId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select location" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="top-level">
+                    <span className="flex items-center gap-2">
+                      <Folder className="h-4 w-4" />
+                      Top-level folder
+                    </span>
+                  </SelectItem>
+                  {topLevelFolders.map((folder) => {
+                    const Icon = getIcon(folder.icon);
+                    return (
+                      <SelectItem key={folder.id} value={folder.id}>
+                        <span className="flex items-center gap-2">
+                          <Icon className="h-4 w-4" />
+                          Under: {folder.name}
+                        </span>
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="space-y-2">
               <Label htmlFor="folder-name">Folder Name</Label>
               <Input
