@@ -122,7 +122,7 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onDe
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="w-full h-full max-w-none max-h-none sm:w-[95vw] sm:h-[95vh] sm:max-w-[95vw] sm:max-h-[95vh] overflow-y-auto sm:rounded-lg">
         <DialogHeader>
           <div className="flex items-center justify-between">
             <div>
