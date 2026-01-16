@@ -1,4 +1,4 @@
-export const APP_VERSION = "1.3.2";
+export const APP_VERSION = "1.3.3";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,14 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "1.3.3",
+    date: "2026-01-16",
+    changes: [
+      "Fixed RLS policy for location editing (added proper WITH CHECK clause)",
+      "Added role-based permissions for location editing (admin and project_manager only)"
+    ]
+  },
   {
     version: "1.3.2",
     date: "2026-01-16",

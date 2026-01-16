@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { LocationDetailsModal } from "@/components/LocationDetailsModal";
 import { AddLocationModal } from "@/components/AddLocationModal";
 import { useLocations, type Location } from "@/hooks/useLocations";
+import { useUserRoles } from "@/hooks/useUserRoles";
 
 interface LocationGridProps {
   searchTerm?: string;
@@ -12,8 +13,12 @@ interface LocationGridProps {
 
 export const LocationGrid = ({ searchTerm = "", statusFilter = "all" }: LocationGridProps) => {
   const { locations, loading, deleteLocation, fetchLocations } = useLocations();
+  const { hasAnyRole } = useUserRoles();
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
   const [editingLocation, setEditingLocation] = useState<Location | null>(null);
+  
+  // Only admins and project managers can edit/delete locations
+  const canEditLocations = hasAnyRole(['admin', 'project_manager']);
 
   const filteredLocations = useMemo(() => {
     return locations.filter(location => {
@@ -135,8 +140,8 @@ export const LocationGrid = ({ searchTerm = "", statusFilter = "all" }: Location
         location={selectedLocation}
         open={!!selectedLocation}
         onOpenChange={(open) => !open && setSelectedLocation(null)}
-        onEditLocation={setEditingLocation}
-        onDeleteLocation={deleteLocation}
+        onEditLocation={canEditLocations ? setEditingLocation : undefined}
+        onDeleteLocation={canEditLocations ? deleteLocation : undefined}
         onLocationUpdate={fetchLocations}
       />
       
