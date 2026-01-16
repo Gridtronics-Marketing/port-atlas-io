@@ -1,4 +1,4 @@
-export const APP_VERSION = "1.4.0";
+export const APP_VERSION = "1.4.1";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,15 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "1.4.1",
+    date: "2026-01-16",
+    changes: [
+      "Added voice-to-text transcription for walk-through notes using device microphone",
+      "Real-time speech transcription with interim results displayed as you speak",
+      "Microphone button available in both floating notes panel and full notes list view"
+    ]
+  },
   {
     version: "1.4.0",
     date: "2026-01-16",

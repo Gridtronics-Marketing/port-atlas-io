@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { FileText, Plus, Trash2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { FileText, Plus, Trash2, Mic, MicOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -13,7 +13,9 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { useWalkThroughNotes } from '@/hooks/useWalkThroughNotes';
+import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
 
 interface WalkThroughNotesListProps {
   locationId: string;
@@ -31,8 +33,44 @@ export const WalkThroughNotesList = ({ locationId, totalFloors }: WalkThroughNot
   const floorToFetch = selectedFloor === 'all' ? undefined : parseInt(selectedFloor);
   const { notes, loading, addNote, deleteNote } = useWalkThroughNotes(locationId, floorToFetch);
 
+  const {
+    transcript,
+    interimTranscript,
+    isListening,
+    isSupported,
+    startListening,
+    stopListening,
+    resetTranscript,
+    error: speechError,
+  } = useSpeechRecognition();
+
+  // Update note text with transcript
+  useEffect(() => {
+    if (transcript) {
+      setNewNoteText(prev => prev + transcript);
+      resetTranscript();
+    }
+  }, [transcript, resetTranscript]);
+
+  // Show speech errors
+  useEffect(() => {
+    if (speechError) {
+      toast.error(speechError);
+    }
+  }, [speechError]);
+
+  const handleToggleListening = () => {
+    if (isListening) {
+      stopListening();
+    } else {
+      startListening();
+    }
+  };
+
   const handleAddNote = async () => {
     if (!newNoteText.trim()) return;
+
+    if (isListening) stopListening();
 
     setIsAdding(true);
     try {
@@ -56,6 +94,9 @@ export const WalkThroughNotesList = ({ locationId, totalFloors }: WalkThroughNot
 
   // Generate floor options
   const floorOptions = Array.from({ length: totalFloors }, (_, i) => i + 1);
+
+  // Get displayed text (including interim transcript)
+  const displayedNoteText = newNoteText + (isListening ? interimTranscript : '');
 
   return (
     <Card className="shadow-soft">
@@ -89,12 +130,35 @@ export const WalkThroughNotesList = ({ locationId, totalFloors }: WalkThroughNot
       <CardContent className="space-y-3">
         {showAddForm ? (
           <div className="space-y-3 p-3 border border-border rounded-lg">
-            <Textarea
-              placeholder="Add a walk-through note..."
-              value={newNoteText}
-              onChange={(e) => setNewNoteText(e.target.value)}
-              className="min-h-[80px] text-sm"
-            />
+            <div className="relative">
+              <Textarea
+                placeholder="Add a walk-through note..."
+                value={displayedNoteText}
+                onChange={(e) => setNewNoteText(e.target.value)}
+                className="min-h-[80px] text-sm pr-10"
+              />
+              {isSupported && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className={`absolute right-1 top-1 h-8 w-8 p-0 ${isListening ? 'text-destructive animate-pulse' : 'text-muted-foreground'}`}
+                  onClick={handleToggleListening}
+                  title={isListening ? 'Stop recording' : 'Start voice input'}
+                >
+                  {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                </Button>
+              )}
+            </div>
+            {isListening && (
+              <div className="flex items-center gap-2 text-xs text-destructive">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-destructive"></span>
+                </span>
+                Listening...
+              </div>
+            )}
             <div className="flex items-center gap-2">
               <Select
                 value={newNoteFloor.toString()}
@@ -115,7 +179,10 @@ export const WalkThroughNotesList = ({ locationId, totalFloors }: WalkThroughNot
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setShowAddForm(false)}
+                onClick={() => {
+                  if (isListening) stopListening();
+                  setShowAddForm(false);
+                }}
               >
                 Cancel
               </Button>
