@@ -11,7 +11,6 @@ import {
   Redo2,
   Trash2,
   Upload,
-  Save,
   X,
   Ruler,
   Triangle,
@@ -31,12 +30,10 @@ interface PhotoAnnotationToolbarProps {
   onUndo: () => void;
   onRedo: () => void;
   onClear: () => void;
-  onSave: () => void;
   onReupload: () => void;
   onClose: () => void;
   canUndo: boolean;
   canRedo: boolean;
-  isSaving?: boolean;
   isReuploading?: boolean;
   hasScale?: boolean;
 }
@@ -63,12 +60,10 @@ export const PhotoAnnotationToolbar = ({
   onUndo,
   onRedo,
   onClear,
-  onSave,
   onReupload,
   onClose,
   canUndo,
   canRedo,
-  isSaving,
   isReuploading,
   hasScale = false,
 }: PhotoAnnotationToolbarProps) => {
@@ -261,24 +256,14 @@ export const PhotoAnnotationToolbar = ({
           {/* Actions */}
           <div className="flex items-center gap-1">
             <Button
-              variant="outline"
-              size="sm"
-              onClick={onSave}
-              disabled={isSaving}
-              className="h-10 px-3"
-            >
-              <Save className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">{isSaving ? "Saving..." : "Save"}</span>
-            </Button>
-            <Button
-              variant="outline"
+              variant="default"
               size="sm"
               onClick={onReupload}
               disabled={isReuploading}
               className="h-10 px-3"
             >
               <Upload className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">{isReuploading ? "Uploading..." : "Re-upload"}</span>
+              <span className="hidden sm:inline">{isReuploading ? "Saving..." : "Save"}</span>
             </Button>
             <Button
               variant="outline"

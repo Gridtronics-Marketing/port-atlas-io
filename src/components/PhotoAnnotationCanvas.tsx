@@ -772,12 +772,10 @@ export const PhotoAnnotationCanvas = ({
           onUndo={handleUndo}
           onRedo={handleRedo}
           onClear={handleClear}
-          onSave={() => handleSave(false)}
           onReupload={handleReupload}
           onClose={onClose}
           canUndo={canUndo}
           canRedo={canRedo}
-          isSaving={isSaving}
           isReuploading={isReuploading}
           hasScale={!!scale}
         />
