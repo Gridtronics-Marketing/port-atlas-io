@@ -21,37 +21,31 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   return (
     <SidebarProvider>
-      <div className={`min-h-screen flex w-full ${isImpersonating ? 'pt-10' : ''}`}>
+      <div className={`min-h-screen flex w-full overflow-x-hidden ${isImpersonating ? 'pt-10' : ''}`}>
         {isClientPortalUser ? <ClientPortalSidebar /> : <AppSidebar />}
         
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col min-w-0">
           {/* Header with sidebar trigger */}
-          <header className="h-16 md:h-14 flex items-center justify-between border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-3 md:px-4">
-            <div className="flex items-center gap-2">
-              <SidebarTrigger className="h-10 w-10 md:h-9 md:w-9" />
+          <header className="h-14 flex items-center justify-between border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-2 md:px-4">
+            <div className="flex items-center gap-1 md:gap-2 min-w-0 flex-shrink">
+              <SidebarTrigger className="h-9 w-9 flex-shrink-0" />
               <OrganizationSwitcher />
-            </div>
-            
-            {/* App name on mobile when sidebar closed */}
-            <div className="flex-1 text-center md:hidden">
-              <span className="text-sm font-semibold text-foreground">Trade Atlas</span>
             </div>
             
             <div className="flex-1 hidden md:block" />
             
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
               <NotificationBell />
               <ViewAsDropdown />
               <OfflineIndicator />
               <Button
                 variant="ghost"
-                size="sm"
+                size="icon"
                 onClick={signOut}
-                className="h-10 w-10 md:h-9 md:w-auto md:px-3"
+                className="h-9 w-9"
                 title="Sign Out"
               >
-                <LogOut className="h-5 w-5 md:h-4 md:w-4" />
-                <span className="ml-2 hidden md:inline">Sign Out</span>
+                <LogOut className="h-4 w-4" />
               </Button>
             </div>
           </header>
