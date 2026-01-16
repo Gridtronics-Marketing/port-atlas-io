@@ -116,19 +116,19 @@ export const ViewAsDropdown: React.FC = () => {
         <Button 
           variant={isImpersonating ? "destructive" : "outline"} 
           size="sm" 
-          className="gap-2"
+          className="gap-1 md:gap-2 h-9 w-9 md:h-9 md:w-auto md:px-3 p-0 md:p-2"
         >
           <Eye className="h-4 w-4" />
           {isImpersonating ? (
-            <span>
-              Viewing as {impersonation.type === 'role' 
+            <span className="hidden md:inline truncate max-w-[100px]">
+              {impersonation.type === 'role' 
                 ? impersonation.targetRole 
                 : impersonation.targetUserEmail?.split('@')[0]}
             </span>
           ) : (
-            <span>View As</span>
+            <span className="hidden md:inline">View As</span>
           )}
-          <ChevronDown className="h-3 w-3" />
+          <ChevronDown className="h-3 w-3 hidden md:block" />
         </Button>
       </DropdownMenuTrigger>
       

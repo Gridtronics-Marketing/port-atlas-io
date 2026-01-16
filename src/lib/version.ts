@@ -1,4 +1,4 @@
-export const APP_VERSION = "1.4.1";
+export const APP_VERSION = "1.4.2";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,16 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "1.4.2",
+    date: "2026-01-16",
+    changes: [
+      "Fixed mobile responsiveness - app now fits properly on phone screens without horizontal scrolling",
+      "Optimized header layout for mobile with icon-only buttons and smaller gaps",
+      "Dashboard hero section now scales properly for small screens",
+      "Added overflow-x-hidden to prevent horizontal scroll on mobile devices"
+    ]
+  },
   {
     version: "1.4.1",
     date: "2026-01-16",

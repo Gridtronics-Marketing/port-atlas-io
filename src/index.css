@@ -124,6 +124,10 @@ All colors MUST be HSL.
 }
 
 @layer base {
+  html, body {
+    @apply overflow-x-hidden;
+  }
+  
   * {
     @apply border-border;
   }

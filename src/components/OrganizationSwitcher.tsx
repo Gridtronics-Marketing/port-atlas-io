@@ -42,12 +42,12 @@ export const OrganizationSwitcher: React.FC = () => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="gap-2 max-w-[200px]">
+        <Button variant="ghost" size="sm" className="gap-1 md:gap-2 max-w-[100px] sm:max-w-[140px] md:max-w-[200px] px-2 md:px-3">
           <Building2 className="h-4 w-4 shrink-0" />
-          <span className="truncate">
+          <span className="truncate hidden sm:inline">
             {loadingOrganizations 
-              ? 'Loading...' 
-              : currentOrganization?.name || 'Select Organization'}
+              ? '...' 
+              : currentOrganization?.name || 'Org'}
           </span>
           <ChevronDown className="h-3 w-3 shrink-0" />
         </Button>

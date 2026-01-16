@@ -43,62 +43,63 @@ const Index = () => {
     Math.round((dropPoints.filter(dp => dp.status === 'tested' || dp.status === 'finished').length / dropPoints.length) * 100) : 0;
 
   return (
-    <main className="container mx-auto px-4 py-6 space-y-8">
+    <main className="container mx-auto px-3 md:px-4 py-4 md:py-6 space-y-6 md:space-y-8 overflow-x-hidden">
         {/* Hero Section */}
         <div className="relative">
-          <div className="absolute inset-0 bg-gradient-hero rounded-2xl opacity-5"></div>
-          <div className="relative p-8 rounded-2xl border bg-card/50 backdrop-blur-sm">
-            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-              <div className="flex-1">
-                <h1 className="text-4xl lg:text-5xl font-bold bg-gradient-hero bg-clip-text text-transparent mb-3">
+          <div className="absolute inset-0 bg-gradient-hero rounded-xl md:rounded-2xl opacity-5"></div>
+          <div className="relative p-4 md:p-8 rounded-xl md:rounded-2xl border bg-card/50 backdrop-blur-sm">
+            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 md:gap-6">
+              <div className="flex-1 min-w-0">
+                <h1 className="text-2xl sm:text-3xl lg:text-5xl font-bold bg-gradient-hero bg-clip-text text-transparent mb-2 md:mb-3">
                   Jobsite Manager
                 </h1>
-                <p className="text-lg text-muted-foreground mb-6 max-w-2xl">
-                  Professional cable installation management system. Track projects, manage teams, and deliver exceptional results.
+                <p className="text-sm md:text-lg text-muted-foreground mb-4 md:mb-6 max-w-2xl line-clamp-2">
+                  Professional cable installation management. Track projects and manage teams.
                 </p>
                 
                 {/* Key Metrics Row */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-4 gap-2 md:gap-4">
                   <div className="text-center lg:text-left">
-                    <div className="text-2xl font-bold text-primary">{activeLocations}</div>
-                    <div className="text-sm text-muted-foreground">Active Sites</div>
+                    <div className="text-lg md:text-2xl font-bold text-primary">{activeLocations}</div>
+                    <div className="text-xs md:text-sm text-muted-foreground">Sites</div>
                   </div>
                   <div className="text-center lg:text-left">
-                    <div className="text-2xl font-bold text-primary">{activeProjects}</div>
-                    <div className="text-sm text-muted-foreground">Projects</div>
+                    <div className="text-lg md:text-2xl font-bold text-primary">{activeProjects}</div>
+                    <div className="text-xs md:text-sm text-muted-foreground">Projects</div>
                   </div>
                   <div className="text-center lg:text-left">
-                    <div className="text-2xl font-bold text-primary">{completionRate}%</div>
-                    <div className="text-sm text-muted-foreground">Completion</div>
+                    <div className="text-lg md:text-2xl font-bold text-primary">{completionRate}%</div>
+                    <div className="text-xs md:text-sm text-muted-foreground">Done</div>
                   </div>
                   <div className="text-center lg:text-left">
-                    <div className={`text-2xl font-bold ${overdueWorkOrders > 0 ? 'text-destructive' : 'text-success'}`}>
+                    <div className={`text-lg md:text-2xl font-bold ${overdueWorkOrders > 0 ? 'text-destructive' : 'text-success'}`}>
                       {overdueWorkOrders}
                     </div>
-                    <div className="text-sm text-muted-foreground">Overdue</div>
+                    <div className="text-xs md:text-sm text-muted-foreground">Overdue</div>
                   </div>
                 </div>
               </div>
               
               {/* Primary Actions */}
-              <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+              <div className="flex flex-col gap-2 w-full lg:w-auto lg:flex-row lg:gap-3">
                 <Button 
                   onClick={() => setShowAddLocation(true)}
-                  size="lg"
+                  size="default"
                   variant="outline"
+                  className="w-full lg:w-auto"
                 >
-                  <Plus className="h-5 w-5 mr-2" />
+                  <Plus className="h-4 w-4 mr-2" />
                   New Location
                 </Button>
-                <Button variant="outline" size="lg" asChild>
+                <Button variant="outline" size="default" className="w-full lg:w-auto" asChild>
                   <Link to="/projects">
-                    <FileText className="h-5 w-5 mr-2" />
+                    <FileText className="h-4 w-4 mr-2" />
                     Projects
                   </Link>
                 </Button>
-                <Button variant="outline" size="lg" asChild>
+                <Button variant="outline" size="default" className="w-full lg:w-auto" asChild>
                   <Link to="/work-orders">
-                    <FileText className="h-5 w-5 mr-2" />
+                    <FileText className="h-4 w-4 mr-2" />
                     Work Orders
                   </Link>
                 </Button>
