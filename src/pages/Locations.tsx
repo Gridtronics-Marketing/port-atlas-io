@@ -118,7 +118,7 @@ const Locations = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <LocationGrid />
+            <LocationGrid searchTerm={searchTerm} statusFilter={statusFilter} />
           </CardContent>
         </Card>
 
