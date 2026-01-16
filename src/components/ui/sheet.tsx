@@ -55,34 +55,21 @@ interface SheetContentProps
 
 const SheetContent = React.forwardRef<React.ElementRef<typeof SheetPrimitive.Content>, SheetContentProps>(
   ({ side = "right", className, children, onOpenChange, ...props }, ref) => {
-    const [isMinimized, setIsMinimized] = React.useState(false);
-    const [isMaximized, setIsMaximized] = React.useState(false);
-
     return (
       <SheetPortal>
         <SheetOverlay />
         <SheetPrimitive.Content
           ref={ref}
-          className={cn(
-            sheetVariants({ side }),
-            "transition-all",
-            isMaximized && "w-screen h-screen max-w-none",
-            isMinimized && "max-h-[60px] overflow-hidden",
-            className
-          )}
+          className={cn(sheetVariants({ side }), className)}
           {...props}
         >
-        <MacOSWindowControls
-          onClose={() => onOpenChange?.(false)}
-          onMinimize={() => setIsMinimized(!isMinimized)}
-          onMaximize={() => setIsMaximized(!isMaximized)}
-          isMinimized={isMinimized}
-          isMaximized={isMaximized}
-          CloseWrapper={({ children }) => (
-            <SheetPrimitive.Close asChild>{children}</SheetPrimitive.Close>
-          )}
-        />
-          {!isMinimized && children}
+          <MacOSWindowControls
+            onClose={() => onOpenChange?.(false)}
+            CloseWrapper={({ children }) => (
+              <SheetPrimitive.Close asChild>{children}</SheetPrimitive.Close>
+            )}
+          />
+          {children}
         </SheetPrimitive.Content>
       </SheetPortal>
     );

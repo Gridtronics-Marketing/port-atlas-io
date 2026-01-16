@@ -28,39 +28,28 @@ const DrawerContent = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Content> & {
     onOpenChange?: (open: boolean) => void;
   }
->(({ className, children, onOpenChange, ...props }, ref) => {
-  const [isMinimized, setIsMinimized] = React.useState(false);
-  const [isMaximized, setIsMaximized] = React.useState(false);
-
-  return (
-    <DrawerPortal>
-      <DrawerOverlay />
-      <DrawerPrimitive.Content
-        ref={ref}
-        className={cn(
-          "fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto flex-col rounded-t-[10px] border bg-background transition-all",
-          isMaximized && "h-screen rounded-none",
-          isMinimized && "max-h-[60px] overflow-hidden",
-          className,
+>(({ className, children, onOpenChange, ...props }, ref) => (
+  <DrawerPortal>
+    <DrawerOverlay />
+    <DrawerPrimitive.Content
+      ref={ref}
+      className={cn(
+        "fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto flex-col rounded-t-[10px] border bg-background",
+        className,
+      )}
+      {...props}
+    >
+      <div className="mx-auto mt-4 h-2 w-[100px] rounded-full bg-muted" />
+      <MacOSWindowControls
+        onClose={() => onOpenChange?.(false)}
+        CloseWrapper={({ children }) => (
+          <DrawerPrimitive.Close asChild>{children}</DrawerPrimitive.Close>
         )}
-        {...props}
-      >
-        <div className="mx-auto mt-4 h-2 w-[100px] rounded-full bg-muted" />
-        <MacOSWindowControls
-          onClose={() => onOpenChange?.(false)}
-          onMinimize={() => setIsMinimized(!isMinimized)}
-          onMaximize={() => setIsMaximized(!isMaximized)}
-          isMinimized={isMinimized}
-          isMaximized={isMaximized}
-          CloseWrapper={({ children }) => (
-            <DrawerPrimitive.Close asChild>{children}</DrawerPrimitive.Close>
-          )}
-        />
-        {!isMinimized && children}
-      </DrawerPrimitive.Content>
-    </DrawerPortal>
-  );
-});
+      />
+      {children}
+    </DrawerPrimitive.Content>
+  </DrawerPortal>
+));
 DrawerContent.displayName = "DrawerContent";
 
 const DrawerHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
