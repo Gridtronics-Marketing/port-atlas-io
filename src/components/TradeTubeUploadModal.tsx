@@ -172,7 +172,7 @@ export function TradeTubeUploadModal({
         title: title.trim(),
         description: description.trim() || undefined,
         mediaType,
-        folderId: folderId || undefined,
+        folderId: folderId && folderId !== 'none' ? folderId : undefined,
         tags: tags.length > 0 ? tags : undefined,
       });
       resetForm();
@@ -324,12 +324,14 @@ export function TradeTubeUploadModal({
                 <SelectValue placeholder="Select a folder (optional)" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">No folder</SelectItem>
-                {folders.map((folder) => (
-                  <SelectItem key={folder.id} value={folder.id}>
-                    {folder.name}
-                  </SelectItem>
-                ))}
+                <SelectItem value="none">No folder</SelectItem>
+                {folders
+                  .filter(folder => folder.id && folder.id.trim() !== '')
+                  .map((folder) => (
+                    <SelectItem key={folder.id} value={folder.id}>
+                      {folder.name}
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
           </div>
