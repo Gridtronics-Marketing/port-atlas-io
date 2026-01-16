@@ -63,7 +63,7 @@ export const useLocations = () => {
             )
           `)
           .eq('client_id', linkedClientId)
-          .order('created_at', { ascending: false });
+          .order('name', { ascending: true });
 
         if (clientError) throw clientError;
         data = clientLocations || [];
@@ -109,7 +109,7 @@ export const useLocations = () => {
               client:clients(name)
             )
           `)
-          .order('created_at', { ascending: false });
+          .order('name', { ascending: true });
 
         if (organizationId) {
           query = query.eq('organization_id', organizationId);

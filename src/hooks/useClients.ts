@@ -43,7 +43,7 @@ export const useClients = () => {
             slug
           )
         `)
-        .order('created_at', { ascending: false });
+        .order('name', { ascending: true });
 
       // Filter by organization if one is selected
       if (organizationId) {
