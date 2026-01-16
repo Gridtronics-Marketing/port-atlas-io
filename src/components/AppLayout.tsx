@@ -26,9 +26,9 @@ export function AppLayout({ children }: AppLayoutProps) {
         
         <div className="flex-1 flex flex-col min-w-0">
           {/* Header with sidebar trigger */}
-          <header className="h-14 flex items-center justify-between border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-2 md:px-4">
-            <div className="flex items-center gap-1 md:gap-2 min-w-0 flex-shrink">
-              <SidebarTrigger className="h-9 w-9 flex-shrink-0" />
+          <header className="h-14 flex items-center justify-between border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-3 md:px-4">
+            <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-shrink">
+              <SidebarTrigger className="h-11 w-11 min-w-[44px] min-h-[44px] flex-shrink-0" />
               <OrganizationSwitcher />
             </div>
             
