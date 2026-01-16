@@ -1,4 +1,4 @@
-export const APP_VERSION = "1.3.0";
+export const APP_VERSION = "1.3.1";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,14 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "1.3.1",
+    date: "2026-01-16",
+    changes: [
+      "Client list now sorted alphabetically by name",
+      "Location list now sorted alphabetically by name"
+    ]
+  },
   {
     version: "1.3.0",
     date: "2026-01-14",

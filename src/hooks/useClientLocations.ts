@@ -32,7 +32,7 @@ export const useClientLocations = (clientId?: string) => {
           )
         `)
         .eq('client_id', clientId)
-        .order('created_at', { ascending: false });
+        .order('name', { ascending: true });
 
       if (directError) {
         console.error('Error fetching direct locations:', directError);
@@ -53,7 +53,7 @@ export const useClientLocations = (clientId?: string) => {
         `)
         .eq('project.client_id', clientId)
         .is('client_id', null)
-        .order('created_at', { ascending: false });
+        .order('name', { ascending: true });
 
       if (projectError) {
         console.error('Error fetching project locations:', projectError);
