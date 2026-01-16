@@ -43,6 +43,7 @@ import ClientLocationDetail from "./pages/ClientLocationDetail";
 import ServiceRequestHistory from "./pages/ServiceRequestHistory";
 import PortalEntry from "./pages/PortalEntry";
 import ClientPortalManagement from "./pages/ClientPortalManagement";
+import TradeTube from "./pages/TradeTube";
 
 const queryClient = new QueryClient();
 
@@ -244,6 +245,13 @@ const App = () => (
               <ProtectedRoute>
                 <AppLayout>
                   <ClientPortalManagement />
+                </AppLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/tradetube" element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <TradeTube />
                 </AppLayout>
               </ProtectedRoute>
             } />
