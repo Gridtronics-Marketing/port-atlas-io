@@ -34,12 +34,12 @@ const TradeTube = () => {
   const [deleteConfirmContent, setDeleteConfirmContent] = useState<TradeTubeContent | null>(null);
 
   const { hasAnyRole } = useUserRoles();
-  const { userRole } = useOrganization();
+  const { effectiveRole } = useOrganization();
   
   const canUpload = hasAnyRole(['admin', 'project_manager']) || 
-    ['owner', 'admin', 'project_manager'].includes(userRole || '');
+    ['owner', 'admin', 'project_manager'].includes(effectiveRole || '');
   const canManageFolders = hasAnyRole(['admin']) || 
-    ['owner', 'admin'].includes(userRole || '');
+    ['owner', 'admin'].includes(effectiveRole || '');
 
   const { folders, loading: foldersLoading, createFolder, deleteFolder } = useTradeTubeFolders();
   const { 
