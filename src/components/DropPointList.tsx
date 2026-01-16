@@ -221,7 +221,14 @@ const DropPointListContent = ({ locationId }: DropPointListProps) => {
               </TableHeader>
               <TableBody>
                 {filteredDropPoints.map((point) => (
-                  <TableRow key={point.id}>
+                  <TableRow 
+                    key={point.id}
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => {
+                      setSelectedDropPoint(point);
+                      setDetailsModalOpen(true);
+                    }}
+                  >
                     <TableCell className="font-medium">{point.label}</TableCell>
                     <TableCell>{point.room || "—"}</TableCell>
                     <TableCell>{point.floor || "—"}</TableCell>
@@ -246,7 +253,7 @@ const DropPointListContent = ({ locationId }: DropPointListProps) => {
                     <TableCell className="text-xs text-muted-foreground">
                       {point.patch_panel_port || "—"}
                     </TableCell>
-                    <TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
