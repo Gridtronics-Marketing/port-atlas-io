@@ -5,13 +5,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Camera, Upload, X, Maximize2 } from 'lucide-react';
+import { Camera, Upload, X, Maximize2, RotateCcw } from 'lucide-react';
 import { usePhotoCapture } from '@/hooks/usePhotoCapture';
 import { useRoomViews } from '@/hooks/useRoomViews';
+import { useRoomViewPhotos } from '@/hooks/useRoomViewPhotos';
 import { useCurrentEmployee } from '@/hooks/useCurrentEmployee';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRoles } from '@/hooks/useUserRoles';
 import { useToast } from '@/hooks/use-toast';
+import { GuidedPanoramaCapture } from '@/components/GuidedPanoramaCapture';
 
 interface AddRoomViewModalProps {
   open: boolean;
@@ -38,6 +40,7 @@ export const AddRoomViewModal = ({
   const [submitting, setSubmitting] = useState(false);
   const [showPhotoOptions, setShowPhotoOptions] = useState(false);
   const [isPanoramic, setIsPanoramic] = useState(false);
+  const [showGuidedCapture, setShowGuidedCapture] = useState(false);
 
   const { capturePhoto, selectFromGallery, loading: photoLoading } = usePhotoCapture();
   const { addRoomView } = useRoomViews();
@@ -306,11 +309,43 @@ export const AddRoomViewModal = ({
                 <Maximize2 className="h-5 w-5 mr-2" />
                 Upload Panoramic Photo
               </Button>
+              <Button
+                variant="secondary"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setShowPhotoOptions(false);
+                  setShowGuidedCapture(true);
+                }}
+                disabled={photoLoading}
+                className="h-14 col-span-1"
+              >
+                <RotateCcw className="h-5 w-5 mr-2" />
+                Guided 360° Capture
+              </Button>
             </div>
             <Button variant="ghost" onClick={handleClose} className="mt-4">
               Cancel
             </Button>
           </div>
+        ) : showGuidedCapture ? (
+          <GuidedPanoramaCapture
+            locationId={locationId}
+            onComplete={async (photos) => {
+              setShowGuidedCapture(false);
+              if (photos.length > 0) {
+                // Use first photo as the main room view photo
+                setCapturedPhoto(photos[0].url);
+                toast({
+                  title: "360° Capture Complete",
+                  description: `Captured ${photos.length} photos. First photo set as main view.`,
+                });
+              }
+            }}
+            onCancel={() => {
+              setShowGuidedCapture(false);
+              setShowPhotoOptions(true);
+            }}
+          />
         ) : capturedPhoto ? (
           <div className="space-y-4">
             <div className="relative">

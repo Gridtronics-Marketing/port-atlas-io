@@ -1,4 +1,4 @@
-export const APP_VERSION = "1.3.8";
+export const APP_VERSION = "1.3.9";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,17 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "1.3.9",
+    date: "2026-01-16",
+    changes: [
+      "Added spherical 360° photo viewer with gyroscope navigation",
+      "Added guided multi-shot panoramic capture for room views (8 angles)",
+      "Added multi-angle photo viewer for guided room captures",
+      "Added device orientation tracking hook for gyroscope support",
+      "Removed redundant Save button from photo annotations (auto-save handles this)"
+    ]
+  },
   {
     version: "1.3.7",
     date: "2026-01-16",
