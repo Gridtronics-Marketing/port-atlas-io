@@ -4777,6 +4777,174 @@ export type Database = {
           },
         ]
       }
+      tradetube_content: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          duration_seconds: number | null
+          file_size: number | null
+          file_url: string
+          folder_id: string | null
+          id: string
+          is_featured: boolean | null
+          media_type: string
+          organization_id: string
+          sort_order: number | null
+          tags: string[] | null
+          thumbnail_url: string | null
+          title: string
+          updated_at: string | null
+          view_count: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          duration_seconds?: number | null
+          file_size?: number | null
+          file_url: string
+          folder_id?: string | null
+          id?: string
+          is_featured?: boolean | null
+          media_type: string
+          organization_id: string
+          sort_order?: number | null
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string | null
+          view_count?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          duration_seconds?: number | null
+          file_size?: number | null
+          file_url?: string
+          folder_id?: string | null
+          id?: string
+          is_featured?: boolean | null
+          media_type?: string
+          organization_id?: string
+          sort_order?: number | null
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string | null
+          view_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tradetube_content_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "tradetube_folders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tradetube_content_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tradetube_folders: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          icon: string | null
+          id: string
+          name: string
+          organization_id: string
+          parent_id: string | null
+          sort_order: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+          organization_id: string
+          parent_id?: string | null
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+          organization_id?: string
+          parent_id?: string | null
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tradetube_folders_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tradetube_folders_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "tradetube_folders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tradetube_views: {
+        Row: {
+          content_id: string
+          id: string
+          organization_id: string | null
+          user_id: string | null
+          viewed_at: string | null
+        }
+        Insert: {
+          content_id: string
+          id?: string
+          organization_id?: string | null
+          user_id?: string | null
+          viewed_at?: string | null
+        }
+        Update: {
+          content_id?: string
+          id?: string
+          organization_id?: string | null
+          user_id?: string | null
+          viewed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tradetube_views_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "tradetube_content"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tradetube_views_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       twilio_settings: {
         Row: {
           created_at: string

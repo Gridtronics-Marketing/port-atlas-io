@@ -18,7 +18,8 @@ import {
   Wrench,
   Package,
   Info,
-  Building2
+  Building2,
+  PlayCircle
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { NavLink, useLocation } from "react-router-dom";
@@ -60,6 +61,7 @@ const navigationItems = [
   { title: "Projects", url: "/projects", icon: FolderOpen },
   { title: "Work Orders", url: "/work-orders", icon: ClipboardList },
   { title: "Service Requests", url: "/service-requests", icon: MessageSquare },
+  { title: "TradeTube", url: "/tradetube", icon: PlayCircle },
   { title: "Procurement", url: "/procurement", icon: Package },
   { title: "Contracts", url: "/contracts", icon: FileText },
   { title: "Maintenance", url: "/maintenance", icon: Wrench },
