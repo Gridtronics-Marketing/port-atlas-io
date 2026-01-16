@@ -80,11 +80,11 @@ export const InteractiveFloorPlan = ({
   const [filters, setFilters] = useState<FloorPlanFilters>({
     showDropPointLabels: true,
     showRoomViewDots: true,
+    showWirePaths: true,
     dropPointTypes: ['data', 'wifi', 'camera', 'mdf_idf', 'access_control', 'av', 'other'],
     dropPointStatuses: ['planned', 'roughed_in', 'finished', 'tested'],
     markerScale: 1,
   });
-  const [showWirePaths, setShowWirePaths] = useState(true);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [showDrawModeModal, setShowDrawModeModal] = useState(false);
   const [uploadedFileUrl, setUploadedFileUrl] = useState<string | undefined>(undefined);
@@ -124,7 +124,7 @@ export const InteractiveFloorPlan = ({
     return typeMatch && statusMatch;
   });
   const filteredRoomViews = filters.showRoomViewDots ? floorRoomViews : [];
-  const filteredWirePaths = showWirePaths ? wirePaths : [];
+  const filteredWirePaths = filters.showWirePaths ? wirePaths : [];
 
   const getFileExtension = (url?: string, path?: string, name?: string) => {
     if (!url && !path && !name) return '';
@@ -671,6 +671,7 @@ export const InteractiveFloorPlan = ({
                       onClick={() => {
                         setIsAddingRoomView(!isAddingRoomView);
                         setIsAddingPoint(false);
+                        setIsDrawingWirePath(false);
                       }}
                       disabled={!validLocationId}
                     >
@@ -682,6 +683,35 @@ export const InteractiveFloorPlan = ({
                 {!validLocationId && (
                   <TooltipContent>
                     <p>Save the location first to add room views</p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-block">
+                    <Button
+                      variant={isDrawingWirePath ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => {
+                        setIsDrawingWirePath(!isDrawingWirePath);
+                        setIsAddingPoint(false);
+                        setIsAddingRoomView(false);
+                        if (isDrawingWirePath) {
+                          setCurrentWirePathPoints([]);
+                        }
+                      }}
+                      disabled={!validLocationId}
+                    >
+                      <Route className="h-4 w-4 mr-2" />
+                      {isDrawingWirePath ? 'Cancel' : 'Draw Wire Path'}
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                {!validLocationId && (
+                  <TooltipContent>
+                    <p>Save the location first to draw wire paths</p>
                   </TooltipContent>
                 )}
               </Tooltip>
@@ -998,6 +1028,127 @@ export const InteractiveFloorPlan = ({
             </TooltipProvider>
           )}
 
+          {/* Wire Paths SVG Overlay */}
+          {validLocationId && (
+            <svg 
+              className="absolute inset-0 w-full h-full pointer-events-none"
+              style={{ zIndex: 5 }}
+            >
+              {/* Rendered Wire Paths */}
+              {filteredWirePaths.map((path) => {
+                if (!path.path_points || path.path_points.length < 2) return null;
+                const points = path.path_points as { x: number; y: number }[];
+                const pathString = points
+                  .map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x}% ${p.y}%`)
+                  .join(' ');
+                
+                return (
+                  <g key={path.id} className="pointer-events-auto cursor-pointer">
+                    {/* Wider invisible stroke for easier clicking */}
+                    <path
+                      d={pathString}
+                      fill="none"
+                      stroke="transparent"
+                      strokeWidth="16"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedWirePath(path);
+                      }}
+                    />
+                    {/* Visible stroke */}
+                    <path
+                      d={pathString}
+                      fill="none"
+                      stroke={path.color || '#3b82f6'}
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeDasharray={path.status === 'planned' ? '8 4' : 'none'}
+                      className="transition-all hover:stroke-[4]"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedWirePath(path);
+                      }}
+                    />
+                    {/* Label at midpoint */}
+                    {path.label && points.length >= 2 && (
+                      <text
+                        x={`${points[Math.floor(points.length / 2)].x}%`}
+                        y={`${points[Math.floor(points.length / 2)].y}%`}
+                        fill={path.color || '#3b82f6'}
+                        fontSize="10"
+                        fontWeight="bold"
+                        textAnchor="middle"
+                        dy="-6"
+                        className="pointer-events-none"
+                      >
+                        {path.label}
+                      </text>
+                    )}
+                  </g>
+                );
+              })}
+
+              {/* Currently drawing wire path */}
+              {isDrawingWirePath && currentWirePathPoints.length > 0 && (
+                <>
+                  <path
+                    d={currentWirePathPoints
+                      .map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x}% ${p.y}%`)
+                      .join(' ')}
+                    fill="none"
+                    stroke="#22c55e"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeDasharray="4 2"
+                  />
+                  {/* Points on current path */}
+                  {currentWirePathPoints.map((p, i) => (
+                    <circle
+                      key={i}
+                      cx={`${p.x}%`}
+                      cy={`${p.y}%`}
+                      r="5"
+                      fill="#22c55e"
+                      stroke="white"
+                      strokeWidth="2"
+                    />
+                  ))}
+                </>
+              )}
+            </svg>
+          )}
+
+          {/* Selected Wire Path Actions */}
+          {selectedWirePath && (
+            <div className="absolute bottom-4 left-4 bg-background/95 backdrop-blur border rounded-lg p-3 z-20 shadow-lg">
+              <div className="flex items-center gap-2">
+                <div className="text-sm">
+                  <p className="font-medium">{selectedWirePath.label || 'Wire Path'}</p>
+                  <p className="text-xs text-muted-foreground">{selectedWirePath.cable_type}</p>
+                </div>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => {
+                    handleDeleteWirePath(selectedWirePath.id);
+                    setSelectedWirePath(null);
+                  }}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedWirePath(null)}
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          )}
+
           {/* Add Point Indicators */}
           {isAddingPoint && (
             <div className="absolute top-4 left-4 bg-primary/90 text-primary-foreground px-3 py-2 rounded-lg text-sm font-medium z-10">
@@ -1009,6 +1160,29 @@ export const InteractiveFloorPlan = ({
               Click anywhere on the plan to add a room view camera
             </div>
           )}
+          {isDrawingWirePath && (
+            <div className="absolute top-4 left-4 bg-green-600/90 text-white px-3 py-2 rounded-lg text-sm font-medium z-10 flex items-center gap-2">
+              <span>Click to add points ({currentWirePathPoints.length} points)</span>
+              {currentWirePathPoints.length >= 2 && (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={handleFinishWirePath}
+                  className="h-6 text-xs"
+                >
+                  Finish Path
+                </Button>
+              )}
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={handleCancelWirePath}
+                className="h-6 text-xs text-white hover:text-white hover:bg-white/20"
+              >
+                Cancel
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Instructions */}
@@ -1017,9 +1191,10 @@ export const InteractiveFloorPlan = ({
           <ul className="space-y-1 text-xs">
             <li>• <strong>Add Drop Point:</strong> Click the button above, then click on the plan</li>
             <li>• <strong>Add Room View:</strong> Click the camera button above, then click on the plan to capture a photo</li>
+            <li>• <strong>Draw Wire Path:</strong> Click multiple points to draw cable routes, then click "Finish Path"</li>
             <li>• <strong>Move Drop Point:</strong> Click and drag existing points to reposition them</li>
             <li>• <strong>Zoom:</strong> Use the zoom controls or mouse wheel</li>
-            <li>• <strong>View Details:</strong> Click on existing drop points or room view cameras</li>
+            <li>• <strong>View Details:</strong> Click on existing drop points, room view cameras, or wire paths</li>
           </ul>
         </div>
       </CardContent>
@@ -1136,6 +1311,21 @@ export const InteractiveFloorPlan = ({
             onFloorPlanSaved?.();
           }
         }}
+      />
+
+      {/* Add Wire Path Modal */}
+      <AddWirePathModal
+        open={showAddWirePathModal}
+        onOpenChange={(open) => {
+          setShowAddWirePathModal(open);
+          if (!open) {
+            setCurrentWirePathPoints([]);
+          }
+        }}
+        locationId={locationId}
+        floor={floorNumber}
+        pathPoints={currentWirePathPoints}
+        onSuccess={handleWirePathSuccess}
       />
 
       </Card>

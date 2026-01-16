@@ -17,6 +17,7 @@ import { Separator } from '@/components/ui/separator';
 export interface FloorPlanFilters {
   showDropPointLabels: boolean;
   showRoomViewDots: boolean;
+  showWirePaths: boolean;
   dropPointTypes: string[];
   dropPointStatuses: string[];
   markerScale: number;
@@ -133,6 +134,18 @@ export const FloorPlanFilterDialog = ({
               />
               <Label htmlFor="showRoomViewDots" className="text-sm">
                 Show Room View Camera Dots
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="showWirePaths"
+                checked={filters.showWirePaths}
+                onCheckedChange={(checked) =>
+                  onFiltersChange({ ...filters, showWirePaths: checked as boolean })
+                }
+              />
+              <Label htmlFor="showWirePaths" className="text-sm">
+                Show Wire Paths
               </Label>
             </div>
           </div>
