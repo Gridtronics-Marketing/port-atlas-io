@@ -1,4 +1,4 @@
-export const APP_VERSION = "1.3.9";
+export const APP_VERSION = "1.4.0";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,17 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "1.4.0",
+    date: "2026-01-16",
+    changes: [
+      "Added annotation support for room view photos",
+      "Fixed cable count input clearing on iPad/iOS devices",
+      "Added wire path drawing feature for cable routing visualization",
+      "Added portrait/landscape option for PDF floor plan exports",
+      "Added ability to edit walk-through notes after saving"
+    ]
+  },
   {
     version: "1.3.9",
     date: "2026-01-16",

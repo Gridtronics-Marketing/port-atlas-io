@@ -11,12 +11,13 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Pencil, Trash2, User, Calendar, MapPin, Hash, Camera, Upload, Maximize2 } from 'lucide-react';
 import { RoomView } from '@/hooks/useRoomViews';
 import { useRoomViews } from '@/hooks/useRoomViews';
-import { useRoomViewPhotos } from '@/hooks/useRoomViewPhotos';
+import { useRoomViewPhotos, RoomViewPhoto } from '@/hooks/useRoomViewPhotos';
 import { usePhotoCapture } from '@/hooks/usePhotoCapture';
 import { useCurrentEmployee } from '@/hooks/useCurrentEmployee';
 import { useToast } from '@/hooks/use-toast';
 import { PhotoGallery } from '@/components/PhotoGallery';
 import { useUserRoles } from '@/hooks/useUserRoles';
+import { Json } from '@/integrations/supabase/types';
 
 interface RoomViewModalProps {
   open: boolean;
@@ -35,7 +36,7 @@ export const RoomViewModal: React.FC<RoomViewModalProps> = ({
   const [editData, setEditData] = useState<Partial<RoomView>>({});
   const [activeTab, setActiveTab] = useState('details');
   const { updateRoomView, deleteRoomView } = useRoomViews(locationId);
-  const { photos, loading: photosLoading, addPhoto, deletePhoto } = useRoomViewPhotos(roomView?.id);
+  const { photos, loading: photosLoading, addPhoto, updatePhoto, deletePhoto } = useRoomViewPhotos(roomView?.id);
   const { capturePhoto, selectFromGallery } = usePhotoCapture();
   const { employee } = useCurrentEmployee();
   const { hasRole } = useUserRoles();
@@ -188,6 +189,14 @@ export const RoomViewModal: React.FC<RoomViewModalProps> = ({
       await deletePhoto(photoId, photoUrl);
     } catch (error) {
       console.error('Error deleting photo:', error);
+    }
+  };
+
+  const handleUpdatePhoto = async (photoId: string, updates: { annotation_data?: Json; description?: string }) => {
+    try {
+      await updatePhoto(photoId, updates as Partial<RoomViewPhoto>);
+    } catch (error) {
+      console.error('Error updating photo:', error);
     }
   };
 
@@ -427,6 +436,7 @@ export const RoomViewModal: React.FC<RoomViewModalProps> = ({
             <PhotoGallery
               photos={photos}
               onDeletePhoto={handleDeletePhoto}
+              onUpdatePhoto={handleUpdatePhoto}
               loading={photosLoading}
               emptyMessage="No additional photos for this room view. Take or upload photos to document the space."
             />

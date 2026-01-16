@@ -6,6 +6,7 @@ export interface ExportOptions {
   includeDropPoints?: boolean;
   includeRoomViews?: boolean;
   includeMetadata?: boolean;
+  orientation?: 'portrait' | 'landscape';
 }
 
 /**
@@ -23,12 +24,13 @@ export async function exportFloorPlanToPDF(
     includeDropPoints = true,
     includeRoomViews = true,
     includeMetadata = true,
+    orientation = 'landscape',
   } = options;
 
   try {
-    // Create PDF in landscape orientation for floor plans
+    // Create PDF with selected orientation
     const pdf = new jsPDF({
-      orientation: 'landscape',
+      orientation: orientation,
       unit: 'mm',
       format: 'a4',
     });

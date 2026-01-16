@@ -1,9 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
-import { Plus, RotateCcw, ZoomIn, ZoomOut, RefreshCw, Camera, FileImage, Upload, PenTool, Edit, Trash2 } from 'lucide-react';
+import { Plus, RotateCcw, ZoomIn, ZoomOut, RefreshCw, Camera, FileImage, Upload, PenTool, Edit, Trash2, Route } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,8 +24,10 @@ import { DropPointColorLegend } from './DropPointColorLegend';
 import { FloorPlanUploadDialog } from './FloorPlanUploadDialog';
 import { FloorPlanFilterDialog, type FloorPlanFilters } from './FloorPlanFilterDialog';
 import { ManualDrawModeCanvas } from './ManualDrawModeCanvas';
+import { AddWirePathModal } from './AddWirePathModal';
 import { useDropPoints } from '@/hooks/useDropPoints';
 import { useRoomViews } from '@/hooks/useRoomViews';
+import { useWirePaths, WirePath } from '@/hooks/useWirePaths';
 import { useFloorPlanDrawing, isDrawnFloorPlan, getDrawingData } from '@/hooks/useFloorPlanDrawing';
 import { getStorageUrl, removeFloorPlanFromLocation } from '@/lib/storage-utils';
 import { useToast } from '@/hooks/use-toast';
@@ -52,12 +56,18 @@ export const InteractiveFloorPlan = ({
   const [scale, setScale] = useState(1.0);
   const [isAddingPoint, setIsAddingPoint] = useState(false);
   const [isAddingRoomView, setIsAddingRoomView] = useState(false);
+  const [isDrawingWirePath, setIsDrawingWirePath] = useState(false);
+  const [currentWirePathPoints, setCurrentWirePathPoints] = useState<{ x: number; y: number }[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showAddRoomViewModal, setShowAddRoomViewModal] = useState(false);
+  const [showAddWirePathModal, setShowAddWirePathModal] = useState(false);
+  const [showExportDialog, setShowExportDialog] = useState(false);
+  const [exportOrientation, setExportOrientation] = useState<'portrait' | 'landscape'>('landscape');
   const [clickCoordinates, setClickCoordinates] = useState<{ x: number; y: number } | null>(null);
   const [isRepairing, setIsRepairing] = useState(false);
   const [selectedDropPoint, setSelectedDropPoint] = useState<any>(null);
   const [selectedRoomView, setSelectedRoomView] = useState<any>(null);
+  const [selectedWirePath, setSelectedWirePath] = useState<WirePath | null>(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [roomViewModalOpen, setRoomViewModalOpen] = useState(false);
   const [draggedPoint, setDraggedPoint] = useState<any>(null);
@@ -74,6 +84,7 @@ export const InteractiveFloorPlan = ({
     dropPointStatuses: ['planned', 'roughed_in', 'finished', 'tested'],
     markerScale: 1,
   });
+  const [showWirePaths, setShowWirePaths] = useState(true);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [showDrawModeModal, setShowDrawModeModal] = useState(false);
   const [uploadedFileUrl, setUploadedFileUrl] = useState<string | undefined>(undefined);
@@ -97,6 +108,7 @@ export const InteractiveFloorPlan = ({
   const validLocationId = locationId && isValidUUID(locationId) ? locationId : undefined;
   const { dropPoints, loading: dropPointsLoading, updateDropPoint, fetchDropPoints } = useDropPoints(validLocationId);
   const { roomViews, loading: roomViewsLoading, updateRoomView, fetchRoomViews } = useRoomViews(validLocationId);
+  const { wirePaths, loading: wirePathsLoading, deleteWirePath, refetch: fetchWirePaths } = useWirePaths(validLocationId, floorNumber);
 
   // Generate the actual file URL from path or use provided URL
   const actualFileUrl = uploadedFileUrl || fileUrl || (filePath ? getStorageUrl('floor-plans', filePath) : undefined);
@@ -111,8 +123,8 @@ export const InteractiveFloorPlan = ({
     const statusMatch = filters.dropPointStatuses.includes(dp.status || 'planned');
     return typeMatch && statusMatch;
   });
-
   const filteredRoomViews = filters.showRoomViewDots ? floorRoomViews : [];
+  const filteredWirePaths = showWirePaths ? wirePaths : [];
 
   const getFileExtension = (url?: string, path?: string, name?: string) => {
     if (!url && !path && !name) return '';
@@ -172,11 +184,19 @@ export const InteractiveFloorPlan = ({
 
   const handleContainerClick = (e: React.MouseEvent) => {
     if (isDragging) return;
-    if ((!isAddingPoint && !isAddingRoomView) || !containerRef.current) return;
+    if (!containerRef.current) return;
 
     const rect = containerRef.current.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+    // Handle wire path drawing mode
+    if (isDrawingWirePath) {
+      setCurrentWirePathPoints(prev => [...prev, { x, y }]);
+      return;
+    }
+
+    if (!isAddingPoint && !isAddingRoomView) return;
 
     setClickCoordinates({ x, y });
     
@@ -186,6 +206,39 @@ export const InteractiveFloorPlan = ({
     } else if (isAddingRoomView) {
       setShowAddRoomViewModal(true);
       setIsAddingRoomView(false);
+    }
+  };
+
+  const handleFinishWirePath = () => {
+    if (currentWirePathPoints.length >= 2) {
+      setShowAddWirePathModal(true);
+    } else {
+      toast({
+        title: "Not enough points",
+        description: "Draw at least 2 points to create a wire path",
+        variant: "destructive",
+      });
+    }
+    setIsDrawingWirePath(false);
+  };
+
+  const handleCancelWirePath = () => {
+    setIsDrawingWirePath(false);
+    setCurrentWirePathPoints([]);
+  };
+
+  const handleWirePathSuccess = () => {
+    setCurrentWirePathPoints([]);
+    fetchWirePaths();
+  };
+
+  const handleDeleteWirePath = async (pathId: string) => {
+    if (confirm('Are you sure you want to delete this wire path?')) {
+      try {
+        await deleteWirePath(pathId);
+      } catch (error) {
+        console.error('Error deleting wire path:', error);
+      }
     }
   };
 
