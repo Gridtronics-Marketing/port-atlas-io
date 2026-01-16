@@ -192,22 +192,22 @@ export function TradeTubeUploadModal({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
+      <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-lg max-h-[90vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>Upload Content</DialogTitle>
           <DialogDescription>
             Add videos, documents, audio, or images to your knowledge library
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
+        <div className="flex-1 overflow-y-auto space-y-4 py-2 px-1">
           {/* Drop Zone */}
           <div
             onDrop={handleDrop}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             className={cn(
-              "border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer",
+              "border-2 border-dashed rounded-lg p-4 sm:p-6 text-center transition-colors cursor-pointer",
               isDragging ? "border-primary bg-primary/5" : "border-muted-foreground/25 hover:border-primary/50",
               file && "border-green-500 bg-green-500/5"
             )}
@@ -225,10 +225,10 @@ export function TradeTubeUploadModal({
             />
             
             {file ? (
-              <div className="flex items-center justify-center gap-3">
-                <Icon className="h-8 w-8 text-green-600" />
-                <div className="text-left">
-                  <p className="font-medium text-sm truncate max-w-[200px]">{file.name}</p>
+              <div className="flex items-center justify-center gap-2 sm:gap-3">
+                <Icon className="h-6 w-6 sm:h-8 sm:w-8 text-green-600 flex-shrink-0" />
+                <div className="text-left min-w-0 flex-1">
+                  <p className="font-medium text-sm truncate">{file.name}</p>
                   <p className="text-xs text-muted-foreground">
                     {(file.size / (1024 * 1024)).toFixed(2)} MB
                   </p>
@@ -236,7 +236,7 @@ export function TradeTubeUploadModal({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8"
+                  className="h-8 w-8 flex-shrink-0"
                   onClick={(e) => {
                     e.stopPropagation();
                     setFile(null);
@@ -247,7 +247,7 @@ export function TradeTubeUploadModal({
               </div>
             ) : (
               <>
-                <Upload className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
+                <Upload className="h-8 w-8 sm:h-10 sm:w-10 mx-auto text-muted-foreground mb-2 sm:mb-3" />
                 <p className="text-sm font-medium">Drop file here or click to browse</p>
                 <p className="text-xs text-muted-foreground mt-1">
                   Videos, audio, documents, images up to 100MB
@@ -259,7 +259,7 @@ export function TradeTubeUploadModal({
           {/* Media Type Selector */}
           <div className="space-y-2">
             <Label>Content Type</Label>
-            <div className="flex flex-wrap gap-2">
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
               {(Object.entries(mediaTypeConfig) as [MediaType, typeof config][]).map(([type, cfg]) => {
                 const TypeIcon = cfg.icon;
                 return (
@@ -268,10 +268,11 @@ export function TradeTubeUploadModal({
                     variant={mediaType === type ? "default" : "outline"}
                     size="sm"
                     onClick={() => setMediaType(type)}
-                    className="gap-1.5"
+                    className="gap-1 sm:gap-1.5 px-2 sm:px-3 text-xs sm:text-sm"
                   >
                     <TypeIcon className="h-3.5 w-3.5" />
-                    {cfg.label}
+                    <span className="hidden sm:inline">{cfg.label}</span>
+                    <span className="sm:hidden">{cfg.label.slice(0, 3)}</span>
                   </Button>
                 );
               })}
@@ -331,7 +332,7 @@ export function TradeTubeUploadModal({
                 placeholder="Add tags (press Enter)"
                 className="flex-1"
               />
-              <Button type="button" variant="outline" onClick={addTag}>
+              <Button type="button" variant="outline" onClick={addTag} size="sm">
                 Add
               </Button>
             </div>
@@ -351,13 +352,14 @@ export function TradeTubeUploadModal({
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => handleOpenChange(false)}>
+        <DialogFooter className="flex-shrink-0 flex-col-reverse sm:flex-row gap-2 sm:gap-0">
+          <Button variant="outline" onClick={() => handleOpenChange(false)} className="w-full sm:w-auto">
             Cancel
           </Button>
           <Button 
             onClick={handleSubmit} 
             disabled={!file || !title.trim() || isUploading}
+            className="w-full sm:w-auto"
           >
             {isUploading ? (
               <>
