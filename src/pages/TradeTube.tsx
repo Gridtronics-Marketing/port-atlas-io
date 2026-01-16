@@ -41,7 +41,7 @@ const TradeTube = () => {
   const canManageFolders = hasAnyRole(['admin']) || 
     ['owner', 'admin'].includes(effectiveRole || '');
 
-  const { folders, loading: foldersLoading, createFolder, deleteFolder } = useTradeTubeFolders();
+  const { folders, loading: foldersLoading, createFolder, updateFolder, deleteFolder, reorderFolders } = useTradeTubeFolders();
   const { 
     content, 
     loading: contentLoading, 
@@ -90,8 +90,16 @@ const TradeTube = () => {
     }
   };
 
-  const handleCreateFolder = async (name: string, description?: string, parentId?: string) => {
-    await createFolder({ name, description, parent_id: parentId });
+  const handleCreateFolder = async (name: string, description?: string, parentId?: string, icon?: string) => {
+    await createFolder({ name, description, parent_id: parentId, icon });
+  };
+
+  const handleUpdateFolder = async (id: string, updates: { name?: string; description?: string; icon?: string; parent_id?: string | null }) => {
+    await updateFolder(id, updates);
+  };
+
+  const handleReorderFolders = async (folderId: string, targetFolderId: string, position: 'before' | 'after') => {
+    await reorderFolders(folderId, targetFolderId, position);
   };
 
   const handleDeleteFolder = async (folder: TradeTubeFolder) => {
@@ -147,7 +155,9 @@ const TradeTube = () => {
             selectedFolderId={selectedFolderId}
             onSelectFolder={setSelectedFolderId}
             onCreateFolder={canManageFolders ? handleCreateFolder : undefined}
+            onUpdateFolder={canManageFolders ? handleUpdateFolder : undefined}
             onDeleteFolder={canManageFolders ? handleDeleteFolder : undefined}
+            onReorderFolders={canManageFolders ? handleReorderFolders : undefined}
             canManageFolders={canManageFolders}
           />
         </Card>

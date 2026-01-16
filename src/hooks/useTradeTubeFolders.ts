@@ -23,6 +23,13 @@ export interface CreateFolderInput {
   parent_id?: string;
 }
 
+export interface UpdateFolderInput {
+  name?: string;
+  description?: string;
+  icon?: string;
+  parent_id?: string | null;
+}
+
 export function useTradeTubeFolders() {
   const [folders, setFolders] = useState<TradeTubeFolder[]>([]);
   const [loading, setLoading] = useState(true);
@@ -88,16 +95,17 @@ export function useTradeTubeFolders() {
     }
   };
 
-  const updateFolder = async (id: string, updates: Partial<CreateFolderInput>): Promise<boolean> => {
+  const updateFolder = async (id: string, updates: UpdateFolderInput): Promise<boolean> => {
     try {
+      const updateData: Record<string, any> = {};
+      if (updates.name !== undefined) updateData.name = updates.name;
+      if (updates.description !== undefined) updateData.description = updates.description;
+      if (updates.icon !== undefined) updateData.icon = updates.icon;
+      if (updates.parent_id !== undefined) updateData.parent_id = updates.parent_id;
+
       const { error } = await supabase
         .from('tradetube_folders')
-        .update({
-          name: updates.name,
-          description: updates.description,
-          icon: updates.icon,
-          parent_id: updates.parent_id
-        })
+        .update(updateData)
         .eq('id', id);
 
       if (error) throw error;
@@ -108,6 +116,54 @@ export function useTradeTubeFolders() {
     } catch (error: any) {
       console.error('Error updating folder:', error);
       toast.error('Failed to update folder');
+      return false;
+    }
+  };
+
+  const reorderFolders = async (folderId: string, targetFolderId: string, position: 'before' | 'after'): Promise<boolean> => {
+    try {
+      // Get current folder order
+      const targetFolder = folders.find(f => f.id === targetFolderId);
+      const draggedFolder = folders.find(f => f.id === folderId);
+      
+      if (!targetFolder || !draggedFolder) return false;
+
+      // Calculate new sort_order
+      const newSortOrder = position === 'before' 
+        ? targetFolder.sort_order 
+        : targetFolder.sort_order + 1;
+
+      // Update dragged folder's sort_order and parent_id to match target's parent
+      const { error: updateError } = await supabase
+        .from('tradetube_folders')
+        .update({ 
+          sort_order: newSortOrder,
+          parent_id: targetFolder.parent_id 
+        })
+        .eq('id', folderId);
+
+      if (updateError) throw updateError;
+
+      // Shift other folders
+      const foldersToShift = folders.filter(
+        f => f.id !== folderId && 
+        f.parent_id === targetFolder.parent_id && 
+        f.sort_order >= newSortOrder
+      );
+
+      for (const folder of foldersToShift) {
+        await supabase
+          .from('tradetube_folders')
+          .update({ sort_order: folder.sort_order + 1 })
+          .eq('id', folder.id);
+      }
+
+      toast.success('Folders reordered');
+      await fetchFolders();
+      return true;
+    } catch (error: any) {
+      console.error('Error reordering folders:', error);
+      toast.error('Failed to reorder folders');
       return false;
     }
   };
@@ -185,6 +241,7 @@ export function useTradeTubeFolders() {
     createFolder,
     updateFolder,
     deleteFolder,
+    reorderFolders,
     seedDefaultFolders
   };
 }
