@@ -536,30 +536,88 @@ export const PhotoAnnotationCanvas = ({
     }, 2000); // Increased to 2 seconds for better batching
   }, [saveHistory]);
 
-  const handleUndo = useCallback(() => {
+  const handleUndo = useCallback(async () => {
     if (!fabricCanvas || historyStepRef.current <= 0) return;
 
     historyStepRef.current--;
     const json = historyRef.current[historyStepRef.current];
     
-    fabricCanvas.loadFromJSON(json, () => {
+    // Store the current background image before loading
+    const bgImage = fabricCanvas.backgroundImage;
+    
+    try {
+      // Clear all objects first
+      const objects = fabricCanvas.getObjects();
+      objects.forEach(obj => fabricCanvas.remove(obj));
+      
+      // Parse the saved state
+      const parsed = JSON.parse(json);
+      
+      // Restore objects from the saved state using Fabric.js v6 API
+      if (parsed.objects && parsed.objects.length > 0) {
+        const { util } = await import('fabric');
+        const enlivenedObjects = await util.enlivenObjects(parsed.objects);
+        enlivenedObjects.forEach((obj: any) => fabricCanvas.add(obj));
+      }
+      
+      // Restore background image if it was lost
+      if (!fabricCanvas.backgroundImage && bgImage) {
+        fabricCanvas.backgroundImage = bgImage;
+      }
+      
       fabricCanvas.renderAll();
       setCanUndo(historyStepRef.current > 0);
       setCanRedo(true);
-    });
+    } catch (error) {
+      console.error("Undo failed:", error);
+      // Restore background if operation failed
+      if (bgImage && !fabricCanvas.backgroundImage) {
+        fabricCanvas.backgroundImage = bgImage;
+        fabricCanvas.renderAll();
+      }
+    }
   }, [fabricCanvas]);
 
-  const handleRedo = useCallback(() => {
+  const handleRedo = useCallback(async () => {
     if (!fabricCanvas || historyStepRef.current >= historyRef.current.length - 1) return;
 
     historyStepRef.current++;
     const json = historyRef.current[historyStepRef.current];
     
-    fabricCanvas.loadFromJSON(json, () => {
+    // Store the current background image before loading
+    const bgImage = fabricCanvas.backgroundImage;
+    
+    try {
+      // Clear all objects first
+      const objects = fabricCanvas.getObjects();
+      objects.forEach(obj => fabricCanvas.remove(obj));
+      
+      // Parse the saved state
+      const parsed = JSON.parse(json);
+      
+      // Restore objects from the saved state using Fabric.js v6 API
+      if (parsed.objects && parsed.objects.length > 0) {
+        const { util } = await import('fabric');
+        const enlivenedObjects = await util.enlivenObjects(parsed.objects);
+        enlivenedObjects.forEach((obj: any) => fabricCanvas.add(obj));
+      }
+      
+      // Restore background image if it was lost
+      if (!fabricCanvas.backgroundImage && bgImage) {
+        fabricCanvas.backgroundImage = bgImage;
+      }
+      
       fabricCanvas.renderAll();
       setCanUndo(true);
       setCanRedo(historyStepRef.current < historyRef.current.length - 1);
-    });
+    } catch (error) {
+      console.error("Redo failed:", error);
+      // Restore background if operation failed
+      if (bgImage && !fabricCanvas.backgroundImage) {
+        fabricCanvas.backgroundImage = bgImage;
+        fabricCanvas.renderAll();
+      }
+    }
   }, [fabricCanvas]);
 
   const handleClear = useCallback(() => {
