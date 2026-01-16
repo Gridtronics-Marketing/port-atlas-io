@@ -1,4 +1,4 @@
-export const APP_VERSION = "1.4.2";
+export const APP_VERSION = "1.5.0";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,16 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "1.5.0",
+    date: "2026-01-16",
+    changes: [
+      "Added icon picker for TradeTube folders with 20 category-specific icons",
+      "Added folder editing with ability to change name, description, icon, and parent",
+      "Added drag-and-drop folder reordering for admins",
+      "Added nested folder support - create subfolders under existing categories"
+    ]
+  },
   {
     version: "1.4.2",
     date: "2026-01-16",
