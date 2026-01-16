@@ -5011,6 +5011,69 @@ export type Database = {
           },
         ]
       }
+      wire_paths: {
+        Row: {
+          cable_type: string
+          color: string | null
+          created_at: string
+          created_by: string | null
+          floor: number
+          id: string
+          label: string | null
+          location_id: string | null
+          notes: string | null
+          organization_id: string | null
+          path_points: Json
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          cable_type?: string
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          floor?: number
+          id?: string
+          label?: string | null
+          location_id?: string | null
+          notes?: string | null
+          organization_id?: string | null
+          path_points?: Json
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cable_type?: string
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          floor?: number
+          id?: string
+          label?: string | null
+          location_id?: string | null
+          notes?: string | null
+          organization_id?: string | null
+          path_points?: Json
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wire_paths_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wire_paths_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       work_orders: {
         Row: {
           actual_hours: number | null

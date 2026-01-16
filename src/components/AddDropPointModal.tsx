@@ -35,10 +35,11 @@ export const AddDropPointModal = ({
 }: AddDropPointModalProps) => {
   const [formData, setFormData] = useState({
     point_type: 'data',
-    cable_count: 1,
+    cable_count: '',  // Allow empty string for better iPad/iOS input handling
     label: '',
     notes: '',
   });
+  const [cableCountError, setCableCountError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { addDropPoint } = useDropPoints(locationId);
   const { toast } = useToast();
@@ -46,13 +47,21 @@ export const AddDropPointModal = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Validate cable count
+    const cableCount = formData.cable_count === '' ? 0 : parseInt(formData.cable_count);
+    if (cableCount < 1) {
+      setCableCountError('Number of cables must be at least 1');
+      return;
+    }
+    setCableCountError('');
+
     setIsSubmitting(true);
     try {
       const dropPointData = {
         location_id: locationId,
         point_type: formData.point_type,
         label: formData.label.trim() || null,
-        cable_count: formData.cable_count,
+        cable_count: cableCount,
         notes: formData.notes.trim() || null,
         floor: floor,
         x_coordinate: coordinates?.x || 50,
@@ -83,10 +92,11 @@ export const AddDropPointModal = ({
       // Reset form
       setFormData({
         point_type: 'data',
-        cable_count: 1,
+        cable_count: '',
         label: '',
         notes: '',
       });
+      setCableCountError('');
       
       onOpenChange(false);
     } catch (error) {
@@ -104,10 +114,11 @@ export const AddDropPointModal = ({
   const handleCancel = () => {
     setFormData({
       point_type: 'data',
-      cable_count: 1,
+      cable_count: '',
       label: '',
       notes: '',
     });
+    setCableCountError('');
     onOpenChange(false);
   };
 
@@ -143,11 +154,24 @@ export const AddDropPointModal = ({
             <Label htmlFor="cable_count">Number of Cables</Label>
             <Input
               id="cable_count"
-              type="number"
-              min="1"
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
               value={formData.cable_count}
-              onChange={(e) => setFormData({ ...formData, cable_count: parseInt(e.target.value) || 1 })}
+              onChange={(e) => {
+                const value = e.target.value;
+                // Allow empty or numeric values only
+                if (value === '' || /^\d+$/.test(value)) {
+                  setFormData({ ...formData, cable_count: value });
+                  setCableCountError('');
+                }
+              }}
+              placeholder="1"
+              className={cableCountError ? 'border-destructive' : ''}
             />
+            {cableCountError && (
+              <p className="text-sm text-destructive">{cableCountError}</p>
+            )}
           </div>
 
           {/* Label - Optional */}
