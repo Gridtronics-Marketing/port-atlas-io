@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { Upload, X, Video, FileText, Music, Image, Mic, Loader2 } from 'lucide-react';
+import { Upload, X, Video, FileText, Music, Image, Mic, Loader2, Zap } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -23,6 +23,7 @@ import { Badge } from '@/components/ui/badge';
 import { TradeTubeFolder } from '@/hooks/useTradeTubeFolders';
 import { MediaType } from '@/hooks/useTradeTubeContent';
 import { cn } from '@/lib/utils';
+import { formatBytes } from '@/lib/image-compression';
 
 interface TradeTubeUploadModalProps {
   open: boolean;
@@ -91,6 +92,8 @@ export function TradeTubeUploadModal({
   const [tags, setTags] = useState<string[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<'idle' | 'compressing' | 'uploading'>('idle');
+  const [compressionInfo, setCompressionInfo] = useState<{ original: number; compressed: number } | null>(null);
 
   const detectMediaType = (file: File): MediaType => {
     const type = file.type.toLowerCase();
@@ -154,6 +157,15 @@ export function TradeTubeUploadModal({
     if (!file || !title.trim()) return;
 
     setIsUploading(true);
+    setCompressionInfo(null);
+    
+    // Show compressing status for images
+    if (mediaType === 'image') {
+      setUploadStatus('compressing');
+    } else {
+      setUploadStatus('uploading');
+    }
+    
     try {
       await onUpload({
         file,
@@ -167,6 +179,8 @@ export function TradeTubeUploadModal({
       onOpenChange(false);
     } finally {
       setIsUploading(false);
+      setUploadStatus('idle');
+      setCompressionInfo(null);
     }
   };
 
@@ -364,7 +378,14 @@ export function TradeTubeUploadModal({
             {isUploading ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Uploading...
+                {uploadStatus === 'compressing' ? (
+                  <span className="flex items-center gap-1">
+                    <Zap className="h-3 w-3" />
+                    Compressing...
+                  </span>
+                ) : (
+                  'Uploading...'
+                )}
               </>
             ) : (
               <>

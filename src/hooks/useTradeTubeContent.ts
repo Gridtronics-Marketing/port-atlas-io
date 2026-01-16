@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
+import { compressImage, CompressionResult } from '@/lib/image-compression';
 
 export type MediaType = 'video' | 'audio' | 'document' | 'image' | 'voice_note';
 
@@ -230,21 +231,38 @@ export function useTradeTubeContent(filters?: ContentFilters) {
     }
   };
 
-  const uploadFile = async (file: File, mediaType: MediaType): Promise<string | null> => {
+  const uploadFile = async (
+    file: File, 
+    mediaType: MediaType,
+    onCompressionComplete?: (result: CompressionResult) => void
+  ): Promise<string | null> => {
     if (!currentOrganization?.id) {
       toast.error('No organization selected');
       return null;
     }
 
     try {
-      const fileExt = file.name.split('.').pop();
+      let fileToUpload = file;
+
+      // Compress images before upload
+      if (mediaType === 'image') {
+        const compressionResult = await compressImage(file, {
+          maxWidth: 2000,
+          maxHeight: 2000,
+          quality: 0.85
+        });
+        fileToUpload = compressionResult.file;
+        onCompressionComplete?.(compressionResult);
+      }
+
+      const fileExt = fileToUpload.name.split('.').pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
       const folderPath = mediaType === 'voice_note' ? 'audio' : `${mediaType}s`;
       const filePath = `${currentOrganization.id}/${folderPath}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('tradetube-media')
-        .upload(filePath, file, {
+        .upload(filePath, fileToUpload, {
           cacheControl: '3600',
           upsert: false
         });
