@@ -109,15 +109,24 @@ Deno.serve(async (req) => {
           }
         }
 
-        const origin = req.headers.get('origin') || 'https://trade-atlas.lovable.app';
+        // Fetch branding settings to get app_domain
+        const { data: brandingData } = await supabaseAdmin
+          .from('platform_settings')
+          .select('setting_value')
+          .eq('setting_key', 'email_branding')
+          .single();
+
+        const branding = brandingData?.setting_value as { app_domain?: string } || {};
+        const appDomain = branding.app_domain || 'https://port-atlas-io.lovable.app';
+        console.log('Using app domain for invite links:', appDomain);
 
         if (targetOrganizationId) {
           // === PATH 1: ADD USER TO EXISTING ORGANIZATION ===
           console.log(`Adding user ${inviteEmail} to existing organization ${targetOrganizationId}`);
 
-          // Generate invite link
+          // Generate invite link - use magiclink to prevent Supabase sending its own email
           const { data: linkData, error: inviteLinkError } = await supabaseAdmin.auth.admin.generateLink({
-            type: 'invite',
+            type: 'magiclink',
             email: inviteEmail,
             options: {
               data: {
@@ -125,7 +134,7 @@ Deno.serve(async (req) => {
                 organization_name: targetOrganizationName,
                 role: userRole
               },
-              redirectTo: `${origin}/auth`
+              redirectTo: `${appDomain}/auth`
             }
           });
 
@@ -279,9 +288,9 @@ Deno.serve(async (req) => {
           console.error('Error creating invitation record:', inviteRecordError);
         }
 
-        // Generate invite link WITHOUT sending Supabase's default email
+        // Generate invite link WITHOUT sending Supabase's default email - use magiclink
         const { data: linkData, error: inviteLinkError } = await supabaseAdmin.auth.admin.generateLink({
-          type: 'invite',
+          type: 'magiclink',
           email: inviteEmail,
           options: {
             data: {
@@ -290,7 +299,7 @@ Deno.serve(async (req) => {
               role: userRole,
               invitation_token: invitationToken
             },
-            redirectTo: `${origin}/auth`
+            redirectTo: `${appDomain}/auth`
           }
         });
 

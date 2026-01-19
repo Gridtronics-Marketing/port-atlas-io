@@ -1,4 +1,4 @@
-export const APP_VERSION = "1.5.0";
+export const APP_VERSION = "1.5.1";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,15 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "1.5.1",
+    date: "2026-01-19",
+    changes: [
+      "Added configurable App Domain setting for custom domains in invitation emails",
+      "Fixed user invitations to use branded Resend emails instead of Supabase defaults",
+      "Fixed invitation and password reset links redirecting to correct domain instead of localhost"
+    ]
+  },
   {
     version: "1.5.0",
     date: "2026-01-16",
