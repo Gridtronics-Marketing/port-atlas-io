@@ -12,12 +12,14 @@ interface EmailBranding {
   logo_url: string | null;
   company_name: string;
   primary_color: string;
+  app_domain: string;
 }
 
 const defaultBranding: EmailBranding = {
   logo_url: null,
   company_name: 'Trade Atlas',
-  primary_color: '#1e3a5f'
+  primary_color: '#1e3a5f',
+  app_domain: 'https://port-atlas-io.lovable.app'
 };
 
 export const EmailBrandingSettings = () => {
@@ -43,7 +45,8 @@ export const EmailBrandingSettings = () => {
         setBranding({
           logo_url: value.logo_url ?? null,
           company_name: value.company_name ?? 'Trade Atlas',
-          primary_color: value.primary_color ?? '#1e3a5f'
+          primary_color: value.primary_color ?? '#1e3a5f',
+          app_domain: value.app_domain ?? 'https://port-atlas-io.lovable.app'
         });
       }
     } catch (err: any) {
@@ -269,6 +272,33 @@ export const EmailBrandingSettings = () => {
           <p className="text-xs text-muted-foreground">
             Used for email header background and accents
           </p>
+        </div>
+
+        {/* App Domain */}
+        <div className="space-y-2">
+          <Label htmlFor="app-domain">App Domain</Label>
+          <Input
+            id="app-domain"
+            value={branding.app_domain}
+            onChange={(e) => {
+              let value = e.target.value.trim();
+              // Remove trailing slash
+              if (value.endsWith('/')) {
+                value = value.slice(0, -1);
+              }
+              setBranding(prev => ({ ...prev, app_domain: value }));
+            }}
+            placeholder="https://yourdomain.com"
+          />
+          <p className="text-xs text-muted-foreground">
+            Used for invitation and password reset links. Must start with https://
+          </p>
+          {branding.app_domain && !branding.app_domain.startsWith('https://') && (
+            <p className="text-xs text-destructive flex items-center gap-1">
+              <AlertCircle className="h-3 w-3" />
+              Domain must start with https://
+            </p>
+          )}
         </div>
 
         {/* Email Preview Note */}

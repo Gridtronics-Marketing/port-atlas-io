@@ -43,12 +43,21 @@ const Auth = () => {
     confirmPassword: '',
   });
 
-  // Check for password reset token in URL
+  // Check for password reset or magic link token in URL
   useEffect(() => {
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
     const type = hashParams.get('type');
+    const accessToken = hashParams.get('access_token');
     
+    // Handle password recovery links
     if (type === 'recovery') {
+      setShowResetPassword(true);
+    }
+    
+    // Handle magic link invitations - user needs to set password
+    // When Supabase processes the magiclink, it sets access_token in hash
+    if (type === 'magiclink' && accessToken) {
+      console.log('Magic link detected - prompting user to set password');
       setShowResetPassword(true);
     }
   }, []);

@@ -84,14 +84,29 @@ Deno.serve(async (req) => {
 
     console.log(`Admin ${callerEmail} resetting password for ${email}`);
 
+    // Fetch branding settings first to get app_domain
+    const { data: brandingData } = await supabaseAdmin
+      .from('platform_settings')
+      .select('setting_value')
+      .eq('setting_key', 'email_branding')
+      .single();
+
+    const branding = brandingData?.setting_value as { logo_url?: string; company_name?: string; primary_color?: string; app_domain?: string } || {
+      logo_url: null,
+      company_name: 'Trade Atlas',
+      primary_color: '#1e3a5f',
+      app_domain: 'https://port-atlas-io.lovable.app'
+    };
+
+    const appDomain = branding.app_domain || 'https://port-atlas-io.lovable.app';
+    console.log('Using app domain for reset link:', appDomain);
+
     // Generate password reset link
-    const origin = req.headers.get('origin') || 'https://mhrekppksiekhstnteyu.supabase.co';
-    
     const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
       type: 'recovery',
       email: email,
       options: {
-        redirectTo: `${origin}/auth`
+        redirectTo: `${appDomain}/auth`
       }
     });
 
@@ -104,19 +119,6 @@ Deno.serve(async (req) => {
     }
 
     const resetLink = linkData.properties.action_link;
-
-    // Fetch branding settings
-    const { data: brandingData } = await supabaseAdmin
-      .from('platform_settings')
-      .select('setting_value')
-      .eq('setting_key', 'email_branding')
-      .single();
-
-    const branding = brandingData?.setting_value as { logo_url?: string; company_name?: string; primary_color?: string } || {
-      logo_url: null,
-      company_name: 'Trade Atlas',
-      primary_color: '#1e3a5f'
-    };
 
     // Send branded email
     if (resendApiKey) {
