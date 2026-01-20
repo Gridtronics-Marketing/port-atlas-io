@@ -1,4 +1,4 @@
-export const APP_VERSION = "1.5.1";
+export const APP_VERSION = "1.5.2";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,16 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "1.5.2",
+    date: "2026-01-20",
+    changes: [
+      "Added dual user creation mode: admin can set password directly or send magic link invitation",
+      "New branded invitation email template for internal users via Resend",
+      "Fixed user creation to bypass Supabase default emails - now uses custom edge function",
+      "Invitation links now use configurable app domain instead of localhost"
+    ]
+  },
   {
     version: "1.5.1",
     date: "2026-01-19",

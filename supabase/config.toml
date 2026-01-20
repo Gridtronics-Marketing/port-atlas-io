@@ -11,3 +11,9 @@ verify_jwt = true
 
 [functions.invite-client-user]
 verify_jwt = true
+
+[functions.create-user]
+verify_jwt = false
+
+[functions.send-user-invitation-email]
+verify_jwt = false
