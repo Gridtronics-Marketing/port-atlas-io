@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Shield, Users, Mail, Activity, UserCog, CheckSquare } from "lucide-react";
+import { Plus, Shield, Users, Mail, Activity, UserCog, CheckSquare, Briefcase } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +11,7 @@ import { RoleManagementModal } from "@/components/RoleManagementModal";
 import { ManualRoleAssignmentModal } from "@/components/ManualRoleAssignmentModal";
 import { BulkRoleAssignmentModal } from "@/components/BulkRoleAssignmentModal";
 import { UserActivityLogViewer } from "@/components/UserActivityLogViewer";
+import { EmployeeDetailsPanel } from "@/components/EmployeeDetailsPanel";
 import { useUserRoles } from "@/hooks/useUserRoles";
 import { useProfiles } from "@/hooks/useProfiles";
 import { useAuth } from "@/hooks/useAuth";
@@ -33,11 +34,12 @@ const UserManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
   
-  const { userRoles, loading, hasRole, fetchAllUserRoles } = useUserRoles();
+  const { userRoles, loading, hasRole, hasAnyRole, fetchAllUserRoles } = useUserRoles();
   const { profiles, loading: profilesLoading, getProfileByUserId } = useProfiles();
   const { user } = useAuth();
 
   const isAdmin = hasRole('admin');
+  const canViewHRData = hasAnyRole(['admin', 'hr_manager']);
 
   // Show loading state while roles are being fetched
   if (loading || profilesLoading) {
@@ -123,6 +125,8 @@ const UserManagement = () => {
         return 'default';
       case 'technician':
         return 'outline';
+      case 'employee':
+        return 'default';
       default:
         return 'outline';
     }
@@ -134,6 +138,9 @@ const UserManagement = () => {
     setShowRoleModal(true);
   };
 
+  // Stats
+  const employeeCount = userRoles.filter(ur => ur.role === 'employee').length;
+
   return (
     <main className="container mx-auto px-4 py-6 space-y-6">
       <Tabs defaultValue="users" className="w-full">
@@ -144,7 +151,7 @@ const UserManagement = () => {
               User Management
             </h1>
             <p className="text-muted-foreground mt-2">
-              Manage system users, roles, and permissions
+              Manage system users, roles, and employee details
             </p>
           </div>
           <TabsList>
@@ -152,6 +159,12 @@ const UserManagement = () => {
               <Users className="h-4 w-4" />
               Users
             </TabsTrigger>
+            {canViewHRData && (
+              <TabsTrigger value="employees" className="flex items-center gap-2">
+                <Briefcase className="h-4 w-4" />
+                Employee Details
+              </TabsTrigger>
+            )}
             <TabsTrigger value="activity" className="flex items-center gap-2">
               <Activity className="h-4 w-4" />
               Activity Log
@@ -190,7 +203,7 @@ const UserManagement = () => {
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
@@ -222,6 +235,18 @@ const UserManagement = () => {
                   <div>
                     <p className="text-2xl font-bold">{userRoles.filter(ur => ur.role === 'hr_manager').length}</p>
                     <p className="text-sm text-muted-foreground">HR Managers</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <Briefcase className="h-8 w-8 text-primary" />
+                  <div>
+                    <p className="text-2xl font-bold">{employeeCount}</p>
+                    <p className="text-sm text-muted-foreground">Employees</p>
                   </div>
                 </div>
               </CardContent>
@@ -358,6 +383,12 @@ const UserManagement = () => {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {canViewHRData && (
+          <TabsContent value="employees" className="space-y-6">
+            <EmployeeDetailsPanel />
+          </TabsContent>
+        )}
 
         <TabsContent value="activity" className="space-y-6">
           <UserActivityLogViewer />

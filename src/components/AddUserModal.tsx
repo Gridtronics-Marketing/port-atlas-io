@@ -65,6 +65,11 @@ const availableRoles: { value: AppRole; label: string; description: string }[] =
     description: 'Project oversight and team coordination' 
   },
   { 
+    value: 'employee', 
+    label: 'Employee', 
+    description: 'Organization member with HR data and skills tracking' 
+  },
+  { 
     value: 'technician', 
     label: 'Technician', 
     description: 'Field operations and technical tasks' 

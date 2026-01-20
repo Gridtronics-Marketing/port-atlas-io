@@ -1,4 +1,4 @@
-export const APP_VERSION = "1.5.2";
+export const APP_VERSION = "1.6.0";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,18 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "1.6.0",
+    date: "2026-01-20",
+    changes: [
+      "Refactored employee management into User Management page",
+      "Added new 'employee' role to app_role enum for organization members",
+      "Employee Details tab in User Management for HR data (skills, certifications, compensation)",
+      "Employees now automatically linked to user accounts via user_id",
+      "Database triggers auto-sync employee records when employee role is assigned",
+      "Removed standalone Employees page from navigation"
+    ]
+  },
   {
     version: "1.5.2",
     date: "2026-01-20",

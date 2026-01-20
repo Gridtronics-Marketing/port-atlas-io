@@ -1721,6 +1721,7 @@ export type Database = {
           skills: string[] | null
           status: string | null
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           certification_expiry?: Json | null
@@ -1743,6 +1744,7 @@ export type Database = {
           skills?: string[] | null
           status?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           certification_expiry?: Json | null
@@ -1765,6 +1767,7 @@ export type Database = {
           skills?: string[] | null
           status?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -5428,6 +5431,7 @@ export type Database = {
         Args: { _role: Database["public"]["Enums"]["app_role"] }
         Returns: boolean
       }
+      is_employee: { Args: { _user_id: string }; Returns: boolean }
       is_platform_admin: { Args: { _user_id?: string }; Returns: boolean }
       is_super_admin: { Args: { _user_id?: string }; Returns: boolean }
     }
@@ -5442,6 +5446,7 @@ export type Database = {
         | "client_technician"
         | "client_admin"
         | "field_photographer"
+        | "employee"
       org_role: "owner" | "admin" | "project_manager" | "technician" | "viewer"
       platform_role: "super_admin" | "support"
     }
@@ -5581,6 +5586,7 @@ export const Constants = {
         "client_technician",
         "client_admin",
         "field_photographer",
+        "employee",
       ],
       org_role: ["owner", "admin", "project_manager", "technician", "viewer"],
       platform_role: ["super_admin", "support"],

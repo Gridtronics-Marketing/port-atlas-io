@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 
-export type AppRole = 'admin' | 'hr_manager' | 'project_manager' | 'technician' | 'viewer' | 'client_technician' | 'client_admin' | 'field_photographer';
+export type AppRole = 'admin' | 'hr_manager' | 'project_manager' | 'technician' | 'viewer' | 'client_technician' | 'client_admin' | 'field_photographer' | 'employee';
 
 export interface UserRole {
   id: string;
@@ -146,7 +146,11 @@ export const useUserRoles = () => {
   };
 
   const isCompanyUser = (): boolean => {
-    return hasAnyRole(['admin', 'hr_manager', 'project_manager', 'technician', 'viewer', 'field_photographer']);
+    return hasAnyRole(['admin', 'hr_manager', 'project_manager', 'technician', 'viewer', 'field_photographer', 'employee']);
+  };
+
+  const isEmployee = (): boolean => {
+    return hasRole('employee');
   };
 
   useEffect(() => {
@@ -177,5 +181,6 @@ export const useUserRoles = () => {
     canEditEmployees,
     isClientUser,
     isCompanyUser,
+    isEmployee,
   };
 };
