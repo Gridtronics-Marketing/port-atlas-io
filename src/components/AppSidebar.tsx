@@ -75,7 +75,6 @@ const navigationItems = [
   { title: "Twilio Settings", url: "/twilio-settings", icon: Phone },
   { title: "Locations", url: "/locations", icon: Building },
   { title: "Clients", url: "/clients", icon: Building },
-  { title: "Employees", url: "/employees", icon: Users },
 ];
 
 export function AppSidebar() {
