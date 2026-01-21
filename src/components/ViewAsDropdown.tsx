@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Eye, ChevronDown, Shield, User, Users, Search } from 'lucide-react';
+import { Eye, ChevronDown, Shield, User, Users, Search, Building2 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,6 +23,11 @@ interface OrgUser {
   email: string;
 }
 
+interface ClientPortalOrg {
+  id: string;
+  name: string;
+}
+
 export const ViewAsDropdown: React.FC = () => {
   const {
     isSuperAdmin,
@@ -31,12 +36,15 @@ export const ViewAsDropdown: React.FC = () => {
     currentOrganization,
     startRoleImpersonation,
     startUserImpersonation,
+    startClientPortalImpersonation,
     stopImpersonation,
   } = useOrganization();
 
   const [orgUsers, setOrgUsers] = useState<OrgUser[]>([]);
+  const [clientPortalOrgs, setClientPortalOrgs] = useState<ClientPortalOrg[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loadingUsers, setLoadingUsers] = useState(false);
+  const [loadingPortals, setLoadingPortals] = useState(false);
 
   const roles: { value: OrgRole; label: string; description: string }[] = [
     { value: 'owner', label: 'Owner', description: 'Full organization access' },
@@ -81,7 +89,34 @@ export const ViewAsDropdown: React.FC = () => {
     } catch (error) {
       console.error('Error fetching org users:', error);
     } finally {
-      setLoadingUsers(false);
+    setLoadingUsers(false);
+    }
+  };
+
+  const fetchClientPortalOrgs = async () => {
+    setLoadingPortals(true);
+    try {
+      const { data, error } = await supabase
+        .from('organizations')
+        .select('id, name, settings')
+        .order('name');
+
+      if (!error && data) {
+        const portals = data
+          .filter(org => {
+            const settings = org.settings as Record<string, unknown> | null;
+            return settings?.parentOrganizationId;
+          })
+          .map(org => ({
+            id: org.id,
+            name: org.name
+          }));
+        setClientPortalOrgs(portals);
+      }
+    } catch (error) {
+      console.error('Error fetching client portal orgs:', error);
+    } finally {
+      setLoadingPortals(false);
     }
   };
 
@@ -91,6 +126,12 @@ export const ViewAsDropdown: React.FC = () => {
       fetchOrgUsers();
     }
   }, [currentOrganization, isSuperAdmin]);
+
+  useEffect(() => {
+    if (isSuperAdmin) {
+      fetchClientPortalOrgs();
+    }
+  }, [isSuperAdmin]);
 
   // Only show for super admins - this must be AFTER all hooks
   if (!isSuperAdmin) return null;
@@ -121,9 +162,11 @@ export const ViewAsDropdown: React.FC = () => {
           <Eye className="h-4 w-4" />
           {isImpersonating ? (
             <span className="hidden md:inline truncate max-w-[100px]">
-              {impersonation.type === 'role' 
-                ? impersonation.targetRole 
-                : impersonation.targetUserEmail?.split('@')[0]}
+              {impersonation.type === 'client_portal'
+                ? impersonation.targetClientOrgName
+                : impersonation.type === 'role' 
+                  ? impersonation.targetRole 
+                  : impersonation.targetUserEmail?.split('@')[0]}
             </span>
           ) : (
             <span className="hidden md:inline">View As</span>
@@ -205,6 +248,39 @@ export const ViewAsDropdown: React.FC = () => {
                     <Badge variant="secondary" className={getRoleColor(user.role)}>
                       {user.role}
                     </Badge>
+                  </DropdownMenuItem>
+                ))
+              )}
+            </div>
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>
+
+        <DropdownMenuSeparator />
+
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger className="gap-2">
+            <Building2 className="h-4 w-4" />
+            View as Client Portal
+          </DropdownMenuSubTrigger>
+          <DropdownMenuSubContent className="w-64">
+            <div className="max-h-64 overflow-y-auto">
+              {loadingPortals ? (
+                <div className="p-4 text-center text-sm text-muted-foreground">
+                  Loading client portals...
+                </div>
+              ) : clientPortalOrgs.length === 0 ? (
+                <div className="p-4 text-center text-sm text-muted-foreground">
+                  No client portals found
+                </div>
+              ) : (
+                clientPortalOrgs.map(org => (
+                  <DropdownMenuItem
+                    key={org.id}
+                    onClick={() => startClientPortalImpersonation(org.id, org.name)}
+                    className="flex items-center gap-2 py-2"
+                  >
+                    <Building2 className="h-4 w-4 text-muted-foreground" />
+                    <span className="truncate">{org.name}</span>
                   </DropdownMenuItem>
                 ))
               )}
