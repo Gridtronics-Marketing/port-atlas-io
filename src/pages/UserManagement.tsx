@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Shield, Users, Mail, Activity, UserCog, CheckSquare, Briefcase, Building2, AlertTriangle, Settings } from "lucide-react";
+import { Plus, Shield, Users, Mail, Activity, UserCog, CheckSquare, Briefcase, Building2, AlertTriangle, Settings, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +17,18 @@ import { useUserRoles } from "@/hooks/useUserRoles";
 import { useProfiles } from "@/hooks/useProfiles";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrganization } from "@/contexts/OrganizationContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Table,
   TableBody,
@@ -29,6 +41,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
@@ -41,6 +54,9 @@ const UserManagement = () => {
   const [showManualRoleModal, setShowManualRoleModal] = useState(false);
   const [showBulkRoleModal, setShowBulkRoleModal] = useState(false);
   const [showAssignOrgModal, setShowAssignOrgModal] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<{ id: string; email: string | null } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
   
@@ -48,6 +64,7 @@ const UserManagement = () => {
   const { profiles, loading: profilesLoading, fetchProfiles } = useProfiles();
   const { user } = useAuth();
   const { isSuperAdmin, isGlobalView } = useOrganization();
+  const { toast } = useToast();
 
   const isAdmin = hasRole('admin') || isSuperAdmin;
   const canViewHRData = hasAnyRole(['admin', 'hr_manager']) || isSuperAdmin;
@@ -170,6 +187,53 @@ const UserManagement = () => {
     setSelectedUserEmail(userEmail || userId);
     setSelectedUserOrgs(orgs);
     setShowAssignOrgModal(true);
+  };
+
+  const handleDeleteUser = async () => {
+    if (!userToDelete) return;
+    
+    try {
+      setIsDeleting(true);
+      
+      // Delete user roles first
+      await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', userToDelete.id);
+      
+      // Delete organization memberships
+      await supabase
+        .from('organization_members')
+        .delete()
+        .eq('user_id', userToDelete.id);
+      
+      // Delete profile
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', userToDelete.id);
+      
+      if (profileError) throw profileError;
+      
+      toast({
+        title: "User Deleted",
+        description: `${userToDelete.email || userToDelete.id} has been removed from the system.`,
+      });
+      
+      fetchAllUserRoles();
+      fetchProfiles();
+    } catch (error: any) {
+      console.error('Error deleting user:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete user",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
+      setUserToDelete(null);
+    }
   };
 
   // Stats
@@ -471,6 +535,21 @@ const UserManagement = () => {
                                   Assign to Organization
                                 </DropdownMenuItem>
                               )}
+                              {isSuperAdmin && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem 
+                                    onClick={() => {
+                                      setUserToDelete({ id: user.id, email: user.email });
+                                      setShowDeleteConfirm(true);
+                                    }}
+                                    className="text-destructive focus:text-destructive"
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Delete User
+                                  </DropdownMenuItem>
+                                </>
+                              )}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>
@@ -536,6 +615,34 @@ const UserManagement = () => {
           fetchProfiles();
         }}
       />
+
+      {/* Delete User Confirmation */}
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete User Account</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete {userToDelete?.email || userToDelete?.id}? This will remove:
+              <ul className="list-disc list-inside mt-2 space-y-1">
+                <li>Their profile</li>
+                <li>All role assignments</li>
+                <li>All organization memberships</li>
+              </ul>
+              <p className="mt-2 font-medium text-destructive">This action cannot be undone.</p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteUser}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? 'Deleting...' : 'Delete User'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 };
