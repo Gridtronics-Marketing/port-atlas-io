@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Building2 } from 'lucide-react';
+import { Building2, X } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import {
   Select,
   SelectContent,
@@ -51,6 +52,7 @@ export const AssignOrganizationModal: React.FC<AssignOrganizationModalProps> = (
   const [selectedOrgId, setSelectedOrgId] = useState<string>('');
   const [selectedRole, setSelectedRole] = useState<OrgRole>('viewer');
   const [loading, setLoading] = useState(false);
+  const [removingOrgId, setRemovingOrgId] = useState<string | null>(null);
 
   // Filter out organizations user is already a member of
   const availableOrgs = organizations.filter(
@@ -101,6 +103,36 @@ export const AssignOrganizationModal: React.FC<AssignOrganizationModalProps> = (
     }
   };
 
+  const handleRemoveFromOrg = async (orgId: string, orgName: string) => {
+    try {
+      setRemovingOrgId(orgId);
+
+      const { error } = await supabase
+        .from('organization_members')
+        .delete()
+        .eq('user_id', userId)
+        .eq('organization_id', orgId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `Removed user from ${orgName}`,
+      });
+
+      onAssigned();
+    } catch (error: any) {
+      console.error('Error removing from organization:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to remove from organization",
+        variant: "destructive",
+      });
+    } finally {
+      setRemovingOrgId(null);
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
@@ -117,15 +149,26 @@ export const AssignOrganizationModal: React.FC<AssignOrganizationModalProps> = (
         <div className="space-y-4 py-4">
           {currentOrganizations.length > 0 && (
             <div className="space-y-2">
-              <Label className="text-sm text-muted-foreground">Current Organizations</Label>
-              <div className="flex flex-wrap gap-1">
+              <Label className="text-sm text-muted-foreground">Current Organizations (click X to remove)</Label>
+              <div className="flex flex-wrap gap-2">
                 {currentOrganizations.map(org => (
-                  <span
+                  <Badge
                     key={org.id}
-                    className="text-xs bg-muted px-2 py-1 rounded"
+                    variant="secondary"
+                    className="flex items-center gap-1 pr-1"
                   >
+                    <Building2 className="h-3 w-3" />
                     {org.name} ({org.role})
-                  </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-4 w-4 p-0 ml-1 hover:bg-destructive hover:text-destructive-foreground rounded-full"
+                      onClick={() => handleRemoveFromOrg(org.id, org.name)}
+                      disabled={removingOrgId === org.id}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </Badge>
                 ))}
               </div>
             </div>
