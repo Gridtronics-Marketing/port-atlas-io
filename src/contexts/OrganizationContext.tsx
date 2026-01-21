@@ -42,6 +42,7 @@ interface OrganizationContextType {
   // Super admin state
   isSuperAdmin: boolean;
   isPlatformAdmin: boolean;
+  isGlobalView: boolean;
   
   // Impersonation state
   impersonation: ImpersonationState;
@@ -54,7 +55,7 @@ interface OrganizationContextType {
   linkedClientId: string | null;
   
   // Actions
-  switchOrganization: (orgId: string) => Promise<void>;
+  switchOrganization: (orgId: string | null) => Promise<void>;
   startRoleImpersonation: (role: OrgRole) => Promise<void>;
   startUserImpersonation: (userId: string, userEmail: string) => Promise<void>;
   stopImpersonation: () => Promise<void>;
@@ -76,6 +77,7 @@ interface OrganizationProviderProps {
 }
 
 const STORAGE_KEY = 'selectedOrganizationId';
+const GLOBAL_VIEW_KEY = 'global';
 
 export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ children }) => {
   const { user } = useAuth();
@@ -89,6 +91,7 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
   // Super admin state
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [isPlatformAdmin, setIsPlatformAdmin] = useState(false);
+  const [isGlobalView, setIsGlobalView] = useState(false);
   
   // Client portal state
   const [isClientPortalUser, setIsClientPortalUser] = useState(false);
@@ -165,12 +168,25 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
         const orgs = (allOrgs || []) as Organization[];
         setOrganizations(orgs);
         
-        // Restore from localStorage or auto-select first org
+        // Restore from localStorage - check for global view or specific org
         const savedOrgId = localStorage.getItem(STORAGE_KEY);
-        const savedOrg = savedOrgId ? orgs.find(o => o.id === savedOrgId) : null;
         
-        if (!currentOrganization) {
-          setCurrentOrganization(savedOrg || orgs[0] || null);
+        if (savedOrgId === GLOBAL_VIEW_KEY) {
+          // Super admin previously selected global view
+          setIsGlobalView(true);
+          setCurrentOrganization(null);
+        } else if (!currentOrganization && !isGlobalView) {
+          // Default super admins to global view on first load
+          const savedOrg = savedOrgId ? orgs.find(o => o.id === savedOrgId) : null;
+          if (savedOrg) {
+            setCurrentOrganization(savedOrg);
+            setIsGlobalView(false);
+          } else {
+            // Default to global view for super admins
+            setIsGlobalView(true);
+            setCurrentOrganization(null);
+            localStorage.setItem(STORAGE_KEY, GLOBAL_VIEW_KEY);
+          }
         }
       } else {
         // Fetch only organizations user is a member of
@@ -216,12 +232,26 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
     }
   };
 
-  const switchOrganization = async (orgId: string) => {
+  const switchOrganization = async (orgId: string | null) => {
+    // Handle global view for super admins
+    if (orgId === null && isSuperAdmin) {
+      setIsGlobalView(true);
+      setCurrentOrganization(null);
+      localStorage.setItem(STORAGE_KEY, GLOBAL_VIEW_KEY);
+      
+      // Stop any impersonation when switching to global view
+      if (isImpersonating) {
+        await stopImpersonation();
+      }
+      return;
+    }
+
     const org = organizations.find(o => o.id === orgId);
     if (!org) return;
 
+    setIsGlobalView(false);
     setCurrentOrganization(org);
-    localStorage.setItem(STORAGE_KEY, orgId);
+    localStorage.setItem(STORAGE_KEY, orgId!);
 
     // Get user's role in this org (if not super admin)
     if (!isSuperAdmin && user) {
@@ -373,6 +403,7 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
     loadingOrganizations,
     isSuperAdmin,
     isPlatformAdmin,
+    isGlobalView,
     impersonation,
     isImpersonating,
     effectiveRole,

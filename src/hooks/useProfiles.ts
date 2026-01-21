@@ -12,8 +12,15 @@ export interface Profile {
   updated_at: string;
 }
 
+export interface OrganizationMembership {
+  id: string;
+  name: string;
+  role: string;
+}
+
 export interface ProfileWithRoles extends Profile {
   roles: string[];
+  organizations: OrganizationMembership[];
 }
 
 export const useProfiles = () => {
@@ -41,15 +48,39 @@ export const useProfiles = () => {
 
       if (rolesError) throw rolesError;
 
-      // Combine profiles with their roles
+      // Fetch all organization memberships with org names
+      const { data: membershipsData, error: membershipsError } = await supabase
+        .from('organization_members')
+        .select(`
+          user_id,
+          role,
+          organization_id,
+          organizations (
+            id,
+            name
+          )
+        `);
+
+      if (membershipsError) throw membershipsError;
+
+      // Combine profiles with their roles and organizations
       const profilesWithRoles: ProfileWithRoles[] = (profilesData || []).map(profile => {
         const userRoles = (rolesData || [])
           .filter(r => r.user_id === profile.id)
           .map(r => r.role);
         
+        const userOrgs = (membershipsData || [])
+          .filter(m => m.user_id === profile.id)
+          .map(m => ({
+            id: (m.organizations as any)?.id || m.organization_id,
+            name: (m.organizations as any)?.name || 'Unknown',
+            role: m.role,
+          }));
+        
         return {
           ...profile,
-          roles: userRoles
+          roles: userRoles,
+          organizations: userOrgs,
         };
       });
 
