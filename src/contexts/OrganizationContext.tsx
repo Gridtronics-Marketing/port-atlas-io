@@ -25,10 +25,12 @@ export interface OrganizationMember {
 }
 
 interface ImpersonationState {
-  type: 'role' | 'user' | null;
+  type: 'role' | 'user' | 'client_portal' | null;
   targetRole: OrgRole | null;
   targetUserId: string | null;
   targetUserEmail: string | null;
+  targetClientOrgId: string | null;
+  targetClientOrgName: string | null;
   startedAt: Date | null;
 }
 
@@ -58,6 +60,7 @@ interface OrganizationContextType {
   switchOrganization: (orgId: string | null) => Promise<void>;
   startRoleImpersonation: (role: OrgRole) => Promise<void>;
   startUserImpersonation: (userId: string, userEmail: string) => Promise<void>;
+  startClientPortalImpersonation: (orgId: string, orgName: string) => Promise<void>;
   stopImpersonation: () => Promise<void>;
   refreshOrganizations: () => Promise<void>;
 }
@@ -104,6 +107,8 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
     targetRole: null,
     targetUserId: null,
     targetUserEmail: null,
+    targetClientOrgId: null,
+    targetClientOrgName: null,
     startedAt: null,
   });
 
@@ -291,6 +296,8 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
       targetRole: role,
       targetUserId: null,
       targetUserEmail: null,
+      targetClientOrgId: null,
+      targetClientOrgName: null,
       startedAt: new Date(),
     });
   };
@@ -326,8 +333,45 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
       targetRole: membership?.role as OrgRole || 'viewer',
       targetUserId: userId,
       targetUserEmail: userEmail,
+      targetClientOrgId: null,
+      targetClientOrgName: null,
       startedAt: new Date(),
     });
+  };
+
+  // Start client portal impersonation (super admin only)
+  const startClientPortalImpersonation = async (orgId: string, orgName: string) => {
+    if (!isSuperAdmin || !user) return;
+
+    // Log the impersonation start
+    await supabase.from('admin_impersonation_log').insert({
+      admin_user_id: user.id,
+      impersonation_type: 'client_portal',
+      target_organization_id: orgId,
+      action: 'start',
+      user_agent: navigator.userAgent,
+      metadata: { client_org_name: orgName }
+    });
+
+    // Switch to the client portal organization
+    const org = organizations.find(o => o.id === orgId);
+    if (org) {
+      setCurrentOrganization(org);
+      setIsGlobalView(false);
+    }
+
+    setImpersonation({
+      type: 'client_portal',
+      targetRole: 'viewer',
+      targetUserId: null,
+      targetUserEmail: null,
+      targetClientOrgId: orgId,
+      targetClientOrgName: orgName,
+      startedAt: new Date(),
+    });
+
+    // Set client portal user flag
+    setIsClientPortalUser(true);
   };
 
   // Stop impersonation
@@ -340,7 +384,9 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
       impersonation_type: impersonation.type,
       target_role: impersonation.targetRole,
       target_user_id: impersonation.targetUserId,
-      target_organization_id: currentOrganization?.id,
+      target_organization_id: impersonation.type === 'client_portal' 
+        ? impersonation.targetClientOrgId 
+        : currentOrganization?.id,
       action: 'end',
       user_agent: navigator.userAgent,
       metadata: { 
@@ -350,11 +396,22 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
       }
     });
 
+    // Reset client portal state if it was a client portal impersonation
+    if (impersonation.type === 'client_portal') {
+      setIsClientPortalUser(false);
+      // Restore to global view for super admin
+      setIsGlobalView(true);
+      setCurrentOrganization(null);
+      localStorage.setItem(STORAGE_KEY, GLOBAL_VIEW_KEY);
+    }
+
     setImpersonation({
       type: null,
       targetRole: null,
       targetUserId: null,
       targetUserEmail: null,
+      targetClientOrgId: null,
+      targetClientOrgName: null,
       startedAt: null,
     });
   };
@@ -413,6 +470,7 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
     switchOrganization,
     startRoleImpersonation,
     startUserImpersonation,
+    startClientPortalImpersonation,
     stopImpersonation,
     refreshOrganizations,
   };

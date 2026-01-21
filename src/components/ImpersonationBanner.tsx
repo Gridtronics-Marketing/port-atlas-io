@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertTriangle, X, User, Shield } from 'lucide-react';
+import { AlertTriangle, X, User, Shield, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useOrganization } from '@/contexts/OrganizationContext';
 
@@ -39,7 +39,14 @@ export const ImpersonationBanner: React.FC = () => {
         <div className="flex items-center gap-3">
           <AlertTriangle className="h-5 w-5" />
           <div className="flex items-center gap-2">
-            {impersonation.type === 'role' ? (
+            {impersonation.type === 'client_portal' ? (
+              <>
+                <Building2 className="h-4 w-4" />
+                <span className="font-medium">
+                  Viewing Client Portal: {impersonation.targetClientOrgName}
+                </span>
+              </>
+            ) : impersonation.type === 'role' ? (
               <>
                 <Shield className="h-4 w-4" />
                 <span className="font-medium">
@@ -57,7 +64,7 @@ export const ImpersonationBanner: React.FC = () => {
                 </span>
               </>
             )}
-            {currentOrganization && (
+            {impersonation.type !== 'client_portal' && currentOrganization && (
               <span className="text-destructive-foreground/70">
                 @ {currentOrganization.name}
               </span>
