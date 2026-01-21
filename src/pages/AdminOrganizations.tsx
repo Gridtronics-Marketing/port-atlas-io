@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Building2, Plus, Users, Search, MoreVertical, Trash2, Edit, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { OrphanedOrganizationsCleanup } from '@/components/OrphanedOrganizationsCleanup';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -318,6 +319,9 @@ const AdminOrganizations: React.FC = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Orphaned Organizations Cleanup Tool */}
+      <OrphanedOrganizationsCleanup />
 
       {/* Create Dialog */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
