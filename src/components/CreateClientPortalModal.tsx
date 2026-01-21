@@ -7,7 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Building2, Mail, Link, Loader2, AlertCircle, UserPlus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useOrganization } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
 
 import { Client } from '@/hooks/useClients';
@@ -25,7 +24,6 @@ export const CreateClientPortalModal = ({
   client,
   onSuccess
 }: CreateClientPortalModalProps) => {
-  const { currentOrganization } = useOrganization();
   const [loading, setLoading] = useState(false);
   const [organizationName, setOrganizationName] = useState(client.name);
   const [inviteEmail, setInviteEmail] = useState(client.contact_email || '');
@@ -58,8 +56,11 @@ export const CreateClientPortalModal = ({
       return;
     }
 
-    if (!currentOrganization?.id) {
-      toast.error('No organization context found');
+    // Use the client's organization_id as the parent (works in Global View)
+    const parentOrgId = client.organization_id;
+    
+    if (!parentOrgId) {
+      toast.error('Client has no organization assigned');
       return;
     }
 
@@ -74,7 +75,7 @@ export const CreateClientPortalModal = ({
           organizationSlug: portalExists && existingOrg ? existingOrg.slug : generateSlug(organizationName),
           inviteEmail,
           userRole,
-          parentOrganizationId: currentOrganization.id,
+          parentOrganizationId: parentOrgId,
           existingOrganizationId: portalExists ? client.linked_organization_id : undefined
         }
       });
