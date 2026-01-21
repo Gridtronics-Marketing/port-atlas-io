@@ -223,12 +223,163 @@ Deno.serve(async (req) => {
         // === PATH 2: CREATE NEW ORGANIZATION ===
         console.log('Creating new organization for client:', clientName);
 
-        // Create the organization
+        // Check if slug already exists (could be orphaned from previous failed attempt)
+        let finalSlug = organizationSlug;
+        const { data: existingSlugOrg } = await supabaseAdmin
+          .from('organizations')
+          .select('id, name, settings')
+          .eq('slug', organizationSlug)
+          .single();
+
+        if (existingSlugOrg) {
+          const existingSettings = existingSlugOrg.settings as any;
+          
+          // Check if this org was meant for the same parent (orphaned from failed attempt)
+          if (existingSettings?.parentOrganizationId === parentOrganizationId) {
+            console.log('Found matching orphaned organization, reusing:', existingSlugOrg.id);
+            
+            // Link it to the client
+            await supabaseAdmin
+              .from('clients')
+              .update({ linked_organization_id: existingSlugOrg.id })
+              .eq('id', clientId);
+            
+            // Set target org to existing one and jump to invite flow
+            targetOrganizationId = existingSlugOrg.id;
+            targetOrganizationName = existingSlugOrg.name;
+            targetOrganizationSlug = organizationSlug;
+            
+            // Continue to invite user to this existing organization
+            // (The invite logic will be handled below in a shared block)
+          } else {
+            // Different parent - generate unique slug with suffix
+            let slugAttempt = 1;
+            while (true) {
+              const testSlug = `${organizationSlug}-${slugAttempt}`;
+              const { data: slugCheck } = await supabaseAdmin
+                .from('organizations')
+                .select('id')
+                .eq('slug', testSlug)
+                .single();
+              
+              if (!slugCheck) {
+                finalSlug = testSlug;
+                break;
+              }
+              slugAttempt++;
+              if (slugAttempt > 100) {
+                // Safety limit
+                finalSlug = `${organizationSlug}-${Date.now()}`;
+                break;
+              }
+            }
+            console.log('Slug collision, using unique slug:', finalSlug);
+          }
+        }
+
+        // If we reused an orphaned org, skip creation and go to invite
+        if (targetOrganizationId) {
+          // Generate invite for the reused organization
+          const invitationToken = crypto.randomUUID();
+          
+          const { error: inviteRecordError } = await supabaseAdmin
+            .from('client_invitations')
+            .insert({
+              client_id: clientId,
+              organization_id: targetOrganizationId,
+              invited_email: inviteEmail,
+              invited_by: user.id,
+              status: 'pending',
+              invitation_token: invitationToken,
+              expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+              organization_id_scope: parentOrganizationId
+            });
+
+          if (inviteRecordError) {
+            console.error('Error creating invitation record:', inviteRecordError);
+          }
+
+          // Generate invite link
+          const { data: linkData, error: inviteLinkError } = await supabaseAdmin.auth.admin.generateLink({
+            type: 'magiclink',
+            email: inviteEmail,
+            options: {
+              data: {
+                organization_id: targetOrganizationId,
+                organization_name: targetOrganizationName,
+                role: userRole
+              },
+              redirectTo: `${appDomain}/auth`
+            }
+          });
+
+          if (inviteLinkError) {
+            console.error('Error generating invite link:', inviteLinkError);
+            results.push({
+              clientId,
+              success: false,
+              error: `Failed to generate invitation: ${inviteLinkError.message}`,
+              status: 'failed'
+            });
+            continue;
+          }
+
+          // Create organization member record
+          const { error: memberError } = await supabaseAdmin
+            .from('organization_members')
+            .insert({
+              organization_id: targetOrganizationId,
+              user_id: linkData.user.id,
+              role: userRole
+            });
+
+          if (memberError) {
+            console.error('Error creating organization member:', memberError);
+          }
+
+          // Send branded email
+          try {
+            const emailResponse = await fetch(`${supabaseUrl}/functions/v1/send-client-invitation-email`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${supabaseServiceKey}`
+              },
+              body: JSON.stringify({
+                email: inviteEmail,
+                clientName: clientName || targetOrganizationName,
+                organizationName: targetOrganizationName,
+                inviteLink: linkData.properties.action_link,
+                invitedByEmail: user.email,
+                portalSlug: targetOrganizationSlug
+              })
+            });
+
+            if (!emailResponse.ok) {
+              const emailError = await emailResponse.text();
+              console.error('Error sending branded email:', emailError);
+            } else {
+              console.log('Invitation email sent successfully to:', inviteEmail);
+            }
+          } catch (emailError) {
+            console.error('Error calling email function:', emailError);
+          }
+
+          results.push({
+            clientId,
+            success: true,
+            organizationId: targetOrganizationId,
+            status: 'invited'
+          });
+          continue;
+        }
+
+        // Create the organization with unique slug
         const { data: newOrg, error: orgError } = await supabaseAdmin
           .from('organizations')
           .insert({
             name: organizationName,
-            slug: organizationSlug,
+            slug: finalSlug,
             owner_id: user.id, // Parent company admin owns it initially
             settings: {
               branding: {
