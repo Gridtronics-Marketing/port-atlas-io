@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Shield, Users, Mail, Activity, UserCog, CheckSquare, Briefcase } from "lucide-react";
+import { Plus, Shield, Users, Mail, Activity, UserCog, CheckSquare, Briefcase, Building2, AlertTriangle, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,11 +10,13 @@ import { AddUserModal } from "@/components/AddUserModal";
 import { RoleManagementModal } from "@/components/RoleManagementModal";
 import { ManualRoleAssignmentModal } from "@/components/ManualRoleAssignmentModal";
 import { BulkRoleAssignmentModal } from "@/components/BulkRoleAssignmentModal";
+import { AssignOrganizationModal } from "@/components/AssignOrganizationModal";
 import { UserActivityLogViewer } from "@/components/UserActivityLogViewer";
 import { EmployeeDetailsPanel } from "@/components/EmployeeDetailsPanel";
 import { useUserRoles } from "@/hooks/useUserRoles";
 import { useProfiles } from "@/hooks/useProfiles";
 import { useAuth } from "@/hooks/useAuth";
+import { useOrganization } from "@/contexts/OrganizationContext";
 import {
   Table,
   TableBody,
@@ -23,23 +25,32 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const UserManagement = () => {
   const [showAddUser, setShowAddUser] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [selectedUserEmail, setSelectedUserEmail] = useState<string>("");
+  const [selectedUserOrgs, setSelectedUserOrgs] = useState<Array<{ id: string; name: string; role: string }>>([]);
   const [showRoleModal, setShowRoleModal] = useState(false);
   const [showManualRoleModal, setShowManualRoleModal] = useState(false);
   const [showBulkRoleModal, setShowBulkRoleModal] = useState(false);
+  const [showAssignOrgModal, setShowAssignOrgModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
   
   const { userRoles, loading, hasRole, hasAnyRole, fetchAllUserRoles } = useUserRoles();
-  const { profiles, loading: profilesLoading, getProfileByUserId } = useProfiles();
+  const { profiles, loading: profilesLoading, fetchProfiles } = useProfiles();
   const { user } = useAuth();
+  const { isSuperAdmin, isGlobalView } = useOrganization();
 
-  const isAdmin = hasRole('admin');
-  const canViewHRData = hasAnyRole(['admin', 'hr_manager']);
+  const isAdmin = hasRole('admin') || isSuperAdmin;
+  const canViewHRData = hasAnyRole(['admin', 'hr_manager']) || isSuperAdmin;
 
   // Show loading state while roles are being fetched
   if (loading || profilesLoading) {
@@ -74,20 +85,36 @@ const UserManagement = () => {
     );
   }
 
-  // Get unique user IDs with their profiles
-  const uniqueUsers = Array.from(new Set(userRoles.map(ur => ur.user_id))).map(userId => {
-    const profile = getProfileByUserId?.(userId);
+  // Get all profiles with their roles and organizations
+  const uniqueUsers = profiles.map(profile => {
+    const profileRoles = userRoles.filter(ur => ur.user_id === profile.id);
+    const earliestRoleDate = profileRoles.length > 0 
+      ? profileRoles.reduce((min, r) => r.created_at < min ? r.created_at : min, profileRoles[0].created_at)
+      : profile.created_at;
+    
     return {
-      id: userId,
-      email: profile?.email || null,
-      roles: userRoles.filter(ur => ur.user_id === userId),
-      created_at: userRoles.find(ur => ur.user_id === userId)?.created_at || ''
+      id: profile.id,
+      email: profile.email,
+      fullName: profile.full_name,
+      roles: profileRoles,
+      organizations: profile.organizations || [],
+      created_at: earliestRoleDate,
+      hasNoRoles: profileRoles.length === 0,
+      hasNoOrg: (profile.organizations || []).length === 0,
     };
   });
 
-  const filteredUsers = uniqueUsers.filter(user =>
+  // Sort: users needing attention first (no roles or no org)
+  const sortedUsers = [...uniqueUsers].sort((a, b) => {
+    const aScore = (a.hasNoRoles ? 2 : 0) + (a.hasNoOrg ? 1 : 0);
+    const bScore = (b.hasNoRoles ? 2 : 0) + (b.hasNoOrg ? 1 : 0);
+    return bScore - aScore;
+  });
+
+  const filteredUsers = sortedUsers.filter(user =>
     user.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (user.email && user.email.toLowerCase().includes(searchTerm.toLowerCase()))
+    (user.email && user.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (user.fullName && user.fullName.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const toggleUserSelection = (userId: string) => {
@@ -138,11 +165,32 @@ const UserManagement = () => {
     setShowRoleModal(true);
   };
 
+  const handleAssignOrg = (userId: string, userEmail: string | null, orgs: Array<{ id: string; name: string; role: string }>) => {
+    setSelectedUserId(userId);
+    setSelectedUserEmail(userEmail || userId);
+    setSelectedUserOrgs(orgs);
+    setShowAssignOrgModal(true);
+  };
+
   // Stats
   const employeeCount = userRoles.filter(ur => ur.role === 'employee').length;
+  const usersNeedingAttention = uniqueUsers.filter(u => u.hasNoRoles || u.hasNoOrg).length;
 
   return (
     <main className="container mx-auto px-4 py-6 space-y-6">
+      {/* Super Admin Global View Banner */}
+      {isSuperAdmin && isGlobalView && (
+        <Card className="border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800">
+          <CardContent className="p-4 flex items-center gap-3">
+            <Shield className="h-5 w-5 text-amber-600" />
+            <div>
+              <p className="font-medium text-amber-800 dark:text-amber-200">Super Admin View</p>
+              <p className="text-sm text-amber-600 dark:text-amber-400">Viewing all users across all organizations</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Tabs defaultValue="users" className="w-full">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-start mb-6">
           <div>
@@ -203,7 +251,7 @@ const UserManagement = () => {
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
@@ -211,6 +259,18 @@ const UserManagement = () => {
                   <div>
                     <p className="text-2xl font-bold">{uniqueUsers.length}</p>
                     <p className="text-sm text-muted-foreground">Total Users</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <AlertTriangle className="h-8 w-8 text-amber-500" />
+                  <div>
+                    <p className="text-2xl font-bold">{usersNeedingAttention}</p>
+                    <p className="text-sm text-muted-foreground">Needs Attention</p>
                   </div>
                 </div>
               </CardContent>
@@ -282,7 +342,7 @@ const UserManagement = () => {
                 </div>
                 <div className="w-72">
                   <Input
-                    placeholder="Search by email or ID..."
+                    placeholder="Search by email, name, or ID..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
@@ -301,6 +361,7 @@ const UserManagement = () => {
                       />
                     </TableHead>
                     <TableHead>Email / User ID</TableHead>
+                    <TableHead>Organization(s)</TableHead>
                     <TableHead>Roles</TableHead>
                     <TableHead>Created</TableHead>
                     <TableHead>Actions</TableHead>
@@ -309,7 +370,7 @@ const UserManagement = () => {
                 <TableBody>
                   {filteredUsers.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center py-8">
+                      <TableCell colSpan={6} className="text-center py-8">
                         <div className="space-y-2">
                           <p className="text-muted-foreground">No users found</p>
                           <p className="text-sm text-orange-600">
@@ -320,7 +381,7 @@ const UserManagement = () => {
                     </TableRow>
                   ) : (
                     filteredUsers.map((user) => (
-                      <TableRow key={user.id}>
+                      <TableRow key={user.id} className={user.hasNoRoles || user.hasNoOrg ? 'bg-amber-50/50 dark:bg-amber-950/20' : ''}>
                         <TableCell>
                           <Checkbox
                             checked={selectedUsers.has(user.id)}
@@ -335,6 +396,9 @@ const UserManagement = () => {
                               {user.email ? (
                                 <>
                                   <span className="text-sm font-medium">{user.email}</span>
+                                  {user.fullName && (
+                                    <span className="text-xs text-muted-foreground">{user.fullName}</span>
+                                  )}
                                   <code className="text-xs text-muted-foreground">
                                     {user.id.slice(0, 8)}...
                                   </code>
@@ -349,15 +413,38 @@ const UserManagement = () => {
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-wrap gap-1">
-                            {user.roles.map((userRole) => (
-                              <Badge 
-                                key={userRole.id} 
-                                variant={getRoleColor(userRole.role)}
-                                className="text-xs"
-                              >
-                                {userRole.role.replace('_', ' ')}
+                            {user.organizations.length === 0 ? (
+                              <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800">
+                                ⚠️ No organization
                               </Badge>
-                            ))}
+                            ) : (
+                              user.organizations.map((org) => (
+                                <Badge key={org.id} variant="outline" className="text-xs">
+                                  <Building2 className="h-3 w-3 mr-1" />
+                                  {org.name}
+                                  <span className="ml-1 text-muted-foreground">({org.role})</span>
+                                </Badge>
+                              ))
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-wrap gap-1">
+                            {user.roles.length === 0 ? (
+                              <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800">
+                                ⚠️ No roles assigned
+                              </Badge>
+                            ) : (
+                              user.roles.map((userRole) => (
+                                <Badge 
+                                  key={userRole.id} 
+                                  variant={getRoleColor(userRole.role)}
+                                  className="text-xs"
+                                >
+                                  {userRole.role.replace('_', ' ')}
+                                </Badge>
+                              ))
+                            )}
                           </div>
                         </TableCell>
                         <TableCell>
@@ -366,14 +453,26 @@ const UserManagement = () => {
                           </span>
                         </TableCell>
                         <TableCell>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleManageRoles(user.id, user.email)}
-                          >
-                            <Shield className="h-4 w-4 mr-2" />
-                            Manage Roles
-                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" size="sm">
+                                <Settings className="h-4 w-4 mr-2" />
+                                Manage
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleManageRoles(user.id, user.email)}>
+                                <Shield className="h-4 w-4 mr-2" />
+                                Manage Roles
+                              </DropdownMenuItem>
+                              {isSuperAdmin && (
+                                <DropdownMenuItem onClick={() => handleAssignOrg(user.id, user.email, user.organizations)}>
+                                  <Building2 className="h-4 w-4 mr-2" />
+                                  Assign to Organization
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
                       </TableRow>
                     ))
@@ -399,7 +498,10 @@ const UserManagement = () => {
       <AddUserModal 
         open={showAddUser} 
         onOpenChange={setShowAddUser}
-        onUserCreated={fetchAllUserRoles}
+        onUserCreated={() => {
+          fetchAllUserRoles();
+          fetchProfiles();
+        }}
       />
       
       <RoleManagementModal
@@ -422,6 +524,17 @@ const UserManagement = () => {
           setSelectedUsers(new Set());
         }}
         selectedUsers={getSelectedUsersData()}
+      />
+
+      <AssignOrganizationModal
+        isOpen={showAssignOrgModal}
+        onClose={() => setShowAssignOrgModal(false)}
+        userId={selectedUserId}
+        userEmail={selectedUserEmail}
+        currentOrganizations={selectedUserOrgs}
+        onAssigned={() => {
+          fetchProfiles();
+        }}
       />
     </main>
   );

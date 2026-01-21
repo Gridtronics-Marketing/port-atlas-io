@@ -1,5 +1,5 @@
 import React from 'react';
-import { Building2, ChevronDown, Check, Plus } from 'lucide-react';
+import { Building2, ChevronDown, Check, Plus, Globe } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,6 +20,7 @@ export const OrganizationSwitcher: React.FC = () => {
     loadingOrganizations,
     switchOrganization,
     isSuperAdmin,
+    isGlobalView,
     userOrgRole,
   } = useOrganization();
   const navigate = useNavigate();
@@ -39,15 +40,25 @@ export const OrganizationSwitcher: React.FC = () => {
     return labels[role] || role;
   };
 
+  const handleSwitchToGlobalView = () => {
+    switchOrganization(null);
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" className="gap-1 md:gap-2 max-w-[100px] sm:max-w-[140px] md:max-w-[200px] px-2 md:px-3">
-          <Building2 className="h-4 w-4 shrink-0" />
+          {isGlobalView ? (
+            <Globe className="h-4 w-4 shrink-0 text-amber-500" />
+          ) : (
+            <Building2 className="h-4 w-4 shrink-0" />
+          )}
           <span className="truncate hidden sm:inline">
             {loadingOrganizations 
               ? '...' 
-              : currentOrganization?.name || 'Org'}
+              : isGlobalView 
+                ? 'All Organizations' 
+                : currentOrganization?.name || 'Org'}
           </span>
           <ChevronDown className="h-3 w-3 shrink-0" />
         </Button>
@@ -64,6 +75,28 @@ export const OrganizationSwitcher: React.FC = () => {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         
+        {/* Super Admin Global View Option */}
+        {isSuperAdmin && (
+          <>
+            <DropdownMenuItem
+              onClick={handleSwitchToGlobalView}
+              className="flex items-center justify-between py-2"
+            >
+              <div className="flex items-center gap-2">
+                {isGlobalView && (
+                  <Check className="h-4 w-4 text-amber-500" />
+                )}
+                {!isGlobalView && (
+                  <div className="w-4" />
+                )}
+                <Globe className="h-4 w-4 text-amber-500" />
+                <span className="font-medium">Super Admin View</span>
+              </div>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+          </>
+        )}
+        
         {organizations.length === 0 ? (
           <div className="p-4 text-center text-sm text-muted-foreground">
             No organizations found
@@ -77,10 +110,10 @@ export const OrganizationSwitcher: React.FC = () => {
                 className="flex items-center justify-between py-2"
               >
                 <div className="flex items-center gap-2">
-                  {currentOrganization?.id === org.id && (
+                  {currentOrganization?.id === org.id && !isGlobalView && (
                     <Check className="h-4 w-4 text-primary" />
                   )}
-                  {currentOrganization?.id !== org.id && (
+                  {(currentOrganization?.id !== org.id || isGlobalView) && (
                     <div className="w-4" />
                   )}
                   <span className="truncate">{org.name}</span>
