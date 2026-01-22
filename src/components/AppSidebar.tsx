@@ -114,7 +114,7 @@ export function AppSidebar() {
   const location = useLocation();
   const { user, signOut } = useAuth();
   const { hasRole } = useUserRoles();
-  const { isSuperAdmin } = useOrganization();
+  const { isSuperAdmin, loadingOrganizations } = useOrganization();
   const isMobile = useIsMobile();
   
   const currentPath = location.pathname;
@@ -128,8 +128,8 @@ export function AppSidebar() {
     }
   };
   
-  // Build admin groups
-  const adminGroup = hasRole('admin') || isSuperAdmin ? {
+  // Build admin groups - wait for loading to complete to avoid flicker
+  const adminGroup = !loadingOrganizations && (hasRole('admin') || isSuperAdmin) ? {
     label: "Administration",
     items: [
       ...(hasRole('admin') ? [{ title: "User Management", url: "/user-management", icon: UserCog }] : []),
