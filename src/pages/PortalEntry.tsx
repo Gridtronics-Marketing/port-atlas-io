@@ -133,10 +133,18 @@ const PortalEntry = () => {
               {error}
             </CardDescription>
           </CardHeader>
-          <CardContent className="text-center">
+          <CardContent className="space-y-4 text-center">
             <Button onClick={() => navigate('/auth')} variant="outline">
               Go to Login
             </Button>
+            <div className="pt-4 border-t border-border/50 flex items-center justify-center gap-2">
+              <span className="text-xs text-muted-foreground">Powered by</span>
+              <img 
+                src={tradeAtlasLogo} 
+                alt="Trade Atlas" 
+                className="h-5 w-auto opacity-70 hover:opacity-100 transition-opacity"
+              />
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -191,6 +199,14 @@ const PortalEntry = () => {
                 Login with Different Account
               </Button>
             </div>
+            <div className="pt-4 border-t border-border/50 flex items-center justify-center gap-2">
+              <span className="text-xs text-muted-foreground">Powered by</span>
+              <img 
+                src={tradeAtlasLogo} 
+                alt="Trade Atlas" 
+                className="h-5 w-auto opacity-70 hover:opacity-100 transition-opacity"
+              />
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -237,6 +253,14 @@ const PortalEntry = () => {
             Sign In to Portal
             <ArrowRight className="h-4 w-4 ml-2" />
           </Button>
+          <div className="pt-4 border-t border-border/50 flex items-center justify-center gap-2">
+            <span className="text-xs text-muted-foreground">Powered by</span>
+            <img 
+              src={tradeAtlasLogo} 
+              alt="Trade Atlas" 
+              className="h-5 w-auto opacity-70 hover:opacity-100 transition-opacity"
+            />
+          </div>
         </CardContent>
       </Card>
     </div>
