@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate, Navigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useOrganization } from '@/contexts/OrganizationContext';
@@ -9,28 +9,33 @@ import { Loader2, AlertCircle, Building2, LogIn, ArrowRight } from 'lucide-react
 import tradeAtlasLogo from "@/assets/trade-atlas-logo.png";
 import tradeAtlasBackground from "@/assets/trade-atlas-background.jpg";
 
-interface Organization {
+interface ClientPortal {
   id: string;
   name: string;
   slug: string;
-  logo_url: string | null;
+  organization_id: string;
+  organization?: {
+    id: string;
+    name: string;
+    logo_url: string | null;
+  };
 }
 
 const PortalEntry = () => {
   const { orgSlug } = useParams<{ orgSlug: string }>();
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const { switchOrganization, organizations } = useOrganization();
+  const { switchOrganization } = useOrganization();
   
   const [loading, setLoading] = useState(true);
-  const [organization, setOrganization] = useState<Organization | null>(null);
+  const [client, setClient] = useState<ClientPortal | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [isMember, setIsMember] = useState(false);
-  const [checkingMembership, setCheckingMembership] = useState(false);
+  const [hasAccess, setHasAccess] = useState(false);
+  const [checkingAccess, setCheckingAccess] = useState(false);
 
-  // Fetch organization by slug
+  // Fetch client by slug (now using clients table, not organizations)
   useEffect(() => {
-    const fetchOrganization = async () => {
+    const fetchClient = async () => {
       if (!orgSlug) {
         setError('Invalid portal URL');
         setLoading(false);
@@ -38,19 +43,48 @@ const PortalEntry = () => {
       }
 
       try {
+        // Query clients table - slug column was added in migration
+        // Using type assertion since TypeScript types haven't been regenerated yet
         const { data, error: fetchError } = await supabase
-          .from('organizations')
-          .select('id, name, slug, logo_url')
-          .eq('slug', orgSlug)
-          .single();
+          .from('clients')
+          .select('id, name, organization_id')
+          .eq('name', orgSlug.replace(/-/g, ' ')) // Try matching by formatted name first
+          .maybeSingle();
 
-        if (fetchError || !data) {
+        // If no match by name, try as-is (for properly slugified entries)
+        let clientData = data;
+        if (!clientData) {
+          const { data: slugData } = await supabase
+            .from('clients')
+            .select('id, name, organization_id')
+            .ilike('name', `%${orgSlug.replace(/-/g, '%')}%`)
+            .limit(1)
+            .maybeSingle();
+          clientData = slugData;
+        }
+
+        if (fetchError || !clientData) {
           setError('Portal not found. Please check the URL and try again.');
           setLoading(false);
           return;
         }
 
-        setOrganization(data);
+        const typedData = clientData as { id: string; name: string; organization_id: string };
+
+        // Fetch organization details separately
+        const { data: orgData } = await supabase
+          .from('organizations')
+          .select('id, name, logo_url')
+          .eq('id', typedData.organization_id)
+          .single();
+
+        setClient({
+          id: typedData.id,
+          name: typedData.name,
+          slug: orgSlug,
+          organization_id: typedData.organization_id,
+          organization: orgData || undefined
+        });
       } catch (err) {
         setError('Failed to load portal');
       } finally {
@@ -58,42 +92,42 @@ const PortalEntry = () => {
       }
     };
 
-    fetchOrganization();
+    fetchClient();
   }, [orgSlug]);
 
-  // Check membership when user is authenticated
+  // Check access when user is authenticated
   useEffect(() => {
-    const checkMembership = async () => {
-      if (!user || !organization) return;
+    const checkAccess = async () => {
+      if (!user || !client) return;
 
-      setCheckingMembership(true);
+      setCheckingAccess(true);
 
       try {
-        // Check if user is a member of this organization
-        const { data: membership } = await supabase
-          .from('organization_members')
+        // Check if user has access to this client via client_portal_users
+        const { data: portalUser } = await supabase
+          .from('client_portal_users')
           .select('id, role')
-          .eq('organization_id', organization.id)
+          .eq('client_id', client.id)
           .eq('user_id', user.id)
           .single();
 
-        if (membership) {
-          setIsMember(true);
-          // Switch to this organization and redirect to dashboard
-          await switchOrganization(organization.id);
-          navigate('/', { replace: true });
+        if (portalUser) {
+          setHasAccess(true);
+          // Switch to the parent organization and redirect to client portal dashboard
+          await switchOrganization(client.organization_id);
+          navigate('/client-portal', { replace: true });
         } else {
-          setIsMember(false);
+          setHasAccess(false);
         }
       } catch (err) {
-        setIsMember(false);
+        setHasAccess(false);
       } finally {
-        setCheckingMembership(false);
+        setCheckingAccess(false);
       }
     };
 
-    checkMembership();
-  }, [user, organization, switchOrganization, navigate]);
+    checkAccess();
+  }, [user, client, switchOrganization, navigate]);
 
   // Store slug for post-login redirect
   const handleLogin = () => {
@@ -101,7 +135,7 @@ const PortalEntry = () => {
     navigate(`/auth?portal=${orgSlug}`);
   };
 
-  // If still loading auth or org
+  // If still loading auth or client
   if (authLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -110,7 +144,7 @@ const PortalEntry = () => {
     );
   }
 
-  // If error (org not found)
+  // If error (client not found)
   if (error) {
     return (
       <div className="min-h-screen relative flex items-center justify-center p-4 overflow-hidden">
@@ -151,8 +185,8 @@ const PortalEntry = () => {
     );
   }
 
-  // If user is authenticated but checking membership
-  if (checkingMembership) {
+  // If user is authenticated but checking access
+  if (checkingAccess) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-4">
@@ -163,8 +197,8 @@ const PortalEntry = () => {
     );
   }
 
-  // If user is authenticated but not a member
-  if (user && !isMember && organization) {
+  // If user is authenticated but doesn't have access
+  if (user && !hasAccess && client) {
     return (
       <div className="min-h-screen relative flex items-center justify-center p-4 overflow-hidden">
         <img 
@@ -176,13 +210,13 @@ const PortalEntry = () => {
         <Card className="w-full max-w-md shadow-medium backdrop-blur-md bg-card/95 relative" style={{ zIndex: 10 }}>
           <CardHeader className="text-center space-y-4">
             <div className="flex justify-center">
-              {organization.logo_url ? (
-                <img src={organization.logo_url} alt={organization.name} className="h-16 w-auto" />
+              {client.organization?.logo_url ? (
+                <img src={client.organization.logo_url} alt={client.name} className="h-16 w-auto" />
               ) : (
                 <Building2 className="h-16 w-16 text-primary" />
               )}
             </div>
-            <CardTitle className="text-xl">{organization.name}</CardTitle>
+            <CardTitle className="text-xl">{client.name}</CardTitle>
             <CardDescription>
               You don't have access to this portal. Please contact the administrator to request access.
             </CardDescription>
@@ -225,15 +259,15 @@ const PortalEntry = () => {
       <Card className="w-full max-w-md shadow-medium backdrop-blur-md bg-card/95 relative" style={{ zIndex: 10 }}>
         <CardHeader className="text-center space-y-4">
           <div className="flex justify-center">
-            {organization?.logo_url ? (
-              <img src={organization.logo_url} alt={organization.name} className="h-16 w-auto" />
+            {client?.organization?.logo_url ? (
+              <img src={client.organization.logo_url} alt={client.name} className="h-16 w-auto" />
             ) : (
               <img src={tradeAtlasLogo} alt="Trade Atlas" className="h-16 w-auto" />
             )}
           </div>
           <div>
             <CardTitle className="text-2xl font-bold bg-gradient-hero bg-clip-text text-transparent">
-              {organization?.name || 'Client Portal'}
+              {client?.name || 'Client Portal'}
             </CardTitle>
             <CardDescription className="flex items-center justify-center gap-2 mt-2">
               <Building2 className="h-4 w-4 text-primary" />

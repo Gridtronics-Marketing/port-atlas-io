@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 
 export type OrgRole = 'owner' | 'admin' | 'project_manager' | 'technician' | 'viewer';
 export type PlatformRole = 'super_admin' | 'support';
+export type PortalRole = 'admin' | 'member' | 'viewer';
 
 export interface Organization {
   id: string;
@@ -24,13 +25,19 @@ export interface OrganizationMember {
   created_at: string;
 }
 
+interface ClientPortalAccess {
+  clientId: string;
+  clientName: string;
+  role: PortalRole;
+}
+
 interface ImpersonationState {
   type: 'role' | 'user' | 'client_portal' | null;
   targetRole: OrgRole | null;
   targetUserId: string | null;
   targetUserEmail: string | null;
-  targetClientOrgId: string | null;
-  targetClientOrgName: string | null;
+  targetClientId: string | null;
+  targetClientName: string | null;
   startedAt: Date | null;
 }
 
@@ -51,16 +58,16 @@ interface OrganizationContextType {
   isImpersonating: boolean;
   effectiveRole: OrgRole | null;
   
-  // Client portal state
+  // Client portal state (simplified - no child organizations)
   isClientPortalUser: boolean;
-  parentOrganizationId: string | null;
+  clientPortalAccess: ClientPortalAccess | null;
   linkedClientId: string | null;
   
   // Actions
   switchOrganization: (orgId: string | null) => Promise<void>;
   startRoleImpersonation: (role: OrgRole) => Promise<void>;
   startUserImpersonation: (userId: string, userEmail: string) => Promise<void>;
-  startClientPortalImpersonation: (orgId: string, orgName: string) => Promise<void>;
+  startClientPortalImpersonation: (clientId: string, clientName: string) => Promise<void>;
   stopImpersonation: () => Promise<void>;
   refreshOrganizations: () => Promise<void>;
 }
@@ -96,9 +103,9 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
   const [isPlatformAdmin, setIsPlatformAdmin] = useState(false);
   const [isGlobalView, setIsGlobalView] = useState(false);
   
-  // Client portal state
+  // Client portal state (simplified)
   const [isClientPortalUser, setIsClientPortalUser] = useState(false);
-  const [parentOrganizationId, setParentOrganizationId] = useState<string | null>(null);
+  const [clientPortalAccess, setClientPortalAccess] = useState<ClientPortalAccess | null>(null);
   const [linkedClientId, setLinkedClientId] = useState<string | null>(null);
   
   // Impersonation state (not persisted - resets on refresh)
@@ -107,8 +114,8 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
     targetRole: null,
     targetUserId: null,
     targetUserEmail: null,
-    targetClientOrgId: null,
-    targetClientOrgName: null,
+    targetClientId: null,
+    targetClientName: null,
     startedAt: null,
   });
 
@@ -149,6 +156,54 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
     }
   };
 
+  // Check if user is a client portal user (via client_portal_users table)
+  const checkClientPortalAccess = async () => {
+    if (!user) {
+      setIsClientPortalUser(false);
+      setClientPortalAccess(null);
+      setLinkedClientId(null);
+      return;
+    }
+
+    try {
+      const { data: portalUser, error } = await supabase
+        .from('client_portal_users')
+        .select(`
+          client_id,
+          role,
+          clients:client_id (
+            id,
+            name,
+            organization_id
+          )
+        `)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error checking client portal access:', error);
+        return;
+      }
+
+      if (portalUser && portalUser.clients) {
+        const clientData = portalUser.clients as any;
+        setIsClientPortalUser(true);
+        setClientPortalAccess({
+          clientId: portalUser.client_id,
+          clientName: clientData.name,
+          role: portalUser.role as PortalRole
+        });
+        setLinkedClientId(portalUser.client_id);
+      } else {
+        setIsClientPortalUser(false);
+        setClientPortalAccess(null);
+        setLinkedClientId(null);
+      }
+    } catch (error) {
+      console.error('Error checking client portal access:', error);
+    }
+  };
+
   // Fetch user's organizations
   const fetchOrganizations = async () => {
     if (!user) {
@@ -161,7 +216,7 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
     try {
       setLoadingOrganizations(true);
 
-      // If super admin, fetch all organizations
+      // If super admin, fetch all organizations (excluding child portal orgs)
       if (isSuperAdmin) {
         const { data: allOrgs, error } = await supabase
           .from('organizations')
@@ -170,24 +225,24 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
 
         if (error) throw error;
         
-        const orgs = (allOrgs || []) as Organization[];
+        // Filter out child portal organizations (those with parentOrganizationId in settings)
+        const orgs = ((allOrgs || []) as Organization[]).filter(
+          org => !org.settings?.parentOrganizationId
+        );
         setOrganizations(orgs);
         
         // Restore from localStorage - check for global view or specific org
         const savedOrgId = localStorage.getItem(STORAGE_KEY);
         
         if (savedOrgId === GLOBAL_VIEW_KEY) {
-          // Super admin previously selected global view
           setIsGlobalView(true);
           setCurrentOrganization(null);
         } else if (!currentOrganization && !isGlobalView) {
-          // Default super admins to global view on first load
           const savedOrg = savedOrgId ? orgs.find(o => o.id === savedOrgId) : null;
           if (savedOrg) {
             setCurrentOrganization(savedOrg);
             setIsGlobalView(false);
           } else {
-            // Default to global view for super admins
             setIsGlobalView(true);
             setCurrentOrganization(null);
             localStorage.setItem(STORAGE_KEY, GLOBAL_VIEW_KEY);
@@ -213,14 +268,18 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
 
           if (orgsError) throw orgsError;
 
-          setOrganizations((orgs || []) as Organization[]);
+          // Filter out child portal organizations
+          const filteredOrgs = ((orgs || []) as Organization[]).filter(
+            org => !org.settings?.parentOrganizationId
+          );
+          setOrganizations(filteredOrgs);
           
           // Restore from localStorage or auto-select first org
           const savedOrgId = localStorage.getItem(STORAGE_KEY);
-          const savedOrg = savedOrgId ? orgs?.find(o => o.id === savedOrgId) : null;
+          const savedOrg = savedOrgId ? filteredOrgs.find(o => o.id === savedOrgId) : null;
           
-          if (!currentOrganization && orgs && orgs.length > 0) {
-            const firstOrg = (savedOrg || orgs[0]) as Organization;
+          if (!currentOrganization && filteredOrgs.length > 0) {
+            const firstOrg = savedOrg || filteredOrgs[0];
             setCurrentOrganization(firstOrg);
             const membership = memberships.find(m => m.organization_id === firstOrg.id);
             setUserOrgRole(membership?.role as OrgRole || null);
@@ -244,7 +303,6 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
       setCurrentOrganization(null);
       localStorage.setItem(STORAGE_KEY, GLOBAL_VIEW_KEY);
       
-      // Stop any impersonation when switching to global view
       if (isImpersonating) {
         await stopImpersonation();
       }
@@ -270,7 +328,6 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
       setUserOrgRole(membership?.role as OrgRole || null);
     }
 
-    // Stop any impersonation when switching orgs
     if (isImpersonating) {
       await stopImpersonation();
     }
@@ -280,7 +337,6 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
   const startRoleImpersonation = async (role: OrgRole) => {
     if (!isSuperAdmin || !user || !currentOrganization) return;
 
-    // Log the impersonation start
     await supabase.from('admin_impersonation_log').insert({
       admin_user_id: user.id,
       impersonation_type: 'role',
@@ -296,8 +352,8 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
       targetRole: role,
       targetUserId: null,
       targetUserEmail: null,
-      targetClientOrgId: null,
-      targetClientOrgName: null,
+      targetClientId: null,
+      targetClientName: null,
       startedAt: new Date(),
     });
   };
@@ -306,7 +362,6 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
   const startUserImpersonation = async (userId: string, userEmail: string) => {
     if (!isSuperAdmin || !user || !currentOrganization) return;
 
-    // Get the target user's role in this org
     const { data: membership } = await supabase
       .from('organization_members')
       .select('role')
@@ -314,7 +369,6 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
       .eq('user_id', userId)
       .maybeSingle();
 
-    // Log the impersonation start
     await supabase.from('admin_impersonation_log').insert({
       admin_user_id: user.id,
       impersonation_type: 'user',
@@ -333,60 +387,52 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
       targetRole: membership?.role as OrgRole || 'viewer',
       targetUserId: userId,
       targetUserEmail: userEmail,
-      targetClientOrgId: null,
-      targetClientOrgName: null,
+      targetClientId: null,
+      targetClientName: null,
       startedAt: new Date(),
     });
   };
 
-  // Start client portal impersonation (super admin only)
-  const startClientPortalImpersonation = async (orgId: string, orgName: string) => {
+  // Start client portal impersonation (super admin only) - now uses client ID directly
+  const startClientPortalImpersonation = async (clientId: string, clientName: string) => {
     if (!isSuperAdmin || !user) return;
 
-    // Log the impersonation start
     await supabase.from('admin_impersonation_log').insert({
       admin_user_id: user.id,
       impersonation_type: 'client_portal',
-      target_organization_id: orgId,
       action: 'start',
       user_agent: navigator.userAgent,
-      metadata: { client_org_name: orgName }
+      metadata: { client_id: clientId, client_name: clientName }
     });
-
-    // Switch to the client portal organization
-    const org = organizations.find(o => o.id === orgId);
-    if (org) {
-      setCurrentOrganization(org);
-      setIsGlobalView(false);
-    }
 
     setImpersonation({
       type: 'client_portal',
       targetRole: 'viewer',
       targetUserId: null,
       targetUserEmail: null,
-      targetClientOrgId: orgId,
-      targetClientOrgName: orgName,
+      targetClientId: clientId,
+      targetClientName: clientName,
       startedAt: new Date(),
     });
 
-    // Set client portal user flag
     setIsClientPortalUser(true);
+    setLinkedClientId(clientId);
+    setClientPortalAccess({
+      clientId,
+      clientName,
+      role: 'viewer'
+    });
   };
 
   // Stop impersonation
   const stopImpersonation = async () => {
     if (!isImpersonating || !user) return;
 
-    // Log the impersonation end
     await supabase.from('admin_impersonation_log').insert({
       admin_user_id: user.id,
       impersonation_type: impersonation.type,
       target_role: impersonation.targetRole,
       target_user_id: impersonation.targetUserId,
-      target_organization_id: impersonation.type === 'client_portal' 
-        ? impersonation.targetClientOrgId 
-        : currentOrganization?.id,
       action: 'end',
       user_agent: navigator.userAgent,
       metadata: { 
@@ -396,10 +442,10 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
       }
     });
 
-    // Reset client portal state if it was a client portal impersonation
     if (impersonation.type === 'client_portal') {
       setIsClientPortalUser(false);
-      // Restore to global view for super admin
+      setClientPortalAccess(null);
+      setLinkedClientId(null);
       setIsGlobalView(true);
       setCurrentOrganization(null);
       localStorage.setItem(STORAGE_KEY, GLOBAL_VIEW_KEY);
@@ -410,8 +456,8 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
       targetRole: null,
       targetUserId: null,
       targetUserEmail: null,
-      targetClientOrgId: null,
-      targetClientOrgName: null,
+      targetClientId: null,
+      targetClientName: null,
       startedAt: null,
     });
   };
@@ -423,35 +469,13 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
   // Check super admin status when user changes
   useEffect(() => {
     checkSuperAdmin();
+    checkClientPortalAccess();
   }, [user]);
 
   // Fetch organizations when user or super admin status changes
   useEffect(() => {
     fetchOrganizations();
   }, [user, isSuperAdmin]);
-
-  // Detect client portal user based on organization settings
-  React.useEffect(() => {
-    if (currentOrganization?.settings?.parentOrganizationId) {
-      setIsClientPortalUser(true);
-      setParentOrganizationId(currentOrganization.settings.parentOrganizationId);
-      
-      // Find linked client record
-      const fetchLinkedClient = async () => {
-        const { data: client } = await supabase
-          .from('clients')
-          .select('id')
-          .eq('linked_organization_id', currentOrganization.id)
-          .maybeSingle();
-        setLinkedClientId(client?.id || null);
-      };
-      fetchLinkedClient();
-    } else {
-      setIsClientPortalUser(false);
-      setParentOrganizationId(null);
-      setLinkedClientId(null);
-    }
-  }, [currentOrganization]);
 
   const value: OrganizationContextType = {
     currentOrganization,
@@ -465,7 +489,7 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
     isImpersonating,
     effectiveRole,
     isClientPortalUser,
-    parentOrganizationId,
+    clientPortalAccess,
     linkedClientId,
     switchOrganization,
     startRoleImpersonation,

@@ -93,28 +93,29 @@ export const ViewAsDropdown: React.FC = () => {
     }
   };
 
-  const fetchClientPortalOrgs = async () => {
+  // Fetch clients that have portal users (instead of child organizations)
+  const fetchClientPortals = async () => {
     setLoadingPortals(true);
     try {
+      // Get distinct clients that have portal users
       const { data, error } = await supabase
-        .from('organizations')
-        .select('id, name, settings')
-        .order('name');
+        .from('client_portal_users')
+        .select('client_id, clients:client_id(id, name)')
+        .order('client_id');
 
       if (!error && data) {
-        const portals = data
-          .filter(org => {
-            const settings = org.settings as Record<string, unknown> | null;
-            return settings?.parentOrganizationId;
-          })
-          .map(org => ({
-            id: org.id,
-            name: org.name
-          }));
-        setClientPortalOrgs(portals);
+        // Deduplicate by client_id
+        const uniqueClients = new Map<string, ClientPortalOrg>();
+        data.forEach(row => {
+          const client = row.clients as any;
+          if (client && !uniqueClients.has(client.id)) {
+            uniqueClients.set(client.id, { id: client.id, name: client.name });
+          }
+        });
+        setClientPortalOrgs(Array.from(uniqueClients.values()));
       }
     } catch (error) {
-      console.error('Error fetching client portal orgs:', error);
+      console.error('Error fetching client portals:', error);
     } finally {
       setLoadingPortals(false);
     }
@@ -129,7 +130,7 @@ export const ViewAsDropdown: React.FC = () => {
 
   useEffect(() => {
     if (isSuperAdmin) {
-      fetchClientPortalOrgs();
+      fetchClientPortals();
     }
   }, [isSuperAdmin]);
 
@@ -163,7 +164,7 @@ export const ViewAsDropdown: React.FC = () => {
           {isImpersonating ? (
             <span className="hidden md:inline truncate max-w-[100px]">
               {impersonation.type === 'client_portal'
-                ? impersonation.targetClientOrgName
+                ? impersonation.targetClientName
                 : impersonation.type === 'role' 
                   ? impersonation.targetRole 
                   : impersonation.targetUserEmail?.split('@')[0]}

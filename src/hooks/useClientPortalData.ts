@@ -22,60 +22,65 @@ interface ClientProject {
 }
 
 export const useClientPortalData = () => {
-  const { currentOrganization, isClientPortalUser, linkedClientId } = useOrganization();
+  const { isClientPortalUser, linkedClientId, clientPortalAccess } = useOrganization();
   const [accessibleLocations, setAccessibleLocations] = useState<AccessibleLocation[]>([]);
   const [clientProjects, setClientProjects] = useState<ClientProject[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchAccessibleLocations = async () => {
-    if (!currentOrganization?.id) return;
+    if (!linkedClientId) return;
 
     try {
-      // Fetch locations via location_access_grants
+      // Fetch locations via location_access_grants for this client
+      // Note: location_access_grants might use granted_organization_id or granted_client_id
+      // depending on implementation - check for client-based grants first
       const { data: grants, error } = await supabase
         .from('location_access_grants')
-        .select(`
-          access_level,
-          location_id,
-          locations (
-            id,
-            name,
-            address,
-            status
-          )
-        `)
-        .eq('granted_organization_id', currentOrganization.id);
+        .select('access_level, location_id')
+        .or(`granted_client_id.eq.${linkedClientId}`);
 
       if (error) throw error;
-
-      // Get drop point counts for each location
-      const locationIds = grants?.map(g => g.location_id) || [];
       
-      let dropPointCounts: Record<string, number> = {};
-      if (locationIds.length > 0) {
-        const { data: dropPoints } = await supabase
-          .from('drop_points')
-          .select('location_id')
-          .in('location_id', locationIds);
-        
-        dropPointCounts = (dropPoints || []).reduce((acc, dp) => {
-          acc[dp.location_id] = (acc[dp.location_id] || 0) + 1;
-          return acc;
-        }, {} as Record<string, number>);
+      // Get location details separately
+      const locationIds = grants?.map(g => g.location_id) || [];
+      if (locationIds.length === 0) {
+        setAccessibleLocations([]);
+        return;
       }
 
-      const locations: AccessibleLocation[] = (grants || [])
-        .filter(g => g.locations)
-        .map(g => ({
-          id: (g.locations as any).id,
-          name: (g.locations as any).name,
-          address: (g.locations as any).address,
-          status: (g.locations as any).status,
-          access_level: g.access_level,
-          drop_points_count: dropPointCounts[g.location_id] || 0,
-        }));
+      const { data: locations } = await supabase
+        .from('locations')
+        .select('id, name, address, status')
+        .in('id', locationIds);
 
-      setAccessibleLocations(locations);
+      // Get drop point counts for each location
+      let dropPointCounts: Record<string, number> = {};
+      const { data: dropPoints } = await supabase
+        .from('drop_points')
+        .select('location_id')
+        .in('location_id', locationIds);
+      
+      dropPointCounts = (dropPoints || []).reduce((acc, dp) => {
+        acc[dp.location_id] = (acc[dp.location_id] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+
+      // Build access level map from grants
+      const accessLevelMap = (grants || []).reduce((acc, g) => {
+        acc[g.location_id] = g.access_level;
+        return acc;
+      }, {} as Record<string, string>);
+
+      const accessibleLocs: AccessibleLocation[] = (locations || []).map(loc => ({
+        id: loc.id,
+        name: loc.name,
+        address: loc.address,
+        status: loc.status,
+        access_level: accessLevelMap[loc.id] || 'view',
+        drop_points_count: dropPointCounts[loc.id] || 0,
+      }));
+
+      setAccessibleLocations(accessibleLocs);
     } catch (error) {
       console.error('Error fetching accessible locations:', error);
     }
@@ -99,7 +104,7 @@ export const useClientPortalData = () => {
   };
 
   const fetchAllData = async () => {
-    if (!isClientPortalUser) return;
+    if (!isClientPortalUser || !linkedClientId) return;
     
     setLoading(true);
     await Promise.all([
@@ -111,12 +116,14 @@ export const useClientPortalData = () => {
 
   useEffect(() => {
     fetchAllData();
-  }, [currentOrganization?.id, linkedClientId, isClientPortalUser]);
+  }, [linkedClientId, isClientPortalUser]);
 
   return {
     accessibleLocations,
     clientProjects,
     loading,
+    clientName: clientPortalAccess?.clientName || null,
+    clientRole: clientPortalAccess?.role || null,
     refetch: fetchAllData,
   };
 };
