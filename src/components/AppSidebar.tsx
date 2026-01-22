@@ -19,7 +19,13 @@ import {
   Package,
   Info,
   Building2,
-  PlayCircle
+  PlayCircle,
+  LayoutDashboard,
+  Briefcase,
+  ChevronRight,
+  TrendingUp,
+  Layers,
+  Database
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { NavLink, useLocation } from "react-router-dom";
@@ -54,31 +60,57 @@ import tradeAtlasLogo from "@/assets/trade-atlas-logo.png";
 import { PWAInstallButton } from "@/components/PWAInstallButton";
 import { Separator } from "@/components/ui/separator";
 import { APP_VERSION } from "@/lib/version";
-import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
-const navigationItems = [
-  { title: "Dashboard", url: "/", icon: Home },
-  { title: "Projects", url: "/projects", icon: FolderOpen },
-  { title: "Work Orders", url: "/work-orders", icon: ClipboardList },
-  { title: "Service Requests", url: "/service-requests", icon: MessageSquare },
-  { title: "TradeTube", url: "/tradetube", icon: PlayCircle },
-  { title: "Procurement", url: "/procurement", icon: Package },
-  { title: "Contracts", url: "/contracts", icon: FileText },
-  { title: "Maintenance", url: "/maintenance", icon: Wrench },
-  { title: "Scheduling", url: "/scheduling", icon: Calendar },
-  { title: "Field Operations", url: "/field-operations", icon: MapPin },
-  { title: "Quality Assurance", url: "/quality-assurance", icon: Shield },
-  { title: "Advanced Features", url: "/advanced-features", icon: Settings },
-  { title: "System Settings", url: "/settings", icon: Settings },
-  { title: "Communications", url: "/communications", icon: MessageSquare },
-  { title: "Integrations", url: "/integrations", icon: Zap },
-  { title: "Twilio Settings", url: "/twilio-settings", icon: Phone },
-  { title: "Locations", url: "/locations", icon: Building },
-  { title: "Clients", url: "/clients", icon: Building },
+// Organized navigation structure with groups
+const navigationGroups = [
+  {
+    label: "Overview",
+    items: [
+      { title: "Dashboard", url: "/", icon: LayoutDashboard },
+      { title: "Projects", url: "/projects", icon: FolderOpen },
+      { title: "Work Orders", url: "/work-orders", icon: ClipboardList },
+    ]
+  },
+  {
+    label: "Operations",
+    items: [
+      { title: "Locations", url: "/locations", icon: MapPin },
+      { title: "Scheduling", url: "/scheduling", icon: Calendar },
+      { title: "Field Operations", url: "/field-operations", icon: Briefcase },
+      { title: "Maintenance", url: "/maintenance", icon: Wrench },
+    ]
+  },
+  {
+    label: "Business",
+    items: [
+      { title: "Clients", url: "/clients", icon: Building },
+      { title: "Contracts", url: "/contracts", icon: FileText },
+      { title: "Procurement", url: "/procurement", icon: Package },
+      { title: "Service Requests", url: "/service-requests", icon: MessageSquare },
+    ]
+  },
+  {
+    label: "Resources",
+    items: [
+      { title: "TradeTube", url: "/tradetube", icon: PlayCircle },
+      { title: "Communications", url: "/communications", icon: MessageSquare },
+      { title: "Quality Assurance", url: "/quality-assurance", icon: Shield },
+    ]
+  },
+  {
+    label: "Settings",
+    items: [
+      { title: "System Settings", url: "/settings", icon: Settings },
+      { title: "Integrations", url: "/integrations", icon: Zap },
+      { title: "Twilio Settings", url: "/twilio-settings", icon: Phone },
+      { title: "Advanced Features", url: "/advanced-features", icon: Layers },
+    ]
+  }
 ];
 
 export function AppSidebar() {
-  const { state, setOpen, setOpenMobile } = useSidebar();
+  const { state, setOpenMobile } = useSidebar();
   const location = useLocation();
   const { user, signOut } = useAuth();
   const { hasRole } = useUserRoles();
@@ -96,120 +128,157 @@ export function AppSidebar() {
     }
   };
   
-  // Add admin-only items
-  let allItems = hasRole('admin') 
-    ? [...navigationItems, { title: "User Management", url: "/user-management", icon: UserCog }]
-    : navigationItems;
-  
-  // Add super admin items
-  if (isSuperAdmin) {
-    allItems = [
-      ...allItems, 
-      { title: "Organizations", url: "/admin/organizations", icon: Building2 },
-      { title: "Client Portals", url: "/admin/client-portals", icon: Building2 }
-    ];
-  }
+  // Build admin groups
+  const adminGroup = hasRole('admin') || isSuperAdmin ? {
+    label: "Administration",
+    items: [
+      ...(hasRole('admin') ? [{ title: "User Management", url: "/user-management", icon: UserCog }] : []),
+      ...(isSuperAdmin ? [
+        { title: "Organizations", url: "/admin/organizations", icon: Building2 },
+        { title: "Client Portals", url: "/admin/client-portals", icon: Database }
+      ] : [])
+    ]
+  } : null;
 
-  const getNavClassName = (path: string) => {
-    return isActive(path) 
-      ? "bg-primary/10 text-primary font-medium border-r-2 border-primary" 
-      : "hover:bg-muted/50 text-muted-foreground hover:text-foreground";
-  };
+  const allGroups = adminGroup ? [...navigationGroups, adminGroup] : navigationGroups;
 
   return (
-    <Sidebar className={`${isCollapsed ? "w-16" : "w-64"} border-r transition-all duration-300`}>
-      <SidebarHeader className="p-4">
-        <div className="flex items-center gap-3">
-          <img 
-            src={tradeAtlasLogo} 
-            alt="Trade Atlas" 
-            className="h-8 w-8 flex-shrink-0"
-          />
+    <Sidebar 
+      className={cn(
+        "border-r bg-sidebar transition-all duration-300",
+        isCollapsed ? "w-16" : "w-60"
+      )}
+    >
+      {/* Logo Header */}
+      <SidebarHeader className="p-4 border-b border-sidebar-border">
+        <NavLink to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+          <div className="flex-shrink-0 h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
+            <img 
+              src={tradeAtlasLogo} 
+              alt="Trade Atlas" 
+              className="h-6 w-6"
+            />
+          </div>
           {!isCollapsed && (
-            <span className="text-lg font-bold text-foreground">
-              Trade Atlas
-            </span>
+            <div className="flex flex-col min-w-0">
+              <span className="text-sm font-semibold text-foreground truncate">
+                Trade Atlas
+              </span>
+              <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                Dashboard
+              </span>
+            </div>
           )}
-        </div>
+        </NavLink>
       </SidebarHeader>
 
+      {/* Navigation Content */}
       <SidebarContent className="overflow-hidden">
         <ScrollArea className="flex-1 min-h-0 h-full">
-          <SidebarGroup>
-            <SidebarGroupLabel className={isCollapsed ? "sr-only" : ""}>
-              Navigation
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {allItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <NavLink 
-                        to={item.url}
-                        onClick={handleNavClick}
-                        className={`flex items-center gap-3 px-3 py-3 md:py-2 rounded-lg transition-colors ${getNavClassName(item.url)}`}
-                      >
-                        <item.icon className="h-5 w-5 md:h-4 md:w-4 flex-shrink-0" />
-                        {!isCollapsed && <span className="text-sm md:text-base">{item.title}</span>}
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
+          <div className="py-2">
+            {allGroups.map((group, groupIndex) => (
+              <SidebarGroup key={group.label} className="py-2">
+                {!isCollapsed && (
+                  <SidebarGroupLabel className="px-4 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 mb-1">
+                    {group.label}
+                  </SidebarGroupLabel>
+                )}
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {group.items.map((item) => (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton asChild className="px-0">
+                          <NavLink 
+                            to={item.url}
+                            onClick={handleNavClick}
+                            className={cn(
+                              "flex items-center gap-3 px-4 py-2 mx-2 rounded-md transition-all duration-150",
+                              isActive(item.url) 
+                                ? "bg-primary/10 text-primary font-medium shadow-sm" 
+                                : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                            )}
+                            title={isCollapsed ? item.title : undefined}
+                          >
+                            <item.icon className={cn(
+                              "h-4 w-4 flex-shrink-0",
+                              isActive(item.url) ? "text-primary" : "text-muted-foreground"
+                            )} />
+                            {!isCollapsed && (
+                              <span className="text-sm truncate">{item.title}</span>
+                            )}
+                          </NavLink>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+                {groupIndex < allGroups.length - 1 && !isCollapsed && (
+                  <Separator className="mt-3 mx-4 bg-sidebar-border/50" />
+                )}
+              </SidebarGroup>
+            ))}
+          </div>
         </ScrollArea>
       </SidebarContent>
 
-      <SidebarFooter className="p-4">
+      {/* Footer */}
+      <SidebarFooter className="p-3 border-t border-sidebar-border mt-auto">
         {/* PWA Install Button */}
-        <div className={`${isCollapsed ? "flex justify-center" : ""} mb-2`}>
+        <div className={cn("mb-2", isCollapsed && "flex justify-center")}>
           <PWAInstallButton 
-            variant="outline" 
-            size={isCollapsed ? "icon" : "default"}
+            variant="ghost" 
+            size={isCollapsed ? "icon" : "sm"}
             showLabel={!isCollapsed}
-            className="w-full"
+            className={cn(
+              "h-8 text-xs text-muted-foreground hover:text-foreground",
+              !isCollapsed && "w-full justify-start"
+            )}
           />
         </div>
         
-        {/* Build Version - Clickable to view changelog */}
+        {/* Build Version */}
         <NavLink 
           to="/settings?tab=about" 
-          className={`${isCollapsed ? "text-center" : ""} mb-2 block hover:text-primary transition-colors`}
+          className={cn(
+            "block mb-3 text-center hover:text-primary transition-colors",
+            isCollapsed && "text-center"
+          )}
           title="View changelog"
         >
-          <p className="text-xs text-muted-foreground/60 hover:text-muted-foreground">
+          <p className="text-[10px] text-muted-foreground/50 hover:text-muted-foreground">
             {isCollapsed ? `v${APP_VERSION.split('.').slice(0, 2).join('.')}` : `Version ${APP_VERSION}`}
           </p>
         </NavLink>
         
-        <Separator className="mb-4" />
-        
+        {/* User Menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button 
               variant="ghost" 
-              className={`${isCollapsed ? "h-10 w-10 p-0" : "w-full justify-start"} relative`}
+              className={cn(
+                "relative h-auto py-2",
+                isCollapsed ? "h-10 w-10 p-0 mx-auto" : "w-full justify-start px-2"
+              )}
             >
-              <Avatar className="h-8 w-8">
+              <Avatar className="h-8 w-8 flex-shrink-0">
                 <AvatarImage src="/avatars/user.jpg" alt="User" />
-                <AvatarFallback className="bg-primary text-primary-foreground">
+                <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
                   {user?.email?.charAt(0).toUpperCase() || 'U'}
                 </AvatarFallback>
               </Avatar>
               {!isCollapsed && (
-                <div className="ml-3 text-left flex-1">
-                  <p className="text-sm font-medium">
+                <div className="ml-2 text-left flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">
                     {user?.email?.split('@')[0] || 'User'}
                   </p>
-                  <p className="text-xs text-muted-foreground truncate">
+                  <p className="text-[10px] text-muted-foreground truncate">
                     {user?.email}
                   </p>
                 </div>
               )}
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56 bg-popover border" align="start" forceMount>
+          <DropdownMenuContent className="w-56" align="start" forceMount>
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
                 <p className="text-sm font-medium leading-none">
@@ -222,25 +291,25 @@ export function AppSidebar() {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <NavLink to="/profile" className="flex items-center">
+              <NavLink to="/profile" className="flex items-center cursor-pointer">
                 <User className="mr-2 h-4 w-4" />
                 <span>Profile</span>
               </NavLink>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <NavLink to="/settings" className="flex items-center">
+              <NavLink to="/settings" className="flex items-center cursor-pointer">
                 <Settings className="mr-2 h-4 w-4" />
                 <span>Settings</span>
               </NavLink>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <NavLink to="/settings?tab=about" className="flex items-center">
+              <NavLink to="/settings?tab=about" className="flex items-center cursor-pointer">
                 <Info className="mr-2 h-4 w-4" />
                 <span>About & Changelog</span>
               </NavLink>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={signOut}>
+            <DropdownMenuItem onClick={signOut} className="cursor-pointer">
               <LogOut className="mr-2 h-4 w-4" />
               <span>Log out</span>
             </DropdownMenuItem>

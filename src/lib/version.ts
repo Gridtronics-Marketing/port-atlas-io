@@ -1,4 +1,4 @@
-export const APP_VERSION = "1.6.1";
+export const APP_VERSION = "1.7.0";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,20 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "1.7.0",
+    date: "2026-01-22",
+    changes: [
+      "Major UI refactor: Nexa-inspired professional analytics dashboard design",
+      "New design system with refined typography, spacing, and shadow tokens",
+      "Reorganized sidebar navigation with grouped sections (Overview, Operations, Business, Resources, Settings)",
+      "New MetricCard component for KPI displays with trend indicators",
+      "Enhanced table styling with improved headers, hover states, and data density",
+      "Professional header bar with improved layout and visual hierarchy",
+      "Updated card component with consistent shadows and padding",
+      "Both Dashboard and Locations pages transformed with analytics-style layouts"
+    ]
+  },
   {
     version: "1.6.1",
     date: "2026-01-22",

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MapPin, Plus, Filter, Search } from "lucide-react";
+import { MapPin, Plus, Search, Building2, CheckCircle, Clock, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { LocationGrid } from "@/components/LocationGrid";
 import { AddLocationModal } from "@/components/AddLocationModal";
+import { MetricCard } from "@/components/ui/metric-card";
 import { useLocations } from "@/hooks/useLocations";
 
 const Locations = () => {
@@ -21,77 +22,83 @@ const Locations = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const { locations } = useLocations();
 
-  const stats = [
-    { label: "Total Locations", value: locations.length.toString(), color: "text-primary" },
-    { label: "Active Projects", value: locations.filter(l => l.status === 'Active').length.toString(), color: "text-success" },
-    { label: "Completed", value: locations.filter(l => l.status === 'Completed').length.toString(), color: "text-muted-foreground" },
-    { label: "In Progress", value: locations.filter(l => l.status === 'In Progress').length.toString(), color: "text-warning" },
-  ];
+  const activeCount = locations.filter(l => l.status === 'Active').length;
+  const completedCount = locations.filter(l => l.status === 'Completed').length;
+  const inProgressCount = locations.filter(l => l.status === 'In Progress').length;
 
   return (
-    <main className="container mx-auto px-4 py-6 space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold bg-gradient-hero bg-clip-text text-transparent">
-              Location Management
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Manage all jobsites, track installations, and monitor progress
-            </p>
+    <div className="min-h-full bg-background">
+      {/* Page Header */}
+      <div className="border-b bg-card/50">
+        <div className="container mx-auto px-4 lg:px-6 py-4 lg:py-6">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-semibold text-foreground">Locations</h1>
+              <p className="text-sm text-muted-foreground mt-1">
+                Manage jobsites, track installations, and monitor progress
+              </p>
+            </div>
+            <Button 
+              onClick={() => setShowAddLocation(true)}
+              size="sm"
+              className="gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Add Location
+            </Button>
           </div>
-          
-          <Button 
-            onClick={() => setShowAddLocation(true)}
-            className="bg-gradient-primary hover:bg-primary-hover shadow-medium"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add New Location
-          </Button>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="container mx-auto px-4 lg:px-6 py-6 space-y-6">
+        
+        {/* KPI Metrics Row */}
+        <div className="grid-metrics">
+          <MetricCard
+            title="Total Sites"
+            value={locations.length}
+            icon={Building2}
+          />
+          <MetricCard
+            title="Active"
+            value={activeCount}
+            icon={Activity}
+            variant="primary"
+          />
+          <MetricCard
+            title="In Progress"
+            value={inProgressCount}
+            icon={Clock}
+            variant="warning"
+          />
+          <MetricCard
+            title="Completed"
+            value={completedCount}
+            icon={CheckCircle}
+            variant="success"
+          />
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {stats.map((stat, index) => (
-            <Card key={index} className="shadow-soft">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">{stat.label}</p>
-                    <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
-                  </div>
-                  <MapPin className="h-8 w-8 text-primary opacity-20" />
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {/* Filters */}
-        <Card className="shadow-soft">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Filter className="h-5 w-5" />
-              Filter & Search
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col sm:flex-row gap-4">
+        {/* Search & Filter Bar */}
+        <Card className="shadow-card">
+          <CardContent className="p-4">
+            <div className="flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search locations, clients, or addresses..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  className="pl-9 h-9 text-sm"
                 />
               </div>
               
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-full sm:w-[160px] h-9 text-sm">
                   <SelectValue placeholder="Filter by status" />
                 </SelectTrigger>
-                <SelectContent className="bg-popover border">
+                <SelectContent>
                   <SelectItem value="all">All Statuses</SelectItem>
                   <SelectItem value="active">Active</SelectItem>
                   <SelectItem value="in-progress">In Progress</SelectItem>
@@ -104,29 +111,36 @@ const Locations = () => {
         </Card>
 
         {/* Locations Grid */}
-        <Card className="shadow-soft">
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span className="flex items-center gap-2">
-                <MapPin className="h-5 w-5 text-primary" />
-                All Locations
-              </span>
-              <Badge variant="secondary">{locations.length} Total</Badge>
-            </CardTitle>
-            <CardDescription>
-              Manage installation sites and track project progress
-            </CardDescription>
+        <Card className="shadow-card">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <MapPin className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="text-base">All Locations</CardTitle>
+                  <CardDescription className="text-xs">
+                    Manage installation sites and track project progress
+                  </CardDescription>
+                </div>
+              </div>
+              <Badge variant="secondary" className="text-xs font-medium">
+                {locations.length} Total
+              </Badge>
+            </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-0">
             <LocationGrid searchTerm={searchTerm} statusFilter={statusFilter} />
           </CardContent>
         </Card>
+      </div>
 
-        <AddLocationModal 
-          open={showAddLocation} 
-          onOpenChange={setShowAddLocation} 
-        />
-      </main>
+      <AddLocationModal 
+        open={showAddLocation} 
+        onOpenChange={setShowAddLocation} 
+      />
+    </div>
   );
 };
 
