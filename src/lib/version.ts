@@ -1,4 +1,4 @@
-export const APP_VERSION = "1.6.0";
+export const APP_VERSION = "1.6.1";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,16 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "1.6.1",
+    date: "2026-01-22",
+    changes: [
+      "Added 'Powered by Trade Atlas' footer to client portal login page for consistent branding",
+      "Added Orphaned Organizations Cleanup tool for Super Admins to manage unused client portal organizations",
+      "Fixed duplicate organization slug error when creating client portals - now reuses orphaned orgs or generates unique slugs",
+      "Enhanced invite-client-user edge function with slug collision detection and recovery"
+    ]
+  },
   {
     version: "1.6.0",
     date: "2026-01-20",
