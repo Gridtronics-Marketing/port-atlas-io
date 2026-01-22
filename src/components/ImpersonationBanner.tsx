@@ -39,11 +39,11 @@ export const ImpersonationBanner: React.FC = () => {
         <div className="flex items-center gap-3">
           <AlertTriangle className="h-5 w-5" />
           <div className="flex items-center gap-2">
-            {impersonation.type === 'client_portal' ? (
+          {impersonation.type === 'client_portal' ? (
               <>
                 <Building2 className="h-4 w-4" />
                 <span className="font-medium">
-                  Viewing Client Portal: {impersonation.targetClientOrgName}
+                  Viewing Client Portal: {impersonation.targetClientName}
                 </span>
               </>
             ) : impersonation.type === 'role' ? (

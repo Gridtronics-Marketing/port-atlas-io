@@ -48,85 +48,74 @@ import { ClientPortalUserManager } from '@/components/ClientPortalUserManager';
 import { PendingInvitationsManager } from '@/components/PendingInvitationsManager';
 import { useClientInvitations } from '@/hooks/useClientInvitations';
 
-interface ClientPortal {
+interface ClientWithPortal {
   id: string;
   name: string;
-  slug: string;
-  status: string;
-  created_at: string;
-  client_name: string | null;
-  client_id: string | null;
+  slug: string | null;
+  organization_id: string;
   user_count: number;
+  created_at: string;
 }
 
 const ClientPortalManagement = () => {
-  const { isSuperAdmin, currentOrganization } = useOrganization();
-  const [portals, setPortals] = useState<ClientPortal[]>([]);
+  const { isSuperAdmin } = useOrganization();
+  const [clients, setClients] = useState<ClientWithPortal[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedPortal, setSelectedPortal] = useState<ClientPortal | null>(null);
+  const [selectedClient, setSelectedClient] = useState<ClientWithPortal | null>(null);
   const [showUserManager, setShowUserManager] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [activeTab, setActiveTab] = useState('portals');
   
-  const { invitations, loading: invitationsLoading, pendingCount, fetchInvitations } = useClientInvitations();
+  const { pendingCount, fetchInvitations } = useClientInvitations();
 
-  const fetchPortals = async () => {
+  const fetchClientsWithPortals = async () => {
     setLoading(true);
     try {
-      // Fetch organizations that are client portals (have parent org in settings)
-      const { data: orgs, error } = await supabase
-        .from('organizations')
-        .select(`
-          id,
-          name,
-          slug,
-          created_at,
-          settings
-        `)
-        .order('created_at', { ascending: false });
+      // Fetch all clients that have portal users
+      const { data: portalUsers, error: puError } = await supabase
+        .from('client_portal_users')
+        .select('client_id');
 
-      if (error) throw error;
+      if (puError) throw puError;
 
-      // Filter to only client portals (those with parent org)
-      const clientOrgs = (orgs || []).filter(org => {
-        const settings = org.settings as Record<string, unknown> | null;
-        return settings?.parentOrganizationId || settings?.isClientPortal;
-      });
+      // Get unique client IDs
+      const clientIds = [...new Set(portalUsers?.map(pu => pu.client_id) || [])];
+      
+      if (clientIds.length === 0) {
+        setClients([]);
+        setLoading(false);
+        return;
+      }
 
-      // Fetch clients linked to these orgs
-      const { data: clients } = await supabase
+      // Fetch client details
+      const { data: clientsData, error: clientsError } = await supabase
         .from('clients')
-        .select('id, name, linked_organization_id')
-        .in('linked_organization_id', clientOrgs.map(o => o.id));
+        .select('id, name, organization_id, created_at')
+        .in('id', clientIds)
+        .order('name');
 
-      // Fetch user counts per org
-      const { data: members } = await supabase
-        .from('organization_members')
-        .select('organization_id')
-        .in('organization_id', clientOrgs.map(o => o.id));
+      if (clientsError) throw clientsError;
 
-      // Build portal data
-      const portalData: ClientPortal[] = clientOrgs.map(org => {
-        const client = clients?.find(c => c.linked_organization_id === org.id);
-        const userCount = members?.filter(m => m.organization_id === org.id).length || 0;
+      // Count users per client
+      const userCounts = (portalUsers || []).reduce((acc, pu) => {
+        acc[pu.client_id] = (acc[pu.client_id] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
 
-        return {
-          id: org.id,
-          name: org.name,
-          slug: org.slug || '',
-          status: 'active',
-          created_at: org.created_at,
-          client_name: client?.name || null,
-          client_id: client?.id || null,
-          user_count: userCount,
-        };
-      });
+      const clientsWithPortals: ClientWithPortal[] = (clientsData || []).map(client => ({
+        id: client.id,
+        name: client.name,
+        slug: client.name.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-'),
+        organization_id: client.organization_id,
+        user_count: userCounts[client.id] || 0,
+        created_at: client.created_at,
+      }));
 
-      setPortals(portalData);
+      setClients(clientsWithPortals);
     } catch (err: any) {
-      console.error('Error fetching portals:', err);
+      console.error('Error fetching clients with portals:', err);
       toast.error('Failed to load client portals');
     } finally {
       setLoading(false);
@@ -134,7 +123,7 @@ const ClientPortalManagement = () => {
   };
 
   useEffect(() => {
-    fetchPortals();
+    fetchClientsWithPortals();
   }, []);
 
   const handleCopyUrl = (slug: string) => {
@@ -143,49 +132,34 @@ const ClientPortalManagement = () => {
     toast.success('Portal URL copied to clipboard');
   };
 
-  const handleDeletePortal = async () => {
-    if (!selectedPortal) return;
+  const handleRevokePortalAccess = async () => {
+    if (!selectedClient) return;
 
     setDeleting(true);
     try {
-      // Delete organization members first
-      await supabase
-        .from('organization_members')
-        .delete()
-        .eq('organization_id', selectedPortal.id);
-
-      // Unlink client
-      if (selectedPortal.client_id) {
-        await supabase
-          .from('clients')
-          .update({ linked_organization_id: null })
-          .eq('id', selectedPortal.client_id);
-      }
-
-      // Delete organization
+      // Delete all portal users for this client
       const { error } = await supabase
-        .from('organizations')
+        .from('client_portal_users')
         .delete()
-        .eq('id', selectedPortal.id);
+        .eq('client_id', selectedClient.id);
 
       if (error) throw error;
 
-      toast.success('Portal deleted successfully');
+      toast.success('Portal access revoked successfully');
       setShowDeleteDialog(false);
-      setSelectedPortal(null);
-      fetchPortals();
+      setSelectedClient(null);
+      fetchClientsWithPortals();
     } catch (err: any) {
-      console.error('Error deleting portal:', err);
-      toast.error('Failed to delete portal');
+      console.error('Error revoking portal access:', err);
+      toast.error('Failed to revoke portal access');
     } finally {
       setDeleting(false);
     }
   };
 
-  const filteredPortals = portals.filter(portal =>
-    portal.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    portal.client_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    portal.slug.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredClients = clients.filter(client =>
+    client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    client.slug?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   if (!isSuperAdmin) {
@@ -205,7 +179,7 @@ const ClientPortalManagement = () => {
   }
 
   const handleRefresh = () => {
-    fetchPortals();
+    fetchClientsWithPortals();
     fetchInvitations();
   };
 
@@ -217,7 +191,7 @@ const ClientPortalManagement = () => {
             Client Portals
           </h1>
           <p className="text-muted-foreground mt-1">
-            Manage all client portal organizations and their users
+            Manage client portal access and users (no separate organizations)
           </p>
         </div>
         <Button onClick={handleRefresh} variant="outline" size="sm">
@@ -230,8 +204,8 @@ const ClientPortalManagement = () => {
         <TabsList>
           <TabsTrigger value="portals" className="flex items-center gap-2">
             <Building2 className="h-4 w-4" />
-            Portals
-            <Badge variant="secondary" className="ml-1">{portals.length}</Badge>
+            Clients with Portal Access
+            <Badge variant="secondary" className="ml-1">{clients.length}</Badge>
           </TabsTrigger>
           <TabsTrigger value="invitations" className="flex items-center gap-2">
             <Mail className="h-4 w-4" />
@@ -249,16 +223,16 @@ const ClientPortalManagement = () => {
                 <div>
                   <CardTitle className="flex items-center gap-2">
                     <Building2 className="h-5 w-5" />
-                    All Client Portals
+                    Clients with Portal Access
                   </CardTitle>
                   <CardDescription>
-                    {portals.length} portal{portals.length !== 1 ? 's' : ''} configured
+                    {clients.length} client{clients.length !== 1 ? 's' : ''} with portal users
                   </CardDescription>
                 </div>
                 <div className="relative w-64">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Search portals..."
+                    placeholder="Search clients..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-10"
@@ -271,48 +245,40 @@ const ClientPortalManagement = () => {
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
-              ) : filteredPortals.length === 0 ? (
+              ) : filteredClients.length === 0 ? (
                 <div className="text-center py-12">
                   <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-lg font-medium mb-2">No Client Portals</h3>
                   <p className="text-muted-foreground">
-                    {searchQuery ? 'No portals match your search.' : 'Create a client portal from the Clients page.'}
+                    {searchQuery ? 'No clients match your search.' : 'Invite users from the Clients page to create portal access.'}
                   </p>
                 </div>
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Portal Name</TableHead>
-                      <TableHead>Client</TableHead>
-                      <TableHead>URL Slug</TableHead>
-                      <TableHead>Users</TableHead>
-                      <TableHead>Status</TableHead>
+                      <TableHead>Client Name</TableHead>
+                      <TableHead>Portal URL</TableHead>
+                      <TableHead>Portal Users</TableHead>
                       <TableHead>Created</TableHead>
                       <TableHead className="w-[50px]"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredPortals.map((portal) => (
-                      <TableRow key={portal.id}>
-                        <TableCell className="font-medium">{portal.name}</TableCell>
-                        <TableCell>{portal.client_name || '—'}</TableCell>
+                    {filteredClients.map((client) => (
+                      <TableRow key={client.id}>
+                        <TableCell className="font-medium">{client.name}</TableCell>
                         <TableCell>
-                          <code className="bg-muted px-2 py-1 rounded text-sm">/p/{portal.slug}</code>
+                          <code className="bg-muted px-2 py-1 rounded text-sm">/p/{client.slug}</code>
                         </TableCell>
                         <TableCell>
                           <Badge variant="outline" className="gap-1">
                             <Users className="h-3 w-3" />
-                            {portal.user_count}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={portal.status === 'active' ? 'default' : 'secondary'}>
-                            {portal.status}
+                            {client.user_count}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-muted-foreground">
-                          {new Date(portal.created_at).toLocaleDateString()}
+                          {new Date(client.created_at).toLocaleDateString()}
                         </TableCell>
                         <TableCell>
                           <DropdownMenu>
@@ -322,17 +288,17 @@ const ClientPortalManagement = () => {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleCopyUrl(portal.slug)}>
+                              <DropdownMenuItem onClick={() => handleCopyUrl(client.slug || '')}>
                                 <Copy className="h-4 w-4 mr-2" />
                                 Copy Portal URL
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => window.open(`/p/${portal.slug}`, '_blank')}>
+                              <DropdownMenuItem onClick={() => window.open(`/p/${client.slug}`, '_blank')}>
                                 <ExternalLink className="h-4 w-4 mr-2" />
                                 Open Portal
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem onClick={() => {
-                                setSelectedPortal(portal);
+                                setSelectedClient(client);
                                 setShowUserManager(true);
                               }}>
                                 <Users className="h-4 w-4 mr-2" />
@@ -342,12 +308,12 @@ const ClientPortalManagement = () => {
                               <DropdownMenuItem
                                 className="text-destructive"
                                 onClick={() => {
-                                  setSelectedPortal(portal);
+                                  setSelectedClient(client);
                                   setShowDeleteDialog(true);
                                 }}
                               >
                                 <Trash2 className="h-4 w-4 mr-2" />
-                                Delete Portal
+                                Revoke Portal Access
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -366,42 +332,48 @@ const ClientPortalManagement = () => {
         </TabsContent>
       </Tabs>
 
-      {/* User Manager Modal */}
-      {selectedPortal && (
+      {/* User Manager Modal - now uses client-based management */}
+      {selectedClient && (
         <ClientPortalUserManager
           open={showUserManager}
           onOpenChange={setShowUserManager}
-          portal={selectedPortal}
-          onUpdate={fetchPortals}
+          portal={{ 
+            id: selectedClient.id, 
+            name: selectedClient.name, 
+            slug: selectedClient.slug || '',
+            user_count: selectedClient.user_count,
+            client_id: selectedClient.id
+          }}
+          onUpdate={fetchClientsWithPortals}
         />
       )}
 
-      {/* Delete Confirmation Dialog */}
+      {/* Revoke Access Confirmation Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Client Portal</AlertDialogTitle>
+            <AlertDialogTitle>Revoke Portal Access</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete the portal "{selectedPortal?.name}"? 
-              This will remove all {selectedPortal?.user_count} user(s) and cannot be undone.
+              Are you sure you want to revoke portal access for "{selectedClient?.name}"? 
+              This will remove all {selectedClient?.user_count} portal user(s) from this client.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleDeletePortal}
+              onClick={handleRevokePortalAccess}
               disabled={deleting}
               className="bg-destructive hover:bg-destructive/90"
             >
               {deleting ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Deleting...
+                  Revoking...
                 </>
               ) : (
                 <>
                   <Trash2 className="h-4 w-4 mr-2" />
-                  Delete Portal
+                  Revoke Access
                 </>
               )}
             </AlertDialogAction>

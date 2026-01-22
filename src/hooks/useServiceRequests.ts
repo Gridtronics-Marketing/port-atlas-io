@@ -37,11 +37,15 @@ interface CreateServiceRequestData {
 }
 
 export const useServiceRequests = () => {
-  const { currentOrganization, isClientPortalUser, parentOrganizationId } = useOrganization();
+  const { currentOrganization, isClientPortalUser, clientPortalAccess } = useOrganization();
   const { user } = useAuth();
   const { toast } = useToast();
   const [serviceRequests, setServiceRequests] = useState<ServiceRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // For client portal users, the parent organization is the current organization
+  // since they're now members of the parent org, not a child org
+  const parentOrganizationId = currentOrganization?.id || null;
 
   const fetchServiceRequests = async () => {
     if (!currentOrganization?.id) return;

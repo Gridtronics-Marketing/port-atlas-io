@@ -41,7 +41,6 @@ import {
   Mail, 
   KeyRound, 
   UserMinus, 
-  Plus,
   Send 
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -59,6 +58,7 @@ interface Portal {
   name: string;
   slug: string;
   user_count: number;
+  client_id?: string | null;
 }
 
 interface ClientPortalUserManagerProps {
@@ -83,32 +83,42 @@ export const ClientPortalUserManager = ({
   const [showResetDialog, setShowResetDialog] = useState(false);
   const [processing, setProcessing] = useState(false);
 
+  // Use client_id if available (new model), otherwise fall back to portal.id (old model)
+  const clientId = portal.client_id || portal.id;
+
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      // Fetch organization members
-      const { data: members, error } = await supabase
-        .from('organization_members')
+      // Fetch client portal users from the new table
+      const { data: portalUsers, error } = await supabase
+        .from('client_portal_users')
         .select('id, user_id, role, created_at')
-        .eq('organization_id', portal.id);
+        .eq('client_id', clientId);
 
       if (error) throw error;
 
       // Get user emails from profiles
-      const userIds = members?.map(m => m.user_id) || [];
+      const userIds = portalUsers?.map(m => m.user_id) || [];
+      
+      if (userIds.length === 0) {
+        setUsers([]);
+        setLoading(false);
+        return;
+      }
+
       const { data: profiles } = await supabase
         .from('profiles')
         .select('id, email')
         .in('id', userIds);
 
-      const userData: PortalUser[] = (members || []).map(member => {
-        const profile = profiles?.find(p => p.id === member.user_id);
+      const userData: PortalUser[] = (portalUsers || []).map(pu => {
+        const profile = profiles?.find(p => p.id === pu.user_id);
         return {
-          id: member.id,
-          user_id: member.user_id,
+          id: pu.id,
+          user_id: pu.user_id,
           email: profile?.email || 'Unknown',
-          role: member.role,
-          joined_at: member.created_at,
+          role: pu.role,
+          joined_at: pu.created_at,
         };
       });
 
@@ -125,22 +135,31 @@ export const ClientPortalUserManager = ({
     if (open) {
       fetchUsers();
     }
-  }, [open, portal.id]);
+  }, [open, clientId]);
 
   const handleInviteUser = async () => {
     if (!inviteEmail) return;
 
     setInviting(true);
     try {
+      // Get the client's organization_id for the parent org
+      const { data: client } = await supabase
+        .from('clients')
+        .select('organization_id')
+        .eq('id', clientId)
+        .single();
+
+      if (!client) {
+        throw new Error('Client not found');
+      }
+
       const response = await supabase.functions.invoke('invite-client-user', {
         body: {
-          clientId: null, // No client association for direct invite
+          clientId: clientId,
           clientName: portal.name,
-          organizationName: portal.name,
-          organizationSlug: portal.slug,
           inviteEmail,
           userRole: 'member',
-          existingOrganizationId: portal.id // Use existing org
+          parentOrganizationId: client.organization_id
         }
       });
 
@@ -163,8 +182,9 @@ export const ClientPortalUserManager = ({
 
     setProcessing(true);
     try {
+      // Delete from client_portal_users table
       const { error } = await supabase
-        .from('organization_members')
+        .from('client_portal_users')
         .delete()
         .eq('id', selectedUser.id);
 
@@ -210,8 +230,8 @@ export const ClientPortalUserManager = ({
 
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
-      case 'owner': return 'default';
-      case 'admin': return 'secondary';
+      case 'admin': return 'default';
+      case 'member': return 'secondary';
       default: return 'outline';
     }
   };

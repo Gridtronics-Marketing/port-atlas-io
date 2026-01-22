@@ -1,4 +1,4 @@
-export const APP_VERSION = "1.7.0";
+export const APP_VERSION = "1.7.1";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,18 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "1.7.1",
+    date: "2026-01-22",
+    changes: [
+      "Simplified client portal architecture - portals no longer create separate organizations",
+      "Added client_portal_users table for direct client-user relationships",
+      "Client portal users are now linked directly to clients without child organizations",
+      "Updated portal URLs to use client slugs (/p/{client-slug})",
+      "Only paying organizations (ALJ Solutions, Gridtronics Marketing) remain in the organizations list",
+      "Improved portal access management with cleaner data model",
+    ]
+  },
   {
     version: "1.7.0",
     date: "2026-01-22",
