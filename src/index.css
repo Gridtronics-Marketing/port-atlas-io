@@ -2,130 +2,169 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
+/* Trade Atlas Design System - Nexa-Inspired Analytics Dashboard
+   Professional, data-dense, institutional-grade UI
+   All colors MUST be HSL.
 */
 
 @layer base {
   :root {
-    /* Trade Atlas professional theme - Gold & Silver premium */
-    --background: 225 20% 97%;
-    --foreground: 225 30% 15%;
+    /* Core backgrounds - Light, clean, professional */
+    --background: 220 14% 96%;
+    --foreground: 220 25% 12%;
 
+    /* Card surfaces - Pure white for contrast */
     --card: 0 0% 100%;
-    --card-foreground: 225 30% 15%;
+    --card-foreground: 220 25% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 225 30% 15%;
+    --popover-foreground: 220 25% 12%;
 
-    /* Trade Atlas gold primary */
+    /* Trade Atlas gold primary - Premium accent */
     --primary: 43 70% 50%;
-    --primary-foreground: 225 30% 10%;
+    --primary-foreground: 220 25% 8%;
     --primary-hover: 43 75% 45%;
 
-    /* Silver secondary */
-    --secondary: 210 15% 92%;
-    --secondary-foreground: 225 30% 25%;
+    /* Neutral secondary - Professional gray tones */
+    --secondary: 220 14% 92%;
+    --secondary-foreground: 220 25% 25%;
 
-    --muted: 220 15% 94%;
-    --muted-foreground: 220 15% 45%;
+    /* Muted for subtle backgrounds */
+    --muted: 220 14% 95%;
+    --muted-foreground: 220 10% 46%;
 
-    --accent: 43 60% 90%;
+    /* Accent - Subtle gold tint */
+    --accent: 43 25% 94%;
     --accent-foreground: 43 80% 30%;
 
-    --destructive: 0 75% 55%;
+    /* Status colors - Clear, readable indicators */
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Success and warning states */
-    --success: 142 76% 36%;
+    --success: 142 71% 40%;
     --success-foreground: 0 0% 100%;
+    
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
-    --info: 210 100% 50%;
+    
+    --info: 210 92% 45%;
     --info-foreground: 0 0% 100%;
 
-    --border: 220 20% 88%;
-    --input: 220 20% 92%;
+    /* Borders - Subtle separation */
+    --border: 220 13% 90%;
+    --input: 220 13% 91%;
     --ring: 43 70% 50%;
 
-    /* Trade Atlas premium gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(43 70% 50%), hsl(43 80% 60%));
-    --gradient-secondary: linear-gradient(135deg, hsl(210 15% 92%), hsl(220 20% 98%));
+    /* Premium shadows - Soft, professional */
+    --shadow-xs: 0 1px 2px 0 hsl(220 25% 12% / 0.03);
+    --shadow-soft: 0 1px 3px 0 hsl(220 25% 12% / 0.04), 0 1px 2px -1px hsl(220 25% 12% / 0.03);
+    --shadow-medium: 0 4px 6px -1px hsl(220 25% 12% / 0.05), 0 2px 4px -2px hsl(220 25% 12% / 0.04);
+    --shadow-strong: 0 10px 15px -3px hsl(220 25% 12% / 0.06), 0 4px 6px -4px hsl(220 25% 12% / 0.05);
+    --shadow-xl: 0 20px 25px -5px hsl(220 25% 12% / 0.08), 0 8px 10px -6px hsl(220 25% 12% / 0.06);
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(43 70% 50%), hsl(43 80% 58%));
+    --gradient-secondary: linear-gradient(180deg, hsl(220 14% 98%), hsl(220 14% 96%));
     --gradient-hero: linear-gradient(135deg, hsl(43 70% 50%), hsl(48 75% 55%));
-    --gradient-tech: linear-gradient(135deg, hsl(225 30% 12%), hsl(43 70% 50%));
+    --gradient-tech: linear-gradient(135deg, hsl(220 25% 10%), hsl(43 70% 50%));
 
-    /* Professional shadows */
-    --shadow-soft: 0 2px 8px -2px hsl(225 25% 15% / 0.1);
-    --shadow-medium: 0 4px 16px -4px hsl(225 25% 15% / 0.15);
-    --shadow-strong: 0 8px 32px -8px hsl(225 25% 15% / 0.2);
+    /* Typography scale */
+    --font-size-xs: 0.75rem;
+    --font-size-sm: 0.8125rem;
+    --font-size-base: 0.875rem;
+    --font-size-lg: 1rem;
+    --font-size-xl: 1.125rem;
+    --font-size-2xl: 1.5rem;
+    --font-size-3xl: 1.875rem;
+    --font-size-4xl: 2.25rem;
 
-    /* Smooth transitions */
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-bounce: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    /* Spacing scale (analytics-optimized) */
+    --spacing-xs: 0.25rem;
+    --spacing-sm: 0.5rem;
+    --spacing-md: 0.75rem;
+    --spacing-lg: 1rem;
+    --spacing-xl: 1.5rem;
+    --spacing-2xl: 2rem;
+    --spacing-3xl: 3rem;
 
     --radius: 0.5rem;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 225 10% 26%;
+    /* Sidebar - Clean, minimal */
+    --sidebar-background: 220 16% 98%;
+    --sidebar-foreground: 220 15% 30%;
     --sidebar-primary: 43 70% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 43 20% 95%;
-    --sidebar-accent-foreground: 225 30% 15%;
-    --sidebar-border: 220 13% 91%;
+    --sidebar-accent: 220 14% 94%;
+    --sidebar-accent-foreground: 220 25% 15%;
+    --sidebar-border: 220 13% 92%;
     --sidebar-ring: 43 70% 50%;
+    
+    /* Analytics-specific tokens */
+    --metric-positive: 142 71% 40%;
+    --metric-negative: 0 72% 51%;
+    --metric-neutral: 220 10% 46%;
+    --chart-grid: 220 14% 92%;
+    --chart-axis: 220 10% 60%;
   }
 
   .dark {
-    /* Trade Atlas dark theme - Premium metallic look */
-    --background: 225 30% 8%;
-    --foreground: 210 20% 88%;
+    /* Dark theme - Premium, professional */
+    --background: 220 20% 7%;
+    --foreground: 220 14% 92%;
 
-    --card: 225 25% 10%;
-    --card-foreground: 210 20% 88%;
+    --card: 220 18% 10%;
+    --card-foreground: 220 14% 92%;
 
-    --popover: 225 25% 10%;
-    --popover-foreground: 210 20% 88%;
+    --popover: 220 18% 10%;
+    --popover-foreground: 220 14% 92%;
 
     --primary: 43 70% 50%;
-    --primary-foreground: 225 30% 8%;
+    --primary-foreground: 220 20% 7%;
 
-    --secondary: 225 20% 15%;
-    --secondary-foreground: 210 20% 88%;
+    --secondary: 220 15% 16%;
+    --secondary-foreground: 220 14% 85%;
 
-    --muted: 225 20% 12%;
-    --muted-foreground: 210 20% 65%;
+    --muted: 220 15% 13%;
+    --muted-foreground: 220 10% 55%;
 
-    --accent: 43 50% 20%;
-    --accent-foreground: 43 70% 85%;
+    --accent: 43 40% 15%;
+    --accent-foreground: 43 70% 75%;
 
-    --destructive: 0 75% 55%;
-    --destructive-foreground: 210 20% 88%;
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 220 14% 92%;
     
-    --success: 142 76% 36%;
+    --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
-    --info: 210 100% 50%;
+    --info: 210 92% 50%;
     --info-foreground: 0 0% 100%;
 
-    --border: 225 20% 18%;
-    --input: 225 20% 15%;
+    --border: 220 15% 18%;
+    --input: 220 15% 16%;
     --ring: 43 70% 50%;
 
-    --sidebar-background: 225 25% 10%;
-    --sidebar-foreground: 210 20% 95%;
+    --sidebar-background: 220 18% 9%;
+    --sidebar-foreground: 220 14% 85%;
     --sidebar-primary: 43 70% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 225 20% 15%;
-    --sidebar-accent-foreground: 210 20% 95%;
-    --sidebar-border: 225 20% 15%;
+    --sidebar-accent: 220 15% 14%;
+    --sidebar-accent-foreground: 220 14% 92%;
+    --sidebar-border: 220 15% 15%;
     --sidebar-ring: 43 70% 50%;
+    
+    --metric-positive: 142 71% 50%;
+    --metric-negative: 0 72% 60%;
+    --metric-neutral: 220 10% 55%;
+    --chart-grid: 220 15% 18%;
+    --chart-axis: 220 10% 45%;
   }
 }
 
 @layer base {
   html, body {
-    @apply overflow-x-hidden;
+    @apply overflow-x-hidden antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
   
   * {
@@ -133,6 +172,105 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground text-sm;
+  }
+
+  /* Refined typography */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight;
+  }
+
+  h1 {
+    @apply text-2xl lg:text-3xl;
+  }
+
+  h2 {
+    @apply text-xl lg:text-2xl;
+  }
+
+  h3 {
+    @apply text-lg;
+  }
+
+  /* Data-dense table optimizations */
+  .data-table {
+    @apply text-sm;
+  }
+
+  .data-table th {
+    @apply text-xs font-semibold uppercase tracking-wider text-muted-foreground bg-muted/30;
+  }
+
+  .data-table td {
+    @apply py-2.5 px-3;
+  }
+
+  /* Metric display styling */
+  .metric-value {
+    @apply text-2xl font-bold tracking-tight tabular-nums;
+  }
+
+  .metric-label {
+    @apply text-xs font-medium uppercase tracking-wider text-muted-foreground;
+  }
+
+  .metric-delta-positive {
+    color: hsl(var(--metric-positive));
+  }
+
+  .metric-delta-negative {
+    color: hsl(var(--metric-negative));
+  }
+
+  /* Chart container styling */
+  .chart-container {
+    @apply bg-card rounded-lg border;
+  }
+
+  /* Focus states - Professional */
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+}
+
+@layer utilities {
+  /* Analytics-specific utilities */
+  .text-metric {
+    @apply text-2xl font-bold tracking-tight tabular-nums leading-none;
+  }
+
+  .text-metric-sm {
+    @apply text-xl font-semibold tracking-tight tabular-nums leading-none;
+  }
+
+  .text-metric-lg {
+    @apply text-3xl font-bold tracking-tight tabular-nums leading-none;
+  }
+
+  .text-label {
+    @apply text-xs font-medium uppercase tracking-wider text-muted-foreground;
+  }
+
+  /* Shadow utilities */
+  .shadow-card {
+    box-shadow: var(--shadow-soft);
+  }
+
+  .shadow-card-hover {
+    box-shadow: var(--shadow-medium);
+  }
+
+  /* Transition utilities */
+  .transition-card {
+    @apply transition-all duration-200 ease-out;
+  }
+
+  /* Grid layouts for analytics */
+  .grid-analytics {
+    @apply grid gap-4 md:gap-6;
+  }
+
+  .grid-metrics {
+    @apply grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4;
   }
 }
