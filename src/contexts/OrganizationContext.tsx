@@ -466,16 +466,125 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
     await fetchOrganizations();
   };
 
-  // Check super admin status when user changes
+  // Single coordinated initialization effect to avoid race conditions
   useEffect(() => {
-    checkSuperAdmin();
-    checkClientPortalAccess();
-  }, [user]);
+    const initialize = async () => {
+      if (!user) {
+        setIsSuperAdmin(false);
+        setIsPlatformAdmin(false);
+        setIsClientPortalUser(false);
+        setClientPortalAccess(null);
+        setLinkedClientId(null);
+        setOrganizations([]);
+        setCurrentOrganization(null);
+        setLoadingOrganizations(false);
+        return;
+      }
 
-  // Fetch organizations when user or super admin status changes
-  useEffect(() => {
-    fetchOrganizations();
-  }, [user, isSuperAdmin]);
+      setLoadingOrganizations(true);
+
+      // Step 1: Check super admin status FIRST and get the result directly
+      let superAdminStatus = false;
+      try {
+        const { data, error } = await supabase
+          .from('platform_admins')
+          .select('role')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (!error && data) {
+          setIsPlatformAdmin(true);
+          superAdminStatus = data.role === 'super_admin';
+          setIsSuperAdmin(superAdminStatus);
+        } else {
+          setIsPlatformAdmin(false);
+          setIsSuperAdmin(false);
+        }
+      } catch (error) {
+        console.error('Error checking super admin:', error);
+      }
+
+      // Step 2: Check client portal access
+      await checkClientPortalAccess();
+
+      // Step 3: Fetch organizations using the known super admin status
+      try {
+        if (superAdminStatus) {
+          const { data: allOrgs, error } = await supabase
+            .from('organizations')
+            .select('*')
+            .order('name');
+
+          if (error) throw error;
+          
+          const orgs = ((allOrgs || []) as Organization[]).filter(
+            org => !org.settings?.parentOrganizationId
+          );
+          setOrganizations(orgs);
+          
+          const savedOrgId = localStorage.getItem(STORAGE_KEY);
+          
+          if (savedOrgId === GLOBAL_VIEW_KEY) {
+            setIsGlobalView(true);
+            setCurrentOrganization(null);
+          } else if (!currentOrganization && !isGlobalView) {
+            const savedOrg = savedOrgId ? orgs.find(o => o.id === savedOrgId) : null;
+            if (savedOrg) {
+              setCurrentOrganization(savedOrg);
+              setIsGlobalView(false);
+            } else {
+              setIsGlobalView(true);
+              setCurrentOrganization(null);
+              localStorage.setItem(STORAGE_KEY, GLOBAL_VIEW_KEY);
+            }
+          }
+        } else {
+          const { data: memberships, error: memberError } = await supabase
+            .from('organization_members')
+            .select('organization_id, role')
+            .eq('user_id', user.id);
+
+          if (memberError) throw memberError;
+
+          if (memberships && memberships.length > 0) {
+            const orgIds = memberships.map(m => m.organization_id);
+            
+            const { data: orgs, error: orgsError } = await supabase
+              .from('organizations')
+              .select('*')
+              .in('id', orgIds)
+              .order('name');
+
+            if (orgsError) throw orgsError;
+
+            const filteredOrgs = ((orgs || []) as Organization[]).filter(
+              org => !org.settings?.parentOrganizationId
+            );
+            setOrganizations(filteredOrgs);
+            
+            const savedOrgId = localStorage.getItem(STORAGE_KEY);
+            const savedOrg = savedOrgId ? filteredOrgs.find(o => o.id === savedOrgId) : null;
+            
+            if (!currentOrganization && filteredOrgs.length > 0) {
+              const firstOrg = savedOrg || filteredOrgs[0];
+              setCurrentOrganization(firstOrg);
+              const membership = memberships.find(m => m.organization_id === firstOrg.id);
+              setUserOrgRole(membership?.role as OrgRole || null);
+            }
+          } else {
+            setOrganizations([]);
+            setCurrentOrganization(null);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching organizations:', error);
+      } finally {
+        setLoadingOrganizations(false);
+      }
+    };
+
+    initialize();
+  }, [user]);
 
   const value: OrganizationContextType = {
     currentOrganization,
