@@ -6,7 +6,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Send, CheckCircle2 } from "lucide-react";
-import { useLeads } from "@/hooks/useLeads";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -39,7 +38,6 @@ const HEAR_ABOUT = [
 ];
 
 export function ContactForm() {
-  const { createLead } = useLeads();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   
@@ -70,28 +68,34 @@ export function ContactForm() {
     setIsSubmitting(true);
 
     try {
-      const result = await createLead.mutateAsync({
-        email: formData.email,
-        first_name: formData.first_name,
-        last_name: formData.last_name,
-        phone: formData.phone,
-        company_name: formData.company_name,
-        industry: formData.industry,
-        company_size: formData.company_size,
-        message: formData.message,
-        source: "contact_form",
-        utm_source: new URLSearchParams(window.location.search).get("utm_source"),
-        utm_medium: new URLSearchParams(window.location.search).get("utm_medium"),
-        utm_campaign: new URLSearchParams(window.location.search).get("utm_campaign"),
-        status: "new",
-        notes: formData.hear_about ? `Heard about us from: ${formData.hear_about}` : null,
-        assigned_to: null,
+      const params = new URLSearchParams(window.location.search);
+
+      const { data, error } = await supabase.functions.invoke("public-lead-capture", {
+        body: {
+          email: formData.email,
+          first_name: formData.first_name,
+          last_name: formData.last_name,
+          phone: formData.phone,
+          company_name: formData.company_name,
+          industry: formData.industry,
+          company_size: formData.company_size,
+          message: formData.message,
+          source: "contact_form",
+          utm_source: params.get("utm_source"),
+          utm_medium: params.get("utm_medium"),
+          utm_campaign: params.get("utm_campaign"),
+          notes: formData.hear_about ? `Heard about us from: ${formData.hear_about}` : null,
+        },
       });
+
+      if (error || !data?.id) {
+        throw new Error(error?.message || "Failed to create lead");
+      }
 
       // Notify super admins via edge function
       try {
         await supabase.functions.invoke("notify-new-lead", {
-          body: { lead_id: result.id, notification_type: "contact_form" },
+          body: { lead_id: data.id, notification_type: "contact_form" },
         });
       } catch (notifyError) {
         console.error("Failed to send admin notification:", notifyError);
