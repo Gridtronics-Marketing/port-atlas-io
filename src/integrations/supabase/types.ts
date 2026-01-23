@@ -1912,6 +1912,36 @@ export type Database = {
           },
         ]
       }
+      faq_items: {
+        Row: {
+          answer: string
+          category: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          question: string
+          sort_order: number | null
+        }
+        Insert: {
+          answer: string
+          category?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          question: string
+          sort_order?: number | null
+        }
+        Update: {
+          answer?: string
+          category?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          question?: string
+          sort_order?: number | null
+        }
+        Relationships: []
+      }
       inventory_items: {
         Row: {
           alternate_supplier_ids: string[] | null
@@ -2011,6 +2041,69 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      lead_captures: {
+        Row: {
+          assigned_to: string | null
+          company_name: string | null
+          company_size: string | null
+          created_at: string | null
+          email: string
+          first_name: string | null
+          id: string
+          industry: string | null
+          last_name: string | null
+          message: string | null
+          notes: string | null
+          phone: string | null
+          source: string | null
+          status: string | null
+          updated_at: string | null
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          company_name?: string | null
+          company_size?: string | null
+          created_at?: string | null
+          email: string
+          first_name?: string | null
+          id?: string
+          industry?: string | null
+          last_name?: string | null
+          message?: string | null
+          notes?: string | null
+          phone?: string | null
+          source?: string | null
+          status?: string | null
+          updated_at?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          company_name?: string | null
+          company_size?: string | null
+          created_at?: string | null
+          email?: string
+          first_name?: string | null
+          id?: string
+          industry?: string | null
+          last_name?: string | null
+          message?: string | null
+          notes?: string | null
+          phone?: string | null
+          source?: string | null
+          status?: string | null
+          updated_at?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Relationships: []
       }
       location_access_grants: {
         Row: {
@@ -2493,6 +2586,44 @@ export type Database = {
           },
         ]
       }
+      onboarding_responses: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          lead_id: string | null
+          response_data: Json
+          step_name: string
+          step_number: number
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          lead_id?: string | null
+          response_data?: Json
+          step_name: string
+          step_number: number
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          lead_id?: string | null
+          response_data?: Json
+          step_name?: string
+          step_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onboarding_responses_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "lead_captures"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       openphone_call_logs: {
         Row: {
           call_status: string | null
@@ -2823,6 +2954,95 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      pricing_features: {
+        Row: {
+          created_at: string | null
+          feature_name: string
+          feature_value: string | null
+          id: string
+          is_included: boolean | null
+          plan_id: string | null
+          sort_order: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          feature_name: string
+          feature_value?: string | null
+          id?: string
+          is_included?: boolean | null
+          plan_id?: string | null
+          sort_order?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          feature_name?: string
+          feature_value?: string | null
+          id?: string
+          is_included?: boolean | null
+          plan_id?: string | null
+          sort_order?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pricing_features_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "pricing_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pricing_plans: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          is_enterprise: boolean | null
+          is_popular: boolean | null
+          max_locations: number | null
+          max_users: number | null
+          name: string
+          price_monthly: number | null
+          price_yearly: number | null
+          slug: string
+          sort_order: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_enterprise?: boolean | null
+          is_popular?: boolean | null
+          max_locations?: number | null
+          max_users?: number | null
+          name: string
+          price_monthly?: number | null
+          price_yearly?: number | null
+          slug: string
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_enterprise?: boolean | null
+          is_popular?: boolean | null
+          max_locations?: number | null
+          max_users?: number | null
+          name?: string
+          price_monthly?: number | null
+          price_yearly?: number | null
+          slug?: string
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       procurement_approvals: {
         Row: {
@@ -4734,6 +4954,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      testimonials: {
+        Row: {
+          author_name: string
+          author_title: string | null
+          avatar_url: string | null
+          company_name: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          is_featured: boolean | null
+          quote: string
+          rating: number | null
+          sort_order: number | null
+        }
+        Insert: {
+          author_name: string
+          author_title?: string | null
+          avatar_url?: string | null
+          company_name?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          quote: string
+          rating?: number | null
+          sort_order?: number | null
+        }
+        Update: {
+          author_name?: string
+          author_title?: string | null
+          avatar_url?: string | null
+          company_name?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          quote?: string
+          rating?: number | null
+          sort_order?: number | null
+        }
+        Relationships: []
       }
       tool_checkouts: {
         Row: {

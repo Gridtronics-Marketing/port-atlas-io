@@ -3,16 +3,20 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider } from "@/components/AuthProvider";
 import { OrganizationProvider } from "@/contexts/OrganizationContext";
 import { OfflineSyncProvider } from "@/contexts/OfflineSyncContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AppLayout } from "@/components/AppLayout";
+import { PublicLayout } from "@/components/PublicLayout";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { PWAUpdateNotification } from "@/components/PWAUpdateNotification";
 import { OfflineStatusIndicator } from "@/components/OfflineStatusIndicator";
 import { InAppEducationBanner } from "@/components/InAppEducationBanner";
 import { ImpersonationBanner } from "@/components/ImpersonationBanner";
+
+// Protected pages
 import Index from "./pages/Index";
 import Projects from "./pages/Projects";
 import Contracts from "./pages/Contracts";
@@ -44,227 +48,115 @@ import ServiceRequestHistory from "./pages/ServiceRequestHistory";
 import PortalEntry from "./pages/PortalEntry";
 import ClientPortalManagement from "./pages/ClientPortalManagement";
 import TradeTube from "./pages/TradeTube";
+import SuperAdminDashboard from "./pages/SuperAdminDashboard";
+
+// Public pages
+import LandingPage from "./pages/LandingPage";
+import FeaturesPage from "./pages/FeaturesPage";
+import PricingPage from "./pages/PricingPage";
+import AboutPage from "./pages/AboutPage";
+import ContactPage from "./pages/ContactPage";
+import GetStartedPage from "./pages/GetStartedPage";
 
 const queryClient = new QueryClient();
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <OfflineSyncProvider>
-        <OrganizationProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <PWAUpdateNotification />
-            <PWAInstallPrompt />
-            <OfflineStatusIndicator />
-        <InAppEducationBanner />
-        <ImpersonationBanner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/onboarding/organization" element={
-              <ProtectedRoute>
-                <OrganizationOnboarding />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/organizations" element={
-              <ProtectedRoute>
-                <AppLayout>
-                  <AdminOrganizations />
-              </AppLayout>
-            </ProtectedRoute>
-            } />
-            <Route path="/organization/settings" element={
-              <ProtectedRoute>
-                <AppLayout>
-                  <OrganizationSettings />
-                </AppLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/" element={
-              <ProtectedRoute>
-                <AppLayout>
-                  <Index />
-                </AppLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/projects" element={
-              <ProtectedRoute>
-                <AppLayout>
-                  <Projects />
-                </AppLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/locations" element={
-              <ProtectedRoute>
-                <AppLayout>
-                  <Locations />
-                </AppLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/clients" element={
-              <ProtectedRoute>
-                <AppLayout>
-                  <Clients />
-                </AppLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/service-requests" element={
-              <ProtectedRoute>
-                <AppLayout>
-                  <ServiceRequests />
-                </AppLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/employees" element={
-              <ProtectedRoute>
-                <AppLayout>
-                  <Employees />
-                </AppLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/work-orders" element={
-              <ProtectedRoute>
-                <AppLayout>
-                  <WorkOrders />
-                </AppLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/contracts" element={
-              <ProtectedRoute>
-                <AppLayout>
-                  <Contracts />
-                </AppLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/maintenance" element={
-              <ProtectedRoute>
-                <AppLayout>
-                  <Maintenance />
-                </AppLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/scheduling" element={
-              <ProtectedRoute>
-                <AppLayout>
-                  <Scheduling />
-                </AppLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/field-operations" element={
-              <ProtectedRoute>
-                <AppLayout>
-                  <FieldOperations />
-                </AppLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/quality-assurance" element={
-              <ProtectedRoute>
-                <AppLayout>
-                  <QualityAssurance />
-                </AppLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/advanced-features" element={
-              <ProtectedRoute>
-                <AppLayout>
-                  <AdvancedFeatures />
-                </AppLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/settings" element={
-              <ProtectedRoute>
-                <AppLayout>
-                  <Settings />
-                </AppLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/integrations" element={
-              <ProtectedRoute>
-                <AppLayout>
-                  <Integrations />
-                </AppLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/communications" element={
-              <ProtectedRoute>
-                <AppLayout>
-                  <Communications />
-                </AppLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/twilio-settings" element={
-              <ProtectedRoute>
-                <AppLayout>
-                  <TwilioSettings />
-                </AppLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/user-management" element={
-              <ProtectedRoute>
-                <AppLayout>
-                  <UserManagement />
-                </AppLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/procurement" element={
-              <ProtectedRoute>
-                <AppLayout>
-                  <Procurement />
-                </AppLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/profile" element={
-              <ProtectedRoute>
-                <AppLayout>
-                  <Profile />
-                </AppLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/floor-plan-editor" element={
-              <ProtectedRoute>
-                <FloorPlanEditor />
-              </ProtectedRoute>
-            } />
-            <Route path="/client-locations/:locationId" element={
-              <ProtectedRoute>
-                <AppLayout>
-                  <ClientLocationDetail />
-                </AppLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/service-request-history" element={
-              <ProtectedRoute>
-                <AppLayout>
-                  <ServiceRequestHistory />
-                </AppLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/client-portals" element={
-              <ProtectedRoute>
-                <AppLayout>
-                  <ClientPortalManagement />
-                </AppLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/tradetube" element={
-              <ProtectedRoute>
-                <AppLayout>
-                  <TradeTube />
-                </AppLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/p/:orgSlug" element={<PortalEntry />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-        </OrganizationProvider>
-      </OfflineSyncProvider>
-    </AuthProvider>
-  </QueryClientProvider>
+  <HelmetProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <OfflineSyncProvider>
+          <OrganizationProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <PWAUpdateNotification />
+              <PWAInstallPrompt />
+              <OfflineStatusIndicator />
+              <InAppEducationBanner />
+              <ImpersonationBanner />
+              <BrowserRouter>
+                <Routes>
+                  {/* Public marketing pages */}
+                  <Route path="/home" element={<PublicLayout><LandingPage /></PublicLayout>} />
+                  <Route path="/features" element={<PublicLayout><FeaturesPage /></PublicLayout>} />
+                  <Route path="/pricing" element={<PublicLayout><PricingPage /></PublicLayout>} />
+                  <Route path="/about" element={<PublicLayout><AboutPage /></PublicLayout>} />
+                  <Route path="/contact" element={<PublicLayout><ContactPage /></PublicLayout>} />
+                  <Route path="/get-started" element={<PublicLayout><GetStartedPage /></PublicLayout>} />
+                  
+                  {/* Auth */}
+                  <Route path="/auth" element={<Auth />} />
+                  
+                  {/* Onboarding */}
+                  <Route path="/onboarding/organization" element={
+                    <ProtectedRoute>
+                      <OrganizationOnboarding />
+                    </ProtectedRoute>
+                  } />
+                  
+                  {/* Super Admin */}
+                  <Route path="/admin/platform" element={
+                    <ProtectedRoute>
+                      <AppLayout>
+                        <SuperAdminDashboard />
+                      </AppLayout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/admin/organizations" element={
+                    <ProtectedRoute>
+                      <AppLayout>
+                        <AdminOrganizations />
+                      </AppLayout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/admin/client-portals" element={
+                    <ProtectedRoute>
+                      <AppLayout>
+                        <ClientPortalManagement />
+                      </AppLayout>
+                    </ProtectedRoute>
+                  } />
+                  
+                  {/* Protected app routes */}
+                  <Route path="/organization/settings" element={<ProtectedRoute><AppLayout><OrganizationSettings /></AppLayout></ProtectedRoute>} />
+                  <Route path="/" element={<ProtectedRoute><AppLayout><Index /></AppLayout></ProtectedRoute>} />
+                  <Route path="/projects" element={<ProtectedRoute><AppLayout><Projects /></AppLayout></ProtectedRoute>} />
+                  <Route path="/locations" element={<ProtectedRoute><AppLayout><Locations /></AppLayout></ProtectedRoute>} />
+                  <Route path="/clients" element={<ProtectedRoute><AppLayout><Clients /></AppLayout></ProtectedRoute>} />
+                  <Route path="/service-requests" element={<ProtectedRoute><AppLayout><ServiceRequests /></AppLayout></ProtectedRoute>} />
+                  <Route path="/employees" element={<ProtectedRoute><AppLayout><Employees /></AppLayout></ProtectedRoute>} />
+                  <Route path="/work-orders" element={<ProtectedRoute><AppLayout><WorkOrders /></AppLayout></ProtectedRoute>} />
+                  <Route path="/contracts" element={<ProtectedRoute><AppLayout><Contracts /></AppLayout></ProtectedRoute>} />
+                  <Route path="/maintenance" element={<ProtectedRoute><AppLayout><Maintenance /></AppLayout></ProtectedRoute>} />
+                  <Route path="/scheduling" element={<ProtectedRoute><AppLayout><Scheduling /></AppLayout></ProtectedRoute>} />
+                  <Route path="/field-operations" element={<ProtectedRoute><AppLayout><FieldOperations /></AppLayout></ProtectedRoute>} />
+                  <Route path="/quality-assurance" element={<ProtectedRoute><AppLayout><QualityAssurance /></AppLayout></ProtectedRoute>} />
+                  <Route path="/advanced-features" element={<ProtectedRoute><AppLayout><AdvancedFeatures /></AppLayout></ProtectedRoute>} />
+                  <Route path="/settings" element={<ProtectedRoute><AppLayout><Settings /></AppLayout></ProtectedRoute>} />
+                  <Route path="/integrations" element={<ProtectedRoute><AppLayout><Integrations /></AppLayout></ProtectedRoute>} />
+                  <Route path="/communications" element={<ProtectedRoute><AppLayout><Communications /></AppLayout></ProtectedRoute>} />
+                  <Route path="/twilio-settings" element={<ProtectedRoute><AppLayout><TwilioSettings /></AppLayout></ProtectedRoute>} />
+                  <Route path="/user-management" element={<ProtectedRoute><AppLayout><UserManagement /></AppLayout></ProtectedRoute>} />
+                  <Route path="/procurement" element={<ProtectedRoute><AppLayout><Procurement /></AppLayout></ProtectedRoute>} />
+                  <Route path="/profile" element={<ProtectedRoute><AppLayout><Profile /></AppLayout></ProtectedRoute>} />
+                  <Route path="/floor-plan-editor" element={<ProtectedRoute><FloorPlanEditor /></ProtectedRoute>} />
+                  <Route path="/client-locations/:locationId" element={<ProtectedRoute><AppLayout><ClientLocationDetail /></AppLayout></ProtectedRoute>} />
+                  <Route path="/service-request-history" element={<ProtectedRoute><AppLayout><ServiceRequestHistory /></AppLayout></ProtectedRoute>} />
+                  <Route path="/tradetube" element={<ProtectedRoute><AppLayout><TradeTube /></AppLayout></ProtectedRoute>} />
+                  
+                  {/* Portal entry */}
+                  <Route path="/p/:orgSlug" element={<PortalEntry />} />
+                  
+                  {/* Catch-all */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </BrowserRouter>
+            </TooltipProvider>
+          </OrganizationProvider>
+        </OfflineSyncProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  </HelmetProvider>
 );
 
 export default App;
