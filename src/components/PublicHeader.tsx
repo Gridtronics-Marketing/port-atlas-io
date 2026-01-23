@@ -20,20 +20,20 @@ export function PublicHeader() {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-secondary/20 bg-steel-dark/95 backdrop-blur supports-[backdrop-filter]:bg-steel-dark/80">
+    <header className="sticky top-0 z-50 w-full border-b border-primary/20 bg-steel-dark/95 backdrop-blur supports-[backdrop-filter]:bg-steel-dark/80">
       <div className="container flex h-16 items-center justify-between px-4 md:px-6">
         {/* Logo */}
-        <Link to="/home" className="flex items-center gap-2">
+        <Link to="/home" className="flex items-center gap-3">
           <img 
             src={tradeAtlasLogo} 
             alt="Trade Atlas" 
-            className="h-8 w-auto"
+            className="h-9 w-auto"
           />
-          <span className="text-xl font-bold text-white">Trade Atlas</span>
+          <span className="text-xl font-bold text-gradient-gold">Trade Atlas</span>
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-6">
+        <nav className="hidden md:flex items-center gap-8">
           {navLinks.map((link) => (
             <Link
               key={link.href}
@@ -41,7 +41,7 @@ export function PublicHeader() {
               className={`text-sm font-medium transition-colors hover:text-primary ${
                 isActive(link.href) 
                   ? "text-primary" 
-                  : "text-secondary/70"
+                  : "text-white/70"
               }`}
             >
               {link.label}
@@ -51,10 +51,10 @@ export function PublicHeader() {
 
         {/* Desktop CTAs */}
         <div className="hidden md:flex items-center gap-3">
-          <Button variant="ghost" className="text-secondary/70 hover:text-white hover:bg-secondary/10" asChild>
+          <Button variant="ghost" className="text-white/70 hover:text-primary hover:bg-primary/10" asChild>
             <Link to="/auth">Log In</Link>
           </Button>
-          <Button className="bg-primary text-primary-foreground hover:bg-primary/90" asChild>
+          <Button className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_20px_rgba(212,175,55,0.3)]" asChild>
             <Link to="/get-started">Get Started</Link>
           </Button>
         </div>
@@ -62,12 +62,12 @@ export function PublicHeader() {
         {/* Mobile Menu */}
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
           <SheetTrigger asChild className="md:hidden">
-            <Button variant="ghost" size="icon" className="text-secondary">
+            <Button variant="ghost" size="icon" className="text-primary">
               <Menu className="h-5 w-5" />
               <span className="sr-only">Toggle menu</span>
             </Button>
           </SheetTrigger>
-          <SheetContent side="right" className="w-[300px] sm:w-[350px] bg-steel-dark border-secondary/20">
+          <SheetContent side="right" className="w-[300px] sm:w-[350px] bg-steel-dark border-primary/20">
             <div className="flex flex-col gap-6 mt-6">
               <nav className="flex flex-col gap-4">
                 {navLinks.map((link) => (
@@ -78,18 +78,18 @@ export function PublicHeader() {
                     className={`text-lg font-medium transition-colors hover:text-primary ${
                       isActive(link.href) 
                         ? "text-primary" 
-                        : "text-secondary/70"
+                        : "text-white/70"
                     }`}
                   >
                     {link.label}
                   </Link>
                 ))}
               </nav>
-              <div className="flex flex-col gap-3 pt-4 border-t border-secondary/20">
-                <Button variant="outline" className="w-full border-secondary/30 text-secondary hover:bg-secondary/10" asChild>
+              <div className="flex flex-col gap-3 pt-4 border-t border-primary/20">
+                <Button variant="outline" className="w-full border-primary/30 text-white hover:bg-primary/10 hover:border-primary" asChild>
                   <Link to="/auth" onClick={() => setIsOpen(false)}>Log In</Link>
                 </Button>
-                <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90" asChild>
+                <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_20px_rgba(212,175,55,0.3)]" asChild>
                   <Link to="/get-started" onClick={() => setIsOpen(false)}>Get Started</Link>
                 </Button>
               </div>
