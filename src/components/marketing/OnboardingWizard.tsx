@@ -112,6 +112,8 @@ export function OnboardingWizard() {
     setIsSubmitting(true);
     
     try {
+      let currentLeadId = leadId;
+      
       // On step 1, create the lead
       if (currentStep === 1 && !leadId) {
         const result = await createLead.mutateAsync({
@@ -131,14 +133,15 @@ export function OnboardingWizard() {
           notes: null,
           assigned_to: null,
         });
+        currentLeadId = result.id;
         setLeadId(result.id);
       }
 
-      // Save step response
-      if (leadId || currentStep === 1) {
+      // Save step response using local variable (not stale state)
+      if (currentLeadId) {
         const stepData = getStepData(currentStep);
         await saveOnboardingResponse.mutateAsync({
-          lead_id: leadId!,
+          lead_id: currentLeadId,
           step_number: currentStep,
           step_name: STEPS[currentStep - 1].name,
           response_data: stepData,
