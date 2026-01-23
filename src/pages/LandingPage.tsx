@@ -83,7 +83,7 @@ export default function LandingPage() {
           content="Streamline jobsite tracking, work orders, and client management with Trade Atlas. Built for low voltage, telecom, and electrical contractors." 
         />
         <meta name="keywords" content="field operations, work order management, contractor software, floor plan management, low voltage, telecom" />
-        <link rel="canonical" href="https://tradeatlas.app/home" />
+        <link rel="canonical" href="https://runwithatlas.com/" />
       </Helmet>
 
       {/* Hero Section */}

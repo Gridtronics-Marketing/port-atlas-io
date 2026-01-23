@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider } from "@/components/AuthProvider";
 import { OrganizationProvider } from "@/contexts/OrganizationContext";
@@ -87,7 +87,8 @@ const App = () => (
                 <ScrollToTop />
                 <Routes>
                   {/* Public marketing pages */}
-                  <Route path="/home" element={<PublicLayout><LandingPage /></PublicLayout>} />
+                  <Route path="/" element={<PublicLayout><LandingPage /></PublicLayout>} />
+                  <Route path="/home" element={<Navigate to="/" replace />} />
                   <Route path="/features" element={<PublicLayout><FeaturesPage /></PublicLayout>} />
                   <Route path="/pricing" element={<PublicLayout><PricingPage /></PublicLayout>} />
                   <Route path="/about" element={<PublicLayout><AboutPage /></PublicLayout>} />
@@ -137,7 +138,7 @@ const App = () => (
                   
                   {/* Protected app routes */}
                   <Route path="/organization/settings" element={<ProtectedRoute><AppLayout><OrganizationSettings /></AppLayout></ProtectedRoute>} />
-                  <Route path="/" element={<ProtectedRoute><AppLayout><Index /></AppLayout></ProtectedRoute>} />
+                  <Route path="/dashboard" element={<ProtectedRoute><AppLayout><Index /></AppLayout></ProtectedRoute>} />
                   <Route path="/projects" element={<ProtectedRoute><AppLayout><Projects /></AppLayout></ProtectedRoute>} />
                   <Route path="/locations" element={<ProtectedRoute><AppLayout><Locations /></AppLayout></ProtectedRoute>} />
                   <Route path="/clients" element={<ProtectedRoute><AppLayout><Clients /></AppLayout></ProtectedRoute>} />

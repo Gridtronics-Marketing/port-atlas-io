@@ -6,7 +6,7 @@ import { Menu } from "lucide-react";
 import tradeAtlasLogo from "@/assets/trade-atlas-logo.png";
 
 const navLinks = [
-  { href: "/home", label: "Home" },
+  { href: "/", label: "Home" },
   { href: "/features", label: "Features" },
   { href: "/pricing", label: "Pricing" },
   { href: "/about", label: "About" },
@@ -23,7 +23,7 @@ export function PublicHeader() {
     <header className="sticky top-0 z-50 w-full border-b border-primary/20 bg-steel-dark/95 backdrop-blur supports-[backdrop-filter]:bg-steel-dark/80">
       <div className="container flex h-16 items-center justify-between px-4 md:px-6">
         {/* Logo */}
-        <Link to="/home" className="flex items-center gap-3">
+        <Link to="/" className="flex items-center gap-3">
           <img 
             src={tradeAtlasLogo} 
             alt="Trade Atlas" 

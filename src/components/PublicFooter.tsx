@@ -43,7 +43,7 @@ export function PublicFooter() {
         <div className="grid grid-cols-2 md:grid-cols-6 gap-8 lg:gap-12">
           {/* Brand Column */}
           <div className="col-span-2">
-            <Link to="/home" className="flex items-center gap-3 mb-4">
+            <Link to="/" className="flex items-center gap-3 mb-4">
               <img 
                 src={tradeAtlasLogo} 
                 alt="Trade Atlas" 
