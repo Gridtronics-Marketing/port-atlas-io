@@ -53,19 +53,19 @@ export function HeroSection() {
 
           {/* Main Headline */}
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight text-card mb-6">
-            Field Operations.
+            They Track Jobs.
             <br />
-            <span className="text-gradient-gold">Engineered for Excellence.</span>
+            <span className="text-gradient-gold">We Map Reality.</span>
           </h1>
 
           {/* Decorative Gold Line */}
           <div className="gold-line mx-auto mb-8" />
 
           {/* Subheadline */}
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
-            The industrial-grade platform that transforms how contractors 
-            document, track, and deliver projects. Built by tradespeople, 
-            powered by technology.
+          <p className="text-lg md:text-xl text-secondary/80 max-w-2xl mx-auto mb-10 leading-relaxed">
+            Trade Atlas is built for infrastructure-driven teams who need more than 
+            scheduling, invoices, and checklists. We document the physical world — 
+            so nothing is ever lost, guessed, or rebuilt twice.
           </p>
 
           {/* CTA Buttons */}
