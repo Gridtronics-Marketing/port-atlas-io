@@ -79,7 +79,7 @@ export function HeroSection() {
             <Button 
               size="lg" 
               variant="outline" 
-              className="h-14 px-8 text-base font-semibold border-silver text-card hover:bg-card/5 hover:border-primary/50" 
+              className="h-14 px-8 text-base font-semibold border-primary/50 text-white bg-white/10 hover:bg-white/20 hover:border-primary" 
               asChild
             >
               <Link to="/features">
