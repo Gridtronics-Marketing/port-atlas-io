@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Play, Zap, Shield, BarChart3 } from "lucide-react";
+import heroBackground from "@/assets/hero-background.jpg";
 
 const stats = [
   { value: "500+", label: "Active Contractors" },
@@ -10,7 +11,14 @@ const stats = [
 
 export function HeroSection() {
   return (
-    <section className="relative overflow-hidden hero-dark min-h-[90vh] flex items-center">
+    <section className="relative overflow-hidden min-h-[90vh] flex items-center">
+      {/* Background Image */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url(${heroBackground})` }}
+      />
+      {/* Dark overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-steel-dark/95 via-steel-dark/90 to-steel-dark/85" />
       {/* Tech Lines Background Pattern */}
       <div className="absolute inset-0 tech-lines opacity-[0.03]" />
       

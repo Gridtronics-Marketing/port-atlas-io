@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { ArrowLeft, ArrowRight, Check, Loader2 } from "lucide-react";
 import { useLeads } from "@/hooks/useLeads";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const STEPS = [
@@ -161,7 +162,17 @@ export function OnboardingWizard() {
     }
   };
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
+    // Notify super admins that onboarding is complete
+    if (leadId) {
+      try {
+        await supabase.functions.invoke("notify-new-lead", {
+          body: { lead_id: leadId, notification_type: "onboarding_complete" },
+        });
+      } catch (notifyError) {
+        console.error("Failed to send admin notification:", notifyError);
+      }
+    }
     navigate(`/auth?signup=true&email=${encodeURIComponent(formData.email)}`);
   };
 

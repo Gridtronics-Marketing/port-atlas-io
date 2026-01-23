@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Send, CheckCircle2 } from "lucide-react";
 import { useLeads } from "@/hooks/useLeads";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const INDUSTRIES = [
@@ -69,7 +70,7 @@ export function ContactForm() {
     setIsSubmitting(true);
 
     try {
-      await createLead.mutateAsync({
+      const result = await createLead.mutateAsync({
         email: formData.email,
         first_name: formData.first_name,
         last_name: formData.last_name,
@@ -86,6 +87,16 @@ export function ContactForm() {
         notes: formData.hear_about ? `Heard about us from: ${formData.hear_about}` : null,
         assigned_to: null,
       });
+
+      // Notify super admins via edge function
+      try {
+        await supabase.functions.invoke("notify-new-lead", {
+          body: { lead_id: result.id, notification_type: "contact_form" },
+        });
+      } catch (notifyError) {
+        console.error("Failed to send admin notification:", notifyError);
+        // Don't block the success flow if notification fails
+      }
 
       setIsSuccess(true);
       toast.success("Thanks for reaching out! We'll be in touch soon.");
