@@ -13,7 +13,8 @@ import {
   Layers,
   Square,
   Info,
-  Trash2
+  Trash2,
+  Settings2
 } from "lucide-react";
 import {
   Dialog,
@@ -50,6 +51,7 @@ import { CustomerNotesPanel } from "@/components/CustomerNotesPanel";
 import { FloorPlanRepairTool } from "@/components/FloorPlanRepairTool";
 import { FloorPlanFileManager } from "@/components/FloorPlanFileManager";
 import { InteractiveFloorPlan } from "@/components/InteractiveFloorPlan";
+import { FloorBuildingManager } from "@/components/FloorBuildingManager";
 import { getFloorPlanUrls, getStorageUrl, getFloorPlanImagePath } from "@/lib/storage-utils";
 import { useLocationTeam } from "@/hooks/useLocationTeam";
 import { useLocationNotes } from "@/hooks/useLocationNotes";
@@ -79,6 +81,7 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
   const [riserDiagramUrl, setRiserDiagramUrl] = useState<string | null>(null);
   const [showAddFloorPlanModal, setShowAddFloorPlanModal] = useState(false);
   const [showAddRiserModal, setShowAddRiserModal] = useState(false);
+  const [showFloorManager, setShowFloorManager] = useState(false);
 
   // Fetch team members for this location
   const { teamMembers, loading: teamLoading, refetch: refetchTeam } = useLocationTeam(location?.id);
@@ -485,6 +488,15 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
                     </Select>
                   </div>
                   
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowFloorManager(true)}
+                    className="flex items-center gap-2"
+                  >
+                    <Settings2 className="h-4 w-4" />
+                    Manage Floors
+                  </Button>
                 </div>
 
                 <div className="space-y-4">
@@ -748,6 +760,21 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
           // Refresh riser diagrams when a new one is created
           if (location) {
             // This would trigger a refresh of the riser diagram library
+          }
+        }}
+      />
+
+      {/* Floor & Building Manager */}
+      <FloorBuildingManager
+        locationId={location?.id || ''}
+        locationName={location?.name || ''}
+        currentFloors={location?.floors || 1}
+        floorPlanFiles={location?.floor_plan_files || null}
+        open={showFloorManager}
+        onOpenChange={setShowFloorManager}
+        onFloorsUpdated={() => {
+          if (onLocationUpdate) {
+            onLocationUpdate();
           }
         }}
       />
