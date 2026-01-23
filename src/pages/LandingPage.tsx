@@ -9,7 +9,7 @@ import { TestimonialCarousel } from "@/components/marketing/TestimonialCarousel"
 import { 
   Map, ClipboardList, Users, Smartphone, 
   ArrowRight, Building2, Wrench, FileText,
-  Cpu, Cable, Network, Layers
+  Zap, Thermometer, Droplets, HardHat, Server, Hammer
 } from "lucide-react";
 import { usePricingPlans } from "@/hooks/usePricingPlans";
 
@@ -61,11 +61,13 @@ const howItWorks = [
   },
 ];
 
-const techFeatures = [
-  { icon: Cpu, label: "AI-Powered" },
-  { icon: Cable, label: "Cable Management" },
-  { icon: Network, label: "Network Mapping" },
-  { icon: Layers, label: "Multi-Floor" },
+const tradeCategories = [
+  { icon: Zap, label: "Low Voltage" },
+  { icon: Thermometer, label: "HVAC" },
+  { icon: Droplets, label: "Plumbing" },
+  { icon: Server, label: "IT & Data" },
+  { icon: HardHat, label: "General Contractors" },
+  { icon: Hammer, label: "Builders" },
 ];
 
 export default function LandingPage() {
@@ -87,17 +89,20 @@ export default function LandingPage() {
       {/* Hero Section */}
       <HeroSection />
 
-      {/* Tech Bar - Silver Strip */}
+      {/* Trades Bar - All Industries */}
       <section className="relative border-y border-border bg-gradient-to-r from-muted via-background to-muted">
         <div className="absolute inset-0 tech-lines-gold opacity-30" />
         <div className="container relative px-4 md:px-6 py-8">
-          <div className="flex flex-wrap items-center justify-center gap-12">
-            {techFeatures.map((feature) => (
-              <div key={feature.label} className="flex items-center gap-3 text-muted-foreground hover:text-primary transition-colors">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
-                  <feature.icon className="h-5 w-5 text-primary" />
+          <div className="text-center mb-4">
+            <span className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Built for Every Trade</span>
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-6 md:gap-10">
+            {tradeCategories.map((trade) => (
+              <div key={trade.label} className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors group">
+                <div className="w-9 h-9 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                  <trade.icon className="h-4 w-4 text-primary" />
                 </div>
-                <span className="text-sm font-medium uppercase tracking-wider">{feature.label}</span>
+                <span className="text-sm font-medium">{trade.label}</span>
               </div>
             ))}
           </div>
