@@ -7,7 +7,7 @@ const contactInfo = [
   {
     icon: Mail,
     title: "Email",
-    value: "hello@tradeatlas.app",
+    value: "hello@runwithatlas.com",
     description: "We'll respond within 24 hours",
   },
   {
