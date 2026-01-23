@@ -21,11 +21,11 @@ export function PricingCard({ plan, isAnnual }: PricingCardProps) {
 
   return (
     <Card className={cn(
-      "relative flex flex-col h-full transition-all duration-300",
-      plan.is_popular && "border-primary shadow-lg scale-105 z-10"
+      "relative flex flex-col h-full transition-all duration-300 border-secondary/20 bg-card",
+      plan.is_popular && "border-primary shadow-gold-glow scale-105 z-10"
     )}>
       {plan.is_popular && (
-        <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 px-4">
+        <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 bg-primary text-primary-foreground border-0">
           Most Popular
         </Badge>
       )}
@@ -56,7 +56,7 @@ export function PricingCard({ plan, isAnnual }: PricingCardProps) {
         </div>
 
         {/* Limits */}
-        <div className="space-y-2 mb-6 text-sm">
+        <div className="space-y-2 mb-6 text-sm p-3 rounded-lg bg-secondary/5 border border-secondary/10">
           <div className="flex items-center justify-between text-muted-foreground">
             <span>Locations</span>
             <span className="font-medium text-foreground">
@@ -78,7 +78,7 @@ export function PricingCard({ plan, isAnnual }: PricingCardProps) {
               {feature.is_included ? (
                 <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />
               ) : (
-                <X className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+                <X className="h-4 w-4 text-muted-foreground/50 shrink-0 mt-0.5" />
               )}
               <span className={cn(
                 "text-sm",
@@ -93,7 +93,12 @@ export function PricingCard({ plan, isAnnual }: PricingCardProps) {
         {/* CTA */}
         <div className="mt-6">
           <Button 
-            className="w-full" 
+            className={cn(
+              "w-full",
+              plan.is_popular 
+                ? "bg-primary text-primary-foreground hover:bg-primary/90" 
+                : "border-secondary/30"
+            )}
             variant={plan.is_popular ? "default" : "outline"}
             asChild
           >
