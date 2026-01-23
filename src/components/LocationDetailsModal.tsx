@@ -52,7 +52,7 @@ import { FloorPlanRepairTool } from "@/components/FloorPlanRepairTool";
 import { FloorPlanFileManager } from "@/components/FloorPlanFileManager";
 import { InteractiveFloorPlan } from "@/components/InteractiveFloorPlan";
 import { FloorBuildingManager } from "@/components/FloorBuildingManager";
-import { getFloorPlanUrls, getStorageUrl, getFloorPlanImagePath } from "@/lib/storage-utils";
+import { getFloorPlanUrls, getStorageUrl, getFloorPlanImagePath, getAllFloorPlanUrls, getFloorPlanMetadata } from "@/lib/storage-utils";
 import { useLocationTeam } from "@/hooks/useLocationTeam";
 import { useLocationNotes } from "@/hooks/useLocationNotes";
 import {
@@ -76,8 +76,8 @@ interface LocationDetailsModalProps {
 
 export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocation, onDeleteLocation, onLocationUpdate }: LocationDetailsModalProps) => {
   const [activeTab, setActiveTab] = useState("details");
-  const [selectedFloor, setSelectedFloor] = useState<number>(1);
-  const [floorPlanUrls, setFloorPlanUrls] = useState<{ [floorNumber: number]: string }>({});
+  const [selectedFloorKey, setSelectedFloorKey] = useState<string>("1");
+  const [allFloorPlanUrls, setAllFloorPlanUrls] = useState<Record<string, string>>({});
   const [riserDiagramUrl, setRiserDiagramUrl] = useState<string | null>(null);
   const [showAddFloorPlanModal, setShowAddFloorPlanModal] = useState(false);
   const [showAddRiserModal, setShowAddRiserModal] = useState(false);
@@ -99,14 +99,14 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
   useEffect(() => {
     const loadFloorPlans = async () => {
       if (!location?.floor_plan_files) {
-        setFloorPlanUrls({});
+        setAllFloorPlanUrls({});
         setRiserDiagramUrl(null);
         return;
       }
 
-      // Use the utility function to generate URLs
-      const urls = getFloorPlanUrls(location.floor_plan_files);
-      setFloorPlanUrls(urls);
+      // Use the utility function to generate URLs for all floors including outbuildings
+      const urls = getAllFloorPlanUrls(location.floor_plan_files);
+      setAllFloorPlanUrls(urls);
       
       // Check for riser diagram (stored with key 'riser' or 'riser_diagram')
       const riserFile = location.floor_plan_files['riser'] || location.floor_plan_files['riser_diagram'];
@@ -136,10 +136,10 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
         // Generate the public URL for the new file
         const newUrl = getStorageUrl('floor-plans', filePath);
         
-        // Update the floorPlanUrls state with the new URL
-        setFloorPlanUrls(prev => ({
+        // Update the allFloorPlanUrls state with the new URL
+        setAllFloorPlanUrls(prev => ({
           ...prev,
-          [floorNumber]: newUrl
+          [floorNumber.toString()]: newUrl
         }));
         
         // If parent provided a callback, trigger it to refetch location data
@@ -165,13 +165,44 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
     
     // Force re-render by updating floor plan URLs from location
     if (location?.floor_plan_files) {
-      const urls = getFloorPlanUrls(location.floor_plan_files);
-      setFloorPlanUrls(urls);
+      const urls = getAllFloorPlanUrls(location.floor_plan_files);
+      setAllFloorPlanUrls(urls);
     }
   };
 
   const hasFloorPlans = location?.floor_plan_files && Object.keys(location.floor_plan_files).length > 0;
-  const currentFloorPlanUrl = floorPlanUrls[selectedFloor];
+  const currentFloorPlanUrl = allFloorPlanUrls[selectedFloorKey];
+  
+  // Get the numeric floor number for InteractiveFloorPlan (0 for outbuildings)
+  const selectedFloorNumber = selectedFloorKey.startsWith('outbuilding_') ? 0 : parseInt(selectedFloorKey) || 1;
+  
+  // Check if currently viewing an outbuilding
+  const isOutbuilding = selectedFloorKey.startsWith('outbuilding_');
+  
+  // Get outbuildings from floor_plan_files
+  const outbuildings: { key: string; name: string }[] = [];
+  if (location?.floor_plan_files) {
+    Object.entries(location.floor_plan_files).forEach(([key, value]) => {
+      if (key.startsWith('outbuilding_')) {
+        let name = key.replace('outbuilding_', 'Outbuilding ');
+        if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+          const objValue = value as Record<string, unknown>;
+          if (typeof objValue.name === 'string' && objValue.name) {
+            name = objValue.name;
+          }
+        }
+        outbuildings.push({ key, name });
+      }
+    });
+  }
+  
+  // Get custom floor names from metadata
+  const getFloorDisplayName = (floorNum: number): string => {
+    if (!location?.floor_plan_files) return `Floor ${floorNum}`;
+    const metadata = getFloorPlanMetadata(location.floor_plan_files, floorNum.toString());
+    return metadata?.name || `Floor ${floorNum}`;
+  };
+  
 
   const handleAddFloorPlan = () => {
     // Navigate to Floor Plan Editor for this location
@@ -473,17 +504,31 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
               <TabsContent value="floor-plans" className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <Label htmlFor="floor-select">Floor:</Label>
-                    <Select value={selectedFloor.toString()} onValueChange={(value) => setSelectedFloor(parseInt(value))}>
-                      <SelectTrigger className="w-32">
+                    <Label htmlFor="floor-select">Floor / Building:</Label>
+                    <Select value={selectedFloorKey} onValueChange={setSelectedFloorKey}>
+                      <SelectTrigger className="w-48 bg-background">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-popover border shadow-md z-50">
+                        {/* Regular Floors */}
                         {Array.from({ length: location.floors || 1 }, (_, i) => i + 1).map((floor) => (
                           <SelectItem key={floor} value={floor.toString()}>
-                            Floor {floor}
+                            {getFloorDisplayName(floor)}
                           </SelectItem>
                         ))}
+                        {/* Outbuildings */}
+                        {outbuildings.length > 0 && (
+                          <>
+                            <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground border-t mt-1 pt-2">
+                              Outbuildings
+                            </div>
+                            {outbuildings.map((ob) => (
+                              <SelectItem key={ob.key} value={ob.key}>
+                                {ob.name}
+                              </SelectItem>
+                            ))}
+                          </>
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
@@ -502,10 +547,10 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
                 <div className="space-y-4">
                   <InteractiveFloorPlan
                     locationId={location.id}
-                    floorNumber={selectedFloor}
+                    floorNumber={selectedFloorNumber}
                     fileUrl={currentFloorPlanUrl}
-                    filePath={getFloorPlanImagePath(location.floor_plan_files, selectedFloor) || ''}
-                    fileName={getFloorPlanImagePath(location.floor_plan_files, selectedFloor)?.split('/').pop() || ''}
+                    filePath={getFloorPlanImagePath(location.floor_plan_files, selectedFloorKey) || ''}
+                    fileName={getFloorPlanImagePath(location.floor_plan_files, selectedFloorKey)?.split('/').pop() || ''}
                     className="min-h-[500px]"
                     onFloorPlanSaved={handleFloorPlanSaved}
                   />
@@ -521,7 +566,7 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
                       location={location} 
                       onRepairComplete={() => {
                         if (location.floor_plan_files) {
-                          setFloorPlanUrls(getFloorPlanUrls(location.floor_plan_files));
+                          setAllFloorPlanUrls(getAllFloorPlanUrls(location.floor_plan_files));
                         }
                       }}
                     />
@@ -532,7 +577,7 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
                       locationId={location.id}
                       onFilesChanged={() => {
                         if (location.floor_plan_files) {
-                          setFloorPlanUrls(getFloorPlanUrls(location.floor_plan_files));
+                          setAllFloorPlanUrls(getAllFloorPlanUrls(location.floor_plan_files));
                         }
                         window.location.reload();
                       }}
@@ -710,7 +755,7 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
            <DialogHeader>
              <DialogTitle>Add Floor Plan</DialogTitle>
              <p className="text-sm text-muted-foreground">
-              Upload a floor plan for Floor {selectedFloor}
+              Upload a floor plan for {isOutbuilding ? outbuildings.find(o => o.key === selectedFloorKey)?.name : `Floor ${selectedFloorKey}`}
              </p>
            </DialogHeader>
           <div className="space-y-4">
