@@ -16,6 +16,7 @@ import { OfflineStatusIndicator } from "@/components/OfflineStatusIndicator";
 import { InAppEducationBanner } from "@/components/InAppEducationBanner";
 import { ImpersonationBanner } from "@/components/ImpersonationBanner";
 import ScrollToTop from "@/components/ScrollToTop";
+import { AnalyticsProvider } from "@/components/AnalyticsProvider";
 
 // Protected pages
 import Index from "./pages/Index";
@@ -84,8 +85,9 @@ const App = () => (
               <InAppEducationBanner />
               <ImpersonationBanner />
               <BrowserRouter>
-                <ScrollToTop />
-                <Routes>
+                <AnalyticsProvider>
+                  <ScrollToTop />
+                  <Routes>
                   {/* Public marketing pages */}
                   <Route path="/" element={<PublicLayout><LandingPage /></PublicLayout>} />
                   <Route path="/home" element={<Navigate to="/" replace />} />
@@ -169,6 +171,7 @@ const App = () => (
                   {/* Catch-all */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
+                </AnalyticsProvider>
               </BrowserRouter>
             </TooltipProvider>
           </OrganizationProvider>

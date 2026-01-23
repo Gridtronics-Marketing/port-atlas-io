@@ -64,6 +64,283 @@ export type Database = {
           },
         ]
       }
+      analytics_daily_stats: {
+        Row: {
+          avg_pages_per_session: number | null
+          avg_session_duration_seconds: number | null
+          bounce_rate: number | null
+          created_at: string
+          date: string
+          desktop_sessions: number | null
+          id: string
+          mobile_sessions: number | null
+          new_visitors: number | null
+          returning_visitors: number | null
+          tablet_sessions: number | null
+          top_pages: Json | null
+          top_referrers: Json | null
+          total_events: number | null
+          total_page_views: number | null
+          total_sessions: number | null
+          traffic_sources: Json | null
+          unique_visitors: number | null
+          updated_at: string
+        }
+        Insert: {
+          avg_pages_per_session?: number | null
+          avg_session_duration_seconds?: number | null
+          bounce_rate?: number | null
+          created_at?: string
+          date: string
+          desktop_sessions?: number | null
+          id?: string
+          mobile_sessions?: number | null
+          new_visitors?: number | null
+          returning_visitors?: number | null
+          tablet_sessions?: number | null
+          top_pages?: Json | null
+          top_referrers?: Json | null
+          total_events?: number | null
+          total_page_views?: number | null
+          total_sessions?: number | null
+          traffic_sources?: Json | null
+          unique_visitors?: number | null
+          updated_at?: string
+        }
+        Update: {
+          avg_pages_per_session?: number | null
+          avg_session_duration_seconds?: number | null
+          bounce_rate?: number | null
+          created_at?: string
+          date?: string
+          desktop_sessions?: number | null
+          id?: string
+          mobile_sessions?: number | null
+          new_visitors?: number | null
+          returning_visitors?: number | null
+          tablet_sessions?: number | null
+          top_pages?: Json | null
+          top_referrers?: Json | null
+          total_events?: number | null
+          total_page_views?: number | null
+          total_sessions?: number | null
+          traffic_sources?: Json | null
+          unique_visitors?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      analytics_events: {
+        Row: {
+          created_at: string
+          event_action: string
+          event_category: string
+          event_label: string | null
+          event_value: number | null
+          id: string
+          metadata: Json | null
+          page_path: string | null
+          session_id: string | null
+          user_id: string | null
+          visitor_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_action: string
+          event_category: string
+          event_label?: string | null
+          event_value?: number | null
+          id?: string
+          metadata?: Json | null
+          page_path?: string | null
+          session_id?: string | null
+          user_id?: string | null
+          visitor_id: string
+        }
+        Update: {
+          created_at?: string
+          event_action?: string
+          event_category?: string
+          event_label?: string | null
+          event_value?: number | null
+          id?: string
+          metadata?: Json | null
+          page_path?: string | null
+          session_id?: string | null
+          user_id?: string | null
+          visitor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analytics_events_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "analytics_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      analytics_page_views: {
+        Row: {
+          created_at: string
+          exited_at: string | null
+          id: string
+          page_path: string
+          page_title: string | null
+          page_url: string | null
+          referrer: string | null
+          scroll_depth_percent: number | null
+          session_id: string | null
+          time_on_page_seconds: number | null
+          user_id: string | null
+          viewed_at: string
+          visitor_id: string
+        }
+        Insert: {
+          created_at?: string
+          exited_at?: string | null
+          id?: string
+          page_path: string
+          page_title?: string | null
+          page_url?: string | null
+          referrer?: string | null
+          scroll_depth_percent?: number | null
+          session_id?: string | null
+          time_on_page_seconds?: number | null
+          user_id?: string | null
+          viewed_at?: string
+          visitor_id: string
+        }
+        Update: {
+          created_at?: string
+          exited_at?: string | null
+          id?: string
+          page_path?: string
+          page_title?: string | null
+          page_url?: string | null
+          referrer?: string | null
+          scroll_depth_percent?: number | null
+          session_id?: string | null
+          time_on_page_seconds?: number | null
+          user_id?: string | null
+          viewed_at?: string
+          visitor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analytics_page_views_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "analytics_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      analytics_sessions: {
+        Row: {
+          browser: string | null
+          browser_version: string | null
+          city: string | null
+          country: string | null
+          created_at: string
+          device_type: string | null
+          duration_seconds: number | null
+          ended_at: string | null
+          entry_page: string | null
+          exit_page: string | null
+          id: string
+          ip_hash: string | null
+          is_bounce: boolean | null
+          language: string | null
+          os: string | null
+          os_version: string | null
+          page_count: number | null
+          referrer: string | null
+          referrer_domain: string | null
+          screen_height: number | null
+          screen_width: number | null
+          started_at: string
+          timezone: string | null
+          user_id: string | null
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
+          viewport_height: number | null
+          viewport_width: number | null
+          visitor_id: string
+        }
+        Insert: {
+          browser?: string | null
+          browser_version?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          device_type?: string | null
+          duration_seconds?: number | null
+          ended_at?: string | null
+          entry_page?: string | null
+          exit_page?: string | null
+          id?: string
+          ip_hash?: string | null
+          is_bounce?: boolean | null
+          language?: string | null
+          os?: string | null
+          os_version?: string | null
+          page_count?: number | null
+          referrer?: string | null
+          referrer_domain?: string | null
+          screen_height?: number | null
+          screen_width?: number | null
+          started_at?: string
+          timezone?: string | null
+          user_id?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+          viewport_height?: number | null
+          viewport_width?: number | null
+          visitor_id: string
+        }
+        Update: {
+          browser?: string | null
+          browser_version?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          device_type?: string | null
+          duration_seconds?: number | null
+          ended_at?: string | null
+          entry_page?: string | null
+          exit_page?: string | null
+          id?: string
+          ip_hash?: string | null
+          is_bounce?: boolean | null
+          language?: string | null
+          os?: string | null
+          os_version?: string | null
+          page_count?: number | null
+          referrer?: string | null
+          referrer_domain?: string | null
+          screen_height?: number | null
+          screen_width?: number | null
+          started_at?: string
+          timezone?: string | null
+          user_id?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+          viewport_height?: number | null
+          viewport_width?: number | null
+          visitor_id?: string
+        }
+        Relationships: []
+      }
       backbone_cables: {
         Row: {
           cable_label: string
@@ -5905,6 +6182,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      aggregate_daily_analytics: {
+        Args: { target_date?: string }
+        Returns: undefined
+      }
       generate_po_number: { Args: never; Returns: string }
       get_current_user_client_id: { Args: never; Returns: string }
       get_current_user_email: { Args: never; Returns: string }

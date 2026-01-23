@@ -12,9 +12,10 @@ import { BlogManagementPanel } from "@/components/admin/BlogManagementPanel";
 import { CareersManagementPanel } from "@/components/admin/CareersManagementPanel";
 import { HelpArticlesManagementPanel } from "@/components/admin/HelpArticlesManagementPanel";
 import { PageContentManagementPanel } from "@/components/admin/PageContentManagementPanel";
+import { AnalyticsDashboard } from "@/components/admin/AnalyticsDashboard";
 import { useLeads } from "@/hooks/useLeads";
 import { MetricCard } from "@/components/ui/metric-card";
-import { Users, TrendingUp, DollarSign, Target, LayoutDashboard, UserPlus, CreditCard, FileText, Settings, Newspaper, Briefcase, HelpCircle, Globe } from "lucide-react";
+import { Users, TrendingUp, DollarSign, Target, LayoutDashboard, UserPlus, CreditCard, FileText, Settings, Newspaper, Briefcase, HelpCircle, Globe, BarChart3 } from "lucide-react";
 
 export default function SuperAdminDashboard() {
   const { isSuperAdmin, loadingOrganizations } = useOrganization();
@@ -60,10 +61,14 @@ export default function SuperAdminDashboard() {
         </div>
 
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 md:grid-cols-5 lg:grid-cols-9 lg:w-auto lg:inline-grid">
+          <TabsList className="grid w-full grid-cols-3 md:grid-cols-5 lg:grid-cols-10 lg:w-auto lg:inline-grid">
             <TabsTrigger value="overview" className="gap-2">
               <LayoutDashboard className="h-4 w-4" />
               <span className="hidden sm:inline">Overview</span>
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="gap-2">
+              <BarChart3 className="h-4 w-4" />
+              <span className="hidden sm:inline">Analytics</span>
             </TabsTrigger>
             <TabsTrigger value="leads" className="gap-2">
               <UserPlus className="h-4 w-4" />
@@ -175,6 +180,11 @@ export default function SuperAdminDashboard() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Analytics Tab */}
+          <TabsContent value="analytics">
+            <AnalyticsDashboard />
           </TabsContent>
 
           {/* Leads Tab */}
