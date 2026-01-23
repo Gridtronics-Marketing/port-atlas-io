@@ -95,13 +95,46 @@ export const getFloorPlanUrls = (floorPlanFiles: Record<string, any> = {}): Reco
   const urls: Record<number, string> = {};
   
   Object.entries(floorPlanFiles).forEach(([floor, value]) => {
-    const path = typeof value === 'string' ? value : value?.image_path;
-    if (path) {
-      urls[parseInt(floor)] = getStorageUrl('floor-plans', path);
+    // Only include numeric floor keys for backward compatibility
+    if (!isNaN(parseInt(floor))) {
+      const path = typeof value === 'string' ? value : value?.image_path;
+      if (path) {
+        urls[parseInt(floor)] = getStorageUrl('floor-plans', path);
+      }
     }
   });
   
   return urls;
+};
+
+/**
+ * Generates URLs for all floor plan files including outbuildings
+ * Returns string-keyed URLs for both numeric floors and outbuilding keys
+ */
+export const getAllFloorPlanUrls = (floorPlanFiles: Record<string, any> = {}): Record<string, string> => {
+  const urls: Record<string, string> = {};
+  
+  Object.entries(floorPlanFiles).forEach(([key, value]) => {
+    // Skip riser diagrams
+    if (key === 'riser' || key === 'riser_diagram') return;
+    
+    const path = typeof value === 'string' ? value : value?.image_path;
+    if (path) {
+      urls[key] = getStorageUrl('floor-plans', path);
+    }
+  });
+  
+  return urls;
+};
+
+/**
+ * Gets floor plan metadata including custom names for outbuildings
+ */
+export const getFloorPlanMetadata = (floorPlanFiles: Record<string, any> = {}, key: string): { name?: string; type?: string } | null => {
+  const value = floorPlanFiles[key];
+  if (!value) return null;
+  if (typeof value === 'string') return null;
+  return { name: value.name, type: value.type };
 };
 
 /**
