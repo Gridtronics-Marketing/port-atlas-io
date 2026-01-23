@@ -9,7 +9,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { ArrowLeft, ArrowRight, Check, Loader2 } from "lucide-react";
-import { useLeads } from "@/hooks/useLeads";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -64,7 +63,6 @@ const TIMELINES = [
 export function OnboardingWizard() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { createLead, saveOnboardingResponse } = useLeads();
   
   const [currentStep, setCurrentStep] = useState(1);
   const [leadId, setLeadId] = useState<string | null>(null);
@@ -116,37 +114,43 @@ export function OnboardingWizard() {
       
       // On step 1, create the lead
       if (currentStep === 1 && !leadId) {
-        const result = await createLead.mutateAsync({
-          email: formData.email,
-          first_name: formData.first_name,
-          last_name: formData.last_name,
-          phone: formData.phone,
-          source: "onboarding_wizard",
-          status: "new",
-          company_name: null,
-          industry: null,
-          company_size: null,
-          message: null,
-          utm_source: searchParams.get("utm_source"),
-          utm_medium: searchParams.get("utm_medium"),
-          utm_campaign: searchParams.get("utm_campaign"),
-          notes: null,
-          assigned_to: null,
+        const { data, error } = await supabase.functions.invoke("public-lead-capture", {
+          body: {
+            email: formData.email,
+            first_name: formData.first_name,
+            last_name: formData.last_name,
+            phone: formData.phone,
+            source: "onboarding_wizard",
+            utm_source: searchParams.get("utm_source"),
+            utm_medium: searchParams.get("utm_medium"),
+            utm_campaign: searchParams.get("utm_campaign"),
+          },
         });
-        currentLeadId = result.id;
-        setLeadId(result.id);
+
+        if (error || !data?.id) {
+          throw new Error(error?.message || "Failed to create lead");
+        }
+
+        currentLeadId = data.id;
+        setLeadId(data.id);
       }
 
       // Save step response using local variable (not stale state)
       if (currentLeadId) {
         const stepData = getStepData(currentStep);
-        await saveOnboardingResponse.mutateAsync({
-          lead_id: currentLeadId,
-          step_number: currentStep,
-          step_name: STEPS[currentStep - 1].name,
-          response_data: stepData,
-          completed_at: new Date().toISOString(),
+        const { error: saveError } = await supabase.functions.invoke("public-onboarding-response", {
+          body: {
+            lead_id: currentLeadId,
+            step_number: currentStep,
+            step_name: STEPS[currentStep - 1].name,
+            response_data: stepData,
+            completed_at: new Date().toISOString(),
+          },
         });
+
+        if (saveError) {
+          throw new Error(saveError.message || "Failed to save onboarding step");
+        }
       }
 
       if (currentStep < STEPS.length) {

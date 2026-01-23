@@ -20,3 +20,9 @@ verify_jwt = false
 
 [functions.notify-new-lead]
 verify_jwt = false
+
+[functions.public-lead-capture]
+verify_jwt = false
+
+[functions.public-onboarding-response]
+verify_jwt = false
