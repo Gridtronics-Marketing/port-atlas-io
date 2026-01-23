@@ -57,6 +57,14 @@ import PricingPage from "./pages/PricingPage";
 import AboutPage from "./pages/AboutPage";
 import ContactPage from "./pages/ContactPage";
 import GetStartedPage from "./pages/GetStartedPage";
+import CareersPage from "./pages/CareersPage";
+import BlogPage from "./pages/BlogPage";
+import BlogPostPage from "./pages/BlogPostPage";
+import HelpPage from "./pages/HelpPage";
+import APIPage from "./pages/APIPage";
+import PrivacyPage from "./pages/PrivacyPage";
+import TermsPage from "./pages/TermsPage";
+import SecurityPage from "./pages/SecurityPage";
 
 const queryClient = new QueryClient();
 
@@ -83,6 +91,14 @@ const App = () => (
                   <Route path="/about" element={<PublicLayout><AboutPage /></PublicLayout>} />
                   <Route path="/contact" element={<PublicLayout><ContactPage /></PublicLayout>} />
                   <Route path="/get-started" element={<PublicLayout><GetStartedPage /></PublicLayout>} />
+                  <Route path="/careers" element={<PublicLayout><CareersPage /></PublicLayout>} />
+                  <Route path="/blog" element={<PublicLayout><BlogPage /></PublicLayout>} />
+                  <Route path="/blog/:slug" element={<PublicLayout><BlogPostPage /></PublicLayout>} />
+                  <Route path="/help" element={<PublicLayout><HelpPage /></PublicLayout>} />
+                  <Route path="/api" element={<PublicLayout><APIPage /></PublicLayout>} />
+                  <Route path="/privacy" element={<PublicLayout><PrivacyPage /></PublicLayout>} />
+                  <Route path="/terms" element={<PublicLayout><TermsPage /></PublicLayout>} />
+                  <Route path="/security" element={<PublicLayout><SecurityPage /></PublicLayout>} />
                   
                   {/* Auth */}
                   <Route path="/auth" element={<Auth />} />
