@@ -21,8 +21,6 @@ interface PublicLeadCaptureRequest {
   utm_source?: string | null;
   utm_medium?: string | null;
   utm_campaign?: string | null;
-  utm_term?: string | null;
-  utm_content?: string | null;
   notes?: string | null;
 }
 
@@ -100,8 +98,6 @@ const handler = async (req: Request): Promise<Response> => {
       utm_source: cleanText(body.utm_source, 100),
       utm_medium: cleanText(body.utm_medium, 100),
       utm_campaign: cleanText(body.utm_campaign, 100),
-      utm_term: cleanText(body.utm_term, 100),
-      utm_content: cleanText(body.utm_content, 100),
       status: "new",
       notes: cleanText(body.notes, 500),
       assigned_to: null,
