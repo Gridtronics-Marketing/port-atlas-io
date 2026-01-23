@@ -1,12 +1,18 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useContext } from 'react';
 import { useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
+import { AuthContext } from '@/hooks/useAuth';
 
 // Helper to query analytics tables (bypasses type checking for new tables)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const analyticsQuery = (table: string): any => {
   return (supabase as any).from(table);
+};
+
+// Safe hook to get user without throwing if outside AuthProvider
+const useSafeAuth = () => {
+  const context = useContext(AuthContext);
+  return context?.user ?? null;
 };
 
 interface DeviceInfo {
@@ -90,7 +96,7 @@ const getReferrerDomain = (referrer: string): string | null => {
 
 export const useAnalyticsTracking = () => {
   const location = useLocation();
-  const { user } = useAuth();
+  const user = useSafeAuth();
   const sessionDbIdRef = useRef<string | null>(null);
   const currentPageViewIdRef = useRef<string | null>(null);
   const pageStartTimeRef = useRef<number>(Date.now());
