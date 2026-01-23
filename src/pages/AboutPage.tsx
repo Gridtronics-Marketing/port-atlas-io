@@ -57,7 +57,7 @@ export default function AboutPage() {
               Empowering Contractors to{" "}
               <span className="text-gradient-gold">Build the Future</span>
             </h1>
-            <p className="text-lg text-secondary/80 max-w-2xl mx-auto">
+            <p className="text-lg text-white/70 max-w-2xl mx-auto">
               Trade Atlas was founded with a simple mission: give contractors the tools 
               they need to run their operations as efficiently as any modern business.
             </p>
@@ -76,7 +76,7 @@ export default function AboutPage() {
           <div className="grid lg:grid-cols-2 gap-12 items-center max-w-6xl mx-auto">
             <div>
               <h2 className="text-3xl font-bold text-white mb-6">Our <span className="text-gradient-gold">Story</span></h2>
-              <div className="space-y-4 text-secondary/80">
+              <div className="space-y-4 text-white/70">
                 <p>
                   Trade Atlas was born from frustration. After years of watching 
                   skilled contractors struggle with outdated tools — paper floor plans, 
@@ -101,23 +101,23 @@ export default function AboutPage() {
                 </p>
               </div>
             </div>
-            <div className="bg-steel-dark/50 rounded-xl p-8 border border-secondary/20 backdrop-blur-sm">
+            <div className="bg-steel-dark/50 rounded-xl p-8 border border-primary/30 backdrop-blur-sm">
               <div className="grid grid-cols-2 gap-6 text-center">
-                <div className="p-4 rounded-lg bg-steel-dark/50 border border-primary/20">
+                <div className="p-4 rounded-lg bg-white/5 border border-primary/20">
                   <div className="text-4xl font-bold text-gradient-gold mb-2">2021</div>
-                  <div className="text-sm text-secondary/70">Founded</div>
+                  <div className="text-sm text-white/60">Founded</div>
                 </div>
-                <div className="p-4 rounded-lg bg-steel-dark/50 border border-primary/20">
+                <div className="p-4 rounded-lg bg-white/5 border border-primary/20">
                   <div className="text-4xl font-bold text-gradient-gold mb-2">500+</div>
-                  <div className="text-sm text-secondary/70">Customers</div>
+                  <div className="text-sm text-white/60">Customers</div>
                 </div>
-                <div className="p-4 rounded-lg bg-steel-dark/50 border border-primary/20">
+                <div className="p-4 rounded-lg bg-white/5 border border-primary/20">
                   <div className="text-4xl font-bold text-gradient-gold mb-2">15+</div>
-                  <div className="text-sm text-secondary/70">Team Members</div>
+                  <div className="text-sm text-white/60">Team Members</div>
                 </div>
-                <div className="p-4 rounded-lg bg-steel-dark/50 border border-primary/20">
+                <div className="p-4 rounded-lg bg-white/5 border border-primary/20">
                   <div className="text-4xl font-bold text-gradient-gold mb-2">50k+</div>
-                  <div className="text-sm text-secondary/70">Work Orders</div>
+                  <div className="text-sm text-white/60">Work Orders</div>
                 </div>
               </div>
             </div>
@@ -159,18 +159,18 @@ export default function AboutPage() {
             <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
               Join the Trade Atlas <span className="text-gradient-gold">Community</span>
             </h2>
-            <p className="text-secondary/80 max-w-xl mx-auto mb-6">
+            <p className="text-white/70 max-w-xl mx-auto mb-6">
               Ready to transform how you manage field operations? 
               Start your free trial today and see the difference.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90" asChild>
+              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_20px_rgba(212,175,55,0.3)]" asChild>
                 <Link to="/get-started">
                   Start Free Trial
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
-              <Button size="lg" variant="outline" className="border-secondary/30 text-secondary hover:bg-secondary/10" asChild>
+              <Button size="lg" variant="outline" className="border-primary/50 text-white bg-white/10 hover:bg-white/20 hover:border-primary" asChild>
                 <Link to="/contact">Contact Us</Link>
               </Button>
             </div>
