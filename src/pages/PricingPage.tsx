@@ -54,45 +54,60 @@ export default function PricingPage() {
         </script>
       </Helmet>
 
-      {/* Header */}
-      <section className="container px-4 md:px-6 py-16 md:py-24">
-        <div className="text-center max-w-3xl mx-auto">
-          <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
-            Simple, Transparent Pricing
-          </h1>
-          <p className="text-lg text-muted-foreground mb-8">
-            Choose the plan that fits your business. All plans include a 14-day free trial 
-            with full access — no credit card required.
-          </p>
+      {/* Hero Header */}
+      <section className="relative overflow-hidden hero-dark py-20 md:py-28">
+        {/* Tech Lines Background */}
+        <div className="absolute inset-0 tech-lines opacity-30" />
+        
+        {/* Gold accent nodes */}
+        <div className="absolute top-20 right-10 w-3 h-3 rounded-full bg-primary animate-pulse" />
+        <div className="absolute top-40 left-20 w-2 h-2 rounded-full bg-primary/60 animate-pulse delay-300" />
+        
+        <div className="container px-4 md:px-6 relative z-10">
+          <div className="text-center max-w-3xl mx-auto">
+            <span className="inline-block px-4 py-1.5 mb-6 text-xs font-semibold tracking-wider uppercase bg-primary/10 text-primary border border-primary/30 rounded-full">
+              Transparent Pricing
+            </span>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">
+              Simple, <span className="text-gradient-gold">Transparent</span> Pricing
+            </h1>
+            <p className="text-lg text-secondary/80 mb-8 max-w-2xl mx-auto">
+              Choose the plan that fits your business. All plans include a 14-day free trial 
+              with full access — no credit card required.
+            </p>
 
-          {/* Billing Toggle */}
-          <div className="flex items-center justify-center gap-4">
-            <Label 
-              htmlFor="billing-toggle" 
-              className={!isAnnual ? "text-foreground font-medium" : "text-muted-foreground"}
-            >
-              Monthly
-            </Label>
-            <Switch 
-              id="billing-toggle" 
-              checked={isAnnual}
-              onCheckedChange={setIsAnnual}
-            />
-            <Label 
-              htmlFor="billing-toggle" 
-              className={isAnnual ? "text-foreground font-medium" : "text-muted-foreground"}
-            >
-              Annual
-              <span className="ml-2 inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                Save 20%
-              </span>
-            </Label>
+            {/* Billing Toggle */}
+            <div className="flex items-center justify-center gap-4 p-4 rounded-xl bg-steel-dark/50 border border-secondary/20 w-fit mx-auto">
+              <Label 
+                htmlFor="billing-toggle" 
+                className={!isAnnual ? "text-white font-medium" : "text-secondary/60"}
+              >
+                Monthly
+              </Label>
+              <Switch 
+                id="billing-toggle" 
+                checked={isAnnual}
+                onCheckedChange={setIsAnnual}
+              />
+              <Label 
+                htmlFor="billing-toggle" 
+                className={isAnnual ? "text-white font-medium" : "text-secondary/60"}
+              >
+                Annual
+                <span className="ml-2 inline-flex items-center rounded-full bg-primary/20 px-2 py-0.5 text-xs font-medium text-primary border border-primary/30">
+                  Save 20%
+                </span>
+              </Label>
+            </div>
           </div>
         </div>
+        
+        {/* Gold bottom line */}
+        <div className="absolute bottom-0 left-0 right-0 gold-line" />
       </section>
 
       {/* Pricing Cards */}
-      <section className="container px-4 md:px-6 pb-16">
+      <section className="container px-4 md:px-6 py-16">
         {isLoading ? (
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
             {[1, 2, 3, 4].map((i) => (
@@ -109,63 +124,68 @@ export default function PricingPage() {
       </section>
 
       {/* Feature Comparison Table */}
-      <section className="container px-4 md:px-6 py-16 md:py-24 bg-muted/30">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-foreground mb-4">
-            Compare All Features
-          </h2>
-          <p className="text-muted-foreground">
-            See exactly what's included in each plan.
-          </p>
-        </div>
+      <section className="relative hero-dark py-16 md:py-24 overflow-hidden">
+        <div className="absolute inset-0 tech-lines opacity-20" />
+        <div className="absolute top-0 left-0 right-0 gold-line" />
+        
+        <div className="container px-4 md:px-6 relative z-10">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-white mb-4">
+              Compare All <span className="text-gradient-gold">Features</span>
+            </h2>
+            <p className="text-secondary/70">
+              See exactly what's included in each plan.
+            </p>
+          </div>
 
-        <div className="max-w-5xl mx-auto overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[300px]">Feature</TableHead>
-                <TableHead className="text-center">Starter</TableHead>
-                <TableHead className="text-center">Professional</TableHead>
-                <TableHead className="text-center">Business</TableHead>
-                <TableHead className="text-center">Enterprise</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {allFeatures.map((feature) => (
-                <TableRow key={feature.name}>
-                  <TableCell className="font-medium">{feature.name}</TableCell>
-                  <TableCell className="text-center">
-                    {feature.starter ? (
-                      <Check className="h-5 w-5 text-primary mx-auto" />
-                    ) : (
-                      <X className="h-5 w-5 text-muted-foreground mx-auto" />
-                    )}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {feature.professional ? (
-                      <Check className="h-5 w-5 text-primary mx-auto" />
-                    ) : (
-                      <X className="h-5 w-5 text-muted-foreground mx-auto" />
-                    )}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {feature.business ? (
-                      <Check className="h-5 w-5 text-primary mx-auto" />
-                    ) : (
-                      <X className="h-5 w-5 text-muted-foreground mx-auto" />
-                    )}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {feature.enterprise ? (
-                      <Check className="h-5 w-5 text-primary mx-auto" />
-                    ) : (
-                      <X className="h-5 w-5 text-muted-foreground mx-auto" />
-                    )}
-                  </TableCell>
+          <div className="max-w-5xl mx-auto overflow-x-auto">
+            <Table className="border border-secondary/20 rounded-xl overflow-hidden">
+              <TableHeader className="bg-steel-dark/50">
+                <TableRow className="border-secondary/20">
+                  <TableHead className="w-[300px] text-secondary">Feature</TableHead>
+                  <TableHead className="text-center text-secondary">Starter</TableHead>
+                  <TableHead className="text-center text-secondary">Professional</TableHead>
+                  <TableHead className="text-center text-secondary">Business</TableHead>
+                  <TableHead className="text-center text-secondary">Enterprise</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {allFeatures.map((feature) => (
+                  <TableRow key={feature.name} className="border-secondary/20 bg-steel-dark/30">
+                    <TableCell className="font-medium text-white">{feature.name}</TableCell>
+                    <TableCell className="text-center">
+                      {feature.starter ? (
+                        <Check className="h-5 w-5 text-primary mx-auto" />
+                      ) : (
+                        <X className="h-5 w-5 text-secondary/40 mx-auto" />
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {feature.professional ? (
+                        <Check className="h-5 w-5 text-primary mx-auto" />
+                      ) : (
+                        <X className="h-5 w-5 text-secondary/40 mx-auto" />
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {feature.business ? (
+                        <Check className="h-5 w-5 text-primary mx-auto" />
+                      ) : (
+                        <X className="h-5 w-5 text-secondary/40 mx-auto" />
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {feature.enterprise ? (
+                        <Check className="h-5 w-5 text-primary mx-auto" />
+                      ) : (
+                        <X className="h-5 w-5 text-secondary/40 mx-auto" />
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       </section>
 
@@ -187,24 +207,29 @@ export default function PricingPage() {
 
       {/* CTA Section */}
       <section className="container px-4 md:px-6 pb-16 md:pb-24">
-        <div className="bg-primary rounded-2xl p-8 md:p-12 text-center text-primary-foreground">
-          <h2 className="text-2xl md:text-3xl font-bold mb-4">
-            Still Have Questions?
-          </h2>
-          <p className="opacity-90 max-w-xl mx-auto mb-6">
-            Our team is here to help. Schedule a demo and we'll walk you through 
-            the platform and help you find the right plan.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" variant="secondary" asChild>
-              <Link to="/get-started">
-                Start Free Trial
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-            <Button size="lg" variant="outline" className="bg-transparent border-primary-foreground text-primary-foreground hover:bg-primary-foreground/10" asChild>
-              <Link to="/contact">Contact Sales</Link>
-            </Button>
+        <div className="relative overflow-hidden rounded-2xl hero-dark p-8 md:p-12 text-center border border-primary/30">
+          <div className="absolute inset-0 tech-lines opacity-20" />
+          <div className="absolute top-0 left-0 right-0 gold-line" />
+          
+          <div className="relative z-10">
+            <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
+              Still Have <span className="text-gradient-gold">Questions</span>?
+            </h2>
+            <p className="text-secondary/80 max-w-xl mx-auto mb-6">
+              Our team is here to help. Schedule a demo and we'll walk you through 
+              the platform and help you find the right plan.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90" asChild>
+                <Link to="/get-started">
+                  Start Free Trial
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+              <Button size="lg" variant="outline" className="border-secondary/30 text-secondary hover:bg-secondary/10" asChild>
+                <Link to="/contact">Contact Sales</Link>
+              </Button>
+            </div>
           </div>
         </div>
       </section>

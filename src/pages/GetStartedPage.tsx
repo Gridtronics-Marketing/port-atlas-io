@@ -13,19 +13,37 @@ export default function GetStartedPage() {
         <link rel="canonical" href="https://tradeatlas.app/get-started" />
       </Helmet>
 
-      <div className="container px-4 md:px-6 py-12 md:py-16">
-        {/* Header */}
-        <div className="text-center max-w-2xl mx-auto mb-12">
-          <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-            Let's Get You Started
-          </h1>
-          <p className="text-muted-foreground">
-            Answer a few quick questions so we can tailor Trade Atlas to your needs. 
-            This takes about 2 minutes.
-          </p>
+      {/* Hero Header */}
+      <section className="relative overflow-hidden hero-dark py-16 md:py-20">
+        {/* Tech Lines Background */}
+        <div className="absolute inset-0 tech-lines opacity-30" />
+        
+        {/* Gold accent nodes */}
+        <div className="absolute top-10 left-10 w-3 h-3 rounded-full bg-primary animate-pulse" />
+        <div className="absolute top-20 right-20 w-2 h-2 rounded-full bg-primary/60 animate-pulse delay-300" />
+        <div className="absolute bottom-10 left-1/4 w-2 h-2 rounded-full bg-primary/40 animate-pulse delay-500" />
+        
+        <div className="container px-4 md:px-6 relative z-10">
+          <div className="text-center max-w-2xl mx-auto">
+            <span className="inline-block px-4 py-1.5 mb-6 text-xs font-semibold tracking-wider uppercase bg-primary/10 text-primary border border-primary/30 rounded-full">
+              Free 14-Day Trial
+            </span>
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4">
+              Let's Get You <span className="text-gradient-gold">Started</span>
+            </h1>
+            <p className="text-secondary/80">
+              Answer a few quick questions so we can tailor Trade Atlas to your needs. 
+              This takes about 2 minutes.
+            </p>
+          </div>
         </div>
+        
+        {/* Gold bottom line */}
+        <div className="absolute bottom-0 left-0 right-0 gold-line" />
+      </section>
 
-        {/* Wizard */}
+      {/* Wizard */}
+      <div className="container px-4 md:px-6 py-12 md:py-16">
         <OnboardingWizard />
       </div>
     </>

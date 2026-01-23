@@ -37,7 +37,7 @@ const socialLinks = [
 
 export function PublicFooter() {
   return (
-    <footer className="bg-muted/30 border-t">
+    <footer className="hero-dark border-t border-secondary/20">
       <div className="container px-4 md:px-6 py-12 md:py-16">
         {/* Main Footer Content */}
         <div className="grid grid-cols-2 md:grid-cols-6 gap-8 lg:gap-12">
@@ -49,23 +49,23 @@ export function PublicFooter() {
                 alt="Trade Atlas" 
                 className="h-8 w-auto"
               />
-              <span className="text-xl font-bold text-foreground">Trade Atlas</span>
+              <span className="text-xl font-bold text-white">Trade Atlas</span>
             </Link>
-            <p className="text-sm text-muted-foreground mb-6 max-w-xs">
+            <p className="text-sm text-secondary/70 mb-6 max-w-xs">
               Streamline your field operations with intelligent floor plan management, 
               work orders, and client collaboration tools.
             </p>
             
             {/* Newsletter Signup */}
             <div className="space-y-2">
-              <p className="text-sm font-medium">Stay updated</p>
+              <p className="text-sm font-medium text-secondary/80">Stay updated</p>
               <div className="flex gap-2">
                 <Input 
                   type="email" 
                   placeholder="Enter your email" 
-                  className="max-w-[200px]"
+                  className="max-w-[200px] bg-steel-dark/50 border-secondary/20 text-white placeholder:text-secondary/50"
                 />
-                <Button size="sm">
+                <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90">
                   <Mail className="h-4 w-4" />
                 </Button>
               </div>
@@ -74,13 +74,13 @@ export function PublicFooter() {
 
           {/* Product Links */}
           <div>
-            <h4 className="font-semibold text-foreground mb-4">Product</h4>
+            <h4 className="font-semibold text-white mb-4">Product</h4>
             <ul className="space-y-3">
               {footerLinks.product.map((link) => (
                 <li key={link.href}>
                   <Link 
                     to={link.href}
-                    className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                    className="text-sm text-secondary/70 hover:text-primary transition-colors"
                   >
                     {link.label}
                   </Link>
@@ -91,13 +91,13 @@ export function PublicFooter() {
 
           {/* Company Links */}
           <div>
-            <h4 className="font-semibold text-foreground mb-4">Company</h4>
+            <h4 className="font-semibold text-white mb-4">Company</h4>
             <ul className="space-y-3">
               {footerLinks.company.map((link) => (
                 <li key={link.href}>
                   <Link 
                     to={link.href}
-                    className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                    className="text-sm text-secondary/70 hover:text-primary transition-colors"
                   >
                     {link.label}
                   </Link>
@@ -108,13 +108,13 @@ export function PublicFooter() {
 
           {/* Resources Links */}
           <div>
-            <h4 className="font-semibold text-foreground mb-4">Resources</h4>
+            <h4 className="font-semibold text-white mb-4">Resources</h4>
             <ul className="space-y-3">
               {footerLinks.resources.map((link) => (
                 <li key={link.href}>
                   <Link 
                     to={link.href}
-                    className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                    className="text-sm text-secondary/70 hover:text-primary transition-colors"
                   >
                     {link.label}
                   </Link>
@@ -125,13 +125,13 @@ export function PublicFooter() {
 
           {/* Legal Links */}
           <div>
-            <h4 className="font-semibold text-foreground mb-4">Legal</h4>
+            <h4 className="font-semibold text-white mb-4">Legal</h4>
             <ul className="space-y-3">
               {footerLinks.legal.map((link) => (
                 <li key={link.href}>
                   <Link 
                     to={link.href}
-                    className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                    className="text-sm text-secondary/70 hover:text-primary transition-colors"
                   >
                     {link.label}
                   </Link>
@@ -141,11 +141,11 @@ export function PublicFooter() {
           </div>
         </div>
 
-        <Separator className="my-8" />
+        <Separator className="my-8 bg-secondary/20" />
 
         {/* Bottom Bar */}
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-secondary/60">
             © {new Date().getFullYear()} Trade Atlas. All rights reserved.
           </p>
           
@@ -157,7 +157,7 @@ export function PublicFooter() {
                 href={social.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-primary transition-colors"
+                className="text-secondary/60 hover:text-primary transition-colors"
                 aria-label={social.label}
               >
                 <social.icon className="h-5 w-5" />

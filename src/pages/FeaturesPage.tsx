@@ -1,7 +1,6 @@
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FeatureCard } from "@/components/marketing/FeatureCard";
 import { 
@@ -145,38 +144,55 @@ export default function FeaturesPage() {
         <link rel="canonical" href="https://tradeatlas.app/features" />
       </Helmet>
 
-      {/* Header */}
-      <section className="container px-4 md:px-6 py-16 md:py-24">
-        <div className="text-center max-w-3xl mx-auto">
-          <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
-            Powerful Features for Modern Contractors
-          </h1>
-          <p className="text-lg text-muted-foreground mb-8">
-            Everything you need to streamline field operations, manage projects, 
-            and delight your clients — all in one platform.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" asChild>
-              <Link to="/get-started">
-                Start Free Trial
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-            <Button size="lg" variant="outline" asChild>
-              <Link to="/pricing">View Pricing</Link>
-            </Button>
+      {/* Hero Header */}
+      <section className="relative overflow-hidden hero-dark py-20 md:py-28">
+        {/* Tech Lines Background */}
+        <div className="absolute inset-0 tech-lines opacity-30" />
+        
+        {/* Gold accent nodes */}
+        <div className="absolute top-20 left-10 w-3 h-3 rounded-full bg-primary animate-pulse" />
+        <div className="absolute top-40 right-20 w-2 h-2 rounded-full bg-primary/60 animate-pulse delay-300" />
+        <div className="absolute bottom-20 left-1/4 w-2 h-2 rounded-full bg-primary/40 animate-pulse delay-500" />
+        
+        <div className="container px-4 md:px-6 relative z-10">
+          <div className="text-center max-w-3xl mx-auto">
+            <span className="inline-block px-4 py-1.5 mb-6 text-xs font-semibold tracking-wider uppercase bg-primary/10 text-primary border border-primary/30 rounded-full">
+              Platform Capabilities
+            </span>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">
+              Powerful Features for{" "}
+              <span className="text-gradient-gold">Modern Contractors</span>
+            </h1>
+            <p className="text-lg text-secondary/80 mb-8 max-w-2xl mx-auto">
+              Everything you need to streamline field operations, manage projects, 
+              and delight your clients — all in one platform.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90" asChild>
+                <Link to="/get-started">
+                  Start Free Trial
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+              <Button size="lg" variant="outline" className="border-secondary/30 text-secondary hover:bg-secondary/10" asChild>
+                <Link to="/pricing">View Pricing</Link>
+              </Button>
+            </div>
           </div>
         </div>
+        
+        {/* Gold bottom line */}
+        <div className="absolute bottom-0 left-0 right-0 gold-line" />
       </section>
 
       {/* Feature Categories */}
-      <section className="container px-4 md:px-6 pb-16 md:pb-24">
+      <section className="container px-4 md:px-6 py-16 md:py-24">
         <Tabs defaultValue="field" className="max-w-6xl mx-auto">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 mb-8">
-            <TabsTrigger value="field">Field Operations</TabsTrigger>
-            <TabsTrigger value="project">Project Management</TabsTrigger>
-            <TabsTrigger value="client">Client Portal</TabsTrigger>
-            <TabsTrigger value="integrations">Integrations</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 mb-8 bg-steel-dark/50 border border-secondary/20">
+            <TabsTrigger value="field" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Field Operations</TabsTrigger>
+            <TabsTrigger value="project" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Project Management</TabsTrigger>
+            <TabsTrigger value="client" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Client Portal</TabsTrigger>
+            <TabsTrigger value="integrations" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Integrations</TabsTrigger>
           </TabsList>
 
           {Object.entries(featureCategories).map(([key, category]) => (
@@ -196,24 +212,25 @@ export default function FeaturesPage() {
       </section>
 
       {/* Stats Section */}
-      <section className="bg-muted/30 py-16 md:py-24">
-        <div className="container px-4 md:px-6">
+      <section className="relative hero-dark py-16 md:py-24 overflow-hidden">
+        <div className="absolute inset-0 tech-lines opacity-20" />
+        <div className="container px-4 md:px-6 relative z-10">
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 text-center">
-            <div>
-              <div className="text-4xl font-bold text-primary mb-2">500+</div>
-              <div className="text-muted-foreground">Active Contractors</div>
+            <div className="p-6 border border-secondary/20 rounded-xl bg-steel-dark/30 backdrop-blur-sm">
+              <div className="text-4xl font-bold text-gradient-gold mb-2">500+</div>
+              <div className="text-secondary/70">Active Contractors</div>
             </div>
-            <div>
-              <div className="text-4xl font-bold text-primary mb-2">10k+</div>
-              <div className="text-muted-foreground">Locations Managed</div>
+            <div className="p-6 border border-secondary/20 rounded-xl bg-steel-dark/30 backdrop-blur-sm">
+              <div className="text-4xl font-bold text-gradient-gold mb-2">10k+</div>
+              <div className="text-secondary/70">Locations Managed</div>
             </div>
-            <div>
-              <div className="text-4xl font-bold text-primary mb-2">50k+</div>
-              <div className="text-muted-foreground">Work Orders Completed</div>
+            <div className="p-6 border border-secondary/20 rounded-xl bg-steel-dark/30 backdrop-blur-sm">
+              <div className="text-4xl font-bold text-gradient-gold mb-2">50k+</div>
+              <div className="text-secondary/70">Work Orders Completed</div>
             </div>
-            <div>
-              <div className="text-4xl font-bold text-primary mb-2">99.9%</div>
-              <div className="text-muted-foreground">Uptime SLA</div>
+            <div className="p-6 border border-secondary/20 rounded-xl bg-steel-dark/30 backdrop-blur-sm">
+              <div className="text-4xl font-bold text-gradient-gold mb-2">99.9%</div>
+              <div className="text-secondary/70">Uptime SLA</div>
             </div>
           </div>
         </div>
@@ -221,23 +238,26 @@ export default function FeaturesPage() {
 
       {/* CTA Section */}
       <section className="container px-4 md:px-6 py-16 md:py-24">
-        <Card className="bg-primary text-primary-foreground">
-          <CardContent className="p-8 md:p-12 text-center">
-            <h2 className="text-2xl md:text-3xl font-bold mb-4">
-              Ready to See It in Action?
+        <div className="relative overflow-hidden rounded-2xl hero-dark p-8 md:p-12 text-center border border-primary/30">
+          <div className="absolute inset-0 tech-lines opacity-20" />
+          <div className="absolute top-0 left-0 right-0 gold-line" />
+          
+          <div className="relative z-10">
+            <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
+              Ready to See It in <span className="text-gradient-gold">Action</span>?
             </h2>
-            <p className="opacity-90 max-w-xl mx-auto mb-6">
+            <p className="text-secondary/80 max-w-xl mx-auto mb-6">
               Start your 14-day free trial and experience how Trade Atlas 
               can transform your field operations.
             </p>
-            <Button size="lg" variant="secondary" asChild>
+            <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90" asChild>
               <Link to="/get-started">
                 Get Started Free
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </section>
     </>
   );

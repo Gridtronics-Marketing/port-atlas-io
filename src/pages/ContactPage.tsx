@@ -42,18 +42,35 @@ export default function ContactPage() {
         <link rel="canonical" href="https://tradeatlas.app/contact" />
       </Helmet>
 
-      <div className="container px-4 md:px-6 py-16 md:py-24">
-        {/* Header */}
-        <div className="text-center max-w-3xl mx-auto mb-16">
-          <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
-            Get in Touch
-          </h1>
-          <p className="text-lg text-muted-foreground">
-            Have questions about Trade Atlas? Want to learn more about how we can 
-            help your business? We'd love to hear from you.
-          </p>
+      {/* Hero Header */}
+      <section className="relative overflow-hidden hero-dark py-20 md:py-28">
+        {/* Tech Lines Background */}
+        <div className="absolute inset-0 tech-lines opacity-30" />
+        
+        {/* Gold accent nodes */}
+        <div className="absolute top-20 right-10 w-3 h-3 rounded-full bg-primary animate-pulse" />
+        <div className="absolute bottom-20 left-20 w-2 h-2 rounded-full bg-primary/60 animate-pulse delay-300" />
+        
+        <div className="container px-4 md:px-6 relative z-10">
+          <div className="text-center max-w-3xl mx-auto">
+            <span className="inline-block px-4 py-1.5 mb-6 text-xs font-semibold tracking-wider uppercase bg-primary/10 text-primary border border-primary/30 rounded-full">
+              Get in Touch
+            </span>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">
+              Let's <span className="text-gradient-gold">Connect</span>
+            </h1>
+            <p className="text-lg text-secondary/80 max-w-2xl mx-auto">
+              Have questions about Trade Atlas? Want to learn more about how we can 
+              help your business? We'd love to hear from you.
+            </p>
+          </div>
         </div>
+        
+        {/* Gold bottom line */}
+        <div className="absolute bottom-0 left-0 right-0 gold-line" />
+      </section>
 
+      <div className="container px-4 md:px-6 py-16 md:py-24">
         <div className="grid lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
           {/* Contact Form */}
           <div>
@@ -74,9 +91,9 @@ export default function ContactPage() {
 
             <div className="grid sm:grid-cols-2 gap-4">
               {contactInfo.map((info) => (
-                <Card key={info.title}>
+                <Card key={info.title} className="border-secondary/20 hover:border-primary/50 transition-all duration-300">
                   <CardContent className="p-4 flex gap-4">
-                    <div className="bg-primary/10 rounded-lg p-2 h-fit">
+                    <div className="bg-primary/10 border border-primary/30 rounded-lg p-2 h-fit">
                       <info.icon className="h-5 w-5 text-primary" />
                     </div>
                     <div>
@@ -90,7 +107,7 @@ export default function ContactPage() {
             </div>
 
             {/* Additional Info */}
-            <Card>
+            <Card className="border-secondary/20 bg-steel-dark/5">
               <CardContent className="p-6">
                 <h3 className="font-semibold text-foreground mb-3">
                   Looking for Support?
