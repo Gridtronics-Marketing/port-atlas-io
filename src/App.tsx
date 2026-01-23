@@ -15,6 +15,7 @@ import { PWAUpdateNotification } from "@/components/PWAUpdateNotification";
 import { OfflineStatusIndicator } from "@/components/OfflineStatusIndicator";
 import { InAppEducationBanner } from "@/components/InAppEducationBanner";
 import { ImpersonationBanner } from "@/components/ImpersonationBanner";
+import ScrollToTop from "@/components/ScrollToTop";
 
 // Protected pages
 import Index from "./pages/Index";
@@ -83,6 +84,7 @@ const App = () => (
               <InAppEducationBanner />
               <ImpersonationBanner />
               <BrowserRouter>
+                <ScrollToTop />
                 <Routes>
                   {/* Public marketing pages */}
                   <Route path="/home" element={<PublicLayout><LandingPage /></PublicLayout>} />
