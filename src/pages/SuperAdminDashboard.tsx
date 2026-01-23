@@ -8,9 +8,13 @@ import { LeadManagementPanel } from "@/components/admin/LeadManagementPanel";
 import { PricingManagementPanel } from "@/components/admin/PricingManagementPanel";
 import { ContentManagementPanel } from "@/components/admin/ContentManagementPanel";
 import { PlatformSettingsPanel } from "@/components/admin/PlatformSettingsPanel";
+import { BlogManagementPanel } from "@/components/admin/BlogManagementPanel";
+import { CareersManagementPanel } from "@/components/admin/CareersManagementPanel";
+import { HelpArticlesManagementPanel } from "@/components/admin/HelpArticlesManagementPanel";
+import { PageContentManagementPanel } from "@/components/admin/PageContentManagementPanel";
 import { useLeads } from "@/hooks/useLeads";
 import { MetricCard } from "@/components/ui/metric-card";
-import { Users, TrendingUp, DollarSign, Target, LayoutDashboard, UserPlus, CreditCard, FileText, Settings } from "lucide-react";
+import { Users, TrendingUp, DollarSign, Target, LayoutDashboard, UserPlus, CreditCard, FileText, Settings, Newspaper, Briefcase, HelpCircle, Globe } from "lucide-react";
 
 export default function SuperAdminDashboard() {
   const { isSuperAdmin, loadingOrganizations } = useOrganization();
@@ -56,7 +60,7 @@ export default function SuperAdminDashboard() {
         </div>
 
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 lg:w-auto lg:inline-grid">
+          <TabsList className="grid w-full grid-cols-3 md:grid-cols-5 lg:grid-cols-9 lg:w-auto lg:inline-grid">
             <TabsTrigger value="overview" className="gap-2">
               <LayoutDashboard className="h-4 w-4" />
               <span className="hidden sm:inline">Overview</span>
@@ -72,6 +76,22 @@ export default function SuperAdminDashboard() {
             <TabsTrigger value="content" className="gap-2">
               <FileText className="h-4 w-4" />
               <span className="hidden sm:inline">Content</span>
+            </TabsTrigger>
+            <TabsTrigger value="blog" className="gap-2">
+              <Newspaper className="h-4 w-4" />
+              <span className="hidden sm:inline">Blog</span>
+            </TabsTrigger>
+            <TabsTrigger value="careers" className="gap-2">
+              <Briefcase className="h-4 w-4" />
+              <span className="hidden sm:inline">Careers</span>
+            </TabsTrigger>
+            <TabsTrigger value="help" className="gap-2">
+              <HelpCircle className="h-4 w-4" />
+              <span className="hidden sm:inline">Help</span>
+            </TabsTrigger>
+            <TabsTrigger value="pages" className="gap-2">
+              <Globe className="h-4 w-4" />
+              <span className="hidden sm:inline">Pages</span>
             </TabsTrigger>
             <TabsTrigger value="settings" className="gap-2">
               <Settings className="h-4 w-4" />
@@ -170,6 +190,26 @@ export default function SuperAdminDashboard() {
           {/* Content Tab */}
           <TabsContent value="content">
             <ContentManagementPanel />
+          </TabsContent>
+
+          {/* Blog Tab */}
+          <TabsContent value="blog">
+            <BlogManagementPanel />
+          </TabsContent>
+
+          {/* Careers Tab */}
+          <TabsContent value="careers">
+            <CareersManagementPanel />
+          </TabsContent>
+
+          {/* Help Tab */}
+          <TabsContent value="help">
+            <HelpArticlesManagementPanel />
+          </TabsContent>
+
+          {/* Pages Tab */}
+          <TabsContent value="pages">
+            <PageContentManagementPanel />
           </TabsContent>
 
           {/* Settings Tab */}
