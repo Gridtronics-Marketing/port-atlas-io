@@ -1,14 +1,15 @@
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { HeroSection } from "@/components/marketing/HeroSection";
 import { FeatureCard } from "@/components/marketing/FeatureCard";
 import { PricingCard } from "@/components/marketing/PricingCard";
 import { TestimonialCarousel } from "@/components/marketing/TestimonialCarousel";
 import { 
   Map, ClipboardList, Users, Smartphone, 
-  BarChart3, Calendar, Shield, ArrowRight,
-  Building2, Wrench, FileText
+  ArrowRight, Building2, Wrench, FileText,
+  Cpu, Cable, Network, Layers
 } from "lucide-react";
 import { usePricingPlans } from "@/hooks/usePricingPlans";
 
@@ -60,6 +61,13 @@ const howItWorks = [
   },
 ];
 
+const techFeatures = [
+  { icon: Cpu, label: "AI-Powered" },
+  { icon: Cable, label: "Cable Management" },
+  { icon: Network, label: "Network Mapping" },
+  { icon: Layers, label: "Multi-Floor" },
+];
+
 export default function LandingPage() {
   const { plansWithFeatures, isLoading } = usePricingPlans();
   const visiblePlans = plansWithFeatures.filter(p => p.is_active).slice(0, 3);
@@ -79,35 +87,39 @@ export default function LandingPage() {
       {/* Hero Section */}
       <HeroSection />
 
-      {/* Trust Bar */}
-      <section className="border-y bg-muted/30">
-        <div className="container px-4 md:px-6 py-6">
-          <div className="flex flex-wrap items-center justify-center gap-8 text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <Shield className="h-5 w-5" />
-              <span className="text-sm font-medium">Enterprise Security</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5" />
-              <span className="text-sm font-medium">Real-time Analytics</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              <span className="text-sm font-medium">24/7 Support</span>
-            </div>
+      {/* Tech Bar - Silver Strip */}
+      <section className="relative border-y border-border bg-gradient-to-r from-muted via-background to-muted">
+        <div className="absolute inset-0 tech-lines-gold opacity-30" />
+        <div className="container relative px-4 md:px-6 py-8">
+          <div className="flex flex-wrap items-center justify-center gap-12">
+            {techFeatures.map((feature) => (
+              <div key={feature.label} className="flex items-center gap-3 text-muted-foreground hover:text-primary transition-colors">
+                <div className="w-10 h-10 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
+                  <feature.icon className="h-5 w-5 text-primary" />
+                </div>
+                <span className="text-sm font-medium uppercase tracking-wider">{feature.label}</span>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section className="container px-4 md:px-6 py-16 md:py-24">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-            Everything You Need to Run Your Operations
+      <section className="relative container px-4 md:px-6 py-20 md:py-28">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-20 bg-gradient-to-b from-primary/50 to-transparent" />
+        
+        <div className="text-center mb-16">
+          <div className="inline-flex items-center gap-2 text-primary text-sm font-medium uppercase tracking-widest mb-4">
+            <div className="w-8 h-px bg-primary" />
+            Features
+            <div className="w-8 h-px bg-primary" />
+          </div>
+          <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-4">
+            Everything You Need to <span className="text-primary">Run Operations</span>
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             From floor plan documentation to client delivery, Trade Atlas gives you 
-            the tools to manage every aspect of your field operations.
+            industrial-grade tools for every aspect of field operations.
           </p>
         </div>
 
@@ -117,41 +129,57 @@ export default function LandingPage() {
           ))}
         </div>
 
-        <div className="text-center mt-10">
-          <Button variant="outline" size="lg" asChild>
+        <div className="text-center mt-12">
+          <Button variant="outline" size="lg" className="border-primary/30 hover:border-primary hover:bg-primary/5" asChild>
             <Link to="/features">
-              View All Features
+              Explore All Features
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
         </div>
       </section>
 
-      {/* How It Works */}
-      <section className="bg-muted/30 py-16 md:py-24">
-        <div className="container px-4 md:px-6">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+      {/* How It Works - Dark Section */}
+      <section className="relative hero-dark py-20 md:py-28 overflow-hidden">
+        <div className="absolute inset-0 tech-lines opacity-[0.02]" />
+        
+        {/* Gold accent lines */}
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+
+        <div className="container relative px-4 md:px-6">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 text-primary text-sm font-medium uppercase tracking-widest mb-4">
+              <div className="w-8 h-px bg-primary" />
+              Process
+              <div className="w-8 h-px bg-primary" />
+            </div>
+            <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">
               How It Works
             </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Get started in minutes and see results immediately.
+            <p className="text-lg text-gray-400 max-w-2xl mx-auto">
+              Get operational in minutes. See results immediately.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            {howItWorks.map((item) => (
-              <div key={item.step} className="text-center">
+          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            {howItWorks.map((item, index) => (
+              <div key={item.step} className="relative text-center group">
+                {/* Connector line */}
+                {index < howItWorks.length - 1 && (
+                  <div className="hidden md:block absolute top-12 left-[60%] w-[80%] h-px bg-gradient-to-r from-primary/40 to-primary/10" />
+                )}
+                
                 <div className="relative inline-flex mb-6">
-                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                    <item.icon className="h-8 w-8 text-primary" />
+                  <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 flex items-center justify-center group-hover:border-primary/50 transition-colors">
+                    <item.icon className="h-10 w-10 text-primary" />
                   </div>
-                  <div className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">
+                  <div className="absolute -top-2 -right-2 w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold shadow-lg">
                     {item.step}
                   </div>
                 </div>
-                <h3 className="text-xl font-semibold text-foreground mb-2">{item.title}</h3>
-                <p className="text-muted-foreground">{item.description}</p>
+                <h3 className="text-xl font-semibold text-white mb-3">{item.title}</h3>
+                <p className="text-gray-400 leading-relaxed">{item.description}</p>
               </div>
             ))}
           </div>
@@ -159,13 +187,18 @@ export default function LandingPage() {
       </section>
 
       {/* Testimonials */}
-      <section className="container px-4 md:px-6 py-16 md:py-24">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-            Trusted by Contractors Nationwide
+      <section className="container px-4 md:px-6 py-20 md:py-28">
+        <div className="text-center mb-16">
+          <div className="inline-flex items-center gap-2 text-primary text-sm font-medium uppercase tracking-widest mb-4">
+            <div className="w-8 h-px bg-primary" />
+            Testimonials
+            <div className="w-8 h-px bg-primary" />
+          </div>
+          <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-4">
+            Trusted by <span className="text-primary">Industry Leaders</span>
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            See what our customers are saying about Trade Atlas.
+            See why contractors nationwide choose Trade Atlas.
           </p>
         </div>
 
@@ -173,21 +206,28 @@ export default function LandingPage() {
       </section>
 
       {/* Pricing Preview */}
-      <section className="bg-muted/30 py-16 md:py-24">
-        <div className="container px-4 md:px-6">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Simple, Transparent Pricing
+      <section className="relative bg-muted/50 py-20 md:py-28 overflow-hidden">
+        <div className="absolute inset-0 tech-lines-gold opacity-20" />
+        
+        <div className="container relative px-4 md:px-6">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 text-primary text-sm font-medium uppercase tracking-widest mb-4">
+              <div className="w-8 h-px bg-primary" />
+              Pricing
+              <div className="w-8 h-px bg-primary" />
+            </div>
+            <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-4">
+              Simple, <span className="text-primary">Transparent</span> Pricing
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Choose the plan that fits your business. All plans include a 14-day free trial.
+              Choose the plan that scales with your business. All plans include a 14-day free trial.
             </p>
           </div>
 
           {isLoading ? (
             <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-96 animate-pulse bg-muted rounded-lg" />
+                <div key={i} className="h-96 animate-pulse bg-muted rounded-xl" />
               ))}
             </div>
           ) : (
@@ -198,10 +238,10 @@ export default function LandingPage() {
             </div>
           )}
 
-          <div className="text-center mt-10">
-            <Button size="lg" asChild>
+          <div className="text-center mt-12">
+            <Button size="lg" className="glow-gold" asChild>
               <Link to="/pricing">
-                See Full Pricing Details
+                View Full Pricing
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
@@ -210,27 +250,45 @@ export default function LandingPage() {
       </section>
 
       {/* Final CTA */}
-      <section className="container px-4 md:px-6 py-16 md:py-24">
-        <div className="bg-primary rounded-2xl p-8 md:p-12 text-center text-primary-foreground">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Ready to Transform Your Operations?
-          </h2>
-          <p className="text-lg opacity-90 max-w-2xl mx-auto mb-8">
-            Join 500+ contractors who have streamlined their field operations with Trade Atlas.
-            Start your free trial today — no credit card required.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" variant="secondary" asChild>
-              <Link to="/get-started">
-                Start Free Trial
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-            <Button size="lg" variant="outline" className="bg-transparent border-primary-foreground text-primary-foreground hover:bg-primary-foreground/10" asChild>
-              <Link to="/contact">
-                Talk to Sales
-              </Link>
-            </Button>
+      <section className="relative hero-dark py-20 md:py-28 overflow-hidden">
+        <div className="absolute inset-0 tech-lines opacity-[0.02]" />
+        
+        {/* Gold accent */}
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
+        
+        {/* Glow orbs */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] rounded-full bg-primary/5 blur-[100px]" />
+
+        <div className="container relative px-4 md:px-6">
+          <div className="max-w-3xl mx-auto text-center">
+            <div className="gold-line mx-auto mb-8" />
+            
+            <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">
+              Ready to Transform Your Operations?
+            </h2>
+            <p className="text-lg text-gray-400 max-w-2xl mx-auto mb-10">
+              Join 500+ contractors who have streamlined their field operations with Trade Atlas.
+              Start your free trial today — no credit card required.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button size="lg" className="h-14 px-8 text-base font-semibold glow-gold" asChild>
+                <Link to="/get-started">
+                  Start Free Trial
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
+              </Button>
+              <Button 
+                size="lg" 
+                variant="outline" 
+                className="h-14 px-8 text-base font-semibold border-gray-600 text-white hover:bg-white/5 hover:border-primary/50" 
+                asChild
+              >
+                <Link to="/contact">
+                  Talk to Sales
+                </Link>
+              </Button>
+            </div>
           </div>
         </div>
       </section>

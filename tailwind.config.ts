@@ -70,17 +70,36 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        // Trade Atlas brand colors
+        silver: {
+          DEFAULT: "hsl(var(--silver))",
+          light: "hsl(var(--silver-light))",
+        },
+        gold: {
+          DEFAULT: "hsl(var(--gold))",
+          glow: "hsl(var(--gold-glow))",
+        },
+        steel: {
+          dark: "hsl(var(--steel-dark))",
+        },
+        "tech-line": {
+          DEFAULT: "hsl(var(--tech-line))",
+          glow: "hsl(var(--tech-line-glow))",
+        },
       },
       backgroundImage: {
         'gradient-primary': 'var(--gradient-primary)',
         'gradient-secondary': 'var(--gradient-secondary)',
         'gradient-hero': 'var(--gradient-hero)',
         'gradient-tech': 'var(--gradient-tech)',
+        'gradient-steel': 'var(--gradient-steel)',
+        'gradient-gold-shine': 'var(--gradient-gold-shine)',
       },
       boxShadow: {
         'soft': 'var(--shadow-soft)',
         'medium': 'var(--shadow-medium)',
         'strong': 'var(--shadow-strong)',
+        'gold': 'var(--shadow-gold)',
       },
       transitionTimingFunction: {
         'smooth': 'var(--transition-smooth)',

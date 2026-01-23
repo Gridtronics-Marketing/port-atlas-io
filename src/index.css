@@ -2,42 +2,42 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Trade Atlas Design System - Nexa-Inspired Analytics Dashboard
-   Professional, data-dense, institutional-grade UI
+/* Trade Atlas Design System - "We Marry Tech to the Trades"
+   Silver | Gold | Tech Lines - Industrial Premium UI
    All colors MUST be HSL.
 */
 
 @layer base {
   :root {
-    /* Core backgrounds - Light, clean, professional */
-    --background: 220 14% 96%;
-    --foreground: 220 25% 12%;
+    /* Core backgrounds - Industrial steel gray */
+    --background: 220 15% 97%;
+    --foreground: 220 25% 10%;
 
-    /* Card surfaces - Pure white for contrast */
+    /* Card surfaces - Clean white with subtle warmth */
     --card: 0 0% 100%;
-    --card-foreground: 220 25% 12%;
+    --card-foreground: 220 25% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 25% 12%;
+    --popover-foreground: 220 25% 10%;
 
-    /* Trade Atlas gold primary - Premium accent */
-    --primary: 43 70% 50%;
+    /* Trade Atlas Gold - Premium accent */
+    --primary: 43 85% 48%;
     --primary-foreground: 220 25% 8%;
-    --primary-hover: 43 75% 45%;
+    --primary-hover: 43 90% 42%;
 
-    /* Neutral secondary - Professional gray tones */
-    --secondary: 220 14% 92%;
-    --secondary-foreground: 220 25% 25%;
+    /* Silver/Steel secondary - Industrial strength */
+    --secondary: 220 12% 90%;
+    --secondary-foreground: 220 20% 25%;
 
-    /* Muted for subtle backgrounds */
-    --muted: 220 14% 95%;
+    /* Muted - Soft steel gray */
+    --muted: 220 14% 94%;
     --muted-foreground: 220 10% 46%;
 
-    /* Accent - Subtle gold tint */
-    --accent: 43 25% 94%;
-    --accent-foreground: 43 80% 30%;
+    /* Accent - Gold tint for highlights */
+    --accent: 43 30% 92%;
+    --accent-foreground: 43 85% 30%;
 
-    /* Status colors - Clear, readable indicators */
+    /* Status colors */
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
@@ -50,23 +50,35 @@
     --info: 210 92% 45%;
     --info-foreground: 0 0% 100%;
 
-    /* Borders - Subtle separation */
-    --border: 220 13% 90%;
-    --input: 220 13% 91%;
-    --ring: 43 70% 50%;
+    /* Borders - Steel lines */
+    --border: 220 13% 88%;
+    --input: 220 13% 90%;
+    --ring: 43 85% 48%;
 
-    /* Premium shadows - Soft, professional */
+    /* Tech Lines - Circuit board aesthetic */
+    --tech-line: 220 15% 80%;
+    --tech-line-glow: 43 85% 55%;
+    --silver: 220 12% 75%;
+    --silver-light: 220 10% 92%;
+    --gold: 43 85% 48%;
+    --gold-glow: 43 90% 60%;
+    --steel-dark: 220 20% 18%;
+
+    /* Premium shadows */
     --shadow-xs: 0 1px 2px 0 hsl(220 25% 12% / 0.03);
     --shadow-soft: 0 1px 3px 0 hsl(220 25% 12% / 0.04), 0 1px 2px -1px hsl(220 25% 12% / 0.03);
     --shadow-medium: 0 4px 6px -1px hsl(220 25% 12% / 0.05), 0 2px 4px -2px hsl(220 25% 12% / 0.04);
     --shadow-strong: 0 10px 15px -3px hsl(220 25% 12% / 0.06), 0 4px 6px -4px hsl(220 25% 12% / 0.05);
     --shadow-xl: 0 20px 25px -5px hsl(220 25% 12% / 0.08), 0 8px 10px -6px hsl(220 25% 12% / 0.06);
+    --shadow-gold: 0 0 40px -10px hsl(43 85% 48% / 0.4);
 
-    /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(43 70% 50%), hsl(43 80% 58%));
-    --gradient-secondary: linear-gradient(180deg, hsl(220 14% 98%), hsl(220 14% 96%));
-    --gradient-hero: linear-gradient(135deg, hsl(43 70% 50%), hsl(48 75% 55%));
-    --gradient-tech: linear-gradient(135deg, hsl(220 25% 10%), hsl(43 70% 50%));
+    /* Gradients - Tech meets Trades */
+    --gradient-primary: linear-gradient(135deg, hsl(43 85% 48%), hsl(43 90% 58%));
+    --gradient-secondary: linear-gradient(180deg, hsl(220 15% 98%), hsl(220 15% 95%));
+    --gradient-hero: linear-gradient(135deg, hsl(220 20% 12%), hsl(220 18% 18%));
+    --gradient-tech: linear-gradient(135deg, hsl(220 20% 10%), hsl(220 15% 20%));
+    --gradient-steel: linear-gradient(135deg, hsl(220 12% 85%), hsl(220 12% 75%));
+    --gradient-gold-shine: linear-gradient(135deg, hsl(43 85% 48%), hsl(48 90% 55%), hsl(43 85% 48%));
 
     /* Typography scale */
     --font-size-xs: 0.75rem;
@@ -78,7 +90,7 @@
     --font-size-3xl: 1.875rem;
     --font-size-4xl: 2.25rem;
 
-    /* Spacing scale (analytics-optimized) */
+    /* Spacing scale */
     --spacing-xs: 0.25rem;
     --spacing-sm: 0.5rem;
     --spacing-md: 0.75rem;
@@ -89,17 +101,17 @@
 
     --radius: 0.5rem;
 
-    /* Sidebar - Clean, minimal */
+    /* Sidebar */
     --sidebar-background: 220 16% 98%;
     --sidebar-foreground: 220 15% 30%;
-    --sidebar-primary: 43 70% 50%;
+    --sidebar-primary: 43 85% 48%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 220 14% 94%;
     --sidebar-accent-foreground: 220 25% 15%;
     --sidebar-border: 220 13% 92%;
-    --sidebar-ring: 43 70% 50%;
+    --sidebar-ring: 43 85% 48%;
     
-    /* Analytics-specific tokens */
+    /* Analytics tokens */
     --metric-positive: 142 71% 40%;
     --metric-negative: 0 72% 51%;
     --metric-neutral: 220 10% 46%;
@@ -260,17 +272,58 @@
     box-shadow: var(--shadow-medium);
   }
 
+  .shadow-gold {
+    box-shadow: var(--shadow-gold);
+  }
+
   /* Transition utilities */
   .transition-card {
     @apply transition-all duration-200 ease-out;
   }
 
-  /* Grid layouts for analytics */
+  /* Grid layouts */
   .grid-analytics {
     @apply grid gap-4 md:gap-6;
   }
 
   .grid-metrics {
     @apply grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4;
+  }
+
+  /* Tech Lines - Circuit board pattern */
+  .tech-lines {
+    background-image: 
+      linear-gradient(90deg, hsl(var(--tech-line)) 1px, transparent 1px),
+      linear-gradient(180deg, hsl(var(--tech-line)) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+
+  .tech-lines-gold {
+    background-image: 
+      linear-gradient(90deg, hsl(var(--gold) / 0.1) 1px, transparent 1px),
+      linear-gradient(180deg, hsl(var(--gold) / 0.1) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+
+  /* Gold accent line */
+  .gold-line {
+    @apply h-1 w-20 rounded-full;
+    background: var(--gradient-gold-shine);
+  }
+
+  /* Steel gradient text */
+  .text-gradient-gold {
+    @apply bg-clip-text text-transparent;
+    background-image: var(--gradient-gold-shine);
+  }
+
+  /* Hero dark section */
+  .hero-dark {
+    background: var(--gradient-hero);
+  }
+
+  /* Glow effects */
+  .glow-gold {
+    box-shadow: 0 0 30px -5px hsl(var(--gold) / 0.5);
   }
 }
