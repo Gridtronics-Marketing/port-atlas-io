@@ -1219,6 +1219,7 @@ export type Database = {
           linked_organization_id: string | null
           name: string
           organization_id: string | null
+          slug: string | null
           status: string | null
           updated_at: string
         }
@@ -1233,6 +1234,7 @@ export type Database = {
           linked_organization_id?: string | null
           name: string
           organization_id?: string | null
+          slug?: string | null
           status?: string | null
           updated_at?: string
         }
@@ -1247,6 +1249,7 @@ export type Database = {
           linked_organization_id?: string | null
           name?: string
           organization_id?: string | null
+          slug?: string | null
           status?: string | null
           updated_at?: string
         }
