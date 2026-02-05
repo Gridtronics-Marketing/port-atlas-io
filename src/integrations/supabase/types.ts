@@ -2347,6 +2347,59 @@ export type Database = {
         }
         Relationships: []
       }
+      integration_credentials: {
+        Row: {
+          created_at: string | null
+          encrypted_credentials: string | null
+          id: string
+          integration_type: string
+          is_active: boolean | null
+          last_error: string | null
+          last_verified_at: string | null
+          organization_id: string
+          phone_number: string | null
+          settings: Json | null
+          updated_at: string | null
+          webhook_secret: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          encrypted_credentials?: string | null
+          id?: string
+          integration_type: string
+          is_active?: boolean | null
+          last_error?: string | null
+          last_verified_at?: string | null
+          organization_id: string
+          phone_number?: string | null
+          settings?: Json | null
+          updated_at?: string | null
+          webhook_secret?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          encrypted_credentials?: string | null
+          id?: string
+          integration_type?: string
+          is_active?: boolean | null
+          last_error?: string | null
+          last_verified_at?: string | null
+          organization_id?: string
+          phone_number?: string | null
+          settings?: Json | null
+          updated_at?: string | null
+          webhook_secret?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integration_credentials_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inventory_items: {
         Row: {
           alternate_supplier_ids: string[] | null
@@ -3090,7 +3143,7 @@ export type Database = {
           id: string
           notes: string | null
           openphone_call_id: string
-          organization_id: string | null
+          organization_id: string
           phone_number: string
           recording_url: string | null
           started_at: string
@@ -3110,7 +3163,7 @@ export type Database = {
           id?: string
           notes?: string | null
           openphone_call_id: string
-          organization_id?: string | null
+          organization_id: string
           phone_number: string
           recording_url?: string | null
           started_at: string
@@ -3130,7 +3183,7 @@ export type Database = {
           id?: string
           notes?: string | null
           openphone_call_id?: string
-          organization_id?: string | null
+          organization_id?: string
           phone_number?: string
           recording_url?: string | null
           started_at?: string
@@ -3334,6 +3387,41 @@ export type Database = {
             columns: ["to_frame_id"]
             isOneToOne: false
             referencedRelation: "distribution_frames"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      phone_number_org_mapping: {
+        Row: {
+          created_at: string | null
+          id: string
+          integration_type: string
+          is_active: boolean | null
+          organization_id: string
+          phone_number: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          integration_type: string
+          is_active?: boolean | null
+          organization_id: string
+          phone_number: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          integration_type?: string
+          is_active?: boolean | null
+          organization_id?: string
+          phone_number?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "phone_number_org_mapping_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]

@@ -1,9 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { crypto } from "https://deno.land/std@0.168.0/crypto/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-openphone-signature',
 };
 
 interface OpenPhoneWebhookPayload {
@@ -23,31 +24,138 @@ interface OpenPhoneWebhookPayload {
   };
 }
 
+// Verify OpenPhone webhook signature
+async function verifySignature(
+  payload: string,
+  signature: string | null,
+  webhookSecret: string
+): Promise<boolean> {
+  if (!signature || !webhookSecret) {
+    console.warn('No signature or webhook secret provided');
+    return false;
+  }
+
+  try {
+    const encoder = new TextEncoder();
+    const key = await crypto.subtle.importKey(
+      'raw',
+      encoder.encode(webhookSecret),
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['verify']
+    );
+
+    const signatureBytes = new Uint8Array(
+      signature.match(/.{1,2}/g)?.map(byte => parseInt(byte, 16)) || []
+    );
+
+    return await crypto.subtle.verify(
+      'HMAC',
+      key,
+      signatureBytes,
+      encoder.encode(payload)
+    );
+  } catch (error) {
+    console.error('Signature verification error:', error);
+    return false;
+  }
+}
+
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-    );
+    // Use service role for all operations
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const payload: OpenPhoneWebhookPayload = await req.json();
-    console.log('OpenPhone webhook received:', payload);
+    const rawBody = await req.text();
+    const payload: OpenPhoneWebhookPayload = JSON.parse(rawBody);
+    console.log('OpenPhone webhook received:', payload.type);
+
+    // Extract phone number to lookup organization
+    const phoneNumber = payload.data.direction === 'inbound' 
+      ? payload.data.to 
+      : payload.data.from;
+
+    // Clean phone number for lookup
+    const cleanPhone = phoneNumber.replace(/\D/g, '');
+    const phoneVariants = [
+      phoneNumber,
+      `+${cleanPhone}`,
+      cleanPhone,
+      cleanPhone.slice(-10),
+    ];
+
+    // Lookup organization from phone number mapping
+    const { data: phoneMapping, error: mappingError } = await supabase
+      .from('phone_number_org_mapping')
+      .select('organization_id, integration_type')
+      .eq('integration_type', 'openphone')
+      .eq('is_active', true)
+      .or(phoneVariants.map(p => `phone_number.ilike.%${p.slice(-10)}%`).join(','))
+      .limit(1)
+      .single();
+
+    if (mappingError || !phoneMapping) {
+      console.error('No organization found for phone number:', phoneNumber);
+      // Still return 200 to prevent webhook retries
+      return new Response(JSON.stringify({ 
+        success: false, 
+        error: 'Organization not found for phone number' 
+      }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const organizationId = phoneMapping.organization_id;
+
+    // Fetch integration credentials for signature verification
+    const { data: credentials } = await supabase
+      .from('integration_credentials')
+      .select('webhook_secret, is_active, settings')
+      .eq('organization_id', organizationId)
+      .eq('integration_type', 'openphone')
+      .single();
+
+    // Verify webhook signature if secret is configured
+    if (credentials?.webhook_secret) {
+      const signature = req.headers.get('x-openphone-signature');
+      const isValid = await verifySignature(rawBody, signature, credentials.webhook_secret);
+      
+      if (!isValid) {
+        console.error('Invalid webhook signature for org:', organizationId);
+        return new Response(JSON.stringify({ error: 'Invalid signature' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
+    if (!credentials?.is_active) {
+      return new Response(JSON.stringify({ 
+        success: false, 
+        error: 'OpenPhone integration is not active' 
+      }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     // Process based on event type
     switch (payload.type) {
       case 'call.started':
-        await handleCallStarted(supabase, payload);
+        await handleCallStarted(supabase, payload, organizationId);
         break;
       case 'call.ended':
-        await handleCallEnded(supabase, payload);
+        await handleCallEnded(supabase, payload, organizationId, credentials.settings);
         break;
       case 'voicemail.received':
-        await handleVoicemailReceived(supabase, payload);
+        await handleVoicemailReceived(supabase, payload, organizationId);
         break;
     }
 
@@ -65,13 +173,20 @@ serve(async (req) => {
   }
 });
 
-async function handleCallStarted(supabase: any, payload: OpenPhoneWebhookPayload) {
+async function handleCallStarted(
+  supabase: ReturnType<typeof createClient>, 
+  payload: OpenPhoneWebhookPayload,
+  organizationId: string
+) {
   const { data: callData } = payload;
   
-  // Try to match contact
-  const contact = await matchContact(supabase, callData.direction === 'inbound' ? callData.from : callData.to);
+  // Match contact within organization
+  const contact = await matchContact(
+    supabase, 
+    callData.direction === 'inbound' ? callData.from : callData.to,
+    organizationId
+  );
   
-  // Log the call start
   const { data, error } = await supabase
     .from('openphone_call_logs')
     .insert([{
@@ -83,6 +198,7 @@ async function handleCallStarted(supabase: any, payload: OpenPhoneWebhookPayload
       call_status: 'in_progress',
       duration_seconds: 0,
       started_at: callData.started_at,
+      organization_id: organizationId,
     }])
     .select()
     .single();
@@ -92,19 +208,17 @@ async function handleCallStarted(supabase: any, payload: OpenPhoneWebhookPayload
     return;
   }
 
-  // Send screen-pop notification if enabled
-  await sendScreenPopNotification(supabase, {
-    callId: data.id,
-    direction: callData.direction,
-    phoneNumber: callData.direction === 'inbound' ? callData.from : callData.to,
-    contact: contact,
-  });
+  console.log('Call logged:', data.id);
 }
 
-async function handleCallEnded(supabase: any, payload: OpenPhoneWebhookPayload) {
+async function handleCallEnded(
+  supabase: ReturnType<typeof createClient>, 
+  payload: OpenPhoneWebhookPayload,
+  organizationId: string,
+  settings?: Record<string, boolean>
+) {
   const { data: callData } = payload;
   
-  // Update the call log
   const { error } = await supabase
     .from('openphone_call_logs')
     .update({
@@ -114,23 +228,29 @@ async function handleCallEnded(supabase: any, payload: OpenPhoneWebhookPayload) 
       transcription: callData.transcription,
       ended_at: callData.ended_at,
     })
-    .eq('openphone_call_id', callData.id);
+    .eq('openphone_call_id', callData.id)
+    .eq('organization_id', organizationId);
 
   if (error) {
     console.error('Error updating call log:', error);
   }
 
-  // Check if auto work order creation is enabled
-  const shouldCreateWorkOrder = await checkAutoWorkOrderSetting(supabase);
-  if (shouldCreateWorkOrder && callData.direction === 'inbound' && callData.duration && callData.duration > 30) {
-    await autoCreateWorkOrder(supabase, callData);
+  // Auto-create work order if enabled
+  if (settings?.auto_create_work_orders && 
+      callData.direction === 'inbound' && 
+      callData.duration && 
+      callData.duration > 30) {
+    await autoCreateWorkOrder(supabase, callData, organizationId);
   }
 }
 
-async function handleVoicemailReceived(supabase: any, payload: OpenPhoneWebhookPayload) {
+async function handleVoicemailReceived(
+  supabase: ReturnType<typeof createClient>, 
+  payload: OpenPhoneWebhookPayload,
+  organizationId: string
+) {
   const { data: callData } = payload;
   
-  // Update or create voicemail record
   const { error } = await supabase
     .from('openphone_call_logs')
     .upsert({
@@ -142,6 +262,8 @@ async function handleVoicemailReceived(supabase: any, payload: OpenPhoneWebhookP
       transcription: callData.transcription,
       started_at: callData.started_at,
       ended_at: callData.ended_at,
+      organization_id: organizationId,
+      duration_seconds: 0,
     });
 
   if (error) {
@@ -149,13 +271,18 @@ async function handleVoicemailReceived(supabase: any, payload: OpenPhoneWebhookP
   }
 }
 
-async function matchContact(supabase: any, phoneNumber: string) {
+async function matchContact(
+  supabase: ReturnType<typeof createClient>, 
+  phoneNumber: string,
+  organizationId: string
+) {
   const cleanPhone = phoneNumber.replace(/\D/g, '');
   
-  // Search employees
+  // Search employees in organization
   const { data: employees } = await supabase
     .from('employees')
-    .select('id, first_name, last_name, phone, email')
+    .select('id, first_name, last_name, phone, email, organization_id')
+    .eq('organization_id', organizationId)
     .ilike('phone', `%${cleanPhone.slice(-10)}%`)
     .limit(1);
 
@@ -164,16 +291,17 @@ async function matchContact(supabase: any, phoneNumber: string) {
     return {
       id: emp.id,
       name: `${emp.first_name} ${emp.last_name}`,
-      type: 'employee',
+      type: 'employee' as const,
       phone: emp.phone,
       email: emp.email,
     };
   }
 
-  // Search clients
+  // Search clients in organization
   const { data: clients } = await supabase
     .from('clients')
-    .select('id, name, contact_name, contact_phone, contact_email')
+    .select('id, name, contact_name, contact_phone, contact_email, organization_id')
+    .eq('organization_id', organizationId)
     .ilike('contact_phone', `%${cleanPhone.slice(-10)}%`)
     .limit(1);
 
@@ -182,16 +310,17 @@ async function matchContact(supabase: any, phoneNumber: string) {
     return {
       id: client.id,
       name: client.contact_name || client.name,
-      type: 'client',
+      type: 'client' as const,
       phone: client.contact_phone,
       email: client.contact_email,
     };
   }
 
-  // Search suppliers
+  // Search suppliers in organization
   const { data: suppliers } = await supabase
     .from('suppliers')
-    .select('id, name, contact_name, contact_phone, contact_email')
+    .select('id, name, contact_name, contact_phone, contact_email, organization_id')
+    .eq('organization_id', organizationId)
     .ilike('contact_phone', `%${cleanPhone.slice(-10)}%`)
     .limit(1);
 
@@ -200,7 +329,7 @@ async function matchContact(supabase: any, phoneNumber: string) {
     return {
       id: supplier.id,
       name: supplier.contact_name || supplier.name,
-      type: 'supplier',
+      type: 'supplier' as const,
       phone: supplier.contact_phone,
       email: supplier.contact_email,
     };
@@ -209,36 +338,17 @@ async function matchContact(supabase: any, phoneNumber: string) {
   return null;
 }
 
-async function sendScreenPopNotification(supabase: any, data: any) {
-  // This would integrate with a real-time notification system
-  // For now, we'll just log it
-  console.log('Screen-pop notification:', data);
-  
-  // In a real implementation, you might:
-  // 1. Send a real-time message via Supabase Realtime
-  // 2. Trigger a push notification
-  // 3. Send via WebSocket to connected clients
-}
-
-async function checkAutoWorkOrderSetting(supabase: any): Promise<boolean> {
-  const { data } = await supabase
-    .from('procurement_settings')
-    .select('setting_value')
-    .eq('setting_key', 'openphone_config')
-    .single();
-
-  return data?.setting_value?.auto_create_work_orders || false;
-}
-
-async function autoCreateWorkOrder(supabase: any, callData: any) {
-  // Auto-create work order for inbound calls over 30 seconds
+async function autoCreateWorkOrder(
+  supabase: ReturnType<typeof createClient>,
+  callData: OpenPhoneWebhookPayload['data'],
+  organizationId: string
+) {
   const workOrderData = {
     title: `Call Follow-up - ${callData.from}`,
-    description: `Auto-generated work order from inbound call.\nCall Duration: ${Math.floor(callData.duration / 60)}:${(callData.duration % 60).toString().padStart(2, '0')}\nPhone: ${callData.from}`,
+    description: `Auto-generated from inbound call.\nDuration: ${Math.floor((callData.duration || 0) / 60)}:${((callData.duration || 0) % 60).toString().padStart(2, '0')}\nPhone: ${callData.from}`,
     status: 'open',
     priority: 'medium',
-    phone_number: callData.from,
-    call_reference: callData.id,
+    organization_id: organizationId,
   };
 
   const { data: workOrder, error } = await supabase
@@ -247,12 +357,12 @@ async function autoCreateWorkOrder(supabase: any, callData: any) {
     .select()
     .single();
 
-  if (!error) {
-    // Update call log with work order reference
+  if (!error && workOrder) {
     await supabase
       .from('openphone_call_logs')
       .update({ work_order_created: workOrder.id })
-      .eq('openphone_call_id', callData.id);
+      .eq('openphone_call_id', callData.id)
+      .eq('organization_id', organizationId);
     
     console.log('Auto-created work order:', workOrder.id);
   } else {

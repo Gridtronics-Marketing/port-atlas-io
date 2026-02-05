@@ -39,7 +39,7 @@ export const OpenPhoneManager = () => {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
               <div>
                 <p><strong>Phone Number:</strong></p>
-                <p>{settings.phone_number || 'Not set'}</p>
+                <p>{settings.phone_number_masked || 'Not set'}</p>
               </div>
               <div>
                 <p><strong>Screen Pop:</strong></p>
