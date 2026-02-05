@@ -4,10 +4,13 @@ project_id = "mhrekppksiekhstnteyu"
 verify_jwt = false
 
 [functions.send-twilio-notification]
-verify_jwt = true
+verify_jwt = false
 
 [functions.test-twilio-connection]
-verify_jwt = true
+verify_jwt = false
+
+[functions.manage-integration-credentials]
+verify_jwt = false
 
 [functions.invite-client-user]
 verify_jwt = true
@@ -25,4 +28,16 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.public-onboarding-response]
+verify_jwt = false
+
+[functions.send-client-invitation-email]
+verify_jwt = false
+
+[functions.send-service-request-email]
+verify_jwt = false
+
+[functions.notify-service-request]
+verify_jwt = false
+
+[functions.admin-reset-password]
 verify_jwt = false
