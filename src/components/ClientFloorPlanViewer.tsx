@@ -343,76 +343,96 @@ const RoomViewDetailDialog = ({
   onClose: () => void;
 }) => {
   const { photos, loading: photosLoading } = useRoomViewPhotos(roomView.id);
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl">
-        <DialogHeader>
-          <DialogTitle>{roomView.room_name || "Room View"}</DialogTitle>
-        </DialogHeader>
-        <Tabs defaultValue="details" className="w-full">
-          <TabsList>
-            <TabsTrigger value="details">Details</TabsTrigger>
-            <TabsTrigger value="photos" className="flex items-center gap-1.5">
-              Photos
-              {photos.length > 0 && (
-                <Badge variant="secondary" className="text-xs px-1.5 py-0">{photos.length}</Badge>
+    <>
+      <Dialog open={open} onOpenChange={onClose}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>{roomView.room_name || "Room View"}</DialogTitle>
+          </DialogHeader>
+          <Tabs defaultValue="details" className="w-full">
+            <TabsList>
+              <TabsTrigger value="details">Details</TabsTrigger>
+              <TabsTrigger value="photos" className="flex items-center gap-1.5">
+                Photos
+                {photos.length > 0 && (
+                  <Badge variant="secondary" className="text-xs px-1.5 py-0">{photos.length}</Badge>
+                )}
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="details" className="space-y-4">
+              {roomView.photo_url && (
+                <img
+                  src={roomView.photo_url}
+                  alt={roomView.room_name || "Room view"}
+                  className="w-full rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                  onClick={() => setLightboxUrl(roomView.photo_url!)}
+                />
               )}
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="details" className="space-y-4">
-            {roomView.photo_url && (
-              <img
-                src={roomView.photo_url}
-                alt={roomView.room_name || "Room view"}
-                className="w-full rounded-lg"
-              />
-            )}
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <p className="text-muted-foreground">Floor</p>
-                <p className="font-medium">{roomView.floor}</p>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-muted-foreground">Floor</p>
+                  <p className="font-medium">{roomView.floor}</p>
+                </div>
+                {roomView.description && (
+                  <div className="col-span-2">
+                    <p className="text-muted-foreground">Description</p>
+                    <p className="font-medium">{roomView.description}</p>
+                  </div>
+                )}
               </div>
-              {roomView.description && (
-                <div className="col-span-2">
-                  <p className="text-muted-foreground">Description</p>
-                  <p className="font-medium">{roomView.description}</p>
+            </TabsContent>
+            <TabsContent value="photos">
+              {photosLoading ? (
+                <div className="flex items-center justify-center h-32 text-muted-foreground">
+                  <div className="animate-pulse">Loading photos...</div>
+                </div>
+              ) : photos.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-32 text-muted-foreground">
+                  <ImageIcon className="h-8 w-8 mb-2 opacity-50" />
+                  <p className="text-sm">No additional photos</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {photos.map((photo) => (
+                    <div key={photo.id} className="space-y-1">
+                      <img
+                        src={photo.photo_url}
+                        alt={photo.description || "Room photo"}
+                        className="w-full h-40 object-cover rounded-lg border cursor-pointer hover:opacity-90 transition-opacity"
+                        onClick={() => setLightboxUrl(photo.photo_url)}
+                      />
+                      {photo.description && (
+                        <p className="text-xs text-muted-foreground truncate">{photo.description}</p>
+                      )}
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(photo.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                  ))}
                 </div>
               )}
-            </div>
-          </TabsContent>
-          <TabsContent value="photos">
-            {photosLoading ? (
-              <div className="flex items-center justify-center h-32 text-muted-foreground">
-                <div className="animate-pulse">Loading photos...</div>
-              </div>
-            ) : photos.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-32 text-muted-foreground">
-                <ImageIcon className="h-8 w-8 mb-2 opacity-50" />
-                <p className="text-sm">No additional photos</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {photos.map((photo) => (
-                  <div key={photo.id} className="space-y-1">
-                    <img
-                      src={photo.photo_url}
-                      alt={photo.description || "Room photo"}
-                      className="w-full h-40 object-cover rounded-lg border"
-                    />
-                    {photo.description && (
-                      <p className="text-xs text-muted-foreground truncate">{photo.description}</p>
-                    )}
-                    <p className="text-xs text-muted-foreground">
-                      {new Date(photo.created_at).toLocaleDateString()}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
-      </DialogContent>
-    </Dialog>
+            </TabsContent>
+          </Tabs>
+        </DialogContent>
+      </Dialog>
+
+      {/* Lightbox overlay */}
+      {lightboxUrl && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center cursor-pointer"
+          onClick={() => setLightboxUrl(null)}
+        >
+          <img
+            src={lightboxUrl}
+            alt="Full size"
+            className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
+    </>
   );
 };
