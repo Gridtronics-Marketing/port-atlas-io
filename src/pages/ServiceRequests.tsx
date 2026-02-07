@@ -6,8 +6,8 @@ import { ServiceRequestsManager } from "@/components/ServiceRequestsManager";
 import { CreateServiceRequestModal } from "@/components/CreateServiceRequestModal";
 import { useServiceRequests } from "@/hooks/useServiceRequests";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Clock, MapPin, Building2 } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Clock, MapPin } from "lucide-react";
 
 const ServiceRequests = () => {
   const [showCreateRequest, setShowCreateRequest] = useState(false);
@@ -50,17 +50,27 @@ const ServiceRequests = () => {
       }
     };
 
+    if (loading) {
+      return (
+        <main className="container mx-auto px-4 py-6">
+          <div className="flex items-center justify-center h-64 text-muted-foreground animate-pulse">
+            Loading service requests...
+          </div>
+        </main>
+      );
+    }
+
     return (
       <main className="container mx-auto px-4 py-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Service Requests</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-2xl font-semibold">Service Requests</h1>
+            <p className="text-sm text-muted-foreground mt-1">
               Track and manage your service requests
             </p>
           </div>
-          <Button onClick={() => setShowCreateRequest(true)}>
-            <Plus className="h-4 w-4 mr-2" />
+          <Button onClick={() => setShowCreateRequest(true)} size="sm" className="gap-2">
+            <Plus className="h-4 w-4" />
             New Request
           </Button>
         </div>
@@ -141,8 +151,8 @@ const ServiceRequests = () => {
     <main className="container mx-auto px-4 py-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Service Requests</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl font-semibold">Service Requests</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             Manage service requests from your clients
           </p>
         </div>

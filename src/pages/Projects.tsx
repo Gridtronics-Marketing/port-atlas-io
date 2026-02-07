@@ -16,9 +16,126 @@ import { useProjects, Project } from "@/hooks/useProjects";
 import { useClients } from "@/hooks/useClients";
 import { useWorkOrders } from "@/hooks/useWorkOrders";
 import { useLocations } from "@/hooks/useLocations";
+import { useOrganization } from "@/contexts/OrganizationContext";
+import { useClientPortalData } from "@/hooks/useClientPortalData";
+import { RequestProjectModal } from "@/components/RequestProjectModal";
 import { format } from "date-fns";
 
 const Projects = () => {
+  const { isClientPortalUser } = useOrganization();
+
+  if (isClientPortalUser) {
+    return <ClientProjectsView />;
+  }
+
+  return <AdminProjectsView />;
+};
+
+// ─── Client Portal: Read-only project list with request button ───
+const ClientProjectsView = () => {
+  const { clientProjects, loading } = useClientPortalData();
+  const [showRequestProject, setShowRequestProject] = useState(false);
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'Completed':
+        return <Badge className="bg-green-500/10 text-green-600">Completed</Badge>;
+      case 'In Progress':
+        return <Badge className="bg-blue-500/10 text-blue-600">In Progress</Badge>;
+      case 'Planning':
+        return <Badge variant="secondary">Planning</Badge>;
+      case 'On Hold':
+        return <Badge className="bg-yellow-500/10 text-yellow-600">On Hold</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-6">
+        <div className="flex items-center justify-center h-64 text-muted-foreground animate-pulse">
+          Loading projects...
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-foreground flex items-center gap-3">
+            <FolderOpen className="h-6 w-6 text-primary" />
+            My Projects
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            View your active and completed projects
+          </p>
+        </div>
+        <Button onClick={() => setShowRequestProject(true)} size="sm" className="gap-2">
+          <Plus className="h-4 w-4" />
+          Request New Project
+        </Button>
+      </div>
+
+      {clientProjects.length === 0 ? (
+        <Card>
+          <CardContent className="py-12 text-center text-muted-foreground">
+            <FolderOpen className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <p className="text-lg mb-2">No projects yet</p>
+            <p className="text-sm mb-4">Request a new project to get started.</p>
+            <Button onClick={() => setShowRequestProject(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Request New Project
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          {clientProjects.map((project) => (
+            <Card key={project.id} className="hover:bg-muted/30 transition-colors">
+              <CardContent className="p-5">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-semibold text-foreground">{project.name}</h3>
+                      {getStatusBadge(project.status)}
+                      {project.project_type && (
+                        <Badge variant="outline">{project.project_type}</Badge>
+                      )}
+                    </div>
+                    {project.description && (
+                      <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
+                        {project.description}
+                      </p>
+                    )}
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                      {project.start_date && (
+                        <span>Started: {format(new Date(project.start_date), 'MMM dd, yyyy')}</span>
+                      )}
+                      {project.end_date && (
+                        <span>Due: {format(new Date(project.end_date), 'MMM dd, yyyy')}</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      <RequestProjectModal
+        open={showRequestProject}
+        onOpenChange={setShowRequestProject}
+      />
+    </div>
+  );
+};
+
+// ─── Admin: Full Project Management ───
+const AdminProjectsView = () => {
   const [showAddProject, setShowAddProject] = useState(false);
   const [showEditProject, setShowEditProject] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);

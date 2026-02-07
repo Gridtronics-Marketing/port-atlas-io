@@ -9,13 +9,14 @@ import { useServiceRequests } from "@/hooks/useServiceRequests";
 
 interface ClientServiceRequestButtonProps {
   locationId: string;
-  requestType: "new_drop_point" | "new_room_view";
+  requestType: "new_drop_point" | "new_room_view" | "new_project";
   buttonLabel: string;
 }
 
 const REQUEST_TITLES: Record<string, string> = {
   new_drop_point: "Request: New Drop Point",
   new_room_view: "Request: New Room View",
+  new_project: "Request: New Project",
 };
 
 export const ClientServiceRequestButton = ({
