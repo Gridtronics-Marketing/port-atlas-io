@@ -26,7 +26,6 @@ import { PatchPanelsTab } from '@/components/PatchPanelsTab';
 import { CapacityTab } from '@/components/CapacityTab';
 import { DocumentationTab } from '@/components/DocumentationTab';
 import { EnhancedExportManager } from '@/components/EnhancedExportManager';
-import { InfrastructureTopologyView } from '@/components/InfrastructureTopologyView';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -193,11 +192,10 @@ export const RiserDiagramViewer: React.FC<RiserDiagramViewerProps> = ({
           {/* Physical Infrastructure Tab */}
           <TabsContent value="physical" className="mt-6">
             <Tabs defaultValue="diagram" className="w-full">
-              <TabsList className="grid w-full grid-cols-5">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="diagram">Interactive Diagram</TabsTrigger>
                 <TabsTrigger value="cables">Backbone Cables</TabsTrigger>
                 <TabsTrigger value="equipment">Distribution Frames</TabsTrigger>
-                <TabsTrigger value="topology">Topology</TabsTrigger>
                 <TabsTrigger value="integration">Work Orders</TabsTrigger>
               </TabsList>
 
@@ -361,12 +359,6 @@ export const RiserDiagramViewer: React.FC<RiserDiagramViewerProps> = ({
                 </div>
               </TabsContent>
 
-              <TabsContent value="topology" className="space-y-4">
-                <InfrastructureTopologyView
-                  locationId={locationId}
-                  locationName={locationName}
-                />
-              </TabsContent>
 
               <TabsContent value="integration" className="space-y-4">
                 <RiserWorkOrderIntegration 

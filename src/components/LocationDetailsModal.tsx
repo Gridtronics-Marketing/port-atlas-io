@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { 
+import {
   MapPin, 
   Cable, 
   Plus, 
@@ -14,7 +14,8 @@ import {
   Square,
   Info,
   Trash2,
-  Settings2
+  Settings2,
+  Share2
 } from "lucide-react";
 import {
   Dialog,
@@ -47,6 +48,7 @@ import { ScheduleAssignmentModal } from "@/components/ScheduleAssignmentModal";
 import { AddLocationNoteModal } from "@/components/AddLocationNoteModal";
 import { WalkThroughNotesList } from "@/components/WalkThroughNotesList";
 import { CustomerNotesPanel } from "@/components/CustomerNotesPanel";
+import { InfrastructureTopologyView } from "@/components/InfrastructureTopologyView";
 
 import { FloorPlanRepairTool } from "@/components/FloorPlanRepairTool";
 import { FloorPlanFileManager } from "@/components/FloorPlanFileManager";
@@ -358,7 +360,7 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
 
             {/* Enhanced Tabs */}
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-5 bg-muted">
+              <TabsList className="grid w-full grid-cols-6 bg-muted">
                 <TabsTrigger value="details" className="flex items-center gap-2">
                   <Info className="h-4 w-4" />
                   Details
@@ -378,6 +380,10 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
                 <TabsTrigger value="riser-diagrams" className="flex items-center gap-2">
                   <Building2 className="h-4 w-4" />
                   Riser Diagrams
+                </TabsTrigger>
+                <TabsTrigger value="topology" className="flex items-center gap-2">
+                  <Share2 className="h-4 w-4" />
+                  Topology
                 </TabsTrigger>
               </TabsList>
 
@@ -717,6 +723,14 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
               {/* Riser Diagrams Tab */}
                <TabsContent value="riser-diagrams" className="mt-6">
                 <RiserDiagramLibrary 
+                  locationId={location.id}
+                  locationName={location.name}
+                />
+              </TabsContent>
+
+              {/* Topology Tab */}
+              <TabsContent value="topology" className="mt-6">
+                <InfrastructureTopologyView
                   locationId={location.id}
                   locationName={location.name}
                 />
