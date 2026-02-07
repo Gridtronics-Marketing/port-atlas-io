@@ -1592,6 +1592,7 @@ export type Database = {
           frame_type: string
           id: string
           location_id: string | null
+          name: string | null
           notes: string | null
           organization_id: string | null
           patch_panels: Json | null
@@ -1610,6 +1611,7 @@ export type Database = {
           frame_type: string
           id?: string
           location_id?: string | null
+          name?: string | null
           notes?: string | null
           organization_id?: string | null
           patch_panels?: Json | null
@@ -1628,6 +1630,7 @@ export type Database = {
           frame_type?: string
           id?: string
           location_id?: string | null
+          name?: string | null
           notes?: string | null
           organization_id?: string | null
           patch_panels?: Json | null

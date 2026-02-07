@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 export interface DistributionFrame {
   id: string;
   location_id: string;
+  name?: string;
   frame_type: 'MDF' | 'IDF';
   floor: number;
   room?: string;

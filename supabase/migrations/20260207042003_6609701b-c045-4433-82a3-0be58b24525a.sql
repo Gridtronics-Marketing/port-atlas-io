@@ -1,0 +1,1 @@
+ALTER TABLE public.distribution_frames ADD COLUMN IF NOT EXISTS name text;

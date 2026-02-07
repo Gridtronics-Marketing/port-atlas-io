@@ -97,16 +97,20 @@ export const MdfIdfConnectionFields = ({
                   value={conn.frame_id}
                   onValueChange={(val) => updateConnection(index, "frame_id", val)}
                 >
-                  <SelectTrigger className="h-8 text-sm">
-                    <SelectValue placeholder="Select frame..." />
+                  <SelectTrigger className="h-8 text-sm bg-background">
+                    <SelectValue placeholder="Select MDF/IDF..." />
                   </SelectTrigger>
-                  <SelectContent>
-                    {displayFrames.map((frame) => (
-                      <SelectItem key={frame.id} value={frame.id}>
-                        {frame.frame_type} – Floor {frame.floor}
-                        {frame.room ? ` (${frame.room})` : ""}
-                      </SelectItem>
-                    ))}
+                  <SelectContent className="bg-popover z-50">
+                    {displayFrames.map((frame) => {
+                      const label = frame.name
+                        ? `${frame.name} (${frame.frame_type})`
+                        : `${frame.frame_type} – Floor ${frame.floor}${frame.room ? ` (${frame.room})` : ""}`;
+                      return (
+                        <SelectItem key={frame.id} value={frame.id}>
+                          {label}
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
               </div>
