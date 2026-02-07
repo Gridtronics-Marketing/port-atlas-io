@@ -1,78 +1,138 @@
 
 
-## Client Portal: View Drop Points and Room Views + Service Request for New Ones
+## Add "Request New Service Location" to Client Portal
 
-### Current State
+### Overview
 
-- **Drop Points**: Client portal users CAN see drop points via the `ClientDropPointList` and `ClientFloorPlanViewer` components on the `ClientLocationDetail` page. They have no ability to add/edit/delete them (read-only). This is correct.
-- **Room Views**: There is NO Room Views tab on the `ClientLocationDetail` page. Room views exist in the system (`room_views` table, `useRoomViews` hook, `RoomViewModal` component) but are only available in the admin-side floor plan editor.
-- **Service Requests**: The `useServiceRequests` hook and `CreateServiceRequestModal` already exist. Client portal users can create service requests from the dedicated Service Requests page, but there is no way to request a new drop point or room view directly from the location detail page.
+Client portal users will be able to request a new service location via a form that mirrors the admin "Add Location" modal. The request is saved as a service request with type `new_location` and all location details stored as JSON metadata. When the parent organization approves it, the system creates a real location record, assigns it to the client, creates the access grant, and the client can then use the full interactive floor plan with drop point requests.
 
-### What Will Change
+### What Changes
 
-#### 1. Add "Room Views" Tab to Client Location Detail Page
+#### 1. New Database Table: `location_requests`
 
-Add a new tab alongside "Floor Plan", "Drop Points", and "Equipment" that displays room views for the location. This will be a new `ClientRoomViewList` component (similar pattern to `ClientDropPointList`) that:
-- Fetches room views from the `room_views` table filtered by `location_id`
-- Displays room name, floor, description, and thumbnail photo
-- Allows clicking to view the full room view photo and details in a read-only modal
-- Shows room view count in the stats cards section
+A dedicated table to store the full location details submitted by the client, linked to a `service_request` for the approval workflow.
 
-#### 2. Show Room Views on the Client Floor Plan
+| Column | Type | Description |
+|--------|------|-------------|
+| id | uuid PK | |
+| service_request_id | uuid FK | Links to `service_requests` |
+| client_id | uuid FK | The requesting client |
+| name | text | Location name |
+| address | text | Full address |
+| building_type | text | Building type |
+| floors | integer | Number of floors |
+| access_instructions | text | Access notes |
+| contact_onsite | text | Onsite contact name |
+| contact_phone | text | Onsite contact phone |
+| latitude | numeric | Geocoded lat |
+| longitude | numeric | Geocoded lng |
+| status | text | `pending`, `approved`, `rejected` |
+| organization_id | uuid | Parent org who will own it |
+| created_at / updated_at | timestamptz | |
 
-Update `ClientFloorPlanViewer` to also display room view markers on the floor plan (as distinct icons from drop points), so clients can see where room views are located spatially.
+RLS: Client portal users can INSERT and SELECT their own rows. Parent org admins can SELECT and UPDATE.
 
-#### 3. Add "Request New Drop Point" Button
+#### 2. New Component: `AddServiceLocationModal.tsx`
 
-Add a button on the Drop Points tab that opens a simplified service request form pre-filled with:
-- `request_type`: "new_drop_point"
-- `location_id`: current location
-- Title auto-populated as "Request: New Drop Point"
-- Description field for the client to explain what they need
+A dialog form with the same fields as the admin `AddLocationModal` (name, address with autocomplete, building type, floors, access instructions, onsite contact) but WITHOUT client selection (auto-filled from the logged-in portal user's linked client). On submit:
+- Creates a `service_request` with `request_type: 'new_location'`
+- Creates a `location_requests` row with the full details
+- Shows success toast
 
-This creates a service request in the `service_requests` table rather than directly adding a drop point.
+#### 3. UI Integration Points
 
-#### 4. Add "Request New Room View" Button
+- **Client Portal Dashboard** (`ClientPortalDashboard.tsx`): Add an "Add New Service Location" button in the Quick Actions card and optionally in the hero section
+- **Client Portal Sidebar** (`ClientPortalSidebar.tsx`): No changes needed (locations page already listed)
+- **My Locations page**: Add the button at the top of the locations list for portal users
 
-Same pattern on the Room Views tab -- a button that creates a service request with `request_type`: "new_room_view".
+#### 4. Admin Approval Flow (ServiceRequestsManager)
+
+When an admin views a `new_location` type service request:
+- Show a "Review Location Request" action that displays the submitted location details
+- Provide "Approve & Create Location" button that:
+  1. Creates the real `locations` record with `status: 'Pending'` (walk-through not yet done)
+  2. Creates a `location_access_grant` for the client
+  3. Updates the `location_requests` status to `approved`
+  4. Updates the `service_request` status to `approved`
+  5. Optionally creates a work order for the walk-through scheduling
+- Provide "Reject" button with notes
+
+#### 5. Post-Approval: Location Becomes Fully Functional
+
+Once approved, the location appears in the client's "My Locations" with a "Pending" status badge. After the parent org completes the walk-through and updates the status to "Active", the client gets full access including the interactive floor plan and "Request New Drop Point" functionality (already implemented).
 
 ---
 
 ### Technical Details
 
-#### New File: `src/components/ClientRoomViewList.tsx`
-- Fetches `room_views` where `location_id` matches
-- Displays as a card list with room name, floor, thumbnail, ceiling height
-- Click opens a read-only detail dialog showing the full photo and metadata
+**Database Migration:**
 
-#### New File: `src/components/ClientServiceRequestButton.tsx`
-- Reusable button + dialog component
-- Props: `locationId`, `requestType` ("new_drop_point" | "new_room_view"), `buttonLabel`
-- Dialog has: title (auto-filled), description (text area), priority (select)
-- On submit, calls `useServiceRequests().createServiceRequest()`
+```text
+-- Create location_requests table
+CREATE TABLE public.location_requests (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  service_request_id UUID REFERENCES service_requests(id) ON DELETE CASCADE,
+  client_id UUID REFERENCES clients(id) NOT NULL,
+  organization_id UUID REFERENCES organizations(id) NOT NULL,
+  name TEXT NOT NULL,
+  address TEXT NOT NULL,
+  building_type TEXT,
+  floors INTEGER DEFAULT 1,
+  access_instructions TEXT,
+  contact_onsite TEXT,
+  contact_phone TEXT,
+  latitude NUMERIC,
+  longitude NUMERIC,
+  status TEXT DEFAULT 'pending',
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
 
-#### Modified File: `src/pages/ClientLocationDetail.tsx`
-- Import and add `ClientRoomViewList` component
-- Add "Room Views" tab trigger and content
-- Add room view count to stats cards
-- Fetch room view count alongside drop point/equipment counts
+ALTER TABLE public.location_requests ENABLE ROW LEVEL SECURITY;
 
-#### Modified File: `src/components/ClientDropPointList.tsx`
-- Add `ClientServiceRequestButton` at the top of the card header for "Request New Drop Point"
+-- Client portal users can insert and view their own requests
+CREATE POLICY "Clients can insert location requests" ON location_requests
+  FOR INSERT WITH CHECK (
+    client_id IN (SELECT client_id FROM client_portal_users WHERE user_id = auth.uid())
+  );
 
-#### Modified File: `src/components/ClientFloorPlanViewer.tsx`
-- Fetch room views for the location
-- Render room view markers (camera icon style) on the floor plan alongside drop point dots
+CREATE POLICY "Clients can view own location requests" ON location_requests
+  FOR SELECT USING (
+    client_id IN (SELECT client_id FROM client_portal_users WHERE user_id = auth.uid())
+    OR organization_id IN (SELECT get_user_organizations(auth.uid()))
+    OR is_super_admin(auth.uid())
+  );
 
-#### Database: RLS Policy for `room_views`
-- Add a SELECT policy allowing client portal users to read room views for locations they have access to (via `has_location_access()` function)
+-- Parent org can update (approve/reject)
+CREATE POLICY "Org admins can update location requests" ON location_requests
+  FOR UPDATE USING (
+    organization_id IN (SELECT get_user_organizations(auth.uid()))
+    OR is_super_admin(auth.uid())
+  );
+```
 
-| File | Action |
+**New Files:**
+
+| File | Purpose |
+|------|---------|
+| `src/components/AddServiceLocationModal.tsx` | Client-facing form dialog with address, building type, floors, contacts |
+| `src/components/LocationRequestReviewModal.tsx` | Admin-facing review dialog showing submitted details with Approve/Reject actions |
+
+**Modified Files:**
+
+| File | Change |
 |------|--------|
-| `src/components/ClientRoomViewList.tsx` | Create -- read-only room view list for client portal |
-| `src/components/ClientServiceRequestButton.tsx` | Create -- reusable service request button + dialog |
-| `src/pages/ClientLocationDetail.tsx` | Edit -- add Room Views tab, room view count stat, request buttons |
-| `src/components/ClientDropPointList.tsx` | Edit -- add "Request New Drop Point" button |
-| `src/components/ClientFloorPlanViewer.tsx` | Edit -- show room view markers on floor plan |
-| New migration SQL | Add RLS SELECT policy on `room_views` for client portal users |
+| `src/pages/ClientPortalDashboard.tsx` | Add "Request New Location" button to Quick Actions and hero |
+| `src/components/ServiceRequestsManager.tsx` | Add handling for `new_location` request type with review/approve flow |
+| `src/hooks/useServiceRequests.ts` | Add `createLocationRequest()` helper that creates both the service request and location_request row |
+| `src/components/ClientServiceRequestButton.tsx` | Add `new_location` to the request type union |
+
+**Approval Flow (in `LocationRequestReviewModal`):**
+
+1. Admin clicks "Approve & Create Location"
+2. INSERT into `locations` table with submitted details + `status: 'Pending'` + client_id + organization_id
+3. INSERT into `location_access_grants` with `granted_client_id`
+4. UPDATE `location_requests` set `status = 'approved'`
+5. UPDATE `service_requests` set `status = 'approved'`
+6. Optionally prompt to create a walk-through work order
 
