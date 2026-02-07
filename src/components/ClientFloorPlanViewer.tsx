@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { FileImage, Layers } from "lucide-react";
+import { FileImage, Layers, Camera } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 
 interface DropPoint {
@@ -13,6 +14,14 @@ interface DropPoint {
   floor: number | null;
 }
 
+interface RoomViewMarker {
+  id: string;
+  room_name: string | null;
+  x_coordinate: number;
+  y_coordinate: number;
+  floor: number;
+}
+
 interface ClientFloorPlanViewerProps {
   locationId: string;
 }
@@ -21,6 +30,7 @@ export const ClientFloorPlanViewer = ({ locationId }: ClientFloorPlanViewerProps
   const [floorPlanUrls, setFloorPlanUrls] = useState<Record<number, string>>({});
   const [selectedFloor, setSelectedFloor] = useState<number>(1);
   const [dropPoints, setDropPoints] = useState<DropPoint[]>([]);
+  const [roomViewMarkers, setRoomViewMarkers] = useState<RoomViewMarker[]>([]);
   const [loading, setLoading] = useState(true);
   const [floors, setFloors] = useState<number[]>([]);
 
@@ -63,6 +73,14 @@ export const ClientFloorPlanViewer = ({ locationId }: ClientFloorPlanViewerProps
           .eq("location_id", locationId);
 
         setDropPoints(dpData || []);
+
+        // Fetch room views with coordinates
+        const { data: rvData } = await supabase
+          .from("room_views")
+          .select("id, room_name, x_coordinate, y_coordinate, floor")
+          .eq("location_id", locationId);
+
+        setRoomViewMarkers(rvData || []);
       } catch (error) {
         console.error("Error fetching floor plan data:", error);
       } finally {
@@ -76,6 +94,9 @@ export const ClientFloorPlanViewer = ({ locationId }: ClientFloorPlanViewerProps
   const currentFloorPlanUrl = floorPlanUrls[selectedFloor];
   const currentDropPoints = dropPoints.filter(
     dp => dp.x_coordinate && dp.y_coordinate && dp.floor === selectedFloor
+  );
+  const currentRoomViews = roomViewMarkers.filter(
+    rv => rv.x_coordinate && rv.y_coordinate && rv.floor === selectedFloor
   );
 
   const getStatusColor = (status: string | null) => {
@@ -134,6 +155,7 @@ export const ClientFloorPlanViewer = ({ locationId }: ClientFloorPlanViewerProps
       )}
 
       {/* Floor plan with overlays */}
+      <TooltipProvider>
       <div className="relative border rounded-lg overflow-hidden bg-muted/20">
         {currentFloorPlanUrl ? (
           <>
@@ -155,6 +177,26 @@ export const ClientFloorPlanViewer = ({ locationId }: ClientFloorPlanViewerProps
                 title={`${dp.label || "Drop Point"} - ${dp.point_type || "Unknown"}`}
               />
             ))}
+            {/* Room view markers */}
+            {currentRoomViews.map((rv) => (
+              <Tooltip key={rv.id}>
+                <TooltipTrigger asChild>
+                  <div
+                    className="absolute w-6 h-6 rounded-full bg-orange-500 border-2 border-white shadow-md cursor-pointer hover:scale-125 transition-transform flex items-center justify-center"
+                    style={{
+                      left: `${rv.x_coordinate}%`,
+                      top: `${rv.y_coordinate}%`,
+                      transform: "translate(-50%, -50%)",
+                    }}
+                  >
+                    <Camera className="h-3 w-3 text-white" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{rv.room_name || "Room View"}</p>
+                </TooltipContent>
+              </Tooltip>
+            ))}
           </>
         ) : (
           <div className="flex items-center justify-center h-64 text-muted-foreground">
@@ -162,6 +204,7 @@ export const ClientFloorPlanViewer = ({ locationId }: ClientFloorPlanViewerProps
           </div>
         )}
       </div>
+      </TooltipProvider>
 
       {/* Legend */}
       <div className="flex flex-wrap gap-4 text-sm">
@@ -180,6 +223,12 @@ export const ClientFloorPlanViewer = ({ locationId }: ClientFloorPlanViewerProps
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full bg-blue-500" />
           <span>Other</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-full bg-orange-500 flex items-center justify-center">
+            <Camera className="h-2 w-2 text-white" />
+          </div>
+          <span>Room View</span>
         </div>
       </div>
     </div>

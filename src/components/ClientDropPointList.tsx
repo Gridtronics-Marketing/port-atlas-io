@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { ClientDropPointDetail } from "@/components/ClientDropPointDetail";
+import { ClientServiceRequestButton } from "@/components/ClientServiceRequestButton";
 
 interface DropPoint {
   id: string;
@@ -110,6 +111,11 @@ export const ClientDropPointList = ({ locationId }: ClientDropPointListProps) =>
               Drop Points
               <Badge variant="secondary">{dropPoints.length}</Badge>
             </CardTitle>
+            <ClientServiceRequestButton
+              locationId={locationId}
+              requestType="new_drop_point"
+              buttonLabel="Request New Drop Point"
+            />
           </div>
           <div className="relative mt-2">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
