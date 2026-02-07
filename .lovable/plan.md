@@ -1,85 +1,78 @@
 
 
-## Fix: Client Portal Dashboard Shows Empty/Loading State
+## Client Portal: View Drop Points and Room Views + Service Request for New Ones
 
-### Root Cause Analysis
+### Current State
 
-After investigating the database and code, I found **four interconnected problems**:
+- **Drop Points**: Client portal users CAN see drop points via the `ClientDropPointList` and `ClientFloorPlanViewer` components on the `ClientLocationDetail` page. They have no ability to add/edit/delete them (read-only). This is correct.
+- **Room Views**: There is NO Room Views tab on the `ClientLocationDetail` page. Room views exist in the system (`room_views` table, `useRoomViews` hook, `RoomViewModal` component) but are only available in the admin-side floor plan editor.
+- **Service Requests**: The `useServiceRequests` hook and `CreateServiceRequestModal` already exist. Client portal users can create service requests from the dedicated Service Requests page, but there is no way to request a new drop point or room view directly from the location detail page.
 
-#### 1. Loading State Bug (Code)
-`useClientPortalData.ts` initializes `loading = true` but the `fetchAllData` function returns early (without setting `loading = false`) when `isClientPortalUser` or `linkedClientId` aren't ready yet. This causes the skeleton loading screen to display forever.
+### What Will Change
 
-#### 2. Missing `granted_client_id` Column (Database)
-The `location_access_grants` table does NOT have a `granted_client_id` column, but the hook queries `.or('granted_client_id.eq.${linkedClientId}')`. This query silently fails, returning zero results.
+#### 1. Add "Room Views" Tab to Client Location Detail Page
 
-#### 3. Client Portal User Not in Organization Members (Database)
-The KH Dearborn portal user (`4226f60e-...`) has NO entry in `organization_members`. Per the architecture, client portal users should remain members of the parent organization with a restricted role. Without this, every RLS policy that checks `get_user_organizations(auth.uid())` blocks them from reading locations, projects, and drop points.
+Add a new tab alongside "Floor Plan", "Drop Points", and "Equipment" that displays room views for the location. This will be a new `ClientRoomViewList` component (similar pattern to `ClientDropPointList`) that:
+- Fetches room views from the `room_views` table filtered by `location_id`
+- Displays room name, floor, description, and thumbnail photo
+- Allows clicking to view the full room view photo and details in a read-only modal
+- Shows room view count in the stats cards section
 
-#### 4. No Location Access Grants Exist (Database)
-The `location_access_grants` table is completely empty. Even after fixing the column and RLS, the client would see zero locations without grants being created.
+#### 2. Show Room Views on the Client Floor Plan
 
----
+Update `ClientFloorPlanViewer` to also display room view markers on the floor plan (as distinct icons from drop points), so clients can see where room views are located spatially.
 
-### Fix Plan
+#### 3. Add "Request New Drop Point" Button
 
-#### Step 1: Database Migration
+Add a button on the Drop Points tab that opens a simplified service request form pre-filled with:
+- `request_type`: "new_drop_point"
+- `location_id`: current location
+- Title auto-populated as "Request: New Drop Point"
+- Description field for the client to explain what they need
 
-A single migration that:
+This creates a service request in the `service_requests` table rather than directly adding a drop point.
 
-1. **Adds `granted_client_id` column** to `location_access_grants` with a foreign key to `clients(id)`
-2. **Adds the KH Dearborn portal user** to `organization_members` with role `'viewer'` in the parent org (`a1b2c3d4-e5f6-7890-abcd-ef1234567890`)
-3. **Creates a location access grant** linking the "KH Dearborn" location (`1d72c5bd-...`) to client `247da766-...` via the new `granted_client_id` column
-4. **Updates the RLS policy** on `location_access_grants` to also allow access when `granted_client_id` matches the user's linked client (via `client_portal_users`)
-5. **Updates the RLS policy** on `locations` to allow client portal users to see locations they've been granted access to via `granted_client_id`
+#### 4. Add "Request New Room View" Button
 
-#### Step 2: Fix Loading State in `useClientPortalData.ts`
-
-- Always set `loading = false` after the effect runs, even when `isClientPortalUser` or `linkedClientId` are not yet available
-- This prevents the infinite skeleton screen
-
-#### Step 3: Fix the Query in `useClientPortalData.ts`
-
-- Update the `location_access_grants` query to properly use the now-existing `granted_client_id` column
+Same pattern on the Room Views tab -- a button that creates a service request with `request_type`: "new_room_view".
 
 ---
 
 ### Technical Details
 
-**Migration SQL overview:**
+#### New File: `src/components/ClientRoomViewList.tsx`
+- Fetches `room_views` where `location_id` matches
+- Displays as a card list with room name, floor, thumbnail, ceiling height
+- Click opens a read-only detail dialog showing the full photo and metadata
 
-```text
--- Add column
-ALTER TABLE location_access_grants ADD COLUMN granted_client_id UUID REFERENCES clients(id);
+#### New File: `src/components/ClientServiceRequestButton.tsx`
+- Reusable button + dialog component
+- Props: `locationId`, `requestType` ("new_drop_point" | "new_room_view"), `buttonLabel`
+- Dialog has: title (auto-filled), description (text area), priority (select)
+- On submit, calls `useServiceRequests().createServiceRequest()`
 
--- Add portal user to org members (viewer role)
-INSERT INTO organization_members (organization_id, user_id, role)
-VALUES ('a1b2c3d4-...', '4226f60e-...', 'viewer');
+#### Modified File: `src/pages/ClientLocationDetail.tsx`
+- Import and add `ClientRoomViewList` component
+- Add "Room Views" tab trigger and content
+- Add room view count to stats cards
+- Fetch room view count alongside drop point/equipment counts
 
--- Create location grant for KH Dearborn location -> KH Dearborn client
-INSERT INTO location_access_grants (location_id, location_organization_id, granted_client_id, access_level)
-VALUES ('1d72c5bd-...', 'a1b2c3d4-...', '247da766-...', 'view');
+#### Modified File: `src/components/ClientDropPointList.tsx`
+- Add `ClientServiceRequestButton` at the top of the card header for "Request New Drop Point"
 
--- Update RLS: allow client portal users to see their grants
-DROP POLICY "View location access grants" ON location_access_grants;
-CREATE POLICY "View location access grants" ON location_access_grants FOR SELECT
-USING (
-  is_super_admin(auth.uid())
-  OR location_organization_id IN (SELECT get_user_organizations(auth.uid()))
-  OR granted_organization_id IN (SELECT get_user_organizations(auth.uid()))
-  OR granted_client_id IN (
-    SELECT client_id FROM client_portal_users WHERE user_id = auth.uid()
-  )
-);
-```
+#### Modified File: `src/components/ClientFloorPlanViewer.tsx`
+- Fetch room views for the location
+- Render room view markers (camera icon style) on the floor plan alongside drop point dots
 
-**Code fix in `useClientPortalData.ts`:**
-- Move `setLoading(false)` into a `finally` block
-- Handle the case where `isClientPortalUser`/`linkedClientId` are falsy by setting loading to false immediately
+#### Database: RLS Policy for `room_views`
+- Add a SELECT policy allowing client portal users to read room views for locations they have access to (via `has_location_access()` function)
 
-### Files to Modify
-
-| File | Change |
+| File | Action |
 |------|--------|
-| New migration SQL | Add column, org member, grant, update RLS policies |
-| `src/hooks/useClientPortalData.ts` | Fix loading state, ensure query works with new column |
+| `src/components/ClientRoomViewList.tsx` | Create -- read-only room view list for client portal |
+| `src/components/ClientServiceRequestButton.tsx` | Create -- reusable service request button + dialog |
+| `src/pages/ClientLocationDetail.tsx` | Edit -- add Room Views tab, room view count stat, request buttons |
+| `src/components/ClientDropPointList.tsx` | Edit -- add "Request New Drop Point" button |
+| `src/components/ClientFloorPlanViewer.tsx` | Edit -- show room view markers on floor plan |
+| New migration SQL | Add RLS SELECT policy on `room_views` for client portal users |
 
