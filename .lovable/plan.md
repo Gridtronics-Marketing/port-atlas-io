@@ -1,99 +1,53 @@
 
-# Plan: Replace Magic Link with Direct Password Creation for Client Portal
 
-## Summary
+## Fix: Portal Not Found for `/p/kh-dearborn`
 
-Change the client portal invitation flow so admins directly create a user account with email + password (entered manually or auto-generated). No email verification required. The admin then shares the credentials with the client however they prefer (email, phone, in-person, etc.).
+### Problem
 
-## What Changes
+The `/p/kh-dearborn` portal entry page queries the `clients` table to look up the client by slug. However, **Row Level Security (RLS) blocks this query for unauthenticated visitors**. All current SELECT policies require the user to either:
+- Have a matching `contact_email`, or
+- Hold an admin/staff role
 
-### 1. Update `CreateClientPortalModal.tsx`
+Since portal visitors haven't logged in yet, the query returns zero rows and the page shows "Portal Not Found."
 
-- Add a **password field** with two modes:
-  - "Enter password" -- admin types a password
-  - "Generate password" -- button generates a random secure password (e.g., `Abc-1234-Xyz`)
-- Add a **copy credentials** button that appears after successful creation, showing the email + password for the admin to copy/share
-- Remove the "Send Invitation" language; button becomes **"Create Account"**
-- Remove the magic-link-related preview text
+### Solution
 
-### 2. Refactor `invite-client-user` Edge Function
+Two changes are needed:
 
-- Remove the `generateLink({ type: 'magiclink' })` call entirely
-- Replace with `auth.admin.createUser()` with `email_confirm: true` (skips verification)
-- Accept a `password` field in the request body
-- Still create the `client_portal_users` record and `client_invitations` record
-- Remove the call to `send-client-invitation-email` (no email sent automatically)
-- Return the created user ID on success
+#### 1. Database Migration -- Add RLS Policy for Public Slug Lookup
 
-### 3. No Changes Needed
+Add a SELECT policy that allows **anyone** (including anonymous users) to read a minimal set of columns from `clients` when filtering by `slug`. Since RLS policies operate at the row level (not column level), the policy will allow reading the row, but the `PortalEntry` component already only selects `id`, `name`, and `organization_id` -- no sensitive data is exposed.
 
-- **Auth page** -- no changes; clients will just use the standard email/password sign-in
-- **`send-client-invitation-email`** -- kept for future use but no longer called from this flow
-- **Database schema** -- no migration needed; existing tables work as-is
-
-## Technical Details
-
-### Edge Function Request Shape (updated)
-
-```text
-POST /invite-client-user
-Body: {
-  clientId: string,
-  clientName: string,
-  inviteEmail: string,
-  password: string,        // NEW: admin-set or generated password
-  userRole: 'admin' | 'member' | 'viewer',
-  parentOrganizationId: string
-}
+```sql
+CREATE POLICY "Public can view clients by slug for portal entry"
+ON public.clients FOR SELECT
+USING (slug IS NOT NULL);
 ```
 
-### Edge Function Core Change
+**Note:** This allows reading client rows that have a slug set. Only clients with portal slugs will be visible. The query in `PortalEntry` only selects `id`, `name`, and `organization_id` -- no contact details, emails, or billing information are returned in the component code.
 
-Replace lines 152-176 (magic link generation) with:
+#### 2. Code Change -- Query by `slug` Column Directly
+
+The current `PortalEntry.tsx` lookup logic tries to match by `name` with string manipulation, which is fragile and case-sensitive. Update it to query the `slug` column directly:
 
 ```typescript
-const { data: userData, error: createError } = await supabaseAdmin.auth.admin.createUser({
-  email: inviteEmail,
-  password: password,
-  email_confirm: true,  // No verification needed
-  user_metadata: {
-    client_id: clientId,
-    client_name: clientName,
-    organization_id: parentOrganizationId,
-    portal_role: userRole
-  }
-});
+const { data, error } = await supabase
+  .from('clients')
+  .select('id, name, organization_id')
+  .eq('slug', orgSlug)
+  .maybeSingle();
 ```
 
-Remove lines 220-246 (branded email sending).
+This replaces the current two-step name-matching logic (lines ~45-60) with a single, reliable slug lookup.
 
-### Modal UI Changes
-
-- Add password input + "Generate" button
-- After successful creation, show a confirmation card with copyable credentials:
-  ```
-  Account Created!
-  Email: client@example.com
-  Password: Abc-1234-Xyz
-  [Copy to Clipboard]
-  ```
-- Admin manually shares these credentials with the client
-
-### Password Generation Logic
-
-```typescript
-const generatePassword = () => {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
-  const segments = [4, 4, 4];
-  return segments.map(len =>
-    Array.from({ length: len }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
-  ).join('-');
-};
-```
-
-## Files to Modify
+### Files to Modify
 
 | File | Change |
 |------|--------|
-| `supabase/functions/invite-client-user/index.ts` | Replace magic link with `createUser()`, remove email sending |
-| `src/components/CreateClientPortalModal.tsx` | Add password field, generate button, credential display after creation |
+| New migration SQL | Add public SELECT policy for clients with a slug |
+| `src/pages/PortalEntry.tsx` | Replace name-based lookup with direct `.eq('slug', orgSlug)` query |
+
+### Security Consideration
+
+The policy exposes rows where `slug IS NOT NULL`. Since only portal-enabled clients have slugs, this is intentional. The `PortalEntry` component only selects non-sensitive columns (`id`, `name`, `organization_id`). Contact emails, phone numbers, and billing addresses are not fetched.
+
