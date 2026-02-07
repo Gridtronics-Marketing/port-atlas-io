@@ -210,6 +210,7 @@ export const AddDropPointModal = ({
             onChange={setMdfConnections}
             frames={frames}
             framesLoading={framesLoading}
+            currentFloor={floor}
           />
 
           {/* Notes */}

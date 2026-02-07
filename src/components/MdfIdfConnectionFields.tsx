@@ -17,6 +17,7 @@ interface MdfIdfConnectionFieldsProps {
   onChange: (connections: MdfIdfConnection[]) => void;
   frames: DistributionFrame[];
   framesLoading: boolean;
+  currentFloor?: number;
 }
 
 export const MdfIdfConnectionFields = ({
@@ -24,6 +25,7 @@ export const MdfIdfConnectionFields = ({
   onChange,
   frames,
   framesLoading,
+  currentFloor,
 }: MdfIdfConnectionFieldsProps) => {
   const addConnection = () => {
     onChange([...connections, { frame_id: "", port: "", notes: "" }]);
@@ -40,7 +42,12 @@ export const MdfIdfConnectionFields = ({
     onChange(updated);
   };
 
-  const hasFrames = frames.length > 0;
+  // Filter frames to current floor first, fall back to all frames
+  const floorFrames = currentFloor != null
+    ? frames.filter(f => f.floor === currentFloor)
+    : frames;
+  const displayFrames = floorFrames.length > 0 ? floorFrames : frames;
+  const hasFrames = displayFrames.length > 0;
 
   return (
     <div className="space-y-2">
@@ -94,7 +101,7 @@ export const MdfIdfConnectionFields = ({
                     <SelectValue placeholder="Select frame..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {frames.map((frame) => (
+                    {displayFrames.map((frame) => (
                       <SelectItem key={frame.id} value={frame.id}>
                         {frame.frame_type} – Floor {frame.floor}
                         {frame.room ? ` (${frame.room})` : ""}
