@@ -1,4 +1,4 @@
-export const APP_VERSION = "1.8.0";
+export const APP_VERSION = "1.8.1";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,15 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "1.8.1",
+    date: "2026-02-07",
+    changes: [
+      "Fixed Portal Not Found error for unauthenticated visitors on /p/{client-slug} pages",
+      "Added public RLS policy allowing anonymous slug-based client lookup for portal entry",
+      "Simplified PortalEntry page to query by slug column directly instead of fragile name matching",
+    ]
+  },
   {
     version: "1.8.0",
     date: "2026-02-07",
