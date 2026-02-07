@@ -1,4 +1,4 @@
-export const APP_VERSION = "1.8.1";
+export const APP_VERSION = "1.9.0";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,23 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "1.9.0",
+    date: "2026-02-07",
+    changes: [
+      "Added Room Views tab to client portal location detail page with read-only gallery",
+      "Client portal users can now see room view markers on floor plans",
+      "Added 'Request New Drop Point' and 'Request New Room View' buttons for client portal users",
+      "New service request workflow replaces direct asset creation for client portal users",
+      "Added 'Request New Service Location' feature to client portal dashboard",
+      "New location request form with address autocomplete, building details, and contact info",
+      "Admin location request review modal with approve/reject workflow",
+      "Approved location requests automatically create locations with client access grants",
+      "Added location_requests table with RLS policies for secure client-admin workflow",
+      "Added RLS SELECT policy on room_views for client portal users via has_location_access()",
+      "Updated service request type labels for new_location, new_drop_point, and new_room_view",
+    ]
+  },
   {
     version: "1.8.1",
     date: "2026-02-07",
