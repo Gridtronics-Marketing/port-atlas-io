@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Building2, Plus, Search, Filter, MoreHorizontal, Eye, Edit, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,6 +48,21 @@ const Clients = () => {
     { label: "Pending", value: clients.filter(c => c.status === 'Pending').length.toString(), color: "text-warning" },
     { label: "Inactive", value: clients.filter(c => c.status === 'Inactive').length.toString(), color: "text-muted-foreground" },
   ];
+
+  const filteredClients = useMemo(() => {
+    return clients.filter((client) => {
+      const matchesSearch = !searchTerm || 
+        client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (client.contact_name && client.contact_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (client.contact_email && client.contact_email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (client.address && client.address.toLowerCase().includes(searchTerm.toLowerCase()));
+
+      const matchesStatus = statusFilter === 'all' || 
+        client.status.toLowerCase() === statusFilter.toLowerCase();
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [clients, searchTerm, statusFilter]);
 
   return (
     <>
@@ -132,7 +147,7 @@ const Clients = () => {
                 <Building2 className="h-5 w-5 text-primary" />
                 All Clients
               </span>
-              <Badge variant="secondary">{clients.length} Total</Badge>
+              <Badge variant="secondary">{filteredClients.length} of {clients.length}</Badge>
             </CardTitle>
             <CardDescription>
               Manage client relationships and track project progress
@@ -144,14 +159,16 @@ const Clients = () => {
                 <Loader2 className="h-6 w-6 animate-spin text-primary" />
                 <span className="ml-2 text-muted-foreground">Loading clients...</span>
               </div>
-            ) : clients.length === 0 ? (
+            ) : filteredClients.length === 0 ? (
               <div className="text-center py-8">
                 <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">No clients found</p>
+                <p className="text-muted-foreground">
+                  {clients.length === 0 ? 'No clients found' : 'No clients match your search'}
+                </p>
               </div>
             ) : (
               <div className="space-y-3">
-                {clients.map((client) => (
+                {filteredClients.map((client) => (
                   <div
                     key={client.id}
                     className="flex items-center justify-between p-4 border border-border rounded-lg hover:shadow-soft transition-all duration-200 bg-card cursor-pointer"
