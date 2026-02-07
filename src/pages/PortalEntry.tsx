@@ -43,25 +43,11 @@ const PortalEntry = () => {
       }
 
       try {
-        // Query clients table - slug column was added in migration
-        // Using type assertion since TypeScript types haven't been regenerated yet
-        const { data, error: fetchError } = await supabase
+        const { data: clientData, error: fetchError } = await supabase
           .from('clients')
           .select('id, name, organization_id')
-          .eq('name', orgSlug.replace(/-/g, ' ')) // Try matching by formatted name first
+          .eq('slug', orgSlug)
           .maybeSingle();
-
-        // If no match by name, try as-is (for properly slugified entries)
-        let clientData = data;
-        if (!clientData) {
-          const { data: slugData } = await supabase
-            .from('clients')
-            .select('id, name, organization_id')
-            .ilike('name', `%${orgSlug.replace(/-/g, '%')}%`)
-            .limit(1)
-            .maybeSingle();
-          clientData = slugData;
-        }
 
         if (fetchError || !clientData) {
           setError('Portal not found. Please check the URL and try again.');
@@ -69,7 +55,7 @@ const PortalEntry = () => {
           return;
         }
 
-        const typedData = clientData as { id: string; name: string; organization_id: string };
+        const typedData = clientData as unknown as { id: string; name: string; organization_id: string };
 
         // Fetch organization details separately
         const { data: orgData } = await supabase
