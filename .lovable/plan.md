@@ -1,52 +1,32 @@
 
 
-# Fix: Room View Photos Tab Missing for Client Portal Users
+# Fix: Room View Photos Not Showing When Clicked from Floor Plan
 
 ## Problem
-Two issues prevent client portal users from seeing additional room view photos:
+When clicking a room view marker on the **Floor Plan** tab, the dialog that opens (`RoomViewDetailDialog` inside `ClientFloorPlanViewer.tsx`) is a simple inline component that only shows the main photo and basic details. It does NOT have the "Details" and "Photos" tabs.
 
-1. **Missing UI**: The `ClientRoomViewList` component only shows a simple dialog with the original room view photo. It does not have the "Photos" tab that the staff `RoomViewModal` has, so additional photos uploaded to `room_view_photos` are never displayed.
-
-2. **Outdated RLS Policy**: The existing client SELECT policy on `room_view_photos` uses an old access pattern (joining through `projects -> clients -> contact_email`). The current architecture uses `client_portal_users` + `location_access_grants` + `has_location_access()`, so the old policy likely doesn't match.
+The tabbed UI with the photos gallery was added to the **Room Views tab** (`ClientRoomViewList.tsx`), but not to this floor plan dialog.
 
 ## Solution
 
-### 1. Database -- Replace Outdated RLS Policy
+Update the inline `RoomViewDetailDialog` at the bottom of `ClientFloorPlanViewer.tsx` (lines 330-370) to:
 
-Drop the old client policy and create a new one using `has_location_access()`:
-
-```sql
-DROP POLICY IF EXISTS "Clients can view room view photos for their locations" 
-  ON public.room_view_photos;
-
-CREATE POLICY "Client portal users can view room view photos"
-ON public.room_view_photos FOR SELECT
-USING (
-  EXISTS (
-    SELECT 1 FROM public.room_views rv
-    WHERE rv.id = room_view_photos.room_view_id
-    AND has_location_access(rv.location_id)
-  )
-);
-```
-
-### 2. Frontend -- Add Photos Tab to Client Room View Detail
-
-Update `src/components/ClientRoomViewList.tsx` to:
-- Import and use the `useRoomViewPhotos` hook to fetch additional photos for a selected room view
-- Replace the simple detail dialog with a tabbed layout (Details + Photos) similar to the staff `RoomViewModal`
-- Display the photo gallery in a read-only mode (no upload/delete buttons for clients)
-- Show photo count badge on the Photos tab
-
-### 3. Version Bump
-
-Update `src/lib/version.ts` to `v1.10.4` with a changelog entry.
+1. Import and use the `useRoomViewPhotos` hook to fetch additional photos for the selected room view
+2. Add the same tabbed layout (Details + Photos) that already exists in `ClientRoomViewList`
+3. Display photos in a read-only grid with descriptions and timestamps
 
 ## Technical Details
 
-### UI Changes (`ClientRoomViewList.tsx`)
-- Add `Tabs`, `TabsContent`, `TabsList`, `TabsTrigger` imports
-- Add state for `useRoomViewPhotos(selectedView?.id)` 
-- Detail dialog gets two tabs: "Details" (existing content) and "Photos" (gallery of `room_view_photos`)
-- Photos displayed as a read-only image grid with descriptions and timestamps
-- No edit/delete/upload controls since this is the client-facing view
+### File: `src/components/ClientFloorPlanViewer.tsx`
+
+- Import `useRoomViewPhotos` from `@/hooks/useRoomViewPhotos`
+- Import `Tabs`, `TabsContent`, `TabsList`, `TabsTrigger` from `@/components/ui/tabs`
+- Import `Badge` and `ImageIcon` icon
+- Convert `RoomViewDetailDialog` from an arrow function to a proper component (so hooks can be used)
+- Add `useRoomViewPhotos(roomView.id)` inside the component
+- Replace the simple content with a `Tabs` container containing:
+  - **Details tab**: existing photo + metadata (floor, description)
+  - **Photos tab**: grid of additional photos with badge count, loading state, and empty state
+
+No database changes needed -- the RLS policy from v1.10.4 already grants client portal users access to `room_view_photos`.
+
