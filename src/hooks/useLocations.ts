@@ -68,21 +68,20 @@ export const useLocations = () => {
         if (clientError) throw clientError;
         data = clientLocations || [];
 
-        // Also fetch locations via access grants
-        if (organizationId) {
-          const { data: grantedLocations, error: grantError } = await supabase
-            .from('location_access_grants')
-            .select(`
-              location:locations(
-                *,
-                client:clients(name),
-                project:projects(
-                  name,
-                  client:clients(name)
-                )
+        // Also fetch locations via access grants using granted_client_id
+        const { data: grantedLocations, error: grantError } = await supabase
+          .from('location_access_grants')
+          .select(`
+            location:locations(
+              *,
+              client:clients(name),
+              project:projects(
+                name,
+                client:clients(name)
               )
-            `)
-            .eq('granted_organization_id', organizationId);
+            )
+          `)
+          .eq('granted_client_id', linkedClientId);
 
           if (!grantError && grantedLocations) {
             const grantedData = grantedLocations
@@ -96,7 +95,6 @@ export const useLocations = () => {
               }
             }
           }
-        }
       } else {
         // REGULAR USER: Filter by organization
         let query = supabase
