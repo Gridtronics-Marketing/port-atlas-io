@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2, AlertCircle, Building2, LogIn, ArrowRight } from 'lucide-react';
 import tradeAtlasLogo from "@/assets/trade-atlas-logo.png";
 import tradeAtlasBackground from "@/assets/trade-atlas-background.jpg";
+import { APP_VERSION } from '@/lib/version';
 
 interface ClientPortal {
   id: string;
@@ -157,13 +158,16 @@ const PortalEntry = () => {
             <Button onClick={() => navigate('/auth')} variant="outline">
               Go to Login
             </Button>
-            <div className="pt-4 border-t border-border/50 flex items-center justify-center gap-2">
-              <span className="text-xs text-muted-foreground">Powered by</span>
-              <img 
-                src={tradeAtlasLogo} 
-                alt="Trade Atlas" 
-                className="h-5 w-auto opacity-70 hover:opacity-100 transition-opacity"
-              />
+            <div className="pt-4 border-t border-border/50 flex flex-col items-center gap-1">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">Powered by</span>
+                <img 
+                  src={tradeAtlasLogo} 
+                  alt="Trade Atlas" 
+                  className="h-5 w-auto opacity-70 hover:opacity-100 transition-opacity"
+                />
+              </div>
+              <span className="text-xs text-muted-foreground">v{APP_VERSION}</span>
             </div>
           </CardContent>
         </Card>
@@ -219,13 +223,16 @@ const PortalEntry = () => {
                 Login with Different Account
               </Button>
             </div>
-            <div className="pt-4 border-t border-border/50 flex items-center justify-center gap-2">
-              <span className="text-xs text-muted-foreground">Powered by</span>
-              <img 
-                src={tradeAtlasLogo} 
-                alt="Trade Atlas" 
-                className="h-5 w-auto opacity-70 hover:opacity-100 transition-opacity"
-              />
+            <div className="pt-4 border-t border-border/50 flex flex-col items-center gap-1">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">Powered by</span>
+                <img 
+                  src={tradeAtlasLogo} 
+                  alt="Trade Atlas" 
+                  className="h-5 w-auto opacity-70 hover:opacity-100 transition-opacity"
+                />
+              </div>
+              <span className="text-xs text-muted-foreground">v{APP_VERSION}</span>
             </div>
           </CardContent>
         </Card>
@@ -273,14 +280,17 @@ const PortalEntry = () => {
             Sign In to Portal
             <ArrowRight className="h-4 w-4 ml-2" />
           </Button>
-          <div className="pt-4 border-t border-border/50 flex items-center justify-center gap-2">
-            <span className="text-xs text-muted-foreground">Powered by</span>
-            <img 
-              src={tradeAtlasLogo} 
-              alt="Trade Atlas" 
-              className="h-5 w-auto opacity-70 hover:opacity-100 transition-opacity"
-            />
-          </div>
+            <div className="pt-4 border-t border-border/50 flex flex-col items-center gap-1">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">Powered by</span>
+                <img 
+                  src={tradeAtlasLogo} 
+                  alt="Trade Atlas" 
+                  className="h-5 w-auto opacity-70 hover:opacity-100 transition-opacity"
+                />
+              </div>
+              <span className="text-xs text-muted-foreground">v{APP_VERSION}</span>
+            </div>
         </CardContent>
       </Card>
     </div>
