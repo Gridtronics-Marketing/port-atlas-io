@@ -1,138 +1,114 @@
 
 
-## Add "Request New Service Location" to Client Portal
+## Fix Client Portal: Simplified Views, Project Requests, Interactive Floor Plan Drop Points, and Service Requests Page
 
-### Overview
+### Problems Identified
 
-Client portal users will be able to request a new service location via a form that mirrors the admin "Add Location" modal. The request is saved as a service request with type `new_location` and all location details stored as JSON metadata. When the parent organization approves it, the system creates a real location record, assigns it to the client, creates the access grant, and the client can then use the full interactive floor plan with drop point requests.
+1. **Locations page (`/locations`)** shows the full admin layout (add location button, metrics, search/filter, LocationGrid) instead of a simplified client view showing only granted locations.
 
-### What Changes
+2. **Projects page (`/projects`)** shows the full admin project management interface (create/edit/delete projects, budgets, progress bars) instead of a read-only list with a "Request New Project" form.
 
-#### 1. New Database Table: `location_requests`
+3. **Floor Plan**: Drop points and room views are visible but not clickable to open details. Notes (walk-through notes, documentation) are not shown on the client location detail page.
 
-A dedicated table to store the full location details submitted by the client, linked to a `service_request` for the approval workflow.
+4. **Service Requests page (`/service-requests`)** loads a blank page -- likely the `CreateServiceRequestModal` or the data fetch is failing silently.
 
-| Column | Type | Description |
-|--------|------|-------------|
-| id | uuid PK | |
-| service_request_id | uuid FK | Links to `service_requests` |
-| client_id | uuid FK | The requesting client |
-| name | text | Location name |
-| address | text | Full address |
-| building_type | text | Building type |
-| floors | integer | Number of floors |
-| access_instructions | text | Access notes |
-| contact_onsite | text | Onsite contact name |
-| contact_phone | text | Onsite contact phone |
-| latitude | numeric | Geocoded lat |
-| longitude | numeric | Geocoded lng |
-| status | text | `pending`, `approved`, `rejected` |
-| organization_id | uuid | Parent org who will own it |
-| created_at / updated_at | timestamptz | |
+5. **Clients cannot place drop points on the floor plan** -- they should be able to click on the floor plan to place a "proposed" drop point (shown as a grey icon) which creates a service request for parent org approval.
 
-RLS: Client portal users can INSERT and SELECT their own rows. Parent org admins can SELECT and UPDATE.
+---
 
-#### 2. New Component: `AddServiceLocationModal.tsx`
+### Fix Plan
 
-A dialog form with the same fields as the admin `AddLocationModal` (name, address with autocomplete, building type, floors, access instructions, onsite contact) but WITHOUT client selection (auto-filled from the logged-in portal user's linked client). On submit:
-- Creates a `service_request` with `request_type: 'new_location'`
-- Creates a `location_requests` row with the full details
-- Shows success toast
+#### 1. Locations Page: Client Portal View
 
-#### 3. UI Integration Points
+Modify `src/pages/Locations.tsx` to detect `isClientPortalUser` and render a simplified layout:
+- Show only granted locations as clickable cards (using `useClientPortalData` or `useClientLocations`)
+- Include the "Request New Service Location" button
+- Remove admin metrics, search filters, and "Add Location" button
+- Each location card navigates to `/client-locations/{id}`
 
-- **Client Portal Dashboard** (`ClientPortalDashboard.tsx`): Add an "Add New Service Location" button in the Quick Actions card and optionally in the hero section
-- **Client Portal Sidebar** (`ClientPortalSidebar.tsx`): No changes needed (locations page already listed)
-- **My Locations page**: Add the button at the top of the locations list for portal users
+#### 2. Projects Page: Client Portal View
 
-#### 4. Admin Approval Flow (ServiceRequestsManager)
+Modify `src/pages/Projects.tsx` to detect `isClientPortalUser` and render:
+- A read-only list of projects linked to the client (via `useClientPortalData().clientProjects`)
+- A "Request New Project" button that opens a dialog (new `RequestProjectModal` component)
+- The request creates a `service_request` with `request_type: 'new_project'` containing project details in the description
+- Remove all admin capabilities (create/edit/delete projects, budget info, progress tracking)
 
-When an admin views a `new_location` type service request:
-- Show a "Review Location Request" action that displays the submitted location details
-- Provide "Approve & Create Location" button that:
-  1. Creates the real `locations` record with `status: 'Pending'` (walk-through not yet done)
-  2. Creates a `location_access_grant` for the client
-  3. Updates the `location_requests` status to `approved`
-  4. Updates the `service_request` status to `approved`
-  5. Optionally creates a work order for the walk-through scheduling
-- Provide "Reject" button with notes
+#### 3. Floor Plan: Clickable Drop Points and Client Drop Point Placement
 
-#### 5. Post-Approval: Location Becomes Fully Functional
+**Make markers clickable** in `ClientFloorPlanViewer.tsx`:
+- Clicking a drop point opens the `ClientDropPointDetail` modal
+- Clicking a room view opens the room view detail dialog
 
-Once approved, the location appears in the client's "My Locations" with a "Pending" status badge. After the parent org completes the walk-through and updates the status to "Active", the client gets full access including the interactive floor plan and "Request New Drop Point" functionality (already implemented).
+**Add client drop point placement mode**:
+- Add a "Place New Drop Point" button on the floor plan
+- When active, clicking on the floor plan captures x/y coordinates
+- Opens a form dialog to describe the drop point (label, type, floor, description)
+- Creates a service request with `request_type: 'new_drop_point'` AND creates a `drop_points` record with `status: 'Proposed'` and coordinates
+- Proposed drop points render as grey circles on the floor plan
+- Parent org approves by changing status from 'Proposed' to 'Planned' or 'Active'
+
+**Add Notes/Documentation tab** to `ClientLocationDetail.tsx`:
+- New "Notes" or "Documentation" tab showing walk-through notes (read-only via `WalkThroughNotesList` without add/delete) and documentation files
+
+#### 4. Fix Service Requests Blank Page
+
+Debug and fix the `ServiceRequests` page for client portal users. The likely issue is the `useServiceRequests` hook failing because `requesting_organization_id` does not match the client portal user's organization context. Will trace the data flow and fix the query.
+
+#### 5. Database Changes
+
+- Add `'Proposed'` as a valid drop point status rendered as grey in all color maps
+- Potentially add RLS policy to allow client portal users to INSERT drop points with status `'Proposed'` only
 
 ---
 
 ### Technical Details
 
-**Database Migration:**
-
-```text
--- Create location_requests table
-CREATE TABLE public.location_requests (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  service_request_id UUID REFERENCES service_requests(id) ON DELETE CASCADE,
-  client_id UUID REFERENCES clients(id) NOT NULL,
-  organization_id UUID REFERENCES organizations(id) NOT NULL,
-  name TEXT NOT NULL,
-  address TEXT NOT NULL,
-  building_type TEXT,
-  floors INTEGER DEFAULT 1,
-  access_instructions TEXT,
-  contact_onsite TEXT,
-  contact_phone TEXT,
-  latitude NUMERIC,
-  longitude NUMERIC,
-  status TEXT DEFAULT 'pending',
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
-);
-
-ALTER TABLE public.location_requests ENABLE ROW LEVEL SECURITY;
-
--- Client portal users can insert and view their own requests
-CREATE POLICY "Clients can insert location requests" ON location_requests
-  FOR INSERT WITH CHECK (
-    client_id IN (SELECT client_id FROM client_portal_users WHERE user_id = auth.uid())
-  );
-
-CREATE POLICY "Clients can view own location requests" ON location_requests
-  FOR SELECT USING (
-    client_id IN (SELECT client_id FROM client_portal_users WHERE user_id = auth.uid())
-    OR organization_id IN (SELECT get_user_organizations(auth.uid()))
-    OR is_super_admin(auth.uid())
-  );
-
--- Parent org can update (approve/reject)
-CREATE POLICY "Org admins can update location requests" ON location_requests
-  FOR UPDATE USING (
-    organization_id IN (SELECT get_user_organizations(auth.uid()))
-    OR is_super_admin(auth.uid())
-  );
-```
-
-**New Files:**
+#### Files to Create
 
 | File | Purpose |
 |------|---------|
-| `src/components/AddServiceLocationModal.tsx` | Client-facing form dialog with address, building type, floors, contacts |
-| `src/components/LocationRequestReviewModal.tsx` | Admin-facing review dialog showing submitted details with Approve/Reject actions |
+| `src/components/RequestProjectModal.tsx` | Dialog form for clients to request a new project via service request |
 
-**Modified Files:**
+#### Files to Modify
 
 | File | Change |
 |------|--------|
-| `src/pages/ClientPortalDashboard.tsx` | Add "Request New Location" button to Quick Actions and hero |
-| `src/components/ServiceRequestsManager.tsx` | Add handling for `new_location` request type with review/approve flow |
-| `src/hooks/useServiceRequests.ts` | Add `createLocationRequest()` helper that creates both the service request and location_request row |
-| `src/components/ClientServiceRequestButton.tsx` | Add `new_location` to the request type union |
+| `src/pages/Locations.tsx` | Add `isClientPortalUser` check, render simplified client location list |
+| `src/pages/Projects.tsx` | Add `isClientPortalUser` check, render read-only project list with request button |
+| `src/components/ClientFloorPlanViewer.tsx` | Make drop points/room views clickable (open detail modals), add drop point placement mode with grey "Proposed" markers |
+| `src/pages/ClientLocationDetail.tsx` | Add "Notes" tab with read-only walk-through notes and documentation |
+| `src/components/ClientDropPointList.tsx` | Add grey status badge for "Proposed" drop points |
+| `src/pages/ServiceRequests.tsx` | Debug and fix blank page for client portal users |
+| `src/hooks/useServiceRequests.ts` | Fix query for client portal context if needed |
+| `src/components/ClientServiceRequestButton.tsx` | Extend to support `new_project` request type |
 
-**Approval Flow (in `LocationRequestReviewModal`):**
+#### Database Migration
 
-1. Admin clicks "Approve & Create Location"
-2. INSERT into `locations` table with submitted details + `status: 'Pending'` + client_id + organization_id
-3. INSERT into `location_access_grants` with `granted_client_id`
-4. UPDATE `location_requests` set `status = 'approved'`
-5. UPDATE `service_requests` set `status = 'approved'`
-6. Optionally prompt to create a walk-through work order
+```text
+-- Allow client portal users to insert proposed drop points
+CREATE POLICY "Client portal users can insert proposed drop points"
+ON public.drop_points FOR INSERT
+WITH CHECK (
+  status = 'Proposed'
+  AND public.has_location_access(location_id)
+);
+
+-- Update status color maps to include 'Proposed' -> grey
+```
+
+#### Status Color Updates
+
+All components that render drop point status colors will be updated to include:
+- `Proposed` -> grey (`bg-gray-400`) -- indicates client-placed, awaiting approval
+
+#### Floor Plan Interaction Flow
+
+1. Client clicks "Place New Drop Point" button on floor plan
+2. Floor plan enters placement mode (cursor changes to crosshair)
+3. Client clicks on the floor plan image to set x/y coordinates
+4. A form dialog opens asking for: label, point type, description
+5. On submit: INSERT a `drop_points` row with `status: 'Proposed'` + coordinates, and CREATE a `service_request` with `request_type: 'new_drop_point'` linking to that drop point
+6. The proposed point appears immediately as a grey dot on the floor plan
+7. Parent org sees the service request, reviews the location on the plan, and approves (changes status to 'Planned')
 
