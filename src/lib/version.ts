@@ -1,4 +1,4 @@
-export const APP_VERSION = "1.10.2";
+export const APP_VERSION = "1.10.3";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,14 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "1.10.3",
+    date: "2026-02-07",
+    changes: [
+      "Fixed client portal visibility for walk-through notes, documentation files, and customer notes",
+      "Added RLS SELECT policies using has_location_access() for three additional tables",
+    ]
+  },
   {
     version: "1.10.2",
     date: "2026-02-07",
