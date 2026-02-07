@@ -2616,7 +2616,8 @@ export type Database = {
           access_level: string
           created_at: string
           granted_by: string | null
-          granted_organization_id: string
+          granted_client_id: string | null
+          granted_organization_id: string | null
           id: string
           location_id: string
           location_organization_id: string | null
@@ -2627,7 +2628,8 @@ export type Database = {
           access_level?: string
           created_at?: string
           granted_by?: string | null
-          granted_organization_id: string
+          granted_client_id?: string | null
+          granted_organization_id?: string | null
           id?: string
           location_id: string
           location_organization_id?: string | null
@@ -2638,7 +2640,8 @@ export type Database = {
           access_level?: string
           created_at?: string
           granted_by?: string | null
-          granted_organization_id?: string
+          granted_client_id?: string | null
+          granted_organization_id?: string | null
           id?: string
           location_id?: string
           location_organization_id?: string | null
@@ -2646,6 +2649,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "location_access_grants_granted_client_id_fkey"
+            columns: ["granted_client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "location_access_grants_granted_organization_id_fkey"
             columns: ["granted_organization_id"]

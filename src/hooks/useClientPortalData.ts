@@ -104,14 +104,20 @@ export const useClientPortalData = () => {
   };
 
   const fetchAllData = async () => {
-    if (!isClientPortalUser || !linkedClientId) return;
+    if (!isClientPortalUser || !linkedClientId) {
+      setLoading(false);
+      return;
+    }
     
     setLoading(true);
-    await Promise.all([
-      fetchAccessibleLocations(),
-      fetchClientProjects(),
-    ]);
-    setLoading(false);
+    try {
+      await Promise.all([
+        fetchAccessibleLocations(),
+        fetchClientProjects(),
+      ]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
