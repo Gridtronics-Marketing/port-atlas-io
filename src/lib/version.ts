@@ -1,4 +1,4 @@
-export const APP_VERSION = "1.7.1";
+export const APP_VERSION = "1.8.0";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,17 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "1.8.0",
+    date: "2026-02-07",
+    changes: [
+      "Fixed client portal detection in Client Details modal - now checks client_portal_users table",
+      "Added RLS policy for super admins to view all client portal users",
+      "Portal status now correctly displays Active/Inactive with user count and portal URL",
+      "Fixed bulk client invitation edge function with proper slug collision handling",
+      "Improved portal user creation with direct password-based auth (no email verification)",
+    ]
+  },
   {
     version: "1.7.1",
     date: "2026-01-22",
