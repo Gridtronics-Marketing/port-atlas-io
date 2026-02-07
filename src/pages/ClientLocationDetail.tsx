@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, MapPin, Building2, Network, FileText, Package } from "lucide-react";
+import { ArrowLeft, MapPin, Building2, Network, FileText, Package, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ClientFloorPlanViewer } from "@/components/ClientFloorPlanViewer";
 import { ClientDropPointList } from "@/components/ClientDropPointList";
 import { ClientEquipmentList } from "@/components/ClientEquipmentList";
+import { ClientRoomViewList } from "@/components/ClientRoomViewList";
 
 interface LocationDetails {
   id: string;
@@ -31,6 +32,7 @@ const ClientLocationDetail = () => {
   const [loading, setLoading] = useState(true);
   const [dropPointCount, setDropPointCount] = useState(0);
   const [equipmentCount, setEquipmentCount] = useState(0);
+  const [roomViewCount, setRoomViewCount] = useState(0);
 
   useEffect(() => {
     const fetchLocationDetails = async () => {
@@ -62,6 +64,14 @@ const ClientLocationDetail = () => {
           .eq("location_id", locationId);
 
         setEquipmentCount(eqCount || 0);
+
+        // Fetch room view count
+        const { count: rvCount } = await supabase
+          .from("room_views")
+          .select("*", { count: "exact", head: true })
+          .eq("location_id", locationId);
+
+        setRoomViewCount(rvCount || 0);
       } catch (error) {
         console.error("Error fetching location details:", error);
       } finally {
@@ -135,7 +145,7 @@ const ClientLocationDetail = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <Card>
           <CardContent className="pt-4">
             <div className="flex items-center gap-3">
@@ -145,6 +155,20 @@ const ClientLocationDetail = () => {
               <div>
                 <p className="text-2xl font-bold">{dropPointCount}</p>
                 <p className="text-sm text-muted-foreground">Drop Points</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-orange-500/10">
+                <Camera className="h-5 w-5 text-orange-500" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{roomViewCount}</p>
+                <p className="text-sm text-muted-foreground">Room Views</p>
               </div>
             </div>
           </CardContent>
@@ -198,6 +222,7 @@ const ClientLocationDetail = () => {
         <TabsList>
           <TabsTrigger value="floorplan">Floor Plan</TabsTrigger>
           <TabsTrigger value="droppoints">Drop Points</TabsTrigger>
+          <TabsTrigger value="roomviews">Room Views</TabsTrigger>
           <TabsTrigger value="equipment">Equipment</TabsTrigger>
         </TabsList>
 
@@ -214,6 +239,10 @@ const ClientLocationDetail = () => {
 
         <TabsContent value="droppoints" className="mt-4">
           <ClientDropPointList locationId={locationId!} />
+        </TabsContent>
+
+        <TabsContent value="roomviews" className="mt-4">
+          <ClientRoomViewList locationId={locationId!} />
         </TabsContent>
 
         <TabsContent value="equipment" className="mt-4">
