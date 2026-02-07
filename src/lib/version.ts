@@ -1,4 +1,4 @@
-export const APP_VERSION = "1.9.0";
+export const APP_VERSION = "1.10.0";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,21 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "1.10.0",
+    date: "2026-02-07",
+    changes: [
+      "Simplified client portal Locations page - shows only granted locations as clean cards",
+      "Simplified client portal Projects page - read-only list with 'Request New Project' form",
+      "Interactive floor plan: drop points and room views are now clickable to open detail modals",
+      "Client drop point placement mode - click floor plan to place proposed (grey) drop points",
+      "Proposed drop points shown as grey markers until parent organization approves",
+      "Added Notes & Documentation tab to client location detail page (read-only)",
+      "Fixed Service Requests page blank screen for client portal users",
+      "Added RLS policy for client portal users to insert proposed drop points",
+      "New RequestProjectModal creates service requests for project approval workflow",
+    ]
+  },
   {
     version: "1.9.0",
     date: "2026-02-07",
