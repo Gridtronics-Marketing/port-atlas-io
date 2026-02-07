@@ -1,4 +1,4 @@
-export const APP_VERSION = "1.10.5";
+export const APP_VERSION = "1.10.6";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,17 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "1.10.6",
+    date: "2026-02-07",
+    changes: [
+      "Added Infrastructure Topology tab to Physical Infrastructure view",
+      "AI-assisted normalization of MDF/IDF names and drop point classifications",
+      "Hierarchical tree view: Location → MDF/IDF → Drop Points with connection details",
+      "Export topology as strict JSON for external integration",
+      "Flags panel for ambiguous data requiring human review",
+    ]
+  },
   {
     version: "1.10.5",
     date: "2026-02-07",
