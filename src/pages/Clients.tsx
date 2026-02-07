@@ -22,7 +22,7 @@ import { ClientDetailsModal } from "@/components/ClientDetailsModal";
 import { useClients, Client } from "@/hooks/useClients";
 
 const Clients = () => {
-  const { clients, loading, addClient, deleteClient, fetchClients } = useClients();
+  const { clients, loading, addClient, updateClient, deleteClient, fetchClients } = useClients();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -224,6 +224,7 @@ const Clients = () => {
           setIsDetailsModalOpen(false);
           setSelectedClient(null);
         }}
+        onUpdateClient={updateClient}
         onDeleteClient={deleteClient}
         onRefreshClient={fetchClients}
       />

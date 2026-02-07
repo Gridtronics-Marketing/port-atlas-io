@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Dialog, 
   DialogContent, 
@@ -19,7 +19,11 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Building2, User, Mail, Phone, MapPin, Calendar, ExternalLink, Loader2, Edit, Plus, Trash2, Map, Navigation, Users, Globe, Copy, Settings } from "lucide-react";
+import { Building2, User, Mail, Phone, MapPin, Calendar, ExternalLink, Loader2, Edit, Plus, Trash2, Map, Navigation, Users, Globe, Copy, Settings, Save } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { AddressAutocomplete } from "@/components/AddressAutocomplete";
+import { ConfigurableSelect } from "@/components/ui/configurable-select";
 import { CreateClientPortalModal } from "@/components/CreateClientPortalModal";
 import { openNavigation } from "@/lib/navigation-utils";
 import { Client } from "@/hooks/useClients";
@@ -39,11 +43,12 @@ interface ClientDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
   onEditClient?: (client: Client) => void;
+  onUpdateClient?: (id: string, updates: Partial<Client>) => Promise<any>;
   onDeleteClient?: (clientId: string) => void;
   onRefreshClient?: () => void;
 }
 
-export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onDeleteClient, onRefreshClient }: ClientDetailsModalProps) => {
+export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onUpdateClient, onDeleteClient, onRefreshClient }: ClientDetailsModalProps) => {
   const { locations, loading: locationsLoading, refetch: refetchLocations } = useClientLocations(client?.id);
   const { deleteLocation, updateLocation } = useLocations();
   const { toast } = useToast();
@@ -51,10 +56,60 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onDe
   const navigate = useNavigate();
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isAddLocationModalOpen, setIsAddLocationModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
   const [isPortalModalOpen, setIsPortalModalOpen] = useState(false);
+  const [editForm, setEditForm] = useState<{
+    name: string;
+    contact_name: string;
+    contact_email: string;
+    contact_phone: string;
+    address: string;
+    billing_address: string;
+    status: 'Active' | 'Inactive' | 'Pending';
+  }>({
+    name: '',
+    contact_name: '',
+    contact_email: '',
+    contact_phone: '',
+    address: '',
+    billing_address: '',
+    status: 'Active',
+  });
+
+  useEffect(() => {
+    if (client) {
+      setEditForm({
+        name: client.name || '',
+        contact_name: client.contact_name || '',
+        contact_email: client.contact_email || '',
+        contact_phone: client.contact_phone || '',
+        address: client.address || '',
+        billing_address: client.billing_address || '',
+        status: client.status || 'Active',
+      });
+    }
+  }, [client, isEditMode]);
+
+  const handleSave = async () => {
+    if (!client || !onUpdateClient) return;
+    if (!editForm.name.trim()) {
+      toast({ title: "Error", description: "Client name is required", variant: "destructive" });
+      return;
+    }
+    setIsSaving(true);
+    try {
+      await onUpdateClient(client.id, editForm);
+      setIsEditMode(false);
+      onRefreshClient?.();
+    } catch (error) {
+      // toast handled by hook
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   // Check if user can manage portals (super admin, owner, or admin)
   const canManagePortal = isSuperAdmin || userOrgRole === 'owner' || userOrgRole === 'admin';
@@ -135,13 +190,23 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onDe
               </DialogDescription>
             </div>
             <div className="flex gap-2">
+              {isEditMode && (
+                <Button
+                  onClick={handleSave}
+                  disabled={isSaving}
+                  className="flex items-center gap-2"
+                >
+                  {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  Save
+                </Button>
+              )}
               <Button
                 variant="outline"
                 onClick={() => setIsEditMode(!isEditMode)}
                 className="flex items-center gap-2"
               >
                 <Edit className="h-4 w-4" />
-                {isEditMode ? 'Cancel Edit' : 'Edit'}
+                {isEditMode ? 'Cancel' : 'Edit'}
               </Button>
             </div>
           </div>
@@ -154,59 +219,97 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onDe
               <CardTitle className="text-lg flex items-center justify-between">
                 <span className="flex items-center gap-2">
                   <Building2 className="h-5 w-5 text-primary" />
-                  {client.name}
+                  {isEditMode ? (
+                    <Input
+                      value={editForm.name}
+                      onChange={(e) => setEditForm(f => ({ ...f, name: e.target.value }))}
+                      className="max-w-xs"
+                      placeholder="Client name"
+                    />
+                  ) : client.name}
                 </span>
-                <Badge className={getStatusColor(client.status)}>
-                  {client.status}
-                </Badge>
+                {isEditMode ? (
+                  <ConfigurableSelect
+                    category="client_statuses"
+                    value={editForm.status}
+                    onValueChange={(v) => setEditForm(f => ({ ...f, status: v as 'Active' | 'Inactive' | 'Pending' }))}
+                    placeholder="Status"
+                  />
+                ) : (
+                  <Badge className={getStatusColor(client.status)}>
+                    {client.status}
+                  </Badge>
+                )}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Contact Person */}
-                <div className="flex items-start gap-3">
-                  <User className="h-5 w-5 text-muted-foreground mt-0.5" />
-                  <div>
-                    <p className="font-medium text-sm text-muted-foreground">Contact Person</p>
-                    <p className="text-foreground">
-                      {client.contact_name || "Not specified"}
-                    </p>
+              {isEditMode ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Contact Person</Label>
+                    <Input
+                      value={editForm.contact_name}
+                      onChange={(e) => setEditForm(f => ({ ...f, contact_name: e.target.value }))}
+                      placeholder="Primary contact name"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Contact Email</Label>
+                    <Input
+                      type="email"
+                      value={editForm.contact_email}
+                      onChange={(e) => setEditForm(f => ({ ...f, contact_email: e.target.value }))}
+                      placeholder="contact@company.com"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Contact Phone</Label>
+                    <Input
+                      value={editForm.contact_phone}
+                      onChange={(e) => setEditForm(f => ({ ...f, contact_phone: e.target.value }))}
+                      placeholder="(555) 123-4567"
+                    />
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <div>
+                      <p className="font-medium text-sm text-muted-foreground">Added</p>
+                      <p className="text-foreground">{new Date(client.created_at).toLocaleDateString()}</p>
+                    </div>
                   </div>
                 </div>
-
-                {/* Email */}
-                <div className="flex items-start gap-3">
-                  <Mail className="h-5 w-5 text-muted-foreground mt-0.5" />
-                  <div>
-                    <p className="font-medium text-sm text-muted-foreground">Email</p>
-                    <p className="text-foreground">
-                      {client.contact_email || "Not specified"}
-                    </p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex items-start gap-3">
+                    <User className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <div>
+                      <p className="font-medium text-sm text-muted-foreground">Contact Person</p>
+                      <p className="text-foreground">{client.contact_name || "Not specified"}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Mail className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <div>
+                      <p className="font-medium text-sm text-muted-foreground">Email</p>
+                      <p className="text-foreground">{client.contact_email || "Not specified"}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Phone className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <div>
+                      <p className="font-medium text-sm text-muted-foreground">Phone</p>
+                      <p className="text-foreground">{client.contact_phone || "Not specified"}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <div>
+                      <p className="font-medium text-sm text-muted-foreground">Added</p>
+                      <p className="text-foreground">{new Date(client.created_at).toLocaleDateString()}</p>
+                    </div>
                   </div>
                 </div>
-
-                {/* Phone */}
-                <div className="flex items-start gap-3">
-                  <Phone className="h-5 w-5 text-muted-foreground mt-0.5" />
-                  <div>
-                    <p className="font-medium text-sm text-muted-foreground">Phone</p>
-                    <p className="text-foreground">
-                      {client.contact_phone || "Not specified"}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Created Date */}
-                <div className="flex items-start gap-3">
-                  <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
-                  <div>
-                    <p className="font-medium text-sm text-muted-foreground">Added</p>
-                    <p className="text-foreground">
-                      {new Date(client.created_at).toLocaleDateString()}
-                    </p>
-                  </div>
-                </div>
-              </div>
+              )}
             </CardContent>
           </Card>
 
@@ -323,20 +426,34 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onDe
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div>
-                <p className="font-medium text-sm text-muted-foreground mb-1">Business Address</p>
-                <p className="text-foreground">
-                  {client.address || "Not specified"}
-                </p>
-              </div>
-              
-              {client.billing_address && (
-                <div>
-                  <p className="font-medium text-sm text-muted-foreground mb-1">Billing Address</p>
-                  <p className="text-foreground">
-                    {client.billing_address}
-                  </p>
-                </div>
+              {isEditMode ? (
+                <>
+                  <AddressAutocomplete
+                    label="Business Address"
+                    value={editForm.address}
+                    onChange={(v) => setEditForm(f => ({ ...f, address: v }))}
+                    placeholder="Start typing an address..."
+                  />
+                  <AddressAutocomplete
+                    label="Billing Address"
+                    value={editForm.billing_address}
+                    onChange={(v) => setEditForm(f => ({ ...f, billing_address: v }))}
+                    placeholder="Start typing an address..."
+                  />
+                </>
+              ) : (
+                <>
+                  <div>
+                    <p className="font-medium text-sm text-muted-foreground mb-1">Business Address</p>
+                    <p className="text-foreground">{client.address || "Not specified"}</p>
+                  </div>
+                  {client.billing_address && (
+                    <div>
+                      <p className="font-medium text-sm text-muted-foreground mb-1">Billing Address</p>
+                      <p className="text-foreground">{client.billing_address}</p>
+                    </div>
+                  )}
+                </>
               )}
             </CardContent>
           </Card>
