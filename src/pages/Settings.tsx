@@ -16,12 +16,15 @@ import { AuditTrailViewer } from '@/components/AuditTrailViewer';
 import { APIKeysManager } from '@/components/APIKeysManager';
 import { VersionInfo } from '@/components/VersionInfo';
 import { EmailBrandingSettings } from '@/components/EmailBrandingSettings';
+import { OrganizationTradesManager } from '@/components/OrganizationTradesManager';
 import { useSearchParams } from 'react-router-dom';
 import { useOrganization } from '@/contexts/OrganizationContext';
+import { useOrganizationData } from '@/hooks/useOrganizationData';
 
 const Settings = () => {
   const [searchParams] = useSearchParams();
   const { isSuperAdmin } = useOrganization();
+  const { organizationId } = useOrganizationData();
   const defaultTab = searchParams.get('tab') || 'core';
   return (
     <main className="container mx-auto px-4 py-6 space-y-6">
@@ -91,6 +94,22 @@ const Settings = () => {
               </CardHeader>
               <CardContent>
                 <SystemConfigurationManager />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Organization Trades</CardTitle>
+                <CardDescription>
+                  Select the trades your organization performs. Drop points will be tagged to trades for filtering.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {organizationId ? (
+                  <OrganizationTradesManager organizationId={organizationId} />
+                ) : (
+                  <p className="text-sm text-muted-foreground">Please select an organization first to manage trades.</p>
+                )}
               </CardContent>
             </Card>
           </div>
