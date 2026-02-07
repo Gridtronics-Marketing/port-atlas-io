@@ -2679,6 +2679,85 @@ export type Database = {
           },
         ]
       }
+      location_requests: {
+        Row: {
+          access_instructions: string | null
+          address: string
+          building_type: string | null
+          client_id: string
+          contact_onsite: string | null
+          contact_phone: string | null
+          created_at: string | null
+          floors: number | null
+          id: string
+          latitude: number | null
+          longitude: number | null
+          name: string
+          organization_id: string
+          service_request_id: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          access_instructions?: string | null
+          address: string
+          building_type?: string | null
+          client_id: string
+          contact_onsite?: string | null
+          contact_phone?: string | null
+          created_at?: string | null
+          floors?: number | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          name: string
+          organization_id: string
+          service_request_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          access_instructions?: string | null
+          address?: string
+          building_type?: string | null
+          client_id?: string
+          contact_onsite?: string | null
+          contact_phone?: string | null
+          created_at?: string | null
+          floors?: number | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          name?: string
+          organization_id?: string
+          service_request_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "location_requests_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "location_requests_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "location_requests_service_request_id_fkey"
+            columns: ["service_request_id"]
+            isOneToOne: false
+            referencedRelation: "service_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       locations: {
         Row: {
           access_instructions: string | null

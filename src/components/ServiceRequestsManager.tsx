@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   MessageSquare,
   Clock,
@@ -36,6 +36,8 @@ import { Label } from "@/components/ui/label";
 import { useServiceRequests, ServiceRequest } from "@/hooks/useServiceRequests";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConvertToWorkOrderModal } from "@/components/ConvertToWorkOrderModal";
+import { LocationRequestReviewModal } from "@/components/LocationRequestReviewModal";
+import { supabase } from "@/integrations/supabase/client";
 
 export function ServiceRequestsManager() {
   const { serviceRequests, loading, updateServiceRequest, refetch } = useServiceRequests();
@@ -43,6 +45,25 @@ export function ServiceRequestsManager() {
   const [reviewNotes, setReviewNotes] = useState("");
   const [updating, setUpdating] = useState(false);
   const [convertRequest, setConvertRequest] = useState<ServiceRequest | null>(null);
+  const [locationReviewRequest, setLocationReviewRequest] = useState<ServiceRequest | null>(null);
+  const [locationRequestData, setLocationRequestData] = useState<any>(null);
+
+  // Fetch location request data when reviewing a new_location request
+  useEffect(() => {
+    const fetchLocationRequest = async () => {
+      if (!locationReviewRequest) {
+        setLocationRequestData(null);
+        return;
+      }
+      const { data } = await supabase
+        .from("location_requests")
+        .select("*")
+        .eq("service_request_id", locationReviewRequest.id)
+        .maybeSingle();
+      setLocationRequestData(data);
+    };
+    fetchLocationRequest();
+  }, [locationReviewRequest]);
 
   const handleStatusUpdate = async (requestId: string, newStatus: string) => {
     setUpdating(true);
@@ -99,6 +120,12 @@ export function ServiceRequestsManager() {
         return 'Change Request';
       case 'maintenance':
         return 'Maintenance';
+      case 'new_location':
+        return 'New Location';
+      case 'new_drop_point':
+        return 'New Drop Point';
+      case 'new_room_view':
+        return 'New Room View';
       default:
         return type;
     }
@@ -193,6 +220,12 @@ export function ServiceRequestsManager() {
                         <Eye className="h-4 w-4 mr-2" />
                         Review & Respond
                       </DropdownMenuItem>
+                      {request.request_type === 'new_location' && (
+                        <DropdownMenuItem onClick={() => setLocationReviewRequest(request)}>
+                          <MapPin className="h-4 w-4 mr-2 text-primary" />
+                          Review Location Request
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuItem onClick={() => handleStatusUpdate(request.id, 'approved')}>
                         <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
                         Approve
@@ -393,6 +426,15 @@ export function ServiceRequestsManager() {
         serviceRequest={convertRequest}
         open={!!convertRequest}
         onClose={() => setConvertRequest(null)}
+        onSuccess={() => refetch()}
+      />
+
+      {/* Location Request Review Modal */}
+      <LocationRequestReviewModal
+        open={!!locationReviewRequest}
+        onClose={() => setLocationReviewRequest(null)}
+        locationRequest={locationRequestData}
+        serviceRequestId={locationReviewRequest?.id || ""}
         onSuccess={() => refetch()}
       />
     </div>
