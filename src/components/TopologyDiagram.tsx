@@ -133,11 +133,14 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({ topology }) =>
       );
     }
 
-    // Backbone edges between infrastructure nodes
+    // Backbone edges between infrastructure nodes (from cables)
+    const drawnInfraEdges = new Set<string>();
     for (const edge of topology.edges) {
       const fromNode = nodes.find(n => n.id === edge.from);
       const toNode = nodes.find(n => n.id === edge.to);
       if (fromNode && toNode) {
+        drawnInfraEdges.add(`${edge.from}-${edge.to}`);
+        drawnInfraEdges.add(`${edge.to}-${edge.from}`);
         edges.push({
           fromX: fromNode.x + NODE_W / 2,
           fromY: fromNode.y + NODE_H,
@@ -145,6 +148,23 @@ export const TopologyDiagram: React.FC<TopologyDiagramProps> = ({ topology }) =>
           toY: toNode.y,
           label: edge.media,
           dashed: false,
+        });
+      }
+    }
+
+    // Auto-connect MDF → IDF nodes that don't already have a cable edge
+    const mdfs = nodes.filter(n => n.type === 'MDF');
+    const idfs = nodes.filter(n => n.type === 'IDF');
+    for (const mdf of mdfs) {
+      for (const idf of idfs) {
+        const key = `${mdf.id}-${idf.id}`;
+        if (drawnInfraEdges.has(key)) continue;
+        edges.push({
+          fromX: mdf.x + NODE_W / 2,
+          fromY: mdf.y + NODE_H,
+          toX: idf.x + NODE_W / 2,
+          toY: idf.y,
+          dashed: true,
         });
       }
     }
