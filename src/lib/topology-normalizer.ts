@@ -84,6 +84,22 @@ export function buildTopology(
     room: frame.room ?? null,
   }));
 
+  // 1b. Also build nodes from MDF/IDF type drop points (that aren't already represented by a frame)
+  const nodeIdSet = new Set(nodes.map(n => n.id));
+  for (const dp of dropPoints) {
+    if (!NODE_TYPES.has(dp.point_type as string)) continue;
+    if (nodeIdSet.has(dp.id)) continue;
+    const type = (dp.point_type as string) === 'mdf' ? 'MDF' : 'IDF';
+    nodes.push({
+      id: dp.id,
+      type: type as 'MDF' | 'IDF',
+      normalized_name: dp.label || `${type}-F${dp.floor ?? 0}`,
+      floor: dp.floor ?? 0,
+      room: dp.room ?? null,
+    });
+    nodeIdSet.add(dp.id);
+  }
+
   // 2. Build edges from backbone cables
   const frameById = new Map(frames.map(f => [f.id, f]));
   const edges: TopologyEdge[] = [];
@@ -157,7 +173,7 @@ export function buildTopology(
     } else {
       // Create one topology drop point per connection (most will have just one)
       for (const conn of connections) {
-        const parentExists = conn.frame_id ? frameById.has(conn.frame_id) : false;
+        const parentExists = conn.frame_id ? (frameById.has(conn.frame_id) || nodeIdSet.has(conn.frame_id)) : false;
 
         topologyDropPoints.push({
           id: dp.id,

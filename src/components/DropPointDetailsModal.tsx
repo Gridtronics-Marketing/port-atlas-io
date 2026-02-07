@@ -75,13 +75,18 @@ export const DropPointDetailsModal: React.FC<DropPointDetailsModalProps> = ({
   const [mdfConnections, setMdfConnections] = useState<MdfIdfConnection[]>([]);
   const [isTogglingLock, setIsTogglingLock] = useState(false);
   
-  const { updateDropPoint, deleteDropPoint } = useDropPoints(locationId);
+  const { updateDropPoint, deleteDropPoint, dropPoints } = useDropPoints(locationId);
   const { photos, loading: photosLoading, addPhoto, updatePhoto, deletePhoto } = useDropPointPhotos(dropPoint?.id);
   const { employee: currentEmployee } = useCurrentEmployee();
   const { capturePhoto, selectFromGallery } = usePhotoCapture();
   const { toast } = useToast();
   const { hasAnyRole } = useUserRoles();
   const { frames, loading: framesLoading } = useDistributionFrames(locationId);
+
+  // Get MDF/IDF drop points at this location for connection dropdown
+  const mdfIdfDropPoints = dropPoints
+    .filter(dp => ['mdf', 'idf'].includes(dp.point_type as string) && dp.id !== dropPoint?.id)
+    .map(dp => ({ id: dp.id, label: dp.label, point_type: dp.point_type as string, floor: dp.floor, room: dp.room }));
 
   React.useEffect(() => {
     if (dropPoint) {
@@ -581,6 +586,7 @@ export const DropPointDetailsModal: React.FC<DropPointDetailsModalProps> = ({
                   frames={frames}
                   framesLoading={framesLoading}
                   currentFloor={dropPoint.floor || undefined}
+                  mdfIdfDropPoints={mdfIdfDropPoints}
                 />
               ) : (
                 <div className="space-y-2">
