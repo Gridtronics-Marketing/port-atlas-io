@@ -19,6 +19,7 @@ import { Loader2, Shield, Wifi, Download } from 'lucide-react';
 import tradeAtlasLogo from "@/assets/trade-atlas-logo.png";
 import tradeAtlasBackground from "@/assets/trade-atlas-background.jpg";
 import { OfflineIndicator } from '@/components/OfflineIndicator';
+import { APP_VERSION } from '@/lib/version';
 
 const Auth = () => {
   const { user, loading: authLoading, signIn, signUp, resetPassword, updatePassword } = useAuth();
@@ -323,6 +324,7 @@ const Auth = () => {
               </form>
             </TabsContent>
           </Tabs>
+          <p className="text-center text-xs text-muted-foreground mt-4">v{APP_VERSION}</p>
         </CardContent>
       </Card>
 
