@@ -1,4 +1,4 @@
-export const APP_VERSION = "1.10.1";
+export const APP_VERSION = "1.10.2";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,13 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "1.10.2",
+    date: "2026-02-07",
+    changes: [
+      "Fixed client portal drop point photos not showing - added RLS policy for client portal users",
+    ]
+  },
   {
     version: "1.10.1",
     date: "2026-02-07",
