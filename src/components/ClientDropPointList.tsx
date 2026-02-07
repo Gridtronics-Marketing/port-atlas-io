@@ -64,6 +64,8 @@ export const ClientDropPointList = ({ locationId }: ClientDropPointListProps) =>
     switch (status) {
       case "Active":
       case "Installed":
+      case "Finished":
+      case "Tested":
         return (
           <Badge className="bg-green-500/10 text-green-600">
             <CheckCircle className="h-3 w-3 mr-1" />
@@ -71,17 +73,26 @@ export const ClientDropPointList = ({ locationId }: ClientDropPointListProps) =>
           </Badge>
         );
       case "Pending":
+      case "Roughed In":
         return (
           <Badge className="bg-yellow-500/10 text-yellow-600">
             <Clock className="h-3 w-3 mr-1" />
-            Pending
+            {status}
           </Badge>
         );
       case "Issue":
+      case "Planned":
         return (
           <Badge className="bg-red-500/10 text-red-600">
             <AlertCircle className="h-3 w-3 mr-1" />
-            Issue
+            {status}
+          </Badge>
+        );
+      case "Proposed":
+        return (
+          <Badge className="bg-gray-400/10 text-gray-500">
+            <Clock className="h-3 w-3 mr-1" />
+            Proposed
           </Badge>
         );
       default:

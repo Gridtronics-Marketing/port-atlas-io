@@ -126,6 +126,8 @@ export function ServiceRequestsManager() {
         return 'New Drop Point';
       case 'new_room_view':
         return 'New Room View';
+      case 'new_project':
+        return 'New Project';
       default:
         return type;
     }

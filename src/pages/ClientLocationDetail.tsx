@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, MapPin, Building2, Network, FileText, Package, Camera } from "lucide-react";
+import { ArrowLeft, MapPin, Building2, Network, FileText, Package, Camera, StickyNote } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,7 @@ import { ClientFloorPlanViewer } from "@/components/ClientFloorPlanViewer";
 import { ClientDropPointList } from "@/components/ClientDropPointList";
 import { ClientEquipmentList } from "@/components/ClientEquipmentList";
 import { ClientRoomViewList } from "@/components/ClientRoomViewList";
+import { ClientLocationNotesTab } from "@/components/ClientLocationNotesTab";
 
 interface LocationDetails {
   id: string;
@@ -39,7 +40,6 @@ const ClientLocationDetail = () => {
       if (!locationId || !currentOrganization?.id) return;
 
       try {
-        // Fetch location details
         const { data: locationData, error: locationError } = await supabase
           .from("locations")
           .select("*")
@@ -49,29 +49,15 @@ const ClientLocationDetail = () => {
         if (locationError) throw locationError;
         setLocation(locationData);
 
-        // Fetch drop point count
-        const { count: dpCount } = await supabase
-          .from("drop_points")
-          .select("*", { count: "exact", head: true })
-          .eq("location_id", locationId);
+        const [dpRes, eqRes, rvRes] = await Promise.all([
+          supabase.from("drop_points").select("*", { count: "exact", head: true }).eq("location_id", locationId),
+          supabase.from("equipment").select("*", { count: "exact", head: true }).eq("location_id", locationId),
+          supabase.from("room_views").select("*", { count: "exact", head: true }).eq("location_id", locationId),
+        ]);
 
-        setDropPointCount(dpCount || 0);
-
-        // Fetch equipment count
-        const { count: eqCount } = await supabase
-          .from("equipment")
-          .select("*", { count: "exact", head: true })
-          .eq("location_id", locationId);
-
-        setEquipmentCount(eqCount || 0);
-
-        // Fetch room view count
-        const { count: rvCount } = await supabase
-          .from("room_views")
-          .select("*", { count: "exact", head: true })
-          .eq("location_id", locationId);
-
-        setRoomViewCount(rvCount || 0);
+        setDropPointCount(dpRes.count || 0);
+        setEquipmentCount(eqRes.count || 0);
+        setRoomViewCount(rvRes.count || 0);
       } catch (error) {
         console.error("Error fetching location details:", error);
       } finally {
@@ -118,6 +104,8 @@ const ClientLocationDetail = () => {
         return <Badge className="bg-blue-500/10 text-blue-600">In Progress</Badge>;
       case "Completed":
         return <Badge className="bg-purple-500/10 text-purple-600">Completed</Badge>;
+      case "Pending":
+        return <Badge className="bg-yellow-500/10 text-yellow-600">Pending</Badge>;
       default:
         return <Badge variant="outline">{status || "Unknown"}</Badge>;
     }
@@ -127,7 +115,7 @@ const ClientLocationDetail = () => {
     <main className="container mx-auto px-4 py-6 space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
+        <Button variant="ghost" size="icon" onClick={() => navigate("/locations")}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="flex-1">
@@ -145,7 +133,7 @@ const ClientLocationDetail = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="pt-4">
             <div className="flex items-center gap-3">
@@ -201,29 +189,16 @@ const ClientLocationDetail = () => {
             </div>
           </CardContent>
         </Card>
-
-        <Card>
-          <CardContent className="pt-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-purple-500/10">
-                <FileText className="h-5 w-5 text-purple-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{location.building_type || "N/A"}</p>
-                <p className="text-sm text-muted-foreground">Building Type</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
-      {/* Tabs for different views */}
+      {/* Tabs */}
       <Tabs defaultValue="floorplan" className="w-full">
         <TabsList>
           <TabsTrigger value="floorplan">Floor Plan</TabsTrigger>
           <TabsTrigger value="droppoints">Drop Points</TabsTrigger>
           <TabsTrigger value="roomviews">Room Views</TabsTrigger>
           <TabsTrigger value="equipment">Equipment</TabsTrigger>
+          <TabsTrigger value="notes">Notes & Docs</TabsTrigger>
         </TabsList>
 
         <TabsContent value="floorplan" className="mt-4">
@@ -247,6 +222,10 @@ const ClientLocationDetail = () => {
 
         <TabsContent value="equipment" className="mt-4">
           <ClientEquipmentList locationId={locationId!} />
+        </TabsContent>
+
+        <TabsContent value="notes" className="mt-4">
+          <ClientLocationNotesTab locationId={locationId!} totalFloors={location.floors || 1} />
         </TabsContent>
       </Tabs>
     </main>
