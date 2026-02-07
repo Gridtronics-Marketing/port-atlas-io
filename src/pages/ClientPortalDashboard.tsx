@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Plus, 
   MapPin, 
@@ -20,15 +20,35 @@ import { useClientPortalData } from "@/hooks/useClientPortalData";
 import { useServiceRequests } from "@/hooks/useServiceRequests";
 import { CreateServiceRequestModal } from "@/components/CreateServiceRequestModal";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AddServiceLocationModal } from "@/components/AddServiceLocationModal";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 const ClientPortalDashboard = () => {
   const [showCreateRequest, setShowCreateRequest] = useState(false);
+  const [showAddLocation, setShowAddLocation] = useState(false);
+  const [clientId, setClientId] = useState<string | null>(null);
   const { currentOrganization } = useOrganization();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const { accessibleLocations, clientProjects, loading: dataLoading } = useClientPortalData();
   const { serviceRequests, loading: requestsLoading } = useServiceRequests();
 
   const loading = dataLoading || requestsLoading;
+
+  // Fetch client_id for the current portal user
+  useEffect(() => {
+    const fetchClientId = async () => {
+      if (!user?.id) return;
+      const { data } = await supabase
+        .from("client_portal_users")
+        .select("client_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (data) setClientId(data.client_id);
+    };
+    fetchClientId();
+  }, [user?.id]);
 
   // Calculate metrics
   const activeProjects = clientProjects.filter(p => p.status !== 'Completed' && p.status !== 'Cancelled').length;
@@ -399,6 +419,18 @@ const ClientPortalDashboard = () => {
                 </div>
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Button>
+              <Button 
+                variant="outline" 
+                className="w-full justify-between group"
+                onClick={() => setShowAddLocation(true)}
+                disabled={!clientId}
+              >
+                <div className="flex items-center">
+                  <Plus className="h-4 w-4 mr-3" />
+                  Request New Location
+                </div>
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </Button>
             </CardContent>
           </Card>
         </div>
@@ -409,6 +441,16 @@ const ClientPortalDashboard = () => {
         open={showCreateRequest} 
         onOpenChange={setShowCreateRequest} 
       />
+
+      {/* Add Service Location Modal */}
+      {clientId && (
+        <AddServiceLocationModal
+          open={showAddLocation}
+          onOpenChange={setShowAddLocation}
+          clientId={clientId}
+          onSuccess={() => {}}
+        />
+      )}
     </main>
   );
 };
