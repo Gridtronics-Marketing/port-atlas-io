@@ -49,6 +49,8 @@ import { EnhancedPhotoGallery } from './EnhancedPhotoGallery';
 import { PhotoCaptureCard } from './PhotoCaptureCard';
 import { TestResultsUpload } from './TestResultsUpload';
 import { DropPointTypeSpecificFields } from './DropPointTypeSpecificFields';
+import { MdfIdfConnectionFields, MdfIdfConnection } from './MdfIdfConnectionFields';
+import { useDistributionFrames } from '@/hooks/useDistributionFrames';
 import { Lock, Unlock } from 'lucide-react';
 import { useUserRoles } from '@/hooks/useUserRoles';
 import { supabase } from '@/integrations/supabase/client';
@@ -70,6 +72,7 @@ export const DropPointDetailsModal: React.FC<DropPointDetailsModalProps> = ({
   const [activeTab, setActiveTab] = useState('details');
   const [editData, setEditData] = useState<Partial<DropPoint>>({});
   const [typeSpecificData, setTypeSpecificData] = useState<any>({});
+  const [mdfConnections, setMdfConnections] = useState<MdfIdfConnection[]>([]);
   const [isTogglingLock, setIsTogglingLock] = useState(false);
   
   const { updateDropPoint, deleteDropPoint } = useDropPoints(locationId);
@@ -78,6 +81,7 @@ export const DropPointDetailsModal: React.FC<DropPointDetailsModalProps> = ({
   const { capturePhoto, selectFromGallery } = usePhotoCapture();
   const { toast } = useToast();
   const { hasAnyRole } = useUserRoles();
+  const { frames, loading: framesLoading } = useDistributionFrames(locationId);
 
   React.useEffect(() => {
     if (dropPoint) {
@@ -89,7 +93,9 @@ export const DropPointDetailsModal: React.FC<DropPointDetailsModalProps> = ({
         point_type: dropPoint.point_type,
         status: dropPoint.status,
       });
-      setTypeSpecificData((dropPoint as any).type_specific_data || {});
+      const tsd = (dropPoint as any).type_specific_data || {};
+      setTypeSpecificData(tsd);
+      setMdfConnections(tsd.mdf_idf_connections || []);
     }
   }, [dropPoint]);
 
@@ -102,12 +108,21 @@ export const DropPointDetailsModal: React.FC<DropPointDetailsModalProps> = ({
     
     try {
       // Allow cable_count to be null for "to be determined"
+      const validConnections = mdfConnections.filter(c => c.frame_id.trim() || c.port.trim());
+      const mergedTypeData = {
+        ...typeSpecificData,
+        ...(validConnections.length > 0 ? { mdf_idf_connections: validConnections } : {}),
+      };
+      // Remove key if no connections
+      if (validConnections.length === 0) {
+        delete mergedTypeData.mdf_idf_connections;
+      }
       const dataToSave = {
         ...editData,
         cable_count: editData.cable_count === null || editData.cable_count === undefined 
           ? null 
           : parseInt(editData.cable_count as any),
-        type_specific_data: typeSpecificData,
+        type_specific_data: mergedTypeData,
       };
       
       await updateDropPoint(dropPoint.id, dataToSave);
@@ -553,6 +568,41 @@ export const DropPointDetailsModal: React.FC<DropPointDetailsModalProps> = ({
                 onDataChange={setTypeSpecificData}
                 isEditing={isEditing}
               />
+            </div>
+
+            {/* MDF/IDF Connection Fields */}
+            <Separator className="my-4" />
+            <div>
+              <h3 className="text-sm font-medium mb-3">MDF / IDF Connections</h3>
+              {isEditing ? (
+                <MdfIdfConnectionFields
+                  connections={mdfConnections}
+                  onChange={setMdfConnections}
+                  frames={frames}
+                  framesLoading={framesLoading}
+                  currentFloor={dropPoint.floor || undefined}
+                />
+              ) : (
+                <div className="space-y-2">
+                  {mdfConnections.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No MDF/IDF connections specified.</p>
+                  ) : (
+                    mdfConnections.map((conn, idx) => {
+                      const frame = frames.find(f => f.id === conn.frame_id);
+                      const frameLabel = frame
+                        ? (frame.name || `${frame.frame_type} – Floor ${frame.floor}${frame.room ? ` (${frame.room})` : ''}`)
+                        : conn.frame_id || 'Unknown';
+                      return (
+                        <div key={idx} className="border rounded-md p-3 space-y-1 text-sm">
+                          <div><span className="text-muted-foreground">MDF/IDF:</span> {frameLabel}</div>
+                          {conn.port && <div><span className="text-muted-foreground">Port/Panel:</span> {conn.port}</div>}
+                          {conn.notes && <div><span className="text-muted-foreground">Notes:</span> {conn.notes}</div>}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              )}
             </div>
 
             <Separator className="my-6" />
