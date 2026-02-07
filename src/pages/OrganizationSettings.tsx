@@ -4,11 +4,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Building2, Palette, Users, Loader2, Upload, Check } from 'lucide-react';
+import { Building2, Palette, Users, Loader2, Upload, Check, Wrench } from 'lucide-react';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { PendingInvitationsManager } from '@/components/PendingInvitationsManager';
+import { OrganizationTradesManager } from '@/components/OrganizationTradesManager';
 
 interface BrandingSettings {
   primaryColor: string;
@@ -155,6 +156,10 @@ const OrganizationSettings = () => {
           <TabsTrigger value="branding" className="flex items-center gap-2">
             <Palette className="h-4 w-4" />
             Branding
+          </TabsTrigger>
+          <TabsTrigger value="trades" className="flex items-center gap-2">
+            <Wrench className="h-4 w-4" />
+            Trades
           </TabsTrigger>
           <TabsTrigger value="invitations" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
@@ -357,6 +362,11 @@ const OrganizationSettings = () => {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Trades Tab */}
+        <TabsContent value="trades">
+          <OrganizationTradesManager organizationId={currentOrganization.id} />
         </TabsContent>
 
         {/* Invitations Tab */}

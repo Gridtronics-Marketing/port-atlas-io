@@ -1827,6 +1827,7 @@ export type Database = {
           test_results: Json | null
           tested_by: string | null
           tested_date: string | null
+          trade: Database["public"]["Enums"]["trade_type"] | null
           type_specific_data: Json | null
           updated_at: string
           vlan: string | null
@@ -1861,6 +1862,7 @@ export type Database = {
           test_results?: Json | null
           tested_by?: string | null
           tested_date?: string | null
+          trade?: Database["public"]["Enums"]["trade_type"] | null
           type_specific_data?: Json | null
           updated_at?: string
           vlan?: string | null
@@ -1895,6 +1897,7 @@ export type Database = {
           test_results?: Json | null
           tested_by?: string | null
           tested_date?: string | null
+          trade?: Database["public"]["Enums"]["trade_type"] | null
           type_specific_data?: Json | null
           updated_at?: string
           vlan?: string | null
@@ -3328,6 +3331,35 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "organization_members_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organization_trades: {
+        Row: {
+          created_at: string
+          id: string
+          organization_id: string
+          trade: Database["public"]["Enums"]["trade_type"]
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          organization_id: string
+          trade: Database["public"]["Enums"]["trade_type"]
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          organization_id?: string
+          trade?: Database["public"]["Enums"]["trade_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_trades_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -6422,6 +6454,30 @@ export type Database = {
         | "employee"
       org_role: "owner" | "admin" | "project_manager" | "technician" | "viewer"
       platform_role: "super_admin" | "support"
+      trade_type:
+        | "low_voltage"
+        | "electrical"
+        | "plumbing"
+        | "hvac"
+        | "fire_life_safety"
+        | "access_control"
+        | "security_surveillance"
+        | "intrusion_alarm"
+        | "building_automation"
+        | "lighting_controls"
+        | "energy_management"
+        | "gas"
+        | "medical_gas"
+        | "water_treatment"
+        | "elevator"
+        | "escalator"
+        | "av_pro"
+        | "paging_notification"
+        | "parking_systems"
+        | "irrigation"
+        | "refrigeration"
+        | "commercial_kitchen"
+        | "industrial_safety"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -6563,6 +6619,31 @@ export const Constants = {
       ],
       org_role: ["owner", "admin", "project_manager", "technician", "viewer"],
       platform_role: ["super_admin", "support"],
+      trade_type: [
+        "low_voltage",
+        "electrical",
+        "plumbing",
+        "hvac",
+        "fire_life_safety",
+        "access_control",
+        "security_surveillance",
+        "intrusion_alarm",
+        "building_automation",
+        "lighting_controls",
+        "energy_management",
+        "gas",
+        "medical_gas",
+        "water_treatment",
+        "elevator",
+        "escalator",
+        "av_pro",
+        "paging_notification",
+        "parking_systems",
+        "irrigation",
+        "refrigeration",
+        "commercial_kitchen",
+        "industrial_safety",
+      ],
     },
   },
 } as const

@@ -54,6 +54,8 @@ import { useDistributionFrames } from '@/hooks/useDistributionFrames';
 import { Lock, Unlock } from 'lucide-react';
 import { useUserRoles } from '@/hooks/useUserRoles';
 import { supabase } from '@/integrations/supabase/client';
+import { TRADE_TYPES, TRADE_DISPLAY_NAMES, getTradeColor, type TradeType } from '@/lib/trade-registry';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface DropPointDetailsModalProps {
   open: boolean;
@@ -409,6 +411,33 @@ export const DropPointDetailsModal: React.FC<DropPointDetailsModalProps> = ({
                     />
                   ) : (
                     <p className="text-sm">{dropPoint.room || 'Not specified'}</p>
+                  )}
+                </div>
+
+                <div>
+                  <Label htmlFor="trade">Trade</Label>
+                  {isEditing ? (
+                    <Select
+                      value={(editData as any).trade || (dropPoint as any).trade || 'low_voltage'}
+                      onValueChange={(value) => setEditData({ ...editData, trade: value } as any)}
+                    >
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {TRADE_TYPES.map(t => (
+                          <SelectItem key={t} value={t}>{TRADE_DISPLAY_NAMES[t]}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Badge
+                      variant="outline"
+                      style={{
+                        backgroundColor: `hsl(${getTradeColor((dropPoint as any).trade || 'low_voltage')} / 0.15)`,
+                        color: `hsl(${getTradeColor((dropPoint as any).trade || 'low_voltage')})`,
+                      }}
+                    >
+                      {TRADE_DISPLAY_NAMES[((dropPoint as any).trade || 'low_voltage') as TradeType]}
+                    </Badge>
                   )}
                 </div>
 

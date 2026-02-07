@@ -1,10 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { useInfrastructureTopology } from '@/hooks/useInfrastructureTopology';
-import { Download, AlertTriangle, Network } from 'lucide-react';
+import { Download, AlertTriangle, Network, Filter } from 'lucide-react';
 import { TopologyDiagram } from '@/components/TopologyDiagram';
+import { TRADE_CATEGORIES, TRADE_DISPLAY_NAMES, TRADE_TYPES, getTradeColor, type TradeType } from '@/lib/trade-registry';
 
 interface InfrastructureTopologyViewProps {
   locationId: string;
@@ -16,6 +19,14 @@ export const InfrastructureTopologyView: React.FC<InfrastructureTopologyViewProp
   locationName,
 }) => {
   const { topology, loading, flags } = useInfrastructureTopology(locationId, locationName);
+  const [activeTrades, setActiveTrades] = useState<string[]>([]);
+  const [showTradeFilter, setShowTradeFilter] = useState(false);
+
+  const handleToggleTrade = (trade: string) => {
+    setActiveTrades(prev =>
+      prev.includes(trade) ? prev.filter(t => t !== trade) : [...prev, trade]
+    );
+  };
 
   if (loading) {
     return (
@@ -87,11 +98,36 @@ export const InfrastructureTopologyView: React.FC<InfrastructureTopologyViewProp
               <Network className="h-4 w-4 text-primary" />
               Infrastructure Topology
             </h3>
+            <Button size="sm" variant="outline" className="gap-2" onClick={() => setShowTradeFilter(!showTradeFilter)}>
+              <Filter className="h-3.5 w-3.5" />
+              Trades
+            </Button>
             <Button size="sm" variant="outline" className="gap-2" onClick={handleExport}>
               <Download className="h-3.5 w-3.5" />
               Export JSON
             </Button>
           </div>
+          {showTradeFilter && (
+            <div className="flex flex-wrap gap-2 mb-3">
+              {TRADE_CATEGORIES.map(cat => cat.trades).flat().map(trade => (
+                <button
+                  key={trade}
+                  onClick={() => handleToggleTrade(trade)}
+                  className={`text-xs px-2 py-1 rounded-full border transition-colors ${
+                    activeTrades.includes(trade) || activeTrades.length === 0
+                      ? 'opacity-100' : 'opacity-40'
+                  }`}
+                  style={{
+                    borderColor: `hsl(${getTradeColor(trade)})`,
+                    backgroundColor: activeTrades.includes(trade) ? `hsl(${getTradeColor(trade)} / 0.15)` : undefined,
+                    color: `hsl(${getTradeColor(trade)})`,
+                  }}
+                >
+                  {TRADE_DISPLAY_NAMES[trade as TradeType]}
+                </button>
+              ))}
+            </div>
+          )}
           <TopologyDiagram topology={topology} />
         </CardContent>
       </Card>

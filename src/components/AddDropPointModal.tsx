@@ -10,6 +10,9 @@ import { useDistributionFrames } from "@/hooks/useDistributionFrames";
 import { useToast } from "@/hooks/use-toast";
 import { CableNameFields } from "@/components/CableNameFields";
 import { MdfIdfConnectionFields, MdfIdfConnection } from "@/components/MdfIdfConnectionFields";
+import { TRADE_TYPES, TRADE_DISPLAY_NAMES, type TradeType } from "@/lib/trade-registry";
+import { useOrganizationTrades } from "@/hooks/useOrganizationTrades";
+import { useOrganizationData } from "@/hooks/useOrganizationData";
 
 interface AddDropPointModalProps {
   open: boolean;
@@ -37,11 +40,16 @@ export const AddDropPointModal = ({
   coordinates,
   floor = 1
 }: AddDropPointModalProps) => {
+  const { organizationId } = useOrganizationData();
+  const { tradeValues } = useOrganizationTrades(organizationId);
+  const defaultTrade = tradeValues.length > 0 ? tradeValues[0] : 'low_voltage';
+
   const [formData, setFormData] = useState({
     point_type: 'data',
     cable_count: '',
     label: '',
     notes: '',
+    trade: defaultTrade as string,
   });
   const [cableNames, setCableNames] = useState<Record<number, string>>({});
   const [mdfConnections, setMdfConnections] = useState<MdfIdfConnection[]>([{ frame_id: "", port: "", notes: "" }]);
@@ -95,6 +103,7 @@ export const AddDropPointModal = ({
       const dropPointData = {
         location_id: locationId,
         point_type: formData.point_type,
+        trade: formData.trade,
         label: formData.label.trim() || null,
         cable_count: cableCount,
         notes: formData.notes.trim() || null,
@@ -122,7 +131,7 @@ export const AddDropPointModal = ({
       toast({ title: "Success", description: "Drop point added successfully" });
 
       // Reset form
-      setFormData({ point_type: 'data', cable_count: '', label: '', notes: '' });
+      setFormData({ point_type: 'data', cable_count: '', label: '', notes: '', trade: defaultTrade });
       setCableNames({});
       setMdfConnections([{ frame_id: "", port: "", notes: "" }]);
       setCableCountError('');
@@ -137,7 +146,7 @@ export const AddDropPointModal = ({
   };
 
   const handleCancel = () => {
-    setFormData({ point_type: 'data', cable_count: '', label: '', notes: '' });
+    setFormData({ point_type: 'data', cable_count: '', label: '', notes: '', trade: defaultTrade });
     setCableNames({});
     setMdfConnections([{ frame_id: "", port: "", notes: "" }]);
     setCableCountError('');
@@ -151,6 +160,22 @@ export const AddDropPointModal = ({
           <DialogTitle>Add Drop Point</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Trade */}
+          <div className="space-y-2">
+            <Label htmlFor="trade">Trade *</Label>
+            <Select
+              value={formData.trade}
+              onValueChange={(value) => setFormData({ ...formData, trade: value })}
+            >
+              <SelectTrigger id="trade"><SelectValue placeholder="Select trade" /></SelectTrigger>
+              <SelectContent>
+                {TRADE_TYPES.map((trade) => (
+                  <SelectItem key={trade} value={trade}>{TRADE_DISPLAY_NAMES[trade]}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* Type */}
           <div className="space-y-2">
             <Label htmlFor="point_type">Type *</Label>

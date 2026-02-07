@@ -13,6 +13,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
+import { TRADE_CATEGORIES, TRADE_DISPLAY_NAMES, TRADE_TYPES, getTradeColor, type TradeType } from '@/lib/trade-registry';
 
 export interface FloorPlanFilters {
   showDropPointLabels: boolean;
@@ -20,6 +21,7 @@ export interface FloorPlanFilters {
   showWirePaths: boolean;
   dropPointTypes: string[];
   dropPointStatuses: string[];
+  trades: string[];
   markerScale: number;
 }
 
@@ -88,6 +90,21 @@ export const FloorPlanFilterDialog = ({
 
   const handleDeselectAllStatuses = () => {
     onFiltersChange({ ...filters, dropPointStatuses: [] });
+  };
+
+  const handleToggleTrade = (trade: string) => {
+    const newTrades = filters.trades.includes(trade)
+      ? filters.trades.filter(t => t !== trade)
+      : [...filters.trades, trade];
+    onFiltersChange({ ...filters, trades: newTrades });
+  };
+
+  const handleSelectAllTrades = () => {
+    onFiltersChange({ ...filters, trades: [...TRADE_TYPES] });
+  };
+
+  const handleDeselectAllTrades = () => {
+    onFiltersChange({ ...filters, trades: [] });
   };
 
   return (
@@ -257,6 +274,42 @@ export const FloorPlanFilterDialog = ({
                 </div>
               ))}
             </div>
+          </div>
+
+          <Separator />
+
+          {/* Trades Filter */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-medium">Trades</h4>
+              <div className="space-x-2">
+                <Button variant="ghost" size="sm" onClick={handleSelectAllTrades} className="h-7 text-xs">All</Button>
+                <Button variant="ghost" size="sm" onClick={handleDeselectAllTrades} className="h-7 text-xs">None</Button>
+              </div>
+            </div>
+            {TRADE_CATEGORIES.map(category => (
+              <div key={category.label} className="space-y-1">
+                <p className="text-xs text-muted-foreground font-medium">{category.label}</p>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {category.trades.map(trade => (
+                    <div key={trade} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`trade-${trade}`}
+                        checked={filters.trades.includes(trade)}
+                        onCheckedChange={() => handleToggleTrade(trade)}
+                      />
+                      <Label htmlFor={`trade-${trade}`} className="text-sm">
+                        <span
+                          className="inline-block w-2 h-2 rounded-full mr-1"
+                          style={{ backgroundColor: `hsl(${getTradeColor(trade)})` }}
+                        />
+                        {TRADE_DISPLAY_NAMES[trade as TradeType]}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </DialogContent>

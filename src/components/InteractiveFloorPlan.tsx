@@ -83,6 +83,7 @@ export const InteractiveFloorPlan = ({
     showWirePaths: true,
     dropPointTypes: ['data', 'wifi', 'camera', 'mdf', 'idf', 'access_control', 'av', 'other'],
     dropPointStatuses: ['planned', 'roughed_in', 'finished', 'tested'],
+    trades: [],
     markerScale: 1,
   });
   const [showUploadDialog, setShowUploadDialog] = useState(false);
@@ -121,7 +122,8 @@ export const InteractiveFloorPlan = ({
   const filteredDropPoints = floorDropPoints.filter(dp => {
     const typeMatch = filters.dropPointTypes.includes(dp.point_type || 'data');
     const statusMatch = filters.dropPointStatuses.includes(dp.status || 'planned');
-    return typeMatch && statusMatch;
+    const tradeMatch = filters.trades.length === 0 || filters.trades.includes((dp as any).trade || 'low_voltage');
+    return typeMatch && statusMatch && tradeMatch;
   });
   const filteredRoomViews = filters.showRoomViewDots ? floorRoomViews : [];
   const filteredWirePaths = filters.showWirePaths ? wirePaths : [];
