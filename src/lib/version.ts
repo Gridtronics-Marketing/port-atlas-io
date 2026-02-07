@@ -1,4 +1,4 @@
-export const APP_VERSION = "1.10.4";
+export const APP_VERSION = "1.10.5";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,14 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "1.10.5",
+    date: "2026-02-07",
+    changes: [
+      "Split MDF/IDF drop point type into separate MDF and IDF types",
+      "Added Photos tab to floor plan room view dialog for client portal users",
+    ]
+  },
   {
     version: "1.10.4",
     date: "2026-02-07",
