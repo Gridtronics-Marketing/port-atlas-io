@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,7 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useDropPoints } from "@/hooks/useDropPoints";
+import { useDistributionFrames } from "@/hooks/useDistributionFrames";
 import { useToast } from "@/hooks/use-toast";
+import { CableNameFields } from "@/components/CableNameFields";
+import { MdfIdfConnectionFields, MdfIdfConnection } from "@/components/MdfIdfConnectionFields";
 
 interface AddDropPointModalProps {
   open: boolean;
@@ -35,19 +38,23 @@ export const AddDropPointModal = ({
 }: AddDropPointModalProps) => {
   const [formData, setFormData] = useState({
     point_type: 'data',
-    cable_count: '',  // Allow empty string for better iPad/iOS input handling
+    cable_count: '',
     label: '',
     notes: '',
   });
+  const [cableNames, setCableNames] = useState<Record<number, string>>({});
+  const [mdfConnections, setMdfConnections] = useState<MdfIdfConnection[]>([{ frame_id: "", port: "", notes: "" }]);
   const [cableCountError, setCableCountError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { addDropPoint } = useDropPoints(locationId);
+  const { frames, loading: framesLoading } = useDistributionFrames(locationId);
   const { toast } = useToast();
+
+  const parsedCableCount = formData.cable_count === '' ? 0 : parseInt(formData.cable_count);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validate cable count
     const cableCount = formData.cable_count === '' ? 0 : parseInt(formData.cable_count);
     if (cableCount < 1) {
       setCableCountError('Number of cables must be at least 1');
@@ -57,6 +64,28 @@ export const AddDropPointModal = ({
 
     setIsSubmitting(true);
     try {
+      // Build type_specific_data with cable names and MDF connections
+      const typeSpecificData: Record<string, any> = {};
+
+      // Store cable names if more than 1 cable
+      if (cableCount > 1) {
+        const names: Record<number, string> = {};
+        for (let i = 0; i < cableCount; i++) {
+          if (cableNames[i]?.trim()) {
+            names[i] = cableNames[i].trim();
+          }
+        }
+        if (Object.keys(names).length > 0) {
+          typeSpecificData.cable_names = names;
+        }
+      }
+
+      // Store MDF/IDF connections
+      const validConnections = mdfConnections.filter(c => c.frame_id.trim() || c.port.trim());
+      if (validConnections.length > 0) {
+        typeSpecificData.mdf_idf_connections = validConnections;
+      }
+
       const dropPointData = {
         location_id: locationId,
         point_type: formData.point_type,
@@ -67,7 +96,7 @@ export const AddDropPointModal = ({
         x_coordinate: coordinates?.x || 50,
         y_coordinate: coordinates?.y || 50,
         status: 'planned',
-        type_specific_data: {},
+        type_specific_data: typeSpecificData,
         room: null,
         cable_id: null,
         patch_panel_port: null,
@@ -84,66 +113,49 @@ export const AddDropPointModal = ({
 
       await addDropPoint(dropPointData);
 
-      toast({
-        title: "Success",
-        description: "Drop point added successfully",
-      });
+      toast({ title: "Success", description: "Drop point added successfully" });
 
       // Reset form
-      setFormData({
-        point_type: 'data',
-        cable_count: '',
-        label: '',
-        notes: '',
-      });
+      setFormData({ point_type: 'data', cable_count: '', label: '', notes: '' });
+      setCableNames({});
+      setMdfConnections([{ frame_id: "", port: "", notes: "" }]);
       setCableCountError('');
       
       onOpenChange(false);
     } catch (error) {
       console.error("Error adding drop point:", error);
-      toast({
-        title: "Error",
-        description: "Failed to add drop point",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "Failed to add drop point", variant: "destructive" });
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleCancel = () => {
-    setFormData({
-      point_type: 'data',
-      cable_count: '',
-      label: '',
-      notes: '',
-    });
+    setFormData({ point_type: 'data', cable_count: '', label: '', notes: '' });
+    setCableNames({});
+    setMdfConnections([{ frame_id: "", port: "", notes: "" }]);
     setCableCountError('');
     onOpenChange(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add Drop Point</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Type - First Field */}
+          {/* Type */}
           <div className="space-y-2">
             <Label htmlFor="point_type">Type *</Label>
             <Select
               value={formData.point_type}
               onValueChange={(value) => setFormData({ ...formData, point_type: value })}
             >
-              <SelectTrigger id="point_type">
-                <SelectValue />
-              </SelectTrigger>
+              <SelectTrigger id="point_type"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {DROP_POINT_TYPES.map((type) => (
-                  <SelectItem key={type.value} value={type.value}>
-                    {type.label}
-                  </SelectItem>
+                  <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -160,21 +172,28 @@ export const AddDropPointModal = ({
               value={formData.cable_count}
               onChange={(e) => {
                 const value = e.target.value;
-                // Allow empty or numeric values only
                 if (value === '' || /^\d+$/.test(value)) {
-                  setFormData({ ...formData, cable_count: value });
-                  setCableCountError('');
+                  const num = parseInt(value);
+                  if (value === '' || (num >= 0 && num <= 20)) {
+                    setFormData({ ...formData, cable_count: value });
+                    setCableCountError('');
+                  }
                 }
               }}
               placeholder="1"
               className={cableCountError ? 'border-destructive' : ''}
             />
-            {cableCountError && (
-              <p className="text-sm text-destructive">{cableCountError}</p>
-            )}
+            {cableCountError && <p className="text-sm text-destructive">{cableCountError}</p>}
           </div>
 
-          {/* Label - Optional */}
+          {/* Per-cable name fields when count > 1 */}
+          <CableNameFields
+            cableCount={parsedCableCount}
+            cableNames={cableNames}
+            onChange={setCableNames}
+          />
+
+          {/* Label */}
           <div className="space-y-2">
             <Label htmlFor="label">Label (Optional)</Label>
             <Input
@@ -185,7 +204,15 @@ export const AddDropPointModal = ({
             />
           </div>
 
-          {/* Notes - Optional */}
+          {/* MDF/IDF Connection */}
+          <MdfIdfConnectionFields
+            connections={mdfConnections}
+            onChange={setMdfConnections}
+            frames={frames}
+            framesLoading={framesLoading}
+          />
+
+          {/* Notes */}
           <div className="space-y-2">
             <Label htmlFor="notes">Notes (Optional)</Label>
             <Textarea
@@ -205,9 +232,7 @@ export const AddDropPointModal = ({
           )}
 
           <div className="flex justify-end gap-2 pt-4">
-            <Button type="button" variant="outline" onClick={handleCancel}>
-              Cancel
-            </Button>
+            <Button type="button" variant="outline" onClick={handleCancel}>Cancel</Button>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? "Adding..." : "Add Drop Point"}
             </Button>
