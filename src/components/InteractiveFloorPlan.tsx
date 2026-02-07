@@ -81,7 +81,7 @@ export const InteractiveFloorPlan = ({
     showDropPointLabels: true,
     showRoomViewDots: true,
     showWirePaths: true,
-    dropPointTypes: ['data', 'wifi', 'camera', 'mdf_idf', 'access_control', 'av', 'other'],
+    dropPointTypes: ['data', 'wifi', 'camera', 'mdf', 'idf', 'access_control', 'av', 'other'],
     dropPointStatuses: ['planned', 'roughed_in', 'finished', 'tested'],
     markerScale: 1,
   });

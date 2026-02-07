@@ -68,28 +68,13 @@ export const DropPointTypeSpecificFields = ({
     );
   }
 
-  // MDF/IDF Type
-  if (pointType === 'mdf_idf') {
+  // MDF or IDF Type
+  if (pointType === 'mdf' || pointType === 'idf') {
     return (
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="mdf_idf_type">Type</Label>
-          {isEditing ? (
-            <Select
-              value={typeSpecificData?.mdf_idf_type || 'idf'}
-              onValueChange={(value) => updateField('mdf_idf_type', value)}
-            >
-              <SelectTrigger id="mdf_idf_type">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="mdf">MDF (Main Distribution Frame)</SelectItem>
-                <SelectItem value="idf">IDF (Intermediate Distribution Frame)</SelectItem>
-              </SelectContent>
-            </Select>
-          ) : (
-            <div className="text-sm">{typeSpecificData?.mdf_idf_type === 'mdf' ? 'MDF' : 'IDF'}</div>
-          )}
+          <Label>Frame Type</Label>
+          <div className="text-sm font-medium">{pointType.toUpperCase()}</div>
         </div>
 
         <div className="space-y-2">
