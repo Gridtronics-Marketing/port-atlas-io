@@ -4,7 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { Layers, Eye, EyeOff, Zap, Cable, Network, Building, Box, Activity } from 'lucide-react';
+import { TRADE_CATEGORIES, TRADE_DISPLAY_NAMES, getTradeColor, type TradeType } from '@/lib/trade-registry';
 
 interface LayerState {
   fiber: boolean;
@@ -19,6 +22,8 @@ interface LayerState {
 
 interface DiagramLayerControlsProps {
   onLayerToggle: (layer: keyof LayerState, enabled: boolean) => void;
+  onTradeToggle?: (trade: string, enabled: boolean) => void;
+  activeTrades?: string[];
   cableStats: {
     fiber: number;
     copper: number;
@@ -32,6 +37,8 @@ interface DiagramLayerControlsProps {
 
 export const DiagramLayerControls: React.FC<DiagramLayerControlsProps> = ({
   onLayerToggle,
+  onTradeToggle,
+  activeTrades = [],
   cableStats,
   equipmentStats
 }) => {
@@ -190,6 +197,37 @@ export const DiagramLayerControls: React.FC<DiagramLayerControlsProps> = ({
             </div>
           ))}
         </div>
+
+        {/* Trade Layers */}
+        {onTradeToggle && (
+          <>
+            <Separator />
+            <div className="space-y-3">
+              <h4 className="text-sm font-medium text-muted-foreground">Trades</h4>
+              {TRADE_CATEGORIES.map(category => (
+                <div key={category.label} className="space-y-1.5">
+                  <p className="text-xs text-muted-foreground">{category.label}</p>
+                  {category.trades.map(trade => (
+                    <div key={trade} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`layer-trade-${trade}`}
+                        checked={activeTrades.includes(trade)}
+                        onCheckedChange={(checked) => onTradeToggle(trade, checked as boolean)}
+                      />
+                      <Label htmlFor={`layer-trade-${trade}`} className="text-xs cursor-pointer flex items-center gap-1.5">
+                        <span
+                          className="inline-block w-2 h-2 rounded-full"
+                          style={{ backgroundColor: `hsl(${getTradeColor(trade)})` }}
+                        />
+                        {TRADE_DISPLAY_NAMES[trade as TradeType]}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </>
+        )}
 
         {/* Layer Statistics */}
         <Separator />

@@ -31,6 +31,7 @@ export interface DropPoint {
   installed_date: string | null;
   tested_by: string | null;
   tested_date: string | null;
+  trade: string | null;
   created_at: string;
   updated_at: string;
   // Joined data
@@ -190,7 +191,7 @@ export const useDropPoints = (locationId?: string) => {
 
       const { data, error } = await supabase
         .from('drop_points')
-        .insert([{ ...dropPointData, organization_id: orgId }])
+        .insert([{ ...dropPointData, organization_id: orgId } as any])
         .select()
         .single();
 
@@ -217,7 +218,7 @@ export const useDropPoints = (locationId?: string) => {
     try {
       const { data, error } = await supabase
         .from('drop_points')
-        .update(updates)
+        .update(updates as any)
         .eq('id', id)
         .select()
         .single();
