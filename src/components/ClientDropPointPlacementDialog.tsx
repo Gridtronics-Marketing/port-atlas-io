@@ -41,7 +41,7 @@ export const ClientDropPointPlacementDialog = ({
   onSuccess,
 }: ClientDropPointPlacementDialogProps) => {
   const [label, setLabel] = useState("");
-  const [pointType, setPointType] = useState("Data");
+  const [pointType, setPointType] = useState("data");
   const [description, setDescription] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const { createServiceRequest } = useServiceRequests();
@@ -60,7 +60,7 @@ export const ClientDropPointPlacementDialog = ({
           location_id: locationId,
           label: label.trim(),
           point_type: pointType,
-          status: "Proposed",
+          status: "proposed",
           floor,
           x_coordinate: coordinates.x,
           y_coordinate: coordinates.y,
@@ -88,7 +88,7 @@ export const ClientDropPointPlacementDialog = ({
       });
 
       setLabel("");
-      setPointType("Data");
+      setPointType("data");
       setDescription("");
       onSuccess();
     } catch (error) {
@@ -127,12 +127,12 @@ export const ClientDropPointPlacementDialog = ({
             <Select value={pointType} onValueChange={setPointType}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="Data">Data</SelectItem>
-                <SelectItem value="WiFi">WiFi</SelectItem>
-                <SelectItem value="Camera">Camera</SelectItem>
-                <SelectItem value="Access Control">Access Control</SelectItem>
-                <SelectItem value="A/V">A/V</SelectItem>
-                <SelectItem value="Other">Other</SelectItem>
+                <SelectItem value="data">Data</SelectItem>
+                <SelectItem value="wifi">WiFi</SelectItem>
+                <SelectItem value="camera">Camera</SelectItem>
+                <SelectItem value="access_control">Access Control</SelectItem>
+                <SelectItem value="av">A/V</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
               </SelectContent>
             </Select>
           </div>
