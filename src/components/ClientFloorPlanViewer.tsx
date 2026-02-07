@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { ClientDropPointDetail } from "@/components/ClientDropPointDetail";
 import { ClientDropPointPlacementDialog } from "@/components/ClientDropPointPlacementDialog";
+import { getFloorPlanUrls, getFloorPlanMetadata } from "@/lib/storage-utils";
 
 interface DropPoint {
   id: string;
@@ -38,6 +39,7 @@ interface ClientFloorPlanViewerProps {
 
 export const ClientFloorPlanViewer = ({ locationId }: ClientFloorPlanViewerProps) => {
   const [floorPlanUrls, setFloorPlanUrls] = useState<Record<number, string>>({});
+  const [floorNames, setFloorNames] = useState<Record<number, string>>({});
   const [selectedFloor, setSelectedFloor] = useState<number>(1);
   const [dropPoints, setDropPoints] = useState<DropPoint[]>([]);
   const [roomViewMarkers, setRoomViewMarkers] = useState<RoomViewMarker[]>([]);
@@ -59,21 +61,22 @@ export const ClientFloorPlanViewer = ({ locationId }: ClientFloorPlanViewerProps
         .single();
 
       if (locationData?.floor_plan_files) {
-        const floorPlanFiles = locationData.floor_plan_files as Record<string, string>;
-        const urls: Record<number, string> = {};
-        const floorNumbers: number[] = [];
-        
-        for (const [floor, filePath] of Object.entries(floorPlanFiles)) {
-          const floorNum = parseInt(floor, 10);
-          if (!isNaN(floorNum)) {
-            floorNumbers.push(floorNum);
-            urls[floorNum] = `https://mhrekppksiekhstnteyu.supabase.co/storage/v1/object/public/floor-plans/${filePath}`;
+        const floorPlanFiles = locationData.floor_plan_files as Record<string, any>;
+        const urls = getFloorPlanUrls(floorPlanFiles);
+        const names: Record<number, string> = {};
+        const floorNumbers = Object.keys(urls).map(Number).sort((a, b) => a - b);
+
+        // Extract custom floor names from metadata
+        for (const floorNum of floorNumbers) {
+          const meta = getFloorPlanMetadata(floorPlanFiles, floorNum.toString());
+          if (meta?.name) {
+            names[floorNum] = meta.name;
           }
         }
         
-        floorNumbers.sort((a, b) => a - b);
         setFloors(floorNumbers);
         setFloorPlanUrls(urls);
+        setFloorNames(names);
         if (floorNumbers.length > 0) setSelectedFloor(floorNumbers[0]);
       }
 
@@ -164,7 +167,9 @@ export const ClientFloorPlanViewer = ({ locationId }: ClientFloorPlanViewerProps
                 </SelectTrigger>
                 <SelectContent>
                   {floors.map((floor) => (
-                    <SelectItem key={floor} value={floor.toString()}>Floor {floor}</SelectItem>
+                    <SelectItem key={floor} value={floor.toString()}>
+                      {floorNames[floor] || `Floor ${floor}`}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
