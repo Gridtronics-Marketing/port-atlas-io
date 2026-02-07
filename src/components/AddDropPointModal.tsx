@@ -47,8 +47,13 @@ export const AddDropPointModal = ({
   const [mdfConnections, setMdfConnections] = useState<MdfIdfConnection[]>([{ frame_id: "", port: "", notes: "" }]);
   const [cableCountError, setCableCountError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { addDropPoint } = useDropPoints(locationId);
+  const { addDropPoint, dropPoints } = useDropPoints(locationId);
   const { frames, loading: framesLoading } = useDistributionFrames(locationId);
+
+  // Get MDF/IDF drop points at this location for the connection dropdown
+  const mdfIdfDropPoints = dropPoints
+    .filter(dp => ['mdf', 'idf'].includes(dp.point_type as string))
+    .map(dp => ({ id: dp.id, label: dp.label, point_type: dp.point_type as string, floor: dp.floor, room: dp.room }));
   const { toast } = useToast();
 
   const parsedCableCount = formData.cable_count === '' ? 0 : parseInt(formData.cable_count);
@@ -212,6 +217,7 @@ export const AddDropPointModal = ({
             frames={frames}
             framesLoading={framesLoading}
             currentFloor={floor}
+            mdfIdfDropPoints={mdfIdfDropPoints}
           />
 
           {/* Notes */}
