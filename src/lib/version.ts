@@ -1,4 +1,4 @@
-export const APP_VERSION = "1.10.3";
+export const APP_VERSION = "1.10.4";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,14 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "1.10.4",
+    date: "2026-02-07",
+    changes: [
+      "Added Photos tab to client portal room view detail dialog",
+      "Fixed RLS policy on room_view_photos for client portal access via has_location_access()",
+    ]
+  },
   {
     version: "1.10.3",
     date: "2026-02-07",

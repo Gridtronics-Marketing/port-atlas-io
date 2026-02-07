@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
-import { Camera, Search, Maximize2, X } from "lucide-react";
+import { Camera, Search, Maximize2, ImageIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { ClientServiceRequestButton } from "@/components/ClientServiceRequestButton";
+import { useRoomViewPhotos } from "@/hooks/useRoomViewPhotos";
 
 interface RoomView {
   id: string;
@@ -27,6 +29,7 @@ export const ClientRoomViewList = ({ locationId }: ClientRoomViewListProps) => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedView, setSelectedView] = useState<RoomView | null>(null);
+  const { photos, loading: photosLoading } = useRoomViewPhotos(selectedView?.id);
 
   useEffect(() => {
     const fetchRoomViews = async () => {
@@ -142,46 +145,96 @@ export const ClientRoomViewList = ({ locationId }: ClientRoomViewListProps) => {
         </CardContent>
       </Card>
 
-      {/* Detail Dialog */}
+      {/* Detail Dialog with Tabs */}
       <Dialog open={!!selectedView} onOpenChange={() => setSelectedView(null)}>
         <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle>{selectedView?.room_name || "Room View"}</DialogTitle>
           </DialogHeader>
           {selectedView && (
-            <div className="space-y-4">
-              <img
-                src={selectedView.photo_url}
-                alt={selectedView.room_name || "Room view"}
-                className="w-full rounded-lg"
-              />
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-muted-foreground">Floor</p>
-                  <p className="font-medium">{selectedView.floor}</p>
-                </div>
-                {selectedView.ceiling_height && (
+            <Tabs defaultValue="details" className="w-full">
+              <TabsList>
+                <TabsTrigger value="details">Details</TabsTrigger>
+                <TabsTrigger value="photos" className="flex items-center gap-1.5">
+                  Photos
+                  {photos.length > 0 && (
+                    <Badge variant="secondary" className="text-xs px-1.5 py-0">
+                      {photos.length}
+                    </Badge>
+                  )}
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="details" className="mt-4 space-y-4">
+                <img
+                  src={selectedView.photo_url}
+                  alt={selectedView.room_name || "Room view"}
+                  className="w-full rounded-lg"
+                />
+                <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <p className="text-muted-foreground">Ceiling Height</p>
+                    <p className="text-muted-foreground">Floor</p>
+                    <p className="font-medium">{selectedView.floor}</p>
+                  </div>
+                  {selectedView.ceiling_height && (
+                    <div>
+                      <p className="text-muted-foreground">Ceiling Height</p>
+                      <p className="font-medium">
+                        {selectedView.ceiling_height} {selectedView.ceiling_height_unit || "ft"}
+                      </p>
+                    </div>
+                  )}
+                  {selectedView.description && (
+                    <div className="col-span-2">
+                      <p className="text-muted-foreground">Description</p>
+                      <p className="font-medium">{selectedView.description}</p>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-muted-foreground">Added</p>
                     <p className="font-medium">
-                      {selectedView.ceiling_height} {selectedView.ceiling_height_unit || "ft"}
+                      {new Date(selectedView.created_at).toLocaleDateString()}
                     </p>
                   </div>
-                )}
-                {selectedView.description && (
-                  <div className="col-span-2">
-                    <p className="text-muted-foreground">Description</p>
-                    <p className="font-medium">{selectedView.description}</p>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="photos" className="mt-4">
+                {photosLoading ? (
+                  <div className="text-center py-8 text-muted-foreground animate-pulse">
+                    Loading photos...
+                  </div>
+                ) : photos.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <ImageIcon className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>No additional photos</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {photos.map((photo) => (
+                      <div key={photo.id} className="rounded-lg border overflow-hidden bg-card">
+                        <img
+                          src={photo.photo_url}
+                          alt={photo.description || "Room photo"}
+                          className="w-full aspect-video object-cover"
+                        />
+                        <div className="p-2 text-sm">
+                          {photo.description && (
+                            <p className="font-medium">{photo.description}</p>
+                          )}
+                          <p className="text-muted-foreground text-xs">
+                            {new Date(photo.created_at).toLocaleDateString()}
+                            {photo.employee && (
+                              <> · {photo.employee.first_name} {photo.employee.last_name}</>
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
-                <div>
-                  <p className="text-muted-foreground">Added</p>
-                  <p className="font-medium">
-                    {new Date(selectedView.created_at).toLocaleDateString()}
-                  </p>
-                </div>
-              </div>
-            </div>
+              </TabsContent>
+            </Tabs>
           )}
         </DialogContent>
       </Dialog>
