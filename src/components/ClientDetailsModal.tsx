@@ -37,6 +37,7 @@ import { type Location } from "@/hooks/useLocations";
 import { useToast } from "@/hooks/use-toast";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ClientDetailsModalProps {
   client: Client | null;
@@ -58,6 +59,7 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onUp
   const [isEditMode, setIsEditMode] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [portalUsersCount, setPortalUsersCount] = useState(0);
   const [isAddLocationModalOpen, setIsAddLocationModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
   const [isPortalModalOpen, setIsPortalModalOpen] = useState(false);
@@ -93,6 +95,22 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onUp
     }
   }, [client, isEditMode]);
 
+  // Fetch portal users count to detect active portal
+  useEffect(() => {
+    const fetchPortalUsers = async () => {
+      if (!client?.id) return;
+      const { count } = await supabase
+        .from('client_portal_users')
+        .select('*', { count: 'exact', head: true })
+        .eq('client_id', client.id);
+      setPortalUsersCount(count || 0);
+    };
+    fetchPortalUsers();
+  }, [client?.id, isPortalModalOpen]);
+
+  const hasActivePortal = portalUsersCount > 0 || (client?.linked_organization_id && client?.linked_organization);
+  const portalSlug = client?.slug || client?.linked_organization?.slug;
+
   const handleSave = async () => {
     if (!client || !onUpdateClient) return;
     if (!editForm.name.trim()) {
@@ -115,8 +133,8 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onUp
   const canManagePortal = isSuperAdmin || userOrgRole === 'owner' || userOrgRole === 'admin';
 
   const copyPortalUrl = () => {
-    if (client?.linked_organization?.slug) {
-      const url = `${window.location.origin}/p/${client.linked_organization.slug}`;
+    if (portalSlug) {
+      const url = `${window.location.origin}/p/${portalSlug}`;
       navigator.clipboard.writeText(url);
       toast({
         title: "Copied",
@@ -322,14 +340,14 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onUp
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {client.linked_organization_id && client.linked_organization ? (
+              {hasActivePortal && portalSlug ? (
                 <div className="space-y-4">
                   <div className="flex items-center gap-2">
                     <Badge variant="default" className="bg-success text-success-foreground">
                       Active
                     </Badge>
                     <span className="text-sm text-muted-foreground">
-                      {client.linked_organization.name}
+                      {portalUsersCount} portal user{portalUsersCount !== 1 ? 's' : ''}
                     </span>
                   </div>
 
@@ -337,7 +355,7 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onUp
                     <p className="font-medium text-sm text-muted-foreground mb-2">Portal URL</p>
                     <div className="flex items-center gap-2">
                       <code className="flex-1 bg-muted px-3 py-2 rounded text-sm font-mono truncate">
-                        {window.location.origin}/p/{client.linked_organization.slug}
+                        {window.location.origin}/p/{portalSlug}
                       </code>
                       <Button
                         variant="outline"
@@ -354,36 +372,22 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onUp
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => window.open(`/p/${client.linked_organization!.slug}`, '_blank')}
+                      onClick={() => window.open(`/p/${portalSlug}`, '_blank')}
                       className="flex items-center gap-2"
                     >
                       <ExternalLink className="h-4 w-4" />
                       Open Portal
                     </Button>
                     {canManagePortal && (
-                      <>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setIsPortalModalOpen(true)}
-                          className="flex items-center gap-2"
-                        >
-                          <Plus className="h-4 w-4" />
-                          Invite User
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            onClose();
-                            navigate('/admin/client-portals');
-                          }}
-                          className="flex items-center gap-2"
-                        >
-                          <Settings className="h-4 w-4" />
-                          Manage Portal
-                        </Button>
-                      </>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsPortalModalOpen(true)}
+                        className="flex items-center gap-2"
+                      >
+                        <Plus className="h-4 w-4" />
+                        Invite User
+                      </Button>
                     )}
                   </div>
                 </div>
