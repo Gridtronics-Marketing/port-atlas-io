@@ -58,7 +58,6 @@ export const RoomViewModal: React.FC<RoomViewModalProps> = ({
   const handleSave = async () => {
     try {
       await updateRoomView(roomView.id, editData);
-      setIsEditing(false);
       toast({
         title: "Success",
         description: "Room view updated successfully",
@@ -70,6 +69,8 @@ export const RoomViewModal: React.FC<RoomViewModalProps> = ({
         description: "Failed to update room view",
         variant: "destructive",
       });
+    } finally {
+      setIsEditing(false);
     }
   };
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FileText, Plus, Trash2, Mic, MicOff } from 'lucide-react';
+import { FileText, Plus, Trash2, Mic, MicOff, Pencil, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -28,10 +28,11 @@ export const WalkThroughNotesList = ({ locationId, totalFloors }: WalkThroughNot
   const [newNoteFloor, setNewNoteFloor] = useState<number>(1);
   const [isAdding, setIsAdding] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [editNoteText, setEditNoteText] = useState('');
 
-  // Fetch notes - pass undefined for "all floors" view, or specific floor number
   const floorToFetch = selectedFloor === 'all' ? undefined : parseInt(selectedFloor);
-  const { notes, loading, addNote, deleteNote } = useWalkThroughNotes(locationId, floorToFetch);
+  const { notes, loading, addNote, updateNote, deleteNote } = useWalkThroughNotes(locationId, floorToFetch);
 
   const {
     transcript,
@@ -47,10 +48,14 @@ export const WalkThroughNotesList = ({ locationId, totalFloors }: WalkThroughNot
   // Update note text with transcript
   useEffect(() => {
     if (transcript) {
-      setNewNoteText(prev => prev + transcript);
+      if (editingNoteId) {
+        setEditNoteText(prev => prev + transcript);
+      } else {
+        setNewNoteText(prev => prev + transcript);
+      }
       resetTranscript();
     }
-  }, [transcript, resetTranscript]);
+  }, [transcript, resetTranscript, editingNoteId]);
 
   // Show speech errors
   useEffect(() => {
@@ -69,9 +74,7 @@ export const WalkThroughNotesList = ({ locationId, totalFloors }: WalkThroughNot
 
   const handleAddNote = async () => {
     if (!newNoteText.trim()) return;
-
     if (isListening) stopListening();
-
     setIsAdding(true);
     try {
       await addNote({
@@ -92,11 +95,34 @@ export const WalkThroughNotesList = ({ locationId, totalFloors }: WalkThroughNot
     }
   };
 
-  // Generate floor options
+  const handleEditClick = (noteId: string, noteText: string) => {
+    if (isListening) stopListening();
+    setEditingNoteId(noteId);
+    setEditNoteText(noteText || '');
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingNoteId || !editNoteText.trim()) return;
+    if (isListening) stopListening();
+    try {
+      await updateNote(editingNoteId, { note_text: editNoteText });
+      setEditingNoteId(null);
+      setEditNoteText('');
+    } catch {
+      // toast already shown by hook
+    }
+  };
+
+  const handleCancelEdit = () => {
+    if (isListening) stopListening();
+    setEditingNoteId(null);
+    setEditNoteText('');
+  };
+
   const floorOptions = Array.from({ length: totalFloors }, (_, i) => i + 1);
 
-  // Get displayed text (including interim transcript)
-  const displayedNoteText = newNoteText + (isListening ? interimTranscript : '');
+  const displayedNoteText = newNoteText + (isListening && !editingNoteId ? interimTranscript : '');
+  const displayedEditText = editNoteText + (isListening && editingNoteId ? interimTranscript : '');
 
   return (
     <Card className="shadow-soft">
@@ -109,10 +135,7 @@ export const WalkThroughNotesList = ({ locationId, totalFloors }: WalkThroughNot
             </CardTitle>
             <CardDescription>Notes captured during site walk-throughs</CardDescription>
           </div>
-          <Select
-            value={selectedFloor}
-            onValueChange={setSelectedFloor}
-          >
+          <Select value={selectedFloor} onValueChange={setSelectedFloor}>
             <SelectTrigger className="w-32">
               <SelectValue placeholder="Floor" />
             </SelectTrigger>
@@ -142,15 +165,15 @@ export const WalkThroughNotesList = ({ locationId, totalFloors }: WalkThroughNot
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className={`absolute right-1 top-1 h-8 w-8 p-0 ${isListening ? 'text-destructive animate-pulse' : 'text-muted-foreground'}`}
+                  className={`absolute right-1 top-1 h-8 w-8 p-0 ${isListening && !editingNoteId ? 'text-destructive animate-pulse' : 'text-muted-foreground'}`}
                   onClick={handleToggleListening}
                   title={isListening ? 'Stop recording' : 'Start voice input'}
                 >
-                  {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                  {isListening && !editingNoteId ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
                 </Button>
               )}
             </div>
-            {isListening && (
+            {isListening && !editingNoteId && (
               <div className="flex items-center gap-2 text-xs text-destructive">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75"></span>
@@ -217,19 +240,74 @@ export const WalkThroughNotesList = ({ locationId, totalFloors }: WalkThroughNot
                     <Badge variant="outline" className="text-xs">
                       Floor {note.floor}
                     </Badge>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 w-6 p-0"
-                      onClick={() => handleDeleteNote(note.id)}
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
+                    {editingNoteId !== note.id && (
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 w-6 p-0"
+                          onClick={() => handleEditClick(note.id, note.note_text || '')}
+                        >
+                          <Pencil className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 w-6 p-0"
+                          onClick={() => handleDeleteNote(note.id)}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
-                  <p className="text-sm text-foreground">{note.note_text}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {format(new Date(note.created_at), 'MMM d, yyyy h:mm a')}
-                  </p>
+                  {editingNoteId === note.id ? (
+                    <div className="space-y-2">
+                      <div className="relative">
+                        <Textarea
+                          value={displayedEditText}
+                          onChange={(e) => setEditNoteText(e.target.value)}
+                          className="min-h-[60px] text-sm pr-10"
+                        />
+                        {isSupported && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className={`absolute right-1 top-1 h-8 w-8 p-0 ${isListening && editingNoteId ? 'text-destructive animate-pulse' : 'text-muted-foreground'}`}
+                            onClick={handleToggleListening}
+                            title={isListening ? 'Stop recording' : 'Start voice input'}
+                          >
+                            {isListening && editingNoteId ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                          </Button>
+                        )}
+                      </div>
+                      {isListening && editingNoteId && (
+                        <div className="flex items-center gap-2 text-xs text-destructive">
+                          <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-destructive"></span>
+                          </span>
+                          Listening...
+                        </div>
+                      )}
+                      <div className="flex justify-end gap-1">
+                        <Button variant="ghost" size="sm" onClick={handleCancelEdit}>
+                          <X className="h-3 w-3 mr-1" /> Cancel
+                        </Button>
+                        <Button size="sm" onClick={handleSaveEdit} disabled={!editNoteText.trim()}>
+                          <Check className="h-3 w-3 mr-1" /> Save
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-sm text-foreground">{note.note_text}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {format(new Date(note.created_at), 'MMM d, yyyy h:mm a')}
+                      </p>
+                    </>
+                  )}
                 </div>
               ))
             )}
