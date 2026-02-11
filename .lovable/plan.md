@@ -1,24 +1,44 @@
 
-# Add Trade Registry Controls to System Settings Page
 
-## What's Missing
+# Fix Ceiling Height Save and Add Walk-Through Note Editing
 
-The Trade Registry (organization trades, drop point trade assignment) was added but its management UI only exists on the Organization Settings page. The System Settings page (`/settings`) -- where admins go for centralized configuration -- has no trade-related controls.
+## Issue 1: Ceiling Height Save Hangs
 
-## Changes
+**Root Cause**: In `RoomViewModal.tsx`, the `handleSave` function only calls `setIsEditing(false)` on success (line 61). If the Supabase update fails for any reason (RLS policy denial, network error, etc.), the error is caught and a toast is shown, but `isEditing` remains `true` -- leaving the user stuck in edit mode with no way to return to the normal view.
 
-### File: `src/pages/Settings.tsx`
+**Fix**: Move `setIsEditing(false)` into a `finally` block so the UI always recovers, regardless of success or failure. The error toast already informs the user that the save failed.
 
-1. **Import** `OrganizationTradesManager` and the `useOrganizationData` hook (to get the current org ID).
+### File: `src/components/RoomViewModal.tsx`
 
-2. **Add an "Organization Trades" card** inside the **"Core Configuration"** tab, below the existing System Configuration card. This card will render the `OrganizationTradesManager` component, letting admins manage which trades their organization performs directly from Settings.
+- Restructure `handleSave` to use a `finally` block that always resets `isEditing` to `false`
+- This ensures the user is never stuck in a "saving" state
 
-3. The card will include a guard -- if no organization is selected, it shows a message directing the user to select one first.
+## Issue 2: Walk-Through Notes Editing
+
+**Current State**: The `WalkThroughNotesPanel` (floating panel on the floor plan editor) already supports editing notes with pencil icon, inline textarea, voice input, and save/cancel buttons. However, `WalkThroughNotesList` (used in the Location Details "Team and Notes" tab) only supports adding and deleting -- no editing.
+
+**Fix**: Add inline edit capability to `WalkThroughNotesList`, matching the pattern already used in `WalkThroughNotesPanel`.
+
+### File: `src/components/WalkThroughNotesList.tsx`
+
+- Add `editingNoteId` and `editNoteText` state variables
+- Import `Pencil`, `Check`, `X` icons (already available in lucide-react)
+- Add `handleEditClick`, `handleSaveEdit`, `handleCancelEdit` functions mirroring `WalkThroughNotesPanel`
+- Use the existing `updateNote` from `useWalkThroughNotes` (already returned by the hook but not destructured in this component)
+- In the notes list, when a note is being edited, show an inline textarea with voice input support and save/cancel buttons
+- When not editing, show a pencil icon button next to the existing delete button
+- Wire speech recognition transcript into edit mode (transcript appends to `editNoteText` when `editingNoteId` is set)
+
+### File: `src/components/ClientLocationNotesTab.tsx`
+
+- No changes needed -- this is a read-only client portal view which correctly shows notes without edit controls
 
 ## Technical Details
 
-- Import `OrganizationTradesManager` from `@/components/OrganizationTradesManager`
-- Import `useOrganizationData` from `@/hooks/useOrganizationData` to get `organizationId`
-- Add a new `<Card>` block in the `core` TabsContent with title "Organization Trades" and description "Select the trades your organization performs. Drop points will be tagged to trades for filtering."
-- Inside `CardContent`, conditionally render `<OrganizationTradesManager organizationId={organizationId} />` if `organizationId` exists, otherwise show a muted text prompt.
-- No new files, no database changes -- purely wiring an existing component into the Settings page.
+**WalkThroughNotesList changes summary**:
+- Destructure `updateNote` from `useWalkThroughNotes` (line 34)
+- Add state: `editingNoteId: string | null`, `editNoteText: string`
+- Update the `transcript` useEffect to append to `editNoteText` when editing
+- Add three handlers: `handleEditClick`, `handleSaveEdit`, `handleCancelEdit`
+- In each note card, conditionally render either edit form (textarea + save/cancel) or display mode (text + edit/delete buttons)
+
