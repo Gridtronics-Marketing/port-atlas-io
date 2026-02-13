@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Motion } from '@capacitor/motion';
 import { Capacitor } from '@capacitor/core';
 
 export interface DeviceOrientation {
@@ -29,47 +28,59 @@ export const useDeviceOrientation = (): UseDeviceOrientationReturn => {
   const [permissionGranted, setPermissionGranted] = useState(false);
   const [isTracking, setIsTracking] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
+  // Refs for stable callback access
+  const permissionGrantedRef = useRef(false);
+  const isSupportedRef = useRef(false);
+  const isTrackingRef = useRef(false);
   const listenerHandleRef = useRef<any>(null);
   const webListenerRef = useRef<((event: DeviceOrientationEvent) => void) | null>(null);
 
-  // Check if device orientation is supported
+  // Keep refs in sync with state
+  useEffect(() => { permissionGrantedRef.current = permissionGranted; }, [permissionGranted]);
+  useEffect(() => { isSupportedRef.current = isSupported; }, [isSupported]);
+  useEffect(() => { isTrackingRef.current = isTracking; }, [isTracking]);
+
+  // Check support on mount
   useEffect(() => {
     const isNative = Capacitor.isNativePlatform();
     const hasWebOrientation = typeof DeviceOrientationEvent !== 'undefined';
-    
-    setIsSupported(isNative || hasWebOrientation);
-    
+
+    const supported = isNative || hasWebOrientation;
+    setIsSupported(supported);
+    isSupportedRef.current = supported;
+
     // On Android and older iOS, permission is granted by default
     if (hasWebOrientation && !('requestPermission' in DeviceOrientationEvent)) {
       setPermissionGranted(true);
+      permissionGrantedRef.current = true;
     }
   }, []);
 
-  // Request permission (required for iOS 13+)
+  // Stable requestPermission - no deps that change
   const requestPermission = useCallback(async (): Promise<boolean> => {
     try {
       const isNative = Capacitor.isNativePlatform();
-      
+
       if (isNative) {
-        // Capacitor Motion plugin handles permissions automatically
         setPermissionGranted(true);
+        permissionGrantedRef.current = true;
         return true;
       }
-      
-      // Web API permission request (iOS 13+)
+
       if ('requestPermission' in DeviceOrientationEvent) {
         const permission = await (DeviceOrientationEvent as any).requestPermission();
         const granted = permission === 'granted';
         setPermissionGranted(granted);
+        permissionGrantedRef.current = granted;
         if (!granted) {
           setError('Motion permission denied');
         }
         return granted;
       }
-      
-      // Permission not required on this device
+
       setPermissionGranted(true);
+      permissionGrantedRef.current = true;
       return true;
     } catch (err) {
       console.error('Error requesting motion permission:', err);
@@ -78,23 +89,23 @@ export const useDeviceOrientation = (): UseDeviceOrientationReturn => {
     }
   }, []);
 
-  // Start tracking device orientation
+  // Stable startTracking - reads refs instead of state
   const startTracking = useCallback(async () => {
-    if (!isSupported) {
+    if (!isSupportedRef.current) {
       setError('Device orientation not supported');
       return;
     }
 
-    if (!permissionGranted) {
+    if (!permissionGrantedRef.current) {
       const granted = await requestPermission();
       if (!granted) return;
     }
 
     try {
       const isNative = Capacitor.isNativePlatform();
-      
+
       if (isNative) {
-        // Use Capacitor Motion plugin
+        const { Motion } = await import('@capacitor/motion');
         listenerHandleRef.current = await Motion.addListener('orientation', (event) => {
           setOrientation({
             alpha: event.alpha,
@@ -103,7 +114,6 @@ export const useDeviceOrientation = (): UseDeviceOrientationReturn => {
           });
         });
       } else {
-        // Use Web DeviceOrientation API
         const handleOrientation = (event: DeviceOrientationEvent) => {
           setOrientation({
             alpha: event.alpha,
@@ -111,44 +121,54 @@ export const useDeviceOrientation = (): UseDeviceOrientationReturn => {
             gamma: event.gamma,
           });
         };
-        
+
         webListenerRef.current = handleOrientation;
         window.addEventListener('deviceorientation', handleOrientation, true);
       }
-      
+
       setIsTracking(true);
+      isTrackingRef.current = true;
       setError(null);
     } catch (err) {
       console.error('Error starting orientation tracking:', err);
       setError('Failed to start orientation tracking');
     }
-  }, [isSupported, permissionGranted, requestPermission]);
+  }, [requestPermission]);
 
-  // Stop tracking device orientation
+  // Stable stopTracking
   const stopTracking = useCallback(() => {
     const isNative = Capacitor.isNativePlatform();
-    
+
     if (isNative && listenerHandleRef.current) {
       listenerHandleRef.current.remove();
       listenerHandleRef.current = null;
     }
-    
+
     if (!isNative && webListenerRef.current) {
       window.removeEventListener('deviceorientation', webListenerRef.current, true);
       webListenerRef.current = null;
     }
-    
+
     setIsTracking(false);
+    isTrackingRef.current = false;
   }, []);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (isTracking) {
-        stopTracking();
+      if (isTrackingRef.current) {
+        const isNative = Capacitor.isNativePlatform();
+        if (isNative && listenerHandleRef.current) {
+          listenerHandleRef.current.remove();
+          listenerHandleRef.current = null;
+        }
+        if (!isNative && webListenerRef.current) {
+          window.removeEventListener('deviceorientation', webListenerRef.current, true);
+          webListenerRef.current = null;
+        }
       }
     };
-  }, [isTracking, stopTracking]);
+  }, []);
 
   return {
     orientation,
@@ -169,17 +189,15 @@ export const isPointingAtAngle = (
   tolerance: number = 15
 ): boolean => {
   if (currentAlpha === null) return false;
-  
-  // Normalize angles to 0-360
+
   const current = ((currentAlpha % 360) + 360) % 360;
   const target = ((targetAngle % 360) + 360) % 360;
-  
-  // Calculate the difference, accounting for wraparound
+
   let diff = Math.abs(current - target);
   if (diff > 180) {
     diff = 360 - diff;
   }
-  
+
   return diff <= tolerance;
 };
 
@@ -190,19 +208,18 @@ export const getNextTargetAngle = (
   allTargetAngles: number[]
 ): number | null => {
   const remainingAngles = allTargetAngles.filter(
-    angle => !capturedAngles.some(captured => 
+    angle => !capturedAngles.some(captured =>
       Math.abs(captured - angle) < 15 || Math.abs(captured - angle) > 345
     )
   );
-  
+
   if (remainingAngles.length === 0 || currentAlpha === null) {
     return null;
   }
-  
-  // Find the closest remaining angle to current heading
+
   let closestAngle = remainingAngles[0];
   let minDiff = Infinity;
-  
+
   for (const angle of remainingAngles) {
     let diff = Math.abs(currentAlpha - angle);
     if (diff > 180) diff = 360 - diff;
@@ -211,6 +228,6 @@ export const getNextTargetAngle = (
       closestAngle = angle;
     }
   }
-  
+
   return closestAngle;
 };
