@@ -126,7 +126,7 @@ export const FloorPlanFilterDialog = ({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
+        <div className="space-y-6 py-4 max-h-[60vh] overflow-y-auto pr-2">
           {/* Display Toggles */}
           <div className="space-y-3">
             <h4 className="text-sm font-medium">Display Options</h4>
