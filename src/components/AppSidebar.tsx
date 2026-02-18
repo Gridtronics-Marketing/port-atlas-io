@@ -25,7 +25,8 @@ import {
   ChevronRight,
   TrendingUp,
   Layers,
-  Database
+  Database,
+  BookOpen
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { NavLink, useLocation } from "react-router-dom";
@@ -135,7 +136,8 @@ export function AppSidebar() {
       ...(hasRole('admin') ? [{ title: "User Management", url: "/user-management", icon: UserCog }] : []),
       ...(isSuperAdmin ? [
         { title: "Organizations", url: "/admin/organizations", icon: Building2 },
-        { title: "Client Portals", url: "/admin/client-portals", icon: Database }
+        { title: "Client Portals", url: "/admin/client-portals", icon: Database },
+        { title: "PRD & Docs", url: "/docs", icon: BookOpen },
       ] : [])
     ]
   } : null;
