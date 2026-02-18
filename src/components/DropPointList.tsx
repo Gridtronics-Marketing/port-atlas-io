@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, Filter, Cable, Shield, Wifi, Zap, Eye, Edit, Trash2, MoreHorizontal, Loader2, AlertCircle, RefreshCw } from "lucide-react";
+import { Search, Cable, Shield, Wifi, Zap, Eye, Edit, Trash2, MoreHorizontal, AlertCircle, RefreshCw, Columns3 } from "lucide-react";
 import { DropPointDetailsModal } from "./DropPointDetailsModal";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,9 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+  DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu";
 import {
   Table,
@@ -36,6 +39,28 @@ interface DropPointListProps {
   locationId: string;
 }
 
+type ColumnKey = "room" | "floor" | "type" | "status" | "cables" | "cableId" | "patchPanel";
+
+const ALL_COLUMNS: { key: ColumnKey; label: string }[] = [
+  { key: "room", label: "Room" },
+  { key: "floor", label: "Floor" },
+  { key: "type", label: "Type" },
+  { key: "status", label: "Status" },
+  { key: "cables", label: "Cables" },
+  { key: "cableId", label: "Cable ID" },
+  { key: "patchPanel", label: "Patch Panel" },
+];
+
+const DEFAULT_VISIBLE: Record<ColumnKey, boolean> = {
+  room: false,       // hidden by default
+  floor: true,
+  type: true,
+  status: true,
+  cables: true,
+  cableId: true,
+  patchPanel: true,
+};
+
 const DropPointListContent = ({ locationId }: DropPointListProps) => {
   const { dropPoints, loading, error, fetchDropPoints, deleteDropPoint } = useDropPoints(locationId);
   const [searchTerm, setSearchTerm] = useState("");
@@ -43,7 +68,13 @@ const DropPointListContent = ({ locationId }: DropPointListProps) => {
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [selectedDropPoint, setSelectedDropPoint] = useState<any>(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [visibleColumns, setVisibleColumns] = useState<Record<ColumnKey, boolean>>(DEFAULT_VISIBLE);
   const isMobile = useIsMobile();
+
+  const toggleColumn = (key: ColumnKey) =>
+    setVisibleColumns((prev) => ({ ...prev, [key]: !prev[key] }));
+
+  const col = (key: ColumnKey) => visibleColumns[key];
 
   // Emit telemetry when tab opens
   useEffect(() => {
@@ -55,45 +86,37 @@ const DropPointListContent = ({ locationId }: DropPointListProps) => {
   // Safe filtering with defensive checks
   const filteredDropPoints = (dropPoints || []).filter((point) => {
     if (!point) return false;
-    
     const label = point.label || 'TBD';
     const room = point.room || '';
-    
     const matchesSearch = label.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          room.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = filterType === "all" || point.point_type === filterType;
     const matchesStatus = filterStatus === "all" || point.status === filterStatus;
-    
     return matchesSearch && matchesType && matchesStatus;
   });
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "planned":
-        return "bg-red-500/20 text-red-700 border-red-500/40";
-      case "roughed_in":
-        return "bg-yellow-500/20 text-yellow-700 border-yellow-500/40";
-      case "finished":
-        return "bg-green-500/20 text-green-700 border-green-500/40";
-      case "tested":
-        return "bg-green-500/20 text-green-700 border-green-500/40";
-      default:
-        return "bg-secondary text-secondary-foreground";
+      case "planned":      return "bg-red-500/20 text-red-700 border-red-500/40";
+      case "roughed_in":   return "bg-yellow-500/20 text-yellow-700 border-yellow-500/40";
+      case "finished":     return "bg-green-500/20 text-green-700 border-green-500/40";
+      case "tested":       return "bg-green-500/20 text-green-700 border-green-500/40";
+      default:             return "bg-secondary text-secondary-foreground";
     }
   };
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case "data": return Cable;
-      case "fiber": return Cable;
+      case "data":     return Cable;
+      case "fiber":    return Cable;
       case "security": return Shield;
       case "wireless": return Wifi;
-      case "power": return Zap;
-      default: return Cable;
+      case "power":    return Zap;
+      default:         return Cable;
     }
   };
 
-  // Skeleton loader while loading
+  // ── Loading ──────────────────────────────────────────────
   if (loading) {
     return (
       <div className="space-y-4" data-testid="skeleton-droppoints">
@@ -101,11 +124,10 @@ const DropPointListContent = ({ locationId }: DropPointListProps) => {
           <Skeleton className="h-10 flex-1" />
           <Skeleton className="h-10 w-[140px]" />
           <Skeleton className="h-10 w-[140px]" />
+          <Skeleton className="h-10 w-[100px]" />
         </div>
         <Card className="shadow-soft">
-          <CardHeader>
-            <Skeleton className="h-6 w-48" />
-          </CardHeader>
+          <CardHeader><Skeleton className="h-6 w-48" /></CardHeader>
           <CardContent>
             <div className="space-y-3">
               {[...Array(5)].map((_, i) => (
@@ -118,7 +140,7 @@ const DropPointListContent = ({ locationId }: DropPointListProps) => {
     );
   }
 
-  // Error state with retry
+  // ── Error ─────────────────────────────────────────────────
   if (error) {
     return (
       <Card className="border-destructive/50" data-testid="error-droppoints">
@@ -141,7 +163,7 @@ const DropPointListContent = ({ locationId }: DropPointListProps) => {
     );
   }
 
-  // Empty state
+  // ── Empty ─────────────────────────────────────────────────
   if (!dropPoints || dropPoints.length === 0) {
     return (
       <Card className="shadow-soft">
@@ -156,10 +178,12 @@ const DropPointListContent = ({ locationId }: DropPointListProps) => {
     );
   }
 
+  // ── Main ──────────────────────────────────────────────────
   return (
     <div className="space-y-4" data-testid="list-droppoints">
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
+
+      {/* Filter bar */}
+      <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -169,12 +193,12 @@ const DropPointListContent = ({ locationId }: DropPointListProps) => {
             className="pl-10"
           />
         </div>
-        
+
         <Select value={filterType} onValueChange={setFilterType}>
           <SelectTrigger className="w-[140px]">
             <SelectValue placeholder="Type" />
           </SelectTrigger>
-          <SelectContent className="bg-popover border">
+          <SelectContent className="bg-popover border z-50">
             <SelectItem value="all">All Types</SelectItem>
             <SelectItem value="data">Data</SelectItem>
             <SelectItem value="fiber">Fiber</SelectItem>
@@ -183,12 +207,12 @@ const DropPointListContent = ({ locationId }: DropPointListProps) => {
             <SelectItem value="power">Power</SelectItem>
           </SelectContent>
         </Select>
-        
+
         <Select value={filterStatus} onValueChange={setFilterStatus}>
           <SelectTrigger className="w-[140px]">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
-          <SelectContent className="bg-popover border">
+          <SelectContent className="bg-popover border z-50">
             <SelectItem value="all">All Status</SelectItem>
             <SelectItem value="planned">Planned</SelectItem>
             <SelectItem value="roughed_in">Roughed In</SelectItem>
@@ -196,9 +220,40 @@ const DropPointListContent = ({ locationId }: DropPointListProps) => {
             <SelectItem value="tested">Tested</SelectItem>
           </SelectContent>
         </Select>
+
+        {/* Column visibility */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="default" className="gap-2 shrink-0">
+              <Columns3 className="h-4 w-4" />
+              Columns
+              {Object.values(visibleColumns).filter(Boolean).length < ALL_COLUMNS.length && (
+                <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-xs h-4">
+                  {Object.values(visibleColumns).filter(Boolean).length}/{ALL_COLUMNS.length}
+                </Badge>
+              )}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="bg-popover border z-50 w-44">
+            <DropdownMenuLabel className="text-xs text-muted-foreground font-normal">
+              Show / hide columns
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {ALL_COLUMNS.map(({ key, label }) => (
+              <DropdownMenuCheckboxItem
+                key={key}
+                checked={visibleColumns[key]}
+                onCheckedChange={() => toggleColumn(key)}
+                className="text-sm cursor-pointer"
+              >
+                {label}
+              </DropdownMenuCheckboxItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
-      {/* Drop Points Table */}
+      {/* Table */}
       <Card className="shadow-soft">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -213,20 +268,20 @@ const DropPointListContent = ({ locationId }: DropPointListProps) => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Label</TableHead>
-                  <TableHead>Room</TableHead>
-                  <TableHead>Floor</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-center">Cables</TableHead>
-                  <TableHead>Cable ID</TableHead>
-                  <TableHead>Patch Panel</TableHead>
-                  <TableHead className="w-[50px]"></TableHead>
+                  {col("room")       && <TableHead>Room</TableHead>}
+                  {col("floor")      && <TableHead>Floor</TableHead>}
+                  {col("type")       && <TableHead>Type</TableHead>}
+                  {col("status")     && <TableHead>Status</TableHead>}
+                  {col("cables")     && <TableHead className="text-center">Cables</TableHead>}
+                  {col("cableId")    && <TableHead>Cable ID</TableHead>}
+                  {col("patchPanel") && <TableHead>Patch Panel</TableHead>}
+                  <TableHead className="w-[50px]" />
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredDropPoints.map((point) => {
                   const rowContent = (
-                    <TableRow 
+                    <TableRow
                       key={point.id}
                       className="cursor-pointer hover:bg-muted/50"
                       onClick={() => {
@@ -234,40 +289,56 @@ const DropPointListContent = ({ locationId }: DropPointListProps) => {
                         setDetailsModalOpen(true);
                       }}
                     >
-                      <TableCell className="font-medium">{point.label}</TableCell>
-                      <TableCell>{point.room || "—"}</TableCell>
-                      <TableCell>{point.floor || "—"}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          {(() => {
-                            const IconComponent = getTypeIcon(point.point_type);
-                            return <IconComponent className="h-4 w-4" />;
-                          })()}
-                          <span className="capitalize">{point.point_type}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={getStatusColor(point.status)}>
-                          {point.status === 'tested' && <span className="mr-1">✓</span>}
-                          {point.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {point.cable_count > 0 ? (
-                          <Badge variant="outline" className="font-mono text-xs gap-1">
-                            <Cable className="h-3 w-3" />
-                            {point.cable_count}
+                      <TableCell className="font-medium">{point.label || "—"}</TableCell>
+
+                      {col("room") && (
+                        <TableCell>{point.room || "—"}</TableCell>
+                      )}
+                      {col("floor") && (
+                        <TableCell>{point.floor ?? "—"}</TableCell>
+                      )}
+                      {col("type") && (
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            {(() => {
+                              const IconComponent = getTypeIcon(point.point_type);
+                              return <IconComponent className="h-4 w-4" />;
+                            })()}
+                            <span className="capitalize">{point.point_type}</span>
+                          </div>
+                        </TableCell>
+                      )}
+                      {col("status") && (
+                        <TableCell>
+                          <Badge className={getStatusColor(point.status)}>
+                            {point.status === 'tested' && <span className="mr-1">✓</span>}
+                            {point.status}
                           </Badge>
-                        ) : (
-                          <span className="text-muted-foreground text-xs">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
-                        {point.cable_id || "—"}
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
-                        {point.patch_panel_port || "—"}
-                      </TableCell>
+                        </TableCell>
+                      )}
+                      {col("cables") && (
+                        <TableCell className="text-center">
+                          {point.cable_count > 0 ? (
+                            <Badge variant="outline" className="font-mono text-xs gap-1">
+                              <Cable className="h-3 w-3" />
+                              {point.cable_count}
+                            </Badge>
+                          ) : (
+                            <span className="text-muted-foreground text-xs">—</span>
+                          )}
+                        </TableCell>
+                      )}
+                      {col("cableId") && (
+                        <TableCell className="text-xs text-muted-foreground">
+                          {point.cable_id || "—"}
+                        </TableCell>
+                      )}
+                      {col("patchPanel") && (
+                        <TableCell className="text-xs text-muted-foreground">
+                          {point.patch_panel_port || "—"}
+                        </TableCell>
+                      )}
+
                       <TableCell onClick={(e) => e.stopPropagation()}>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -275,7 +346,7 @@ const DropPointListContent = ({ locationId }: DropPointListProps) => {
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="bg-popover border">
+                          <DropdownMenuContent align="end" className="bg-popover border z-50">
                             <DropdownMenuItem onClick={() => {
                               setSelectedDropPoint(point);
                               setDetailsModalOpen(true);
@@ -290,7 +361,8 @@ const DropPointListContent = ({ locationId }: DropPointListProps) => {
                               <Edit className="mr-2 h-4 w-4" />
                               Edit Drop Point
                             </DropdownMenuItem>
-                            <DropdownMenuItem 
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
                               className="text-destructive"
                               onClick={() => deleteDropPoint(point.id)}
                             >
@@ -305,8 +377,8 @@ const DropPointListContent = ({ locationId }: DropPointListProps) => {
 
                   if (isMobile) {
                     return (
-                      <SwipeableRow 
-                        key={point.id} 
+                      <SwipeableRow
+                        key={point.id}
                         onDelete={() => deleteDropPoint(point.id)}
                       >
                         {rowContent}
