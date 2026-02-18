@@ -51,6 +51,7 @@ import PortalEntry from "./pages/PortalEntry";
 import ClientPortalManagement from "./pages/ClientPortalManagement";
 import TradeTube from "./pages/TradeTube";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
+import DocsPage from "./pages/DocsPage";
 
 // Public pages
 import LandingPage from "./pages/LandingPage";
@@ -120,6 +121,13 @@ const App = () => (
                     <ProtectedRoute>
                       <AppLayout>
                         <SuperAdminDashboard />
+                      </AppLayout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/docs" element={
+                    <ProtectedRoute>
+                      <AppLayout>
+                        <DocsPage />
                       </AppLayout>
                     </ProtectedRoute>
                   } />
