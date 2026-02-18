@@ -217,6 +217,7 @@ const DropPointListContent = ({ locationId }: DropPointListProps) => {
                   <TableHead>Floor</TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead className="text-center">Cables</TableHead>
                   <TableHead>Cable ID</TableHead>
                   <TableHead>Patch Panel</TableHead>
                   <TableHead className="w-[50px]"></TableHead>
@@ -250,6 +251,16 @@ const DropPointListContent = ({ locationId }: DropPointListProps) => {
                           {point.status === 'tested' && <span className="mr-1">✓</span>}
                           {point.status}
                         </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {point.cable_count > 0 ? (
+                          <Badge variant="outline" className="font-mono text-xs gap-1">
+                            <Cable className="h-3 w-3" />
+                            {point.cable_count}
+                          </Badge>
+                        ) : (
+                          <span className="text-muted-foreground text-xs">—</span>
+                        )}
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground">
                         {point.cable_id || "—"}
