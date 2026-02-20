@@ -1,62 +1,69 @@
 
-# Add Cable Count Column to Drop Point Management Table
 
-## What's Happening
+# Add Cable Naming to Drop Point Edit Modal
 
-The `cable_count` field already exists end-to-end in the system:
-- **Database**: `drop_points.cable_count INTEGER DEFAULT 1` (migration already applied)
-- **Hook**: `useDropPoints.ts` fetches and validates it (`cable_count: point.cable_count ?? 0`)
-- **Type**: Defined in the `DropPoint` interface as `cable_count: number`
-- **Detail modal**: Shows and edits it correctly in `DropPointDetailsModal.tsx`
+## Problem
 
-It is only missing from the **list table view** in `DropPointList.tsx`. This is a minimal, surgical change.
+When **adding** a new drop point via `AddDropPointModal`, users can set a cable count and then name each individual cable using the `CableNameFields` component. However, when **editing** an existing drop point in `DropPointDetailsModal`, this cable naming UI is completely absent -- users can only change the cable count number but cannot name or rename individual cables.
 
-## Files to Change
+## What Changes
 
-### `src/components/DropPointList.tsx` — Two targeted edits
+### `src/components/DropPointDetailsModal.tsx` -- 3 edits
 
-**Edit 1 — Add the column header** (line 222, after the "Patch Panel" `<TableHead>`):
+**Edit 1 -- Add import and state**
 
-Current table headers:
-```
-Label | Room | Floor | Type | Status | Cable ID | Patch Panel | (actions)
-```
+- Import `CableNameFields` from `@/components/CableNameFields`
+- Add a `cableNames` state: `useState<Record<number, string>>({})`
+- In the existing `useEffect` that initializes edit data from `dropPoint`, also initialize `cableNames` from `dropPoint.type_specific_data.cable_names` (or empty object if none)
 
-New table headers:
-```
-Label | Room | Floor | Type | Status | Cables | Cable ID | Patch Panel | (actions)
-```
+**Edit 2 -- Add `CableNameFields` below the cable count input in editing mode**
 
-Add between Status and Cable ID:
-```tsx
-<TableHead className="text-center">Cables</TableHead>
-```
-
-**Edit 2 — Add the column cell** in each table row (after the Status `<TableCell>`):
+After the second "Number of Cables" field (around line 532), when `isEditing` is true and `cable_count > 1`, render:
 
 ```tsx
-<TableCell className="text-center">
-  {point.cable_count > 0 ? (
-    <Badge variant="outline" className="font-mono text-xs gap-1">
-      <Cable className="h-3 w-3" />
-      {point.cable_count}
-    </Badge>
-  ) : (
-    <span className="text-muted-foreground text-xs">—</span>
-  )}
-</TableCell>
+{isEditing && (editData.cable_count ?? 0) > 1 && (
+  <CableNameFields
+    cableCount={editData.cable_count as number}
+    cableNames={cableNames}
+    onChange={setCableNames}
+  />
+)}
 ```
 
-The `Cable` icon is already imported in `DropPointList.tsx` (line 2), so no new imports are needed.
+When NOT editing and cable names exist, show a read-only list of the named cables.
 
-## Visual Result
+**Edit 3 -- Persist cable names in `handleSave`**
 
-Each row in the drop points table will show a small badge like `🔌 2` in the Cables column, making it immediately clear how many cables each drop point has. Drop points with `cable_count = 0` (unset) will show a dash.
+Update the `handleSave` function to merge cable names into `typeSpecificData` before saving, matching the exact logic from `AddDropPointModal`:
+
+```typescript
+// Inside handleSave, before building dataToSave:
+const cableCount = editData.cable_count ?? 0;
+if (cableCount > 1) {
+  const names: Record<number, string> = {};
+  for (let i = 0; i < cableCount; i++) {
+    if (cableNames[i]?.trim()) {
+      names[i] = cableNames[i].trim();
+    }
+  }
+  if (Object.keys(names).length > 0) {
+    mergedTypeData.cable_names = names;
+  } else {
+    delete mergedTypeData.cable_names;
+  }
+} else {
+  delete mergedTypeData.cable_names;
+}
+```
+
+### Additional cleanup
+
+The "Number of Cables" field currently appears **twice** in the edit form (lines 467-480 and lines 507-532 -- a duplication bug). The first occurrence (lines 467-480) will be removed as part of this change to clean up the form.
 
 ## Technical Notes
 
-- No database changes required — field is already fetched
-- No hook changes required — field is already in the response
-- No new dependencies — `Cable` icon already imported, `Badge` already imported
-- The column appears between **Status** and **Cable ID** — logical grouping since cable count relates to the physical installation
-- `cable_count` defaults to `0` in the hook's defensive mapping, so no risk of undefined/null rendering errors
+- **No new dependencies** -- `CableNameFields` component already exists and is reused as-is
+- **No database changes** -- cable names are already stored in the `type_specific_data` JSONB column
+- **Matches the Add flow exactly** -- same component, same data shape (`type_specific_data.cable_names`), same persistence logic
+- The `handleCancel` already resets `typeSpecificData` from the drop point, so cable name reset on cancel works automatically
+
