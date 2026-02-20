@@ -50,6 +50,7 @@ import { PhotoCaptureCard } from './PhotoCaptureCard';
 import { TestResultsUpload } from './TestResultsUpload';
 import { DropPointTypeSpecificFields } from './DropPointTypeSpecificFields';
 import { MdfIdfConnectionFields, MdfIdfConnection } from './MdfIdfConnectionFields';
+import { CableNameFields } from '@/components/CableNameFields';
 import { useDistributionFrames } from '@/hooks/useDistributionFrames';
 import { Lock, Unlock } from 'lucide-react';
 import { useUserRoles } from '@/hooks/useUserRoles';
@@ -75,6 +76,7 @@ export const DropPointDetailsModal: React.FC<DropPointDetailsModalProps> = ({
   const [editData, setEditData] = useState<Partial<DropPoint>>({});
   const [typeSpecificData, setTypeSpecificData] = useState<any>({});
   const [mdfConnections, setMdfConnections] = useState<MdfIdfConnection[]>([]);
+  const [cableNames, setCableNames] = useState<Record<number, string>>({});
   const [isTogglingLock, setIsTogglingLock] = useState(false);
   
   const { updateDropPoint, deleteDropPoint, dropPoints } = useDropPoints(locationId);
@@ -103,6 +105,7 @@ export const DropPointDetailsModal: React.FC<DropPointDetailsModalProps> = ({
       const tsd = (dropPoint as any).type_specific_data || {};
       setTypeSpecificData(tsd);
       setMdfConnections(tsd.mdf_idf_connections || []);
+      setCableNames(tsd.cable_names || {});
     }
   }, [dropPoint]);
 
@@ -124,6 +127,25 @@ export const DropPointDetailsModal: React.FC<DropPointDetailsModalProps> = ({
       if (validConnections.length === 0) {
         delete mergedTypeData.mdf_idf_connections;
       }
+
+      // Persist cable names
+      const cableCount = editData.cable_count ?? 0;
+      if (cableCount > 1) {
+        const names: Record<number, string> = {};
+        for (let i = 0; i < cableCount; i++) {
+          if (cableNames[i]?.trim()) {
+            names[i] = cableNames[i].trim();
+          }
+        }
+        if (Object.keys(names).length > 0) {
+          mergedTypeData.cable_names = names;
+        } else {
+          delete mergedTypeData.cable_names;
+        }
+      } else {
+        delete mergedTypeData.cable_names;
+      }
+
       const dataToSave = {
         ...editData,
         cable_count: editData.cable_count === null || editData.cable_count === undefined 
@@ -464,20 +486,6 @@ export const DropPointDetailsModal: React.FC<DropPointDetailsModalProps> = ({
                   )}
                 </div>
 
-                <div>
-                  <Label htmlFor="cable_count">Number of Cables</Label>
-                  {isEditing ? (
-                    <Input
-                      id="cable_count"
-                      type="number"
-                      min="1"
-                      value={editData.cable_count || ''}
-                      onChange={(e) => setEditData({ ...editData, cable_count: parseInt(e.target.value) || null })}
-                    />
-                  ) : (
-                    <p className="text-sm">{dropPoint.cable_count || 'Not specified'}</p>
-                  )}
-                </div>
 
                 <div>
                   <Label htmlFor="status">Status</Label>
@@ -530,6 +538,28 @@ export const DropPointDetailsModal: React.FC<DropPointDetailsModalProps> = ({
                     <p className="text-sm">{dropPoint.cable_count || 'Not specified'}</p>
                   )}
                 </div>
+
+                {/* Cable Names */}
+                {isEditing && (editData.cable_count ?? 0) > 1 && (
+                  <CableNameFields
+                    cableCount={editData.cable_count as number}
+                    cableNames={cableNames}
+                    onChange={setCableNames}
+                  />
+                )}
+                {!isEditing && (dropPoint as any).type_specific_data?.cable_names && dropPoint.cable_count > 1 && (
+                  <div className="space-y-1">
+                    <Label>Cable Names</Label>
+                    <div className="space-y-1">
+                      {Object.entries((dropPoint as any).type_specific_data.cable_names).map(([idx, name]) => (
+                        <div key={idx} className="flex items-center gap-2 text-sm">
+                          <span className="text-xs text-muted-foreground w-8 shrink-0">#{parseInt(idx) + 1}</span>
+                          <span>{name as string}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-4">
