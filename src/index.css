@@ -331,4 +331,5 @@
 /* Google Places Autocomplete dropdown above dialogs */
 .pac-container {
   z-index: 99999 !important;
+  pointer-events: auto !important;
 }
