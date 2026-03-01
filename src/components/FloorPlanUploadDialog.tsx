@@ -123,6 +123,24 @@ export const FloorPlanUploadDialog = ({
     setMapReady(false);
   }, []);
 
+  const handleUseMyLocation = () => {
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const coords = { lat: position.coords.latitude, lng: position.coords.longitude };
+        setMapCoordinates(coords);
+        mapInstanceRef.current?.panTo(coords);
+        mapInstanceRef.current?.setZoom(19);
+        setIsLocating(false);
+      },
+      (error) => {
+        toast({ title: "Location Error", description: error.message, variant: "destructive" });
+        setIsLocating(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
+
   const handleCaptureSatellite = async () => {
     const map = mapInstanceRef.current;
     if (!map || !apiKey) return;
