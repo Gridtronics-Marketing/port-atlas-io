@@ -1,50 +1,40 @@
 
 
-# Add Right-Click Context Menu to Room Views and Wire Paths
+# Update Version and Change Log
 
-## Overview
+## Version Bump
 
-Drop points already have a right-click context menu with Edit, Lock/Unlock, and Delete actions. Room views and wire paths currently lack this -- room views only open on click, and wire paths show a bottom panel. This change adds consistent context menus to both.
+Update from **v1.10.6** to **v1.10.7** with today's date (2026-03-01).
 
-## Changes
+## Changes to Record
 
-### `src/components/InteractiveFloorPlan.tsx`
+The following features and fixes were implemented in this session:
 
-**1. Import `deleteRoomView` from `useRoomViews` hook**
+1. **Fixed Google Places Autocomplete selection in dialogs** -- Address suggestions can now be clicked without Radix Dialog stealing focus or closing
+2. **Fixed interactive map not loading after address selection** -- Deferred map initialization to ensure DOM container is mounted before attaching Google Maps
+3. **Fixed Google Maps API race condition** -- Added polling mechanism so multiple components correctly detect when the Maps script finishes loading
+4. **Added right-click context menus to room views and wire paths on floor plans** -- Room views now have "View Details" and "Delete" options; wire paths auto-select on right-click to reveal the action panel
 
-Update the destructured values on line 120 to also pull `deleteRoomView`:
-```tsx
-const { roomViews, loading: roomViewsLoading, updateRoomView, deleteRoomView, fetchRoomViews } = useRoomViews(validLocationId);
+## File Changes
+
+### `src/lib/version.ts`
+
+- Update `APP_VERSION` from `"1.10.6"` to `"1.10.7"`
+- Add a new entry at the top of `VERSION_HISTORY` array:
+
+```typescript
+{
+  version: "1.10.7",
+  date: "2026-03-01",
+  changes: [
+    "Fixed Google Places Autocomplete selection inside dialogs (focus trap and pointer event conflicts)",
+    "Fixed interactive satellite map not loading after address selection or tab switch",
+    "Fixed Google Maps API loading race condition when multiple components request the script",
+    "Added right-click context menus to room views and wire paths on interactive floor plans",
+    "Room view context menu with View Details and Delete actions",
+    "Wire path right-click selects path and reveals action panel with edit/delete options",
+    "Added delete confirmation dialogs for room views and wire paths (replaces native confirm)",
+  ]
+}
 ```
-
-**2. Add state for room view and wire path delete confirmation targets**
-
-Add new state variables (alongside the existing `contextDeleteTarget` for drop points):
-```tsx
-const [contextDeleteRoomViewTarget, setContextDeleteRoomViewTarget] = useState<any>(null);
-const [contextDeleteWirePathTarget, setContextDeleteWirePathTarget] = useState<WirePath | null>(null);
-```
-
-**3. Wrap room view markers with ContextMenu (lines ~1063-1111)**
-
-Replace the current `Tooltip`-only wrapper with `ContextMenu > Tooltip > ContextMenuTrigger` (same pattern as drop points). The context menu will have:
-- **View Details** -- opens the room view modal (same as current click behavior)
-- **Delete** -- sets `contextDeleteRoomViewTarget` to trigger a confirmation dialog
-
-**4. Wrap wire path `<g>` elements with a context menu approach**
-
-Since wire paths are SVG elements and ContextMenu requires DOM elements, add a right-click handler (`onContextMenu`) on the wire path `<g>` element that opens a small popover/action panel. Alternatively, use the existing selected wire path panel pattern but trigger it on right-click as well. The pragmatic approach:
-- On right-click of a wire path, set it as `selectedWirePath` (reusing the existing bottom panel with Edit/Delete actions)
-- This gives consistent access to wire path actions via both click and right-click
-
-**5. Add confirmation AlertDialogs for room view and wire path deletion**
-
-Add two new `AlertDialog` components (matching the existing drop point delete confirmation pattern):
-- Room view delete confirmation: calls `deleteRoomView(id)` on confirm
-- Wire path delete confirmation: calls `handleDeleteWirePath(id)` on confirm
-
-### Summary of user experience
-- **Drop points**: Right-click shows Edit Details, Lock/Unlock, Delete (unchanged)
-- **Room views**: Right-click shows View Details, Delete (new)
-- **Wire paths**: Right-click selects the path and shows the existing action panel with Delete (enhanced)
 
