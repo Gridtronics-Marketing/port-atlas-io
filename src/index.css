@@ -327,3 +327,8 @@
     box-shadow: 0 0 30px -5px hsl(var(--gold) / 0.5);
   }
 }
+
+/* Google Places Autocomplete dropdown above dialogs */
+.pac-container {
+  z-index: 99999 !important;
+}
