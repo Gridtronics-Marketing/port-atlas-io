@@ -1,62 +1,65 @@
 
+# Make Floor Plan Toolbar Float Above the Plan
 
-# Fix Context Menu Not Opening on Right-Click
+## Overview
 
-## Problem
-
-The `ContextMenuTrigger` uses `asChild` but wraps a React Fragment (`<>...</>`). The `asChild` pattern from Radix requires a **single DOM element** child that can accept a ref. Fragments cannot receive refs, so the context menu never activates.
-
-Additionally, the `ContextMenu` component is nested inside `TooltipTrigger asChild`, creating another `asChild`-wrapping-non-element issue.
-
-## Solution
-
-Restructure the nesting so that:
-1. `ContextMenu` is the outermost wrapper (not inside `TooltipTrigger`)
-2. `ContextMenuTrigger asChild` wraps a **single `div`** (not a fragment)
-3. The label element moves inside that single wrapper div
-4. `Tooltip` wraps the trigger div inside the context menu trigger
-
-### New structure (per marker):
-
-```text
-ContextMenu
-  ContextMenuTrigger asChild
-    div (single wrapper element - receives ref)
-      div (marker circle)
-      div (label, if visible)
-  ContextMenuContent
-    ContextMenuItem (Edit)
-    ContextMenuItem (Lock/Unlock)
-    ContextMenuSeparator
-    ContextMenuItem (Delete)
-```
-
-The Tooltip can either wrap around the ContextMenuTrigger's child div or be removed from the individual markers (since the tooltip info is already in the persistent labels). The simplest fix is to keep the Tooltip but restructure so it works:
-
-```text
-TooltipProvider
-  ContextMenu
-    Tooltip
-      TooltipTrigger asChild
-        ContextMenuTrigger asChild
-          div.wrapper  <-- single DOM element, receives both refs
-            div.marker
-            div.label
-      TooltipContent
-    ContextMenuContent
-```
-
-This way both `asChild` props merge onto the same single `div`, and both the tooltip and context menu function correctly.
+Extract the entire toolbar (Upload Map, Draw Floor Plan, Filter, Add Drop Point, Add Room View, Draw Wire Path, Export PDF, Delete, Zoom controls) out of `CardHeader` and make it a sticky/floating bar that stays visible as the user scrolls through the floor plan.
 
 ## Changes
 
-### `src/components/InteractiveFloorPlan.tsx` (~lines 954-1048)
+### `src/components/InteractiveFloorPlan.tsx`
 
-Replace the marker rendering block so that:
-- `ContextMenu` is outermost
-- `Tooltip` is inside `ContextMenu` 
-- `TooltipTrigger asChild` > `ContextMenuTrigger asChild` > single `div` wrapper
-- `ContextMenuContent` is a sibling of `Tooltip` (both inside `ContextMenu`)
-- The wrapper `div` uses `position: absolute` and the same coordinate styles, containing both the marker circle and the label
+**1. Move toolbar out of `CardHeader` into a sticky overlay inside `CardContent`**
 
-No other files are changed. All existing drag, click, lock/unlock, and delete logic remains identical.
+Currently the toolbar buttons (lines ~644-864) are inside `CardHeader`, which scrolls away when the floor plan image is large or zoomed in.
+
+The fix:
+- Keep `CardHeader` minimal -- just the title "Floor N - Interactive Plan"
+- Move the entire toolbar (Upload Map through Zoom controls) into a new `div` placed **inside `CardContent` but above the floor plan container**, with these classes:
+
+```tsx
+<div className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm border-b rounded-t-lg px-3 py-2">
+  <div className="flex flex-wrap items-center gap-2">
+    {/* All toolbar buttons moved here */}
+  </div>
+</div>
+```
+
+**2. Wrap the `CardContent` area in a scrollable container**
+
+To make `sticky` work, the `CardContent` (or its parent `Card`) needs to be the scroll container. Add `max-h-[85vh] overflow-y-auto` to `CardContent` so the toolbar sticks to the top as the user scrolls through a large/zoomed floor plan:
+
+```tsx
+<CardContent className="space-y-4 max-h-[85vh] overflow-y-auto p-0">
+  {/* Sticky toolbar */}
+  <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm border-b px-3 py-2">
+    <div className="flex flex-wrap items-center gap-2">
+      {/* Upload Map, Draw Floor Plan, Filter, Add Drop Point, 
+          Add Room View, Draw Wire Path, Export PDF, Delete, Zoom */}
+    </div>
+  </div>
+  {/* Drop point count + legend */}
+  {/* Floor plan container (the existing ref={containerRef} div) */}
+</CardContent>
+```
+
+**3. Simplify `CardHeader`**
+
+`CardHeader` keeps only:
+- The title "Floor N - Interactive Plan"
+- The "Manage Floors" button (if present at that level)
+
+**4. Styles**
+
+- `sticky top-0 z-30` -- pins the toolbar to the top of the scrollable card
+- `bg-background/95 backdrop-blur-sm` -- semi-transparent background so the plan is slightly visible behind it, matching the app's design system
+- `border-b` -- subtle separator between toolbar and plan content
+- `px-3 py-2` -- compact padding to keep the toolbar slim
+
+## What stays unchanged
+
+- All button logic, click handlers, and state management
+- The floor plan container, markers, context menus, drag behavior
+- Zoom/scale controls and their functionality
+- All modals and dialogs
+- The drop point count/legend section (moves below toolbar but above the plan)
