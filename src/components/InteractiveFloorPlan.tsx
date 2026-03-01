@@ -117,7 +117,9 @@ export const InteractiveFloorPlan = ({
   const validLocationId = locationId && isValidUUID(locationId) ? locationId : undefined;
   const { dropPoints, loading: dropPointsLoading, updateDropPoint, deleteDropPoint, fetchDropPoints } = useDropPoints(validLocationId);
   const [contextDeleteTarget, setContextDeleteTarget] = useState<any>(null);
-  const { roomViews, loading: roomViewsLoading, updateRoomView, fetchRoomViews } = useRoomViews(validLocationId);
+  const [contextDeleteRoomViewTarget, setContextDeleteRoomViewTarget] = useState<any>(null);
+  const [contextDeleteWirePathTarget, setContextDeleteWirePathTarget] = useState<WirePath | null>(null);
+  const { roomViews, loading: roomViewsLoading, updateRoomView, deleteRoomView, fetchRoomViews } = useRoomViews(validLocationId);
   const { wirePaths, loading: wirePathsLoading, deleteWirePath, refetch: fetchWirePaths } = useWirePaths(validLocationId, floorNumber);
 
   // Generate the actual file URL from path or use provided URL
@@ -244,12 +246,11 @@ export const InteractiveFloorPlan = ({
   };
 
   const handleDeleteWirePath = async (pathId: string) => {
-    if (confirm('Are you sure you want to delete this wire path?')) {
-      try {
-        await deleteWirePath(pathId);
-      } catch (error) {
-        console.error('Error deleting wire path:', error);
-      }
+    try {
+      await deleteWirePath(pathId);
+      setSelectedWirePath(null);
+    } catch (error) {
+      console.error('Error deleting wire path:', error);
     }
   };
 
@@ -1064,49 +1065,68 @@ export const InteractiveFloorPlan = ({
               const displayRoomView = draggedRoomView && draggedRoomView.id === roomView.id ? draggedRoomView : roomView;
               
               return (
-                <Tooltip key={roomView.id}>
-                  <TooltipTrigger asChild>
-                     <>
-                       <div
-                         className={`absolute transform -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-600 border-2 border-blue-700 flex items-center justify-center text-white hover:scale-110 transition-transform shadow-lg ${
-                           draggedRoomView && draggedRoomView.id === roomView.id 
-                             ? 'cursor-grabbing scale-110'
-                             : 'cursor-grab'
-                         }`}
-                         style={{
-                           left: `${displayRoomView.x_coordinate || 50}%`,
-                           top: `${displayRoomView.y_coordinate || 50}%`,
-                           zIndex: draggedRoomView && draggedRoomView.id === roomView.id ? 50 : 15,
-                           width: `${32 * filters.markerScale}px`,
-                           height: `${32 * filters.markerScale}px`,
-                         }}
-                         onMouseDown={(e) => handlePointerDown(e, roomView, 'roomView')}
-                         onTouchStart={(e) => handlePointerDown(e, roomView, 'roomView')}
-                         onClick={(e) => {
-                           e.stopPropagation();
-                           if (!isDragging) {
-                             setSelectedRoomView(roomView);
-                             setRoomViewModalOpen(true);
-                           }
-                         }}
-                       >
-                         <Camera style={{ width: `${16 * filters.markerScale}px`, height: `${16 * filters.markerScale}px` }} />
+                <ContextMenu key={roomView.id}>
+                  <Tooltip>
+                    <ContextMenuTrigger asChild>
+                      <TooltipTrigger asChild>
+                        <div
+                          className={`absolute transform -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-600 border-2 border-blue-700 flex items-center justify-center text-white hover:scale-110 transition-transform shadow-lg ${
+                            draggedRoomView && draggedRoomView.id === roomView.id 
+                              ? 'cursor-grabbing scale-110'
+                              : 'cursor-grab'
+                          }`}
+                          style={{
+                            left: `${displayRoomView.x_coordinate || 50}%`,
+                            top: `${displayRoomView.y_coordinate || 50}%`,
+                            zIndex: draggedRoomView && draggedRoomView.id === roomView.id ? 50 : 15,
+                            width: `${32 * filters.markerScale}px`,
+                            height: `${32 * filters.markerScale}px`,
+                          }}
+                          onMouseDown={(e) => handlePointerDown(e, roomView, 'roomView')}
+                          onTouchStart={(e) => handlePointerDown(e, roomView, 'roomView')}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!isDragging) {
+                              setSelectedRoomView(roomView);
+                              setRoomViewModalOpen(true);
+                            }
+                          }}
+                        >
+                          <Camera style={{ width: `${16 * filters.markerScale}px`, height: `${16 * filters.markerScale}px` }} />
                         </div>
-                      </>
-                 </TooltipTrigger>
-                <TooltipContent className="bg-popover border">
-                  <div className="text-sm">
-                    <p className="font-medium">{roomView.room_name || 'Room View'}</p>
-                    {roomView.description && (
-                      <p className="text-muted-foreground">{roomView.description}</p>
-                    )}
-                    <p className="text-xs text-muted-foreground mt-1">
-                      By {roomView.employee?.first_name} {roomView.employee?.last_name}
-                    </p>
-                    <p className="text-xs text-muted-foreground">Click to view photo</p>
-                  </div>
-                </TooltipContent>
-                </Tooltip>
+                      </TooltipTrigger>
+                    </ContextMenuTrigger>
+                    <TooltipContent className="bg-popover border">
+                      <div className="text-sm">
+                        <p className="font-medium">{roomView.room_name || 'Room View'}</p>
+                        {roomView.description && (
+                          <p className="text-muted-foreground">{roomView.description}</p>
+                        )}
+                        <p className="text-xs text-muted-foreground mt-1">
+                          By {roomView.employee?.first_name} {roomView.employee?.last_name}
+                        </p>
+                        <p className="text-xs text-muted-foreground">Click to view • Right-click for options</p>
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                  <ContextMenuContent>
+                    <ContextMenuItem onClick={() => {
+                      setSelectedRoomView(roomView);
+                      setRoomViewModalOpen(true);
+                    }}>
+                      <Camera className="h-4 w-4 mr-2" />
+                      View Details
+                    </ContextMenuItem>
+                    <ContextMenuSeparator />
+                    <ContextMenuItem
+                      className="text-destructive focus:text-destructive"
+                      onClick={() => setContextDeleteRoomViewTarget(roomView)}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete
+                    </ContextMenuItem>
+                  </ContextMenuContent>
+                </ContextMenu>
               );
               })}
             </TooltipProvider>
@@ -1127,7 +1147,13 @@ export const InteractiveFloorPlan = ({
                   .join(' ');
                 
                 return (
-                  <g key={path.id} className="pointer-events-auto cursor-pointer">
+                  <g key={path.id} className="pointer-events-auto cursor-pointer"
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setSelectedWirePath(path);
+                    }}
+                  >
                     {/* Wider invisible stroke for easier clicking */}
                     <path
                       d={pathString}
@@ -1215,10 +1241,7 @@ export const InteractiveFloorPlan = ({
                 <Button
                   variant="destructive"
                   size="sm"
-                  onClick={() => {
-                    handleDeleteWirePath(selectedWirePath.id);
-                    setSelectedWirePath(null);
-                  }}
+                  onClick={() => setContextDeleteWirePathTarget(selectedWirePath)}
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -1387,6 +1410,62 @@ export const InteractiveFloorPlan = ({
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => handleContextDeleteDropPoint(contextDeleteTarget)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Room View Delete Confirmation */}
+      <AlertDialog open={!!contextDeleteRoomViewTarget} onOpenChange={(open) => !open && setContextDeleteRoomViewTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Room View</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{contextDeleteRoomViewTarget?.room_name || 'this room view'}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                try {
+                  await deleteRoomView(contextDeleteRoomViewTarget.id);
+                  setContextDeleteRoomViewTarget(null);
+                } catch (error) {
+                  console.error('Error deleting room view:', error);
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Wire Path Delete Confirmation */}
+      <AlertDialog open={!!contextDeleteWirePathTarget} onOpenChange={(open) => !open && setContextDeleteWirePathTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Wire Path</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{contextDeleteWirePathTarget?.label || 'this wire path'}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                try {
+                  await handleDeleteWirePath(contextDeleteWirePathTarget!.id);
+                  setContextDeleteWirePathTarget(null);
+                } catch (error) {
+                  console.error('Error deleting wire path:', error);
+                }
+              }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Delete
