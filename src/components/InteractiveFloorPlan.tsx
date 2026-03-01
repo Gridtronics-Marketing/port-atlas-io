@@ -636,12 +636,15 @@ export const InteractiveFloorPlan = ({
     <div className={`flex flex-row gap-0 w-full ${className}`}>
       {/* Main Floor Plan Area */}
       <Card className="flex-1">
-        <CardHeader>
-        <div className="flex items-center justify-between">
+        <CardHeader className="pb-2">
           <CardTitle className="text-lg">
             Floor {floorNumber} - Interactive Plan
           </CardTitle>
-          <div className="flex items-center gap-2">
+        </CardHeader>
+      <CardContent className="space-y-4 max-h-[85vh] overflow-y-auto p-0">
+        {/* Sticky floating toolbar */}
+        <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm border-b px-3 py-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Button
               variant="outline"
               size="sm"
@@ -762,8 +765,6 @@ export const InteractiveFloorPlan = ({
                       title: "Generating PDF",
                       description: "Creating composite image with all annotations...",
                     });
-
-                    // Create composite image with all layers
                     const { createCompositeFloorPlan } = await import('@/lib/floor-plan-composite');
                     const compositeUrl = await createCompositeFloorPlan({
                       baseImageUrl: actualFileUrl,
@@ -782,8 +783,6 @@ export const InteractiveFloorPlan = ({
                       width: containerDimensions.width || 800,
                       height: containerDimensions.height || 600
                     });
-
-                    // Export to PDF with composite image
                     const { exportFloorPlanToPDF } = await import('@/lib/floor-plan-exporter');
                     await exportFloorPlanToPDF(
                       locationId, 
@@ -797,7 +796,6 @@ export const InteractiveFloorPlan = ({
                       },
                       compositeUrl
                     );
-                    
                     toast({
                       title: "PDF Export Complete",
                       description: "Floor plan with all annotations has been exported successfully.",
@@ -863,8 +861,9 @@ export const InteractiveFloorPlan = ({
             </div>
           </div>
         </div>
+        {/* Drop point count + legend */}
         {(floorDropPoints.length > 0 || floorRoomViews.length > 0) && (
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2 px-3">
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
               {floorDropPoints.length > 0 && (
                 <span>{floorDropPoints.length} drop points on this floor</span>
@@ -878,8 +877,7 @@ export const InteractiveFloorPlan = ({
             )}
           </div>
         )}
-      </CardHeader>
-      <CardContent className="space-y-4">
+        <div className="px-5 pb-5 space-y-4">
         <div 
           ref={containerRef}
           className={`relative bg-muted rounded-lg overflow-hidden ${
@@ -1273,6 +1271,7 @@ export const InteractiveFloorPlan = ({
             <li>• <strong>Zoom:</strong> Use the zoom controls or mouse wheel</li>
             <li>• <strong>View Details:</strong> Click on existing drop points, room view cameras, or wire paths</li>
           </ul>
+        </div>
         </div>
       </CardContent>
 
