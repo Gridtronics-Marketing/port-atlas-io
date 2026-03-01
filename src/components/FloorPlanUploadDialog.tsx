@@ -63,33 +63,38 @@ export const FloorPlanUploadDialog = ({
     }
   };
 
-  // Initialize interactive map
+  // Initialize interactive map (deferred to ensure DOM is ready)
   useEffect(() => {
-    if (!mapsLoaded || !apiKey || activeTab !== 'satellite' || !mapContainerRef.current) return;
-    if (mapInstanceRef.current) return; // already initialized
+    if (!mapsLoaded || !apiKey || activeTab !== 'satellite') return;
 
-    const map = new window.google.maps.Map(mapContainerRef.current, {
-      center: mapCoordinates || { lat: 37.7749, lng: -122.4194 },
-      zoom: zoomLevel,
-      mapTypeId: 'satellite',
-      gestureHandling: 'greedy',
-      disableDefaultUI: false,
-      zoomControl: true,
-      streetViewControl: false,
-      mapTypeControl: false,
-      fullscreenControl: false,
-    });
+    const timerId = setTimeout(() => {
+      if (!mapContainerRef.current || mapInstanceRef.current) return;
 
-    map.addListener('idle', () => {
-      const center = map.getCenter();
-      if (center) {
-        setMapCoordinates({ lat: center.lat(), lng: center.lng() });
-        setZoomLevel(map.getZoom() || 18);
-      }
-    });
+      const map = new window.google.maps.Map(mapContainerRef.current, {
+        center: mapCoordinates || { lat: 37.7749, lng: -122.4194 },
+        zoom: zoomLevel,
+        mapTypeId: 'satellite',
+        gestureHandling: 'greedy',
+        disableDefaultUI: false,
+        zoomControl: true,
+        streetViewControl: false,
+        mapTypeControl: false,
+        fullscreenControl: false,
+      });
 
-    mapInstanceRef.current = map;
-    setMapReady(true);
+      map.addListener('idle', () => {
+        const center = map.getCenter();
+        if (center) {
+          setMapCoordinates({ lat: center.lat(), lng: center.lng() });
+          setZoomLevel(map.getZoom() || 18);
+        }
+      });
+
+      mapInstanceRef.current = map;
+      setMapReady(true);
+    }, 100);
+
+    return () => clearTimeout(timerId);
   }, [mapsLoaded, apiKey, activeTab]);
 
   // Initialize Places Autocomplete with deferred timing
