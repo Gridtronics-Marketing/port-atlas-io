@@ -53,10 +53,16 @@ export const useGoogleMapsAPI = () => {
       return;
     }
 
-    // Check if script is already loading
+    // Check if script is already loading – poll until it finishes
     if (isScriptLoading) {
       setState(prev => ({ ...prev, isLoading: true }));
-      return;
+      const pollId = setInterval(() => {
+        if (isScriptLoaded && window.google?.maps) {
+          clearInterval(pollId);
+          setState({ isLoaded: true, isLoading: false, error: null, apiKey });
+        }
+      }, 100);
+      return () => clearInterval(pollId);
     }
 
     // Load the script
