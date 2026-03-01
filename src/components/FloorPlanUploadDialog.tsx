@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react';
-import { Upload, X, Image as ImageIcon, FileText, Loader2, Globe, MapPin, Navigation, Minus, Plus } from 'lucide-react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { Upload, X, Image as ImageIcon, FileText, Loader2, Globe, Navigation } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -10,14 +10,12 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { convertPDFToImages, isPDFFile } from '@/lib/pdf-converter';
 import { Progress } from '@/components/ui/progress';
 import { useGoogleMapsAPI } from '@/hooks/useGoogleMapsAPI';
-import { Slider } from '@/components/ui/slider';
 
 interface FloorPlanUploadDialogProps {
   isOpen: boolean;
@@ -43,15 +41,18 @@ export const FloorPlanUploadDialog = ({
   const [conversionProgress, setConversionProgress] = useState(0);
   const [isDragActive, setIsDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<google.maps.Map | null>(null);
+  const autocompleteInputRef = useRef<HTMLInputElement>(null);
+  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const { toast } = useToast();
 
   // Satellite state
   const [activeTab, setActiveTab] = useState<string>(defaultTab);
-  const [addressInput, setAddressInput] = useState('');
   const [mapCoordinates, setMapCoordinates] = useState<{ lat: number; lng: number } | null>(null);
   const [zoomLevel, setZoomLevel] = useState(18);
-  const [isSearching, setIsSearching] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
+  const [mapReady, setMapReady] = useState(false);
 
   const { apiKey, isLoaded: mapsLoaded, error: mapsError } = useGoogleMapsAPI();
 
@@ -62,58 +63,81 @@ export const FloorPlanUploadDialog = ({
     }
   };
 
-  // --- Satellite logic ---
+  // Initialize interactive map
+  useEffect(() => {
+    if (!mapsLoaded || !apiKey || activeTab !== 'satellite' || !mapContainerRef.current) return;
+    if (mapInstanceRef.current) return; // already initialized
 
-  const satellitePreviewUrl = mapCoordinates && apiKey
-    ? `https://maps.googleapis.com/maps/api/staticmap?center=${mapCoordinates.lat},${mapCoordinates.lng}&zoom=${zoomLevel}&size=800x600&maptype=satellite&key=${apiKey}`
-    : null;
+    const map = new window.google.maps.Map(mapContainerRef.current, {
+      center: mapCoordinates || { lat: 37.7749, lng: -122.4194 },
+      zoom: zoomLevel,
+      mapTypeId: 'satellite',
+      gestureHandling: 'greedy',
+      disableDefaultUI: false,
+      zoomControl: true,
+      streetViewControl: false,
+      mapTypeControl: false,
+      fullscreenControl: false,
+    });
 
-  const handleSearchAddress = async () => {
-    if (!addressInput.trim() || !mapsLoaded || !window.google?.maps) return;
-    setIsSearching(true);
-    try {
-      const geocoder = new window.google.maps.Geocoder();
-      const result = await geocoder.geocode({ address: addressInput });
-      if (result.results.length > 0) {
-        const loc = result.results[0].geometry.location;
-        setMapCoordinates({ lat: loc.lat(), lng: loc.lng() });
-      } else {
-        toast({ title: "Address Not Found", description: "Could not find that address. Try a more specific query.", variant: "destructive" });
+    map.addListener('idle', () => {
+      const center = map.getCenter();
+      if (center) {
+        setMapCoordinates({ lat: center.lat(), lng: center.lng() });
+        setZoomLevel(map.getZoom() || 18);
       }
-    } catch (error) {
-      toast({ title: "Geocoding Error", description: error instanceof Error ? error.message : "Failed to search address.", variant: "destructive" });
-    } finally {
-      setIsSearching(false);
-    }
-  };
+    });
 
-  const handleUseMyLocation = () => {
-    setIsLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setMapCoordinates({ lat: position.coords.latitude, lng: position.coords.longitude });
-        setAddressInput(`${position.coords.latitude.toFixed(6)}, ${position.coords.longitude.toFixed(6)}`);
-        setIsLocating(false);
-      },
-      (error) => {
-        toast({ title: "Location Error", description: error.message, variant: "destructive" });
-        setIsLocating(false);
-      },
-      { enableHighAccuracy: true, timeout: 10000 }
+    mapInstanceRef.current = map;
+    setMapReady(true);
+  }, [mapsLoaded, apiKey, activeTab]);
+
+  // Initialize Places Autocomplete
+  useEffect(() => {
+    if (!mapsLoaded || !autocompleteInputRef.current || activeTab !== 'satellite') return;
+    if (autocompleteRef.current) return;
+
+    const autocomplete = new window.google.maps.places.Autocomplete(
+      autocompleteInputRef.current,
+      { types: ['geocode', 'establishment'] }
     );
-  };
+
+    autocomplete.addListener('place_changed', () => {
+      const place = autocomplete.getPlace();
+      if (place.geometry?.location) {
+        const loc = place.geometry.location;
+        const coords = { lat: loc.lat(), lng: loc.lng() };
+        setMapCoordinates(coords);
+        mapInstanceRef.current?.panTo(coords);
+        mapInstanceRef.current?.setZoom(19);
+      }
+    });
+
+    autocompleteRef.current = autocomplete;
+  }, [mapsLoaded, activeTab]);
+
+  // Cleanup map on close
+  const cleanupMap = useCallback(() => {
+    mapInstanceRef.current = null;
+    autocompleteRef.current = null;
+    setMapReady(false);
+  }, []);
 
   const handleCaptureSatellite = async () => {
-    if (!mapCoordinates || !apiKey) return;
+    const map = mapInstanceRef.current;
+    if (!map || !apiKey) return;
+    const center = map.getCenter();
+    const zoom = map.getZoom();
+    if (!center) return;
+
     setIsUploading(true);
     try {
-      const imageUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${mapCoordinates.lat},${mapCoordinates.lng}&zoom=${zoomLevel}&size=1280x1280&maptype=satellite&scale=2&key=${apiKey}`;
+      const imageUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${center.lat()},${center.lng()}&zoom=${zoom}&size=1280x1280&maptype=satellite&scale=2&key=${apiKey}`;
       const response = await fetch(imageUrl);
       if (!response.ok) throw new Error('Failed to fetch satellite image');
       const blob = await response.blob();
       const file = new File([blob], `floor_${floorNumber}_satellite.png`, { type: 'image/png' });
 
-      // Upload to storage (same logic as handleUpload)
       const filePath = `${locationId}/floor_${floorNumber}.png`;
       const { error: uploadError } = await supabase.storage
         .from('floor-plans')
@@ -301,9 +325,9 @@ export const FloorPlanUploadDialog = ({
     setIsConverting(false);
     setConversionProgress(0);
     setIsDragActive(false);
-    setAddressInput('');
     setMapCoordinates(null);
     setZoomLevel(18);
+    cleanupMap();
     onClose();
   };
 
@@ -317,7 +341,7 @@ export const FloorPlanUploadDialog = ({
   };
 
   const isSatelliteTab = activeTab === 'satellite';
-  const canCapture = isSatelliteTab && mapCoordinates && apiKey;
+  const canCapture = isSatelliteTab && mapReady && apiKey;
   const canUpload = !isSatelliteTab && selectedFile;
 
   return (
@@ -417,25 +441,16 @@ export const FloorPlanUploadDialog = ({
                 </div>
               ) : (
                 <>
-                  {/* Address search */}
+                  {/* Address search with autocomplete */}
                   <div className="space-y-2">
                     <Label>Search Address</Label>
                     <div className="flex gap-2">
-                      <Input
-                        placeholder="Enter address or coordinates..."
-                        value={addressInput}
-                        onChange={(e) => setAddressInput(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleSearchAddress()}
+                      <input
+                        ref={autocompleteInputRef}
+                        type="text"
+                        placeholder="Start typing an address..."
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                       />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleSearchAddress}
-                        disabled={isSearching || !addressInput.trim()}
-                        className="shrink-0"
-                      >
-                        {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <MapPin className="h-4 w-4" />}
-                      </Button>
                       <Button
                         variant="outline"
                         size="sm"
@@ -449,43 +464,14 @@ export const FloorPlanUploadDialog = ({
                     </div>
                   </div>
 
-                  {/* Zoom control */}
-                  <div className="space-y-2">
-                    <Label>Zoom Level: {zoomLevel}</Label>
-                    <div className="flex items-center gap-3">
-                      <Minus className="h-4 w-4 text-muted-foreground" />
-                      <Slider
-                        value={[zoomLevel]}
-                        onValueChange={(v) => setZoomLevel(v[0])}
-                        min={15}
-                        max={21}
-                        step={1}
-                        className="flex-1"
-                      />
-                      <Plus className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                  </div>
-
-                  {/* Satellite preview */}
-                  {satellitePreviewUrl ? (
-                    <div className="relative border rounded-lg overflow-hidden bg-muted">
-                      <img
-                        src={satellitePreviewUrl}
-                        alt="Satellite preview"
-                        className="w-full h-auto max-h-96 object-contain"
-                      />
-                    </div>
-                  ) : (
-                    <div className="border-2 border-dashed border-muted rounded-lg p-12 text-center">
-                      <Globe className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                      <p className="text-sm text-muted-foreground mb-2">
-                        Search for an address or use your GPS location
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        The satellite image will appear here as a preview
-                      </p>
-                    </div>
-                  )}
+                  {/* Interactive satellite map */}
+                  <div
+                    ref={mapContainerRef}
+                    className="w-full h-[400px] rounded-lg border border-border overflow-hidden bg-muted"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Drag to pan, scroll or pinch to zoom. Position the view, then capture.
+                  </p>
                 </>
               )}
             </div>
