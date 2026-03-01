@@ -952,13 +952,20 @@ export const InteractiveFloorPlan = ({
                 const displayPoint = draggedPoint && draggedPoint.id === point.id ? draggedPoint : point;
                 
                 return (
-                  <Tooltip key={point.id}>
-                    <TooltipTrigger asChild>
-                      <ContextMenu>
+                  <ContextMenu key={point.id}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
                         <ContextMenuTrigger asChild>
-                          <>
+                          <div
+                            className="absolute"
+                            style={{
+                              left: `${displayPoint.x_coordinate || 50}%`,
+                              top: `${displayPoint.y_coordinate || 50}%`,
+                              zIndex: draggedPoint && draggedPoint.id === point.id ? 50 : 10,
+                            }}
+                          >
                             <div
-                              className={`absolute transform -translate-x-1/2 -translate-y-1/2 rounded-full border-2 flex items-center justify-center text-white font-bold hover:scale-110 transition-transform shadow-lg ${
+                              className={`transform -translate-x-1/2 -translate-y-1/2 rounded-full border-2 flex items-center justify-center text-white font-bold hover:scale-110 transition-transform shadow-lg ${
                                 draggedPoint && draggedPoint.id === point.id 
                                   ? `cursor-grabbing scale-110 ${getDropPointColor(point.status)}` 
                                   : `cursor-grab ${getDropPointColor(point.status)}`
@@ -973,9 +980,6 @@ export const InteractiveFloorPlan = ({
                                 }
                               }}
                               style={{
-                                left: `${displayPoint.x_coordinate || 50}%`,
-                                top: `${displayPoint.y_coordinate || 50}%`,
-                                zIndex: draggedPoint && draggedPoint.id === point.id ? 50 : 10,
                                 width: `${24 * filters.markerScale}px`,
                                 height: `${24 * filters.markerScale}px`,
                               }}
@@ -989,12 +993,12 @@ export const InteractiveFloorPlan = ({
                             {/* Persistent Label for Drop Point */}
                             {filters.showDropPointLabels && (
                               <div
-                                className="absolute pointer-events-none select-none"
+                                className="pointer-events-none select-none"
                                 style={{
-                                  left: `${displayPoint.x_coordinate || 50}%`,
-                                  top: `${displayPoint.y_coordinate || 50}%`,
-                                  transform: `translate(${20 * filters.markerScale}px, -50%)`,
-                                  zIndex: 5,
+                                  position: 'absolute',
+                                  left: `${20 * filters.markerScale}px`,
+                                  top: '50%',
+                                  transform: 'translateY(-50%)',
                                 }}
                               >
                                 <div 
@@ -1008,43 +1012,43 @@ export const InteractiveFloorPlan = ({
                                 </div>
                               </div>
                             )}
-                          </>
+                          </div>
                         </ContextMenuTrigger>
-                        <ContextMenuContent>
-                          <ContextMenuItem onClick={() => {
-                            setSelectedDropPoint(point);
-                            setDetailsModalOpen(true);
-                          }}>
-                            <Edit className="h-4 w-4 mr-2" />
-                            Edit Details
-                          </ContextMenuItem>
-                          <ContextMenuItem onClick={() => handleToggleLock(point)}>
-                            {point.is_locked ? (
-                              <><Unlock className="h-4 w-4 mr-2" /> Unlock</>
-                            ) : (
-                              <><Lock className="h-4 w-4 mr-2" /> Lock</>
-                            )}
-                          </ContextMenuItem>
-                          <ContextMenuSeparator />
-                          <ContextMenuItem
-                            className="text-destructive focus:text-destructive"
-                            onClick={() => setContextDeleteTarget(point)}
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Delete
-                          </ContextMenuItem>
-                        </ContextMenuContent>
-                      </ContextMenu>
-                    </TooltipTrigger>
-                    <TooltipContent className="bg-popover border">
-                      <div className="text-sm">
-                        <p className="font-medium">{point.label}</p>
-                        <p className="text-muted-foreground">{point.room}</p>
-                        <p className="text-xs capitalize">{point.point_type} • {point.status}</p>
-                        <p className="text-xs text-muted-foreground mt-1">Right-click for options • Drag to move</p>
-                      </div>
-                    </TooltipContent>
-                  </Tooltip>
+                      </TooltipTrigger>
+                      <TooltipContent className="bg-popover border">
+                        <div className="text-sm">
+                          <p className="font-medium">{point.label}</p>
+                          <p className="text-muted-foreground">{point.room}</p>
+                          <p className="text-xs capitalize">{point.point_type} • {point.status}</p>
+                          <p className="text-xs text-muted-foreground mt-1">Right-click for options • Drag to move</p>
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                    <ContextMenuContent>
+                      <ContextMenuItem onClick={() => {
+                        setSelectedDropPoint(point);
+                        setDetailsModalOpen(true);
+                      }}>
+                        <Edit className="h-4 w-4 mr-2" />
+                        Edit Details
+                      </ContextMenuItem>
+                      <ContextMenuItem onClick={() => handleToggleLock(point)}>
+                        {point.is_locked ? (
+                          <><Unlock className="h-4 w-4 mr-2" /> Unlock</>
+                        ) : (
+                          <><Lock className="h-4 w-4 mr-2" /> Lock</>
+                        )}
+                      </ContextMenuItem>
+                      <ContextMenuSeparator />
+                      <ContextMenuItem
+                        className="text-destructive focus:text-destructive"
+                        onClick={() => setContextDeleteTarget(point)}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete
+                      </ContextMenuItem>
+                    </ContextMenuContent>
+                  </ContextMenu>
                 );
               })}
 
