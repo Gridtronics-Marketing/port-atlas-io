@@ -1,4 +1,4 @@
-export const APP_VERSION = "1.10.6";
+export const APP_VERSION = "1.10.7";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,19 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "1.10.7",
+    date: "2026-03-01",
+    changes: [
+      "Fixed Google Places Autocomplete selection inside dialogs (focus trap and pointer event conflicts)",
+      "Fixed interactive satellite map not loading after address selection or tab switch",
+      "Fixed Google Maps API loading race condition when multiple components request the script",
+      "Added right-click context menus to room views and wire paths on interactive floor plans",
+      "Room view context menu with View Details and Delete actions",
+      "Wire path right-click selects path and reveals action panel with edit/delete options",
+      "Added delete confirmation dialogs for room views and wire paths (replaces native confirm)",
+    ]
+  },
   {
     version: "1.10.6",
     date: "2026-02-07",
