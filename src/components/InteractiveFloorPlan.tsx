@@ -1,9 +1,16 @@
 import { useState, useRef, useEffect } from 'react';
-import { Plus, RotateCcw, ZoomIn, ZoomOut, RefreshCw, Camera, FileImage, Upload, PenTool, Edit, Trash2, Route } from 'lucide-react';
+import { Plus, RotateCcw, ZoomIn, ZoomOut, RefreshCw, Camera, FileImage, Upload, PenTool, Edit, Trash2, Route, Lock, Unlock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from '@/components/ui/context-menu';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import {
@@ -107,7 +114,8 @@ export const InteractiveFloorPlan = ({
   
   // Only use hooks with valid UUID
   const validLocationId = locationId && isValidUUID(locationId) ? locationId : undefined;
-  const { dropPoints, loading: dropPointsLoading, updateDropPoint, fetchDropPoints } = useDropPoints(validLocationId);
+  const { dropPoints, loading: dropPointsLoading, updateDropPoint, deleteDropPoint, fetchDropPoints } = useDropPoints(validLocationId);
+  const [contextDeleteTarget, setContextDeleteTarget] = useState<any>(null);
   const { roomViews, loading: roomViewsLoading, updateRoomView, fetchRoomViews } = useRoomViews(validLocationId);
   const { wirePaths, loading: wirePathsLoading, deleteWirePath, refetch: fetchWirePaths } = useWirePaths(validLocationId, floorNumber);
 
@@ -474,6 +482,32 @@ export const InteractiveFloorPlan = ({
   };
 
   const resetScale = () => setScale(1.0);
+
+  const handleToggleLock = async (point: any) => {
+    try {
+      await updateDropPoint(point.id, { is_locked: !point.is_locked });
+      toast({
+        title: point.is_locked ? "Drop Point Unlocked" : "Drop Point Locked",
+        description: `${point.label || 'Drop point'} has been ${point.is_locked ? 'unlocked' : 'locked'}.`,
+      });
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to update lock status.", variant: "destructive" });
+    }
+  };
+
+  const handleContextDeleteDropPoint = async (point: any) => {
+    try {
+      await deleteDropPoint(point.id);
+      toast({
+        title: "Drop Point Deleted",
+        description: `${point.label || 'Drop point'} has been removed.`,
+      });
+      setContextDeleteTarget(null);
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to delete drop point.", variant: "destructive" });
+    }
+  };
+
 
   const handleDropPointDetailsClose = (open: boolean) => {
     setDetailsModalOpen(open);
@@ -857,7 +891,10 @@ export const InteractiveFloorPlan = ({
             height: 'auto',
             minHeight: '400px',
             touchAction: isDragging ? 'none' : 'auto',
-          }}
+            WebkitTouchCallout: 'none',
+            WebkitUserSelect: 'none',
+            userSelect: 'none',
+          } as React.CSSProperties}
           onClick={handleContainerClick}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
@@ -868,7 +905,13 @@ export const InteractiveFloorPlan = ({
               src={actualFileUrl}
               alt={`Floor ${floorNumber} plan`}
               className="w-full h-auto"
-              style={{ display: 'block' }}
+              draggable={false}
+              style={{
+                display: 'block',
+                WebkitTouchCallout: 'none',
+                WebkitUserSelect: 'none',
+                userSelect: 'none',
+              } as React.CSSProperties}
               onError={(e) => {
                 console.error('Image failed to load:', actualFileUrl);
                 e.currentTarget.style.display = 'none';
@@ -911,66 +954,94 @@ export const InteractiveFloorPlan = ({
                 return (
                   <Tooltip key={point.id}>
                     <TooltipTrigger asChild>
-                       <>
-                          <div
-                            className={`absolute transform -translate-x-1/2 -translate-y-1/2 rounded-full border-2 flex items-center justify-center text-white font-bold hover:scale-110 transition-transform shadow-lg ${
-                              draggedPoint && draggedPoint.id === point.id 
-                                ? `cursor-grabbing scale-110 ${getDropPointColor(point.status)}` 
-                                : `cursor-grab ${getDropPointColor(point.status)}`
-                            }`}
-                           onMouseDown={(e) => handlePointerDown(e, point, 'dropPoint')}
-                           onTouchStart={(e) => handlePointerDown(e, point, 'dropPoint')}
-                           onClick={(e) => {
-                             e.stopPropagation();
-                             if (!isDragging) {
-                               setSelectedDropPoint(point);
-                               setDetailsModalOpen(true);
-                             }
-                           }}
-                           style={{
-                             left: `${displayPoint.x_coordinate || 50}%`,
-                             top: `${displayPoint.y_coordinate || 50}%`,
-                             zIndex: draggedPoint && draggedPoint.id === point.id ? 50 : 10,
-                             width: `${24 * filters.markerScale}px`,
-                             height: `${24 * filters.markerScale}px`,
-                           }}
-                         >
-                            <span style={{ fontSize: `${10 * filters.markerScale}px` }}>{getDropPointIcon(point.point_type)}</span>
-                            {point.status === 'tested' && (
-                              <div className="absolute inset-0 flex items-center justify-center text-white font-bold" style={{ fontSize: `${8 * filters.markerScale}px` }}>✓</div>
-                            )}
-                         </div>
-                          
-                           {/* Persistent Label for Drop Point */}
-                           {filters.showDropPointLabels && (
+                      <ContextMenu>
+                        <ContextMenuTrigger asChild>
+                          <>
                             <div
-                              className="absolute pointer-events-none select-none"
+                              className={`absolute transform -translate-x-1/2 -translate-y-1/2 rounded-full border-2 flex items-center justify-center text-white font-bold hover:scale-110 transition-transform shadow-lg ${
+                                draggedPoint && draggedPoint.id === point.id 
+                                  ? `cursor-grabbing scale-110 ${getDropPointColor(point.status)}` 
+                                  : `cursor-grab ${getDropPointColor(point.status)}`
+                              }`}
+                              onMouseDown={(e) => handlePointerDown(e, point, 'dropPoint')}
+                              onTouchStart={(e) => handlePointerDown(e, point, 'dropPoint')}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (!isDragging) {
+                                  setSelectedDropPoint(point);
+                                  setDetailsModalOpen(true);
+                                }
+                              }}
                               style={{
                                 left: `${displayPoint.x_coordinate || 50}%`,
                                 top: `${displayPoint.y_coordinate || 50}%`,
-                                transform: `translate(${20 * filters.markerScale}px, -50%)`,
-                                zIndex: 5,
+                                zIndex: draggedPoint && draggedPoint.id === point.id ? 50 : 10,
+                                width: `${24 * filters.markerScale}px`,
+                                height: `${24 * filters.markerScale}px`,
                               }}
                             >
-                            <div 
-                              className="bg-black/80 backdrop-blur-sm text-white px-1.5 py-0.5 rounded-md whitespace-nowrap shadow-md border border-white/20"
-                              style={{ fontSize: `${10 * filters.markerScale}px` }}
-                            >
-                                <div className="font-medium text-blue-300" style={{ fontSize: `${10 * filters.markerScale}px` }}>
-                                  {point.cable_count ? `${point.cable_count} Cable${point.cable_count > 1 ? 's' : ''}` : 'TBD'}
-                                </div>
-                                <div className="font-medium">{point.label || 'TBD'}</div>
-                              </div>
+                              <span style={{ fontSize: `${10 * filters.markerScale}px` }}>{getDropPointIcon(point.point_type)}</span>
+                              {point.status === 'tested' && (
+                                <div className="absolute inset-0 flex items-center justify-center text-white font-bold" style={{ fontSize: `${8 * filters.markerScale}px` }}>✓</div>
+                              )}
                             </div>
-                          )}
-                       </>
+                            
+                            {/* Persistent Label for Drop Point */}
+                            {filters.showDropPointLabels && (
+                              <div
+                                className="absolute pointer-events-none select-none"
+                                style={{
+                                  left: `${displayPoint.x_coordinate || 50}%`,
+                                  top: `${displayPoint.y_coordinate || 50}%`,
+                                  transform: `translate(${20 * filters.markerScale}px, -50%)`,
+                                  zIndex: 5,
+                                }}
+                              >
+                                <div 
+                                  className="bg-black/80 backdrop-blur-sm text-white px-1.5 py-0.5 rounded-md whitespace-nowrap shadow-md border border-white/20"
+                                  style={{ fontSize: `${10 * filters.markerScale}px` }}
+                                >
+                                  <div className="font-medium text-blue-300" style={{ fontSize: `${10 * filters.markerScale}px` }}>
+                                    {point.cable_count ? `${point.cable_count} Cable${point.cable_count > 1 ? 's' : ''}` : 'TBD'}
+                                  </div>
+                                  <div className="font-medium">{point.label || 'TBD'}</div>
+                                </div>
+                              </div>
+                            )}
+                          </>
+                        </ContextMenuTrigger>
+                        <ContextMenuContent>
+                          <ContextMenuItem onClick={() => {
+                            setSelectedDropPoint(point);
+                            setDetailsModalOpen(true);
+                          }}>
+                            <Edit className="h-4 w-4 mr-2" />
+                            Edit Details
+                          </ContextMenuItem>
+                          <ContextMenuItem onClick={() => handleToggleLock(point)}>
+                            {point.is_locked ? (
+                              <><Unlock className="h-4 w-4 mr-2" /> Unlock</>
+                            ) : (
+                              <><Lock className="h-4 w-4 mr-2" /> Lock</>
+                            )}
+                          </ContextMenuItem>
+                          <ContextMenuSeparator />
+                          <ContextMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onClick={() => setContextDeleteTarget(point)}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete
+                          </ContextMenuItem>
+                        </ContextMenuContent>
+                      </ContextMenu>
                     </TooltipTrigger>
                     <TooltipContent className="bg-popover border">
                       <div className="text-sm">
                         <p className="font-medium">{point.label}</p>
                         <p className="text-muted-foreground">{point.room}</p>
                         <p className="text-xs capitalize">{point.point_type} • {point.status}</p>
-                        <p className="text-xs text-muted-foreground mt-1">Click and drag to move</p>
+                        <p className="text-xs text-muted-foreground mt-1">Right-click for options • Drag to move</p>
                       </div>
                     </TooltipContent>
                   </Tooltip>
@@ -1286,6 +1357,27 @@ export const InteractiveFloorPlan = ({
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {isDeleting ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Context Menu Delete Confirmation */}
+      <AlertDialog open={!!contextDeleteTarget} onOpenChange={(open) => !open && setContextDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Drop Point</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{contextDeleteTarget?.label || 'this drop point'}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => handleContextDeleteDropPoint(contextDeleteTarget)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
