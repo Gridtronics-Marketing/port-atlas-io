@@ -1,61 +1,44 @@
 
 
-# Fix: Cannot Select Google Places Autocomplete Suggestions
+# Fix: Interactive Map Not Loading After Address Selection
 
-## Problem
+## Root Cause
 
-The Google Places Autocomplete dropdown (`.pac-container`) renders as a direct child of `document.body`, outside the Radix Dialog. Even though the z-index fix makes it visible, Radix Dialog's **focus trap** and the **overlay's `pointer-events`** intercept mouse/touch events on the suggestion list, preventing selection.
+The map initialization `useEffect` (line 67-93) runs synchronously when `activeTab` changes to `'satellite'`, but the `TabsContent` hasn't mounted the map container `div` into the DOM yet. The effect hits `!mapContainerRef.current` on line 68 and returns early. Since the dependencies (`mapsLoaded`, `apiKey`, `activeTab`) don't change again, the effect never re-runs, so the map never initializes.
 
-## Solution
+This is the exact same timing issue that was fixed for the autocomplete input with a `setTimeout`.
 
-Two CSS additions in `src/index.css`:
+## Fix
 
-1. **Disable pointer-events on the dialog overlay** so clicks can pass through to the `.pac-container`:
-   ```css
-   .pac-container {
-     z-index: 99999 !important;
-     pointer-events: auto !important;
-   }
-   ```
+### `src/components/FloorPlanUploadDialog.tsx`
 
-2. **Prevent Radix's focus-trap from stealing focus** when the user clicks on a `.pac-item`. Add an event listener in `FloorPlanUploadDialog.tsx` that stops the dialog from reclaiming focus when interacting with the autocomplete dropdown.
+Wrap the map initialization logic in a `setTimeout` (like the autocomplete fix), and add cleanup:
 
-### Specific Changes
+```typescript
+// Initialize interactive map (deferred to ensure DOM is ready)
+useEffect(() => {
+  if (!mapsLoaded || !apiKey || activeTab !== 'satellite') return;
 
-**`src/index.css`** -- Enhance the existing `.pac-container` rule:
-```css
-.pac-container {
-  z-index: 99999 !important;
-  pointer-events: auto !important;
-}
+  const timerId = setTimeout(() => {
+    if (!mapContainerRef.current || mapInstanceRef.current) return;
+
+    const map = new window.google.maps.Map(mapContainerRef.current, {
+      center: mapCoordinates || { lat: 37.7749, lng: -122.4194 },
+      zoom: zoomLevel,
+      mapTypeId: 'satellite',
+      gestureHandling: 'greedy',
+      // ... same options
+    });
+
+    map.addListener('idle', () => { /* same */ });
+
+    mapInstanceRef.current = map;
+    setMapReady(true);
+  }, 100);
+
+  return () => clearTimeout(timerId);
+}, [mapsLoaded, apiKey, activeTab]);
 ```
 
-**`src/components/FloorPlanUploadDialog.tsx`** -- Two changes:
-
-1. Add `onPointerDownOutside` and `onInteractOutside` handlers to `DialogContent` to prevent it from closing or stealing focus when the user clicks on the `.pac-container`:
-   ```tsx
-   <DialogContent
-     className="max-w-2xl"
-     onPointerDownOutside={(e) => {
-       const target = e.target as HTMLElement;
-       if (target.closest('.pac-container')) {
-         e.preventDefault();
-       }
-     }}
-     onInteractOutside={(e) => {
-       const target = e.target as HTMLElement;
-       if (target.closest('.pac-container')) {
-         e.preventDefault();
-       }
-     }}
-   >
-   ```
-
-2. These two event handlers tell Radix: "if the user clicked on a Google autocomplete suggestion, do NOT close the dialog and do NOT steal focus." This allows the `place_changed` event to fire normally.
-
-### What stays unchanged
-- All autocomplete initialization logic (already correct with deferred timing)
-- Map initialization and capture logic
-- File upload tab
-- Everything else in the dialog
+The only change is moving the `!mapContainerRef.current` check inside a `setTimeout(…, 100)` so the DOM has time to render after the tab switch, and adding cleanup via `clearTimeout`.
 
