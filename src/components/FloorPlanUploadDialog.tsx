@@ -371,7 +371,15 @@ export const FloorPlanUploadDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) handleClose(); else handleOpenChange(open); }}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent
+        className="max-w-2xl"
+        onPointerDownOutside={(e) => {
+          if ((e.target as HTMLElement).closest('.pac-container')) e.preventDefault();
+        }}
+        onInteractOutside={(e) => {
+          if ((e.target as HTMLElement).closest('.pac-container')) e.preventDefault();
+        }}
+      >
         <DialogHeader>
           <DialogTitle>Upload Floor Plan Map</DialogTitle>
           <DialogDescription>
