@@ -92,28 +92,35 @@ export const FloorPlanUploadDialog = ({
     setMapReady(true);
   }, [mapsLoaded, apiKey, activeTab]);
 
-  // Initialize Places Autocomplete
+  // Initialize Places Autocomplete with deferred timing
   useEffect(() => {
-    if (!mapsLoaded || !autocompleteInputRef.current || activeTab !== 'satellite') return;
-    if (autocompleteRef.current) return;
+    if (!mapsLoaded || activeTab !== 'satellite') return;
 
-    const autocomplete = new window.google.maps.places.Autocomplete(
-      autocompleteInputRef.current,
-      { types: ['geocode', 'establishment'] }
-    );
+    // Defer to ensure the input is mounted in the DOM after tab switch
+    const timerId = setTimeout(() => {
+      const input = autocompleteInputRef.current;
+      if (!input || autocompleteRef.current) return;
 
-    autocomplete.addListener('place_changed', () => {
-      const place = autocomplete.getPlace();
-      if (place.geometry?.location) {
-        const loc = place.geometry.location;
-        const coords = { lat: loc.lat(), lng: loc.lng() };
-        setMapCoordinates(coords);
-        mapInstanceRef.current?.panTo(coords);
-        mapInstanceRef.current?.setZoom(19);
-      }
-    });
+      const autocomplete = new window.google.maps.places.Autocomplete(
+        input,
+        { types: ['geocode', 'establishment'] }
+      );
 
-    autocompleteRef.current = autocomplete;
+      autocomplete.addListener('place_changed', () => {
+        const place = autocomplete.getPlace();
+        if (place.geometry?.location) {
+          const loc = place.geometry.location;
+          const coords = { lat: loc.lat(), lng: loc.lng() };
+          setMapCoordinates(coords);
+          mapInstanceRef.current?.panTo(coords);
+          mapInstanceRef.current?.setZoom(19);
+        }
+      });
+
+      autocompleteRef.current = autocomplete;
+    }, 100);
+
+    return () => clearTimeout(timerId);
   }, [mapsLoaded, activeTab]);
 
   // Cleanup map on close
