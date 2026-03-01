@@ -1,44 +1,61 @@
 
 
-# Fix Satellite View: Autocomplete Suggestions Not Showing
+# Fix: Cannot Select Google Places Autocomplete Suggestions
 
 ## Problem
 
-The Google Places Autocomplete dropdown (`pac-container`) renders as a child of `document.body`, but the Radix Dialog has a very high z-index (z-50). The autocomplete suggestions appear *behind* the dialog and are invisible. Additionally, there may be a timing issue where the autocomplete initializes before the input element is fully mounted in the DOM (since it's inside a tab that may not render its content immediately).
+The Google Places Autocomplete dropdown (`.pac-container`) renders as a direct child of `document.body`, outside the Radix Dialog. Even though the z-index fix makes it visible, Radix Dialog's **focus trap** and the **overlay's `pointer-events`** intercept mouse/touch events on the suggestion list, preventing selection.
 
-## Changes
+## Solution
 
-### `src/components/FloorPlanUploadDialog.tsx`
+Two CSS additions in `src/index.css`:
 
-**1. Add CSS to raise the `pac-container` z-index**
+1. **Disable pointer-events on the dialog overlay** so clicks can pass through to the `.pac-container`:
+   ```css
+   .pac-container {
+     z-index: 99999 !important;
+     pointer-events: auto !important;
+   }
+   ```
 
-Add a `useEffect` that injects a `<style>` tag (or use the existing `index.css`) to set:
-```css
-.pac-container { z-index: 99999 !important; }
-```
+2. **Prevent Radix's focus-trap from stealing focus** when the user clicks on a `.pac-item`. Add an event listener in `FloorPlanUploadDialog.tsx` that stops the dialog from reclaiming focus when interacting with the autocomplete dropdown.
 
-This ensures Google's autocomplete dropdown renders above the Radix Dialog overlay.
+### Specific Changes
 
-**2. Fix autocomplete initialization timing**
-
-The current code checks `if (autocompleteRef.current) return;` to avoid re-init, but after `cleanupMap` sets it to `null`, re-opening the dialog or switching tabs should re-initialize. The issue is the effect runs before the TabsContent has mounted the input. Fix by adding a small delay or using a callback ref pattern:
-
-- Use a `useEffect` with a short `setTimeout(0)` to ensure the DOM input is rendered before attaching `Autocomplete`
-- Or switch to a ref callback on the input element that triggers initialization when the element mounts
-
-The simpler approach: add the style fix globally in `src/index.css` and adjust the autocomplete effect to re-initialize properly when the tab becomes active by removing the early-return guard and instead cleaning up/recreating.
-
-### `src/index.css`
-
-Add one CSS rule:
+**`src/index.css`** -- Enhance the existing `.pac-container` rule:
 ```css
 .pac-container {
   z-index: 99999 !important;
+  pointer-events: auto !important;
 }
 ```
 
-### Summary of fixes:
-1. **CSS z-index** -- `.pac-container` z-index raised above Dialog overlay so suggestions are visible
-2. **Init timing** -- Ensure the Autocomplete attaches after the input is actually in the DOM by deferring initialization with a microtask or using a ref callback
-3. **Cleanup on close** -- Properly destroy and re-create autocomplete when the dialog reopens to avoid stale references
+**`src/components/FloorPlanUploadDialog.tsx`** -- Two changes:
+
+1. Add `onPointerDownOutside` and `onInteractOutside` handlers to `DialogContent` to prevent it from closing or stealing focus when the user clicks on the `.pac-container`:
+   ```tsx
+   <DialogContent
+     className="max-w-2xl"
+     onPointerDownOutside={(e) => {
+       const target = e.target as HTMLElement;
+       if (target.closest('.pac-container')) {
+         e.preventDefault();
+       }
+     }}
+     onInteractOutside={(e) => {
+       const target = e.target as HTMLElement;
+       if (target.closest('.pac-container')) {
+         e.preventDefault();
+       }
+     }}
+   >
+   ```
+
+2. These two event handlers tell Radix: "if the user clicked on a Google autocomplete suggestion, do NOT close the dialog and do NOT steal focus." This allows the `place_changed` event to fire normally.
+
+### What stays unchanged
+- All autocomplete initialization logic (already correct with deferred timing)
+- Map initialization and capture logic
+- File upload tab
+- Everything else in the dialog
 
