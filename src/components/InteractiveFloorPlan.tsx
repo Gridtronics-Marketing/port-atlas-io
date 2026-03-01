@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Plus, RotateCcw, ZoomIn, ZoomOut, RefreshCw, Camera, FileImage, Upload, PenTool, Edit, Trash2, Route, Lock, Unlock } from 'lucide-react';
+import { Plus, RotateCcw, ZoomIn, ZoomOut, RefreshCw, Camera, FileImage, Upload, PenTool, Edit, Trash2, Route, Lock, Unlock, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -94,6 +94,7 @@ export const InteractiveFloorPlan = ({
     markerScale: 1,
   });
   const [showUploadDialog, setShowUploadDialog] = useState(false);
+  const [uploadDialogDefaultTab, setUploadDialogDefaultTab] = useState<'upload' | 'satellite'>('upload');
   const [showDrawModeModal, setShowDrawModeModal] = useState(false);
   const [uploadedFileUrl, setUploadedFileUrl] = useState<string | undefined>(undefined);
   const [floorPlanFiles, setFloorPlanFiles] = useState<Record<string, any> | null>(null);
@@ -648,10 +649,18 @@ export const InteractiveFloorPlan = ({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setShowUploadDialog(true)}
+              onClick={() => { setUploadDialogDefaultTab('upload'); setShowUploadDialog(true); }}
             >
               <Upload className="h-4 w-4 mr-2" />
               Upload Map
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => { setUploadDialogDefaultTab('satellite'); setShowUploadDialog(true); }}
+            >
+              <Globe className="h-4 w-4 mr-2" />
+              Satellite View
             </Button>
             <Button
               variant="outline"
@@ -1392,6 +1401,7 @@ export const InteractiveFloorPlan = ({
         locationId={locationId}
         floorNumber={floorNumber}
         onUploadSuccess={handleUploadSuccess}
+        defaultTab={uploadDialogDefaultTab}
       />
 
       {/* Manual Draw Mode Canvas */}
