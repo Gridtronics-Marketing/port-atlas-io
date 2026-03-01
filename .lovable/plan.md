@@ -1,113 +1,131 @@
 
-# Add Satellite View Capture as Floor Plan Option
 
-## Overview
+# Upgrade Satellite View: Autocomplete Search + Interactive Map
 
-Enhance the `FloorPlanUploadDialog` to include a "Satellite View" tab alongside the existing file upload. Users can search by address (or use GPS on mobile), preview a satellite image via Google Maps Static API, adjust zoom, and capture it as the floor plan. This reuses the existing `useGoogleMapsAPI` hook and the satellite capture pattern already in `FloorPlanViewer.tsx`.
+## Problem
+
+1. **Address search is manual** -- user must type the full address and press Enter/click search. No suggestions appear as they type.
+2. **Map preview is a static image** -- users cannot pan or drag the view. They're stuck with whatever center point the geocoder returns.
+
+## Solution
+
+Replace the current plain text input + static image with:
+1. **Google Places Autocomplete** on the address input (suggestions appear as user types)
+2. **An interactive Google Map** (satellite mode) that users can drag/pan/zoom with mouse or finger, just like Google Maps
+
+When the user clicks "Capture & Use", the system reads the map's current center and zoom, fetches a high-res static image from that position, and uploads it as before.
 
 ## Changes
 
-### 1. `src/components/FloorPlanUploadDialog.tsx` -- Major Enhancement
+### `src/components/FloorPlanUploadDialog.tsx`
 
-Add a tabbed interface inside the dialog with two modes: **Upload File** and **Satellite View**.
+**1. Replace the plain `<Input>` with a Google Places Autocomplete input**
 
-**New imports:**
-- `Globe, MapPin, Navigation` from lucide-react
-- `Tabs, TabsList, TabsTrigger, TabsContent` from shadcn
-- `Input` from shadcn
-- `Label` from shadcn
-- `useGoogleMapsAPI` from the existing hook
-- `Capacitor` from `@capacitor/core` (for native GPS) or fallback to browser `navigator.geolocation`
+- After the Google Maps script loads (it already includes `libraries=places`), attach a `google.maps.places.Autocomplete` instance to the input field using a ref
+- As the user types, Google will show address suggestions in a dropdown
+- When a suggestion is selected, extract coordinates and center the interactive map there
+- Keep the manual "Use My Location" GPS button as-is
 
-**New state:**
-- `activeTab`: `'upload' | 'satellite'`
-- `addressInput`: string for address search
-- `mapCoordinates`: `{ lat: number; lng: number } | null`
-- `zoomLevel`: number (default 18, range 15-21)
-- `isSearching`: boolean (geocoding in progress)
-- `isLocating`: boolean (GPS lookup in progress)
+**2. Replace the static satellite image with an interactive `google.maps.Map`**
 
-**Satellite tab UI:**
-1. Address input field with a "Search" button and a "Use My Location" button (GPS icon)
-2. Zoom level slider or number input (15-21)
-3. Preview area showing the Google Maps Static API satellite image
-4. The existing "Upload & Draw" button text changes to "Capture & Use" when on satellite tab
+- Render a `div` ref that gets initialized as a `google.maps.Map` with `mapTypeId: 'satellite'`
+- The map supports drag/pan (mouse and touch), zoom via scroll/pinch, and all standard Google Maps interactions
+- When the user pans or zooms, track the map's center and zoom level via `idle` event listener
+- Remove the `<Slider>` zoom control (the map has its own built-in zoom controls, plus pinch-to-zoom)
 
-**Satellite capture flow:**
-1. User enters address or taps "Use My Location"
-2. Address is geocoded via `google.maps.Geocoder` (same pattern as `FloorPlanViewer.tsx`)
-3. GPS uses `navigator.geolocation.getCurrentPosition`
-4. Preview renders: `https://maps.googleapis.com/maps/api/staticmap?center={lat},{lng}&zoom={zoom}&size=800x600&maptype=satellite&key={apiKey}`
-5. User adjusts zoom until satisfied
-6. On "Capture & Use": fetch the static map image as a blob, upload to Supabase storage (same `floor-plans` bucket, same path pattern), update the `floor_plan_files` JSONB, dispatch `FLOORPLAN_SAVED` event, and call `onUploadSuccess`
+**3. Capture logic stays the same**
 
-**Key logic for capture:**
+- On "Capture & Use", read `map.getCenter()` and `map.getZoom()` to build the Static Maps API URL
+- Fetch the high-res image, upload to Supabase storage, update the DB -- all unchanged
+
+**New state/refs:**
+- `mapContainerRef = useRef<HTMLDivElement>(null)` -- the div where the interactive map renders
+- `mapInstanceRef = useRef<google.maps.Map | null>(null)` -- reference to the map instance
+- `autocompleteInputRef = useRef<HTMLInputElement>(null)` -- ref for Autocomplete binding
+- Remove the `Slider` import and zoom slider UI (map has native zoom controls)
+
+**Key code patterns:**
+
+```typescript
+// Initialize interactive map
+useEffect(() => {
+  if (!mapsLoaded || !mapContainerRef.current || !apiKey) return;
+  
+  const map = new google.maps.Map(mapContainerRef.current, {
+    center: mapCoordinates || { lat: 37.7749, lng: -122.4194 },
+    zoom: zoomLevel,
+    mapTypeId: 'satellite',
+    gestureHandling: 'greedy', // allows single-finger pan on mobile
+    disableDefaultUI: false,
+    zoomControl: true,
+    streetViewControl: false,
+    mapTypeControl: false,
+    fullscreenControl: false,
+  });
+  
+  map.addListener('idle', () => {
+    const center = map.getCenter();
+    if (center) {
+      setMapCoordinates({ lat: center.lat(), lng: center.lng() });
+      setZoomLevel(map.getZoom() || 18);
+    }
+  });
+  
+  mapInstanceRef.current = map;
+}, [mapsLoaded, apiKey, activeTab]);
+
+// Initialize Places Autocomplete
+useEffect(() => {
+  if (!mapsLoaded || !autocompleteInputRef.current) return;
+  
+  const autocomplete = new google.maps.places.Autocomplete(
+    autocompleteInputRef.current,
+    { types: ['geocode', 'establishment'] }
+  );
+  
+  autocomplete.addListener('place_changed', () => {
+    const place = autocomplete.getPlace();
+    if (place.geometry?.location) {
+      const loc = place.geometry.location;
+      const coords = { lat: loc.lat(), lng: loc.lng() };
+      setMapCoordinates(coords);
+      mapInstanceRef.current?.panTo(coords);
+      mapInstanceRef.current?.setZoom(19);
+    }
+  });
+}, [mapsLoaded, activeTab]);
+```
+
+**Capture (updated to read from map instance):**
 ```typescript
 const handleCaptureSatellite = async () => {
-  if (!mapCoordinates || !apiKey) return;
-  setIsUploading(true);
-  try {
-    const imageUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${mapCoordinates.lat},${mapCoordinates.lng}&zoom=${zoomLevel}&size=1280x1280&maptype=satellite&scale=2&key=${apiKey}`;
-    const response = await fetch(imageUrl);
-    const blob = await response.blob();
-    const file = new File([blob], `floor_${floorNumber}_satellite.png`, { type: 'image/png' });
-    
-    // Reuse existing upload logic (upload to storage, update DB, dispatch event)
-    // ...same as handleUpload but with the satellite file
-  } finally {
-    setIsUploading(false);
-  }
+  const map = mapInstanceRef.current;
+  if (!map || !apiKey) return;
+  
+  const center = map.getCenter();
+  const zoom = map.getZoom();
+  if (!center) return;
+  
+  const imageUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${center.lat()},${center.lng()}&zoom=${zoom}&size=1280x1280&maptype=satellite&scale=2&key=${apiKey}`;
+  // ... rest of upload logic unchanged
 };
 ```
 
-**Note:** Uses `size=1280x1280&scale=2` for a high-resolution 2560x2560 satellite image (within Google Maps Static API limits).
-
-**GPS / "Use My Location" button:**
-```typescript
-const handleUseMyLocation = () => {
-  setIsLocating(true);
-  navigator.geolocation.getCurrentPosition(
-    (position) => {
-      setMapCoordinates({ lat: position.coords.latitude, lng: position.coords.longitude });
-      setAddressInput(`${position.coords.latitude.toFixed(6)}, ${position.coords.longitude.toFixed(6)}`);
-      setIsLocating(false);
-    },
-    (error) => {
-      toast({ title: "Location Error", description: error.message, variant: "destructive" });
-      setIsLocating(false);
-    },
-    { enableHighAccuracy: true, timeout: 10000 }
-  );
-};
+**UI layout for satellite tab:**
+```text
+[Search Address input (with autocomplete)]  [GPS button]
+[Interactive Google Map - 400px tall, satellite view, draggable]
 ```
 
-### 2. `src/components/InteractiveFloorPlan.tsx` -- Minor Toolbar Addition
+- The zoom slider is removed (map has native zoom)
+- The static image preview is replaced by the live interactive map
+- The "Use My Location" button pans the map to the user's GPS coordinates
 
-Add a dedicated "Satellite View" button next to "Upload Map" in the sticky toolbar (around line 648). This button opens the same `FloorPlanUploadDialog` but pre-selects the satellite tab.
+### What stays unchanged
 
-**Changes:**
-- Add `showSatelliteDialog` state (or pass a `defaultTab` prop to `FloorPlanUploadDialog`)
-- Add a new prop `defaultTab?: 'upload' | 'satellite'` to `FloorPlanUploadDialog`
-- Add a Globe icon button in the toolbar:
-```tsx
-<Button variant="outline" size="sm" onClick={() => { setShowUploadDialog(true); setUploadDialogDefaultTab('satellite'); }}>
-  <Globe className="h-4 w-4 mr-2" />
-  Satellite View
-</Button>
-```
+- File upload tab (completely untouched)
+- Capture-to-storage upload logic (same Static Maps API fetch + Supabase upload)
+- `useGoogleMapsAPI` hook (already loads `places` library)
+- All existing props and dialog structure
+- The toolbar button in `InteractiveFloorPlan.tsx`
 
-### 3. What stays unchanged
-
-- All existing file upload logic (drag-drop, PDF conversion, image validation)
-- The `FloorPlanViewer.tsx` satellite import feature (separate component, different use case)
-- Drop point coordinate mapping (percentage-based, works regardless of image source)
-- Storage bucket structure and DB schema (no migrations needed)
-- All existing floor plan editing, drawing, and annotation features
-
-## Technical Notes
-
-- The Google Maps Static API key is already configured via `useGoogleMapsAPI` hook and stored in `system_configurations`
-- If the API key is not configured, the satellite tab will show a message directing users to Settings > API Keys
-- The captured satellite image is stored as a regular PNG in the `floor-plans` bucket, making it fully compatible with all existing floor plan features (markers, wire paths, annotations, export)
-- No database migrations required -- the satellite image is just another floor plan file
-- GPS works on both web (navigator.geolocation) and native Capacitor (same API surface)
