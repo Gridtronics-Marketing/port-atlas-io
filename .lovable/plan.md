@@ -1,57 +1,40 @@
 
 
-# Mobile Toolbar Optimization for Interactive Floor Plan
+# Update Version and Change Log
 
-## Problem
-The floating toolbar has 10+ buttons that wrap and clutter the UI on mobile screens. Need to show only two primary actions (Add Drop Point, Add Room View) directly, and collapse the rest into a hamburger/dropdown menu.
+## Version Bump
 
-## Approach
+Update from **v1.10.6** to **v1.10.7** with today's date (2026-03-01).
 
-### `src/components/InteractiveFloorPlan.tsx`
+## Changes to Record
 
-**1. Add imports**
-- Import `Menu` from lucide-react
-- Import `useIsMobile` from `@/hooks/use-mobile`
-- Import `DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger` from `@/components/ui/dropdown-menu`
+The following features and fixes were implemented in this session:
 
-**2. Use the hook**
-```tsx
-const isMobile = useIsMobile();
-```
+1. **Fixed Google Places Autocomplete selection in dialogs** -- Address suggestions can now be clicked without Radix Dialog stealing focus or closing
+2. **Fixed interactive map not loading after address selection** -- Deferred map initialization to ensure DOM container is mounted before attaching Google Maps
+3. **Fixed Google Maps API race condition** -- Added polling mechanism so multiple components correctly detect when the Maps script finishes loading
+4. **Added right-click context menus to room views and wire paths on floor plans** -- Room views now have "View Details" and "Delete" options; wire paths auto-select on right-click to reveal the action panel
 
-**3. Restructure the toolbar (lines 648-873)**
+## File Changes
 
-On mobile (`isMobile === true`):
-- Show a compact row with:
-  - **Hamburger menu button** (Menu icon) containing: Upload Map, Satellite View, Draw Floor Plan, Edit Drawing, Filters, Draw Wire Path, Export PDF, Delete Floor Plan, Repair Files
-  - **Add Drop Point** button (always visible)
-  - **Add Room View** button (always visible)
-  - **Zoom controls** (compact: just +/- and percentage badge, no reset)
+### `src/lib/version.ts`
 
-On desktop (`isMobile === false`):
-- Keep the current layout unchanged
+- Update `APP_VERSION` from `"1.10.6"` to `"1.10.7"`
+- Add a new entry at the top of `VERSION_HISTORY` array:
 
-The hamburger uses `DropdownMenu` which is already in the project. Each menu item triggers the same handlers as the current buttons.
-
-```text
-Mobile toolbar layout:
-┌──────────────────────────────────┐
-│ [☰] [+ Drop Point] [📷 Room] [−][100%][+] │
-└──────────────────────────────────┘
-
-Hamburger expands to:
-┌─────────────────┐
-│ Upload Map      │
-│ Satellite View  │
-│ Draw Floor Plan │
-│ Edit Drawing    │
-│ ─────────────── │
-│ Filters         │
-│ Draw Wire Path  │
-│ ─────────────── │
-│ Export PDF      │
-│ Delete Plan     │
-│ Repair Files    │
-└─────────────────┘
+```typescript
+{
+  version: "1.10.7",
+  date: "2026-03-01",
+  changes: [
+    "Fixed Google Places Autocomplete selection inside dialogs (focus trap and pointer event conflicts)",
+    "Fixed interactive satellite map not loading after address selection or tab switch",
+    "Fixed Google Maps API loading race condition when multiple components request the script",
+    "Added right-click context menus to room views and wire paths on interactive floor plans",
+    "Room view context menu with View Details and Delete actions",
+    "Wire path right-click selects path and reveals action panel with edit/delete options",
+    "Added delete confirmation dialogs for room views and wire paths (replaces native confirm)",
+  ]
+}
 ```
 

@@ -1,5 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
-import { Plus, RotateCcw, ZoomIn, ZoomOut, RefreshCw, Camera, FileImage, Upload, PenTool, Edit, Trash2, Route, Lock, Unlock, Globe } from 'lucide-react';
+import { Plus, RotateCcw, ZoomIn, ZoomOut, RefreshCw, Camera, FileImage, Upload, PenTool, Edit, Trash2, Route, Lock, Unlock, Globe, Menu } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -112,6 +120,7 @@ export const InteractiveFloorPlan = ({
   
   const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   
   // Only use hooks with valid UUID
   const validLocationId = locationId && isValidUUID(locationId) ? locationId : undefined;
@@ -646,230 +655,282 @@ export const InteractiveFloorPlan = ({
       <CardContent className="space-y-4 max-h-[85vh] overflow-y-auto p-0">
         {/* Sticky floating toolbar */}
         <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm border-b px-3 py-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => { setUploadDialogDefaultTab('upload'); setShowUploadDialog(true); }}
-            >
-              <Upload className="h-4 w-4 mr-2" />
-              Upload Map
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => { setUploadDialogDefaultTab('satellite'); setShowUploadDialog(true); }}
-            >
-              <Globe className="h-4 w-4 mr-2" />
-              Satellite View
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowDrawModeModal(true)}
-            >
-              <PenTool className="h-4 w-4 mr-2" />
-              Draw Floor Plan
-            </Button>
-            {floorPlanFiles && isDrawnFloorPlan(floorPlanFiles, floorNumber) && (
+          {isMobile ? (
+            /* ===== MOBILE TOOLBAR ===== */
+            <div className="flex items-center gap-1.5">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon" className="h-9 w-9 shrink-0">
+                    <Menu className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-48">
+                  <DropdownMenuItem onClick={() => { setUploadDialogDefaultTab('upload'); setShowUploadDialog(true); }}>
+                    <Upload className="h-4 w-4 mr-2" />
+                    Upload Map
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => { setUploadDialogDefaultTab('satellite'); setShowUploadDialog(true); }}>
+                    <Globe className="h-4 w-4 mr-2" />
+                    Satellite View
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setShowDrawModeModal(true)}>
+                    <PenTool className="h-4 w-4 mr-2" />
+                    Draw Floor Plan
+                  </DropdownMenuItem>
+                  {floorPlanFiles && isDrawnFloorPlan(floorPlanFiles, floorNumber) && (
+                    <DropdownMenuItem onClick={() => setShowDrawModeModal(true)}>
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edit Drawing
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <div className="p-0">
+                      <FloorPlanFilterDialog
+                        filters={filters}
+                        onFiltersChange={setFilters}
+                      />
+                    </div>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    disabled={!validLocationId}
+                    onClick={() => {
+                      setIsDrawingWirePath(!isDrawingWirePath);
+                      setIsAddingPoint(false);
+                      setIsAddingRoomView(false);
+                      if (isDrawingWirePath) setCurrentWirePathPoints([]);
+                    }}
+                  >
+                    <Route className="h-4 w-4 mr-2" />
+                    {isDrawingWirePath ? 'Cancel Wire Path' : 'Draw Wire Path'}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  {actualFileUrl && (
+                    <DropdownMenuItem onClick={async () => {
+                      try {
+                        toast({ title: "Generating PDF", description: "Creating composite image with all annotations..." });
+                        const { createCompositeFloorPlan } = await import('@/lib/floor-plan-composite');
+                        const compositeUrl = await createCompositeFloorPlan({
+                          baseImageUrl: actualFileUrl,
+                          dropPoints: floorDropPoints.map(dp => ({ x: dp.x_coordinate || 0, y: dp.y_coordinate || 0, label: dp.label, type: dp.point_type || 'data', status: dp.status || 'planned' })),
+                          roomViews: floorRoomViews.map(rv => ({ x: rv.x_coordinate || 0, y: rv.y_coordinate || 0, label: rv.room_name || 'Room' })),
+                          width: containerDimensions.width || 800,
+                          height: containerDimensions.height || 600
+                        });
+                        const { exportFloorPlanToPDF } = await import('@/lib/floor-plan-exporter');
+                        await exportFloorPlanToPDF(locationId, floorNumber, actualFileUrl, { title: `Floor ${floorNumber} Plan`, includeDropPoints: true, includeRoomViews: true, includeMetadata: true }, compositeUrl);
+                        toast({ title: "PDF Export Complete", description: "Floor plan with all annotations has been exported successfully." });
+                      } catch (error) {
+                        console.error('Error exporting PDF:', error);
+                        toast({ title: "Export Failed", description: "Failed to export floor plan to PDF. Please try again.", variant: "destructive" });
+                      }
+                    }}>
+                      <FileImage className="h-4 w-4 mr-2" />
+                      Export PDF
+                    </DropdownMenuItem>
+                  )}
+                  {actualFileUrl && (
+                    <DropdownMenuItem
+                      onClick={() => setShowDeleteConfirmation(true)}
+                      disabled={isDeleting}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete Floor Plan
+                    </DropdownMenuItem>
+                  )}
+                  {!actualFileUrl && filePath && (
+                    <DropdownMenuItem onClick={handleRepairFiles} disabled={isRepairing}>
+                      <RefreshCw className={`h-4 w-4 mr-2 ${isRepairing ? 'animate-spin' : ''}`} />
+                      Repair Files
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
               <Button
-                variant="ghost"
+                variant={isAddingPoint ? "default" : "outline"}
                 size="sm"
-                onClick={() => setShowDrawModeModal(true)}
+                className="text-xs px-2 h-9"
+                onClick={() => { setIsAddingPoint(!isAddingPoint); setIsAddingRoomView(false); }}
+                disabled={!validLocationId}
               >
-                <Edit className="h-4 w-4 mr-2" />
-                Edit Drawing
+                <Plus className="h-3.5 w-3.5 mr-1" />
+                Drop Point
               </Button>
-            )}
-            <FloorPlanFilterDialog
-              filters={filters}
-              onFiltersChange={setFilters}
-            />
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="inline-block">
-                    <Button
-                      variant={isAddingPoint ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => {
-                        setIsAddingPoint(!isAddingPoint);
-                        setIsAddingRoomView(false);
-                      }}
-                      disabled={!validLocationId}
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Drop Point
-                    </Button>
-                  </span>
-                </TooltipTrigger>
-                {!validLocationId && (
-                  <TooltipContent>
-                    <p>Save the location first to add drop points</p>
-                  </TooltipContent>
-                )}
-              </Tooltip>
-            </TooltipProvider>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="inline-block">
-                    <Button
-                      variant={isAddingRoomView ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => {
-                        setIsAddingRoomView(!isAddingRoomView);
-                        setIsAddingPoint(false);
-                        setIsDrawingWirePath(false);
-                      }}
-                      disabled={!validLocationId}
-                    >
-                      <Camera className="h-4 w-4 mr-2" />
-                      Add Room View
-                    </Button>
-                  </span>
-                </TooltipTrigger>
-                {!validLocationId && (
-                  <TooltipContent>
-                    <p>Save the location first to add room views</p>
-                  </TooltipContent>
-                )}
-              </Tooltip>
-            </TooltipProvider>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="inline-block">
-                    <Button
-                      variant={isDrawingWirePath ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => {
-                        setIsDrawingWirePath(!isDrawingWirePath);
-                        setIsAddingPoint(false);
-                        setIsAddingRoomView(false);
-                        if (isDrawingWirePath) {
-                          setCurrentWirePathPoints([]);
-                        }
-                      }}
-                      disabled={!validLocationId}
-                    >
-                      <Route className="h-4 w-4 mr-2" />
-                      {isDrawingWirePath ? 'Cancel' : 'Draw Wire Path'}
-                    </Button>
-                  </span>
-                </TooltipTrigger>
-                {!validLocationId && (
-                  <TooltipContent>
-                    <p>Save the location first to draw wire paths</p>
-                  </TooltipContent>
-                )}
-              </Tooltip>
-            </TooltipProvider>
-            {actualFileUrl && (
               <Button
-                variant="outline"
+                variant={isAddingRoomView ? "default" : "outline"}
                 size="sm"
-                onClick={async () => {
-                  try {
-                    toast({
-                      title: "Generating PDF",
-                      description: "Creating composite image with all annotations...",
-                    });
-                    const { createCompositeFloorPlan } = await import('@/lib/floor-plan-composite');
-                    const compositeUrl = await createCompositeFloorPlan({
-                      baseImageUrl: actualFileUrl,
-                      dropPoints: floorDropPoints.map(dp => ({
-                        x: dp.x_coordinate || 0,
-                        y: dp.y_coordinate || 0,
-                        label: dp.label,
-                        type: dp.point_type || 'data',
-                        status: dp.status || 'planned'
-                      })),
-                      roomViews: floorRoomViews.map(rv => ({
-                        x: rv.x_coordinate || 0,
-                        y: rv.y_coordinate || 0,
-                        label: rv.room_name || 'Room'
-                      })),
-                      width: containerDimensions.width || 800,
-                      height: containerDimensions.height || 600
-                    });
-                    const { exportFloorPlanToPDF } = await import('@/lib/floor-plan-exporter');
-                    await exportFloorPlanToPDF(
-                      locationId, 
-                      floorNumber, 
-                      actualFileUrl, 
-                      {
-                        title: `Floor ${floorNumber} Plan`,
-                        includeDropPoints: true,
-                        includeRoomViews: true,
-                        includeMetadata: true,
-                      },
-                      compositeUrl
-                    );
-                    toast({
-                      title: "PDF Export Complete",
-                      description: "Floor plan with all annotations has been exported successfully.",
-                    });
-                  } catch (error) {
-                    console.error('Error exporting PDF:', error);
-                    toast({
-                      title: "Export Failed",
-                      description: "Failed to export floor plan to PDF. Please try again.",
-                      variant: "destructive",
-                    });
-                  }
-                }}
+                className="text-xs px-2 h-9"
+                onClick={() => { setIsAddingRoomView(!isAddingRoomView); setIsAddingPoint(false); setIsDrawingWirePath(false); }}
+                disabled={!validLocationId}
               >
-                <FileImage className="h-4 w-4 mr-2" />
-                Export PDF
+                <Camera className="h-3.5 w-3.5 mr-1" />
+                Room View
               </Button>
-            )}
-            {actualFileUrl && (
+
+              <div className="flex items-center gap-0.5 ml-auto">
+                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => adjustScale(false)}>
+                  <ZoomOut className="h-3.5 w-3.5" />
+                </Button>
+                <Badge variant="outline" className="px-1.5 text-[10px]">
+                  {Math.round(scale * 100)}%
+                </Badge>
+                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => adjustScale(true)}>
+                  <ZoomIn className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </div>
+          ) : (
+            /* ===== DESKTOP TOOLBAR ===== */
+            <div className="flex flex-wrap items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => { setUploadDialogDefaultTab('upload'); setShowUploadDialog(true); }}>
+                <Upload className="h-4 w-4 mr-2" />
+                Upload Map
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => { setUploadDialogDefaultTab('satellite'); setShowUploadDialog(true); }}>
+                <Globe className="h-4 w-4 mr-2" />
+                Satellite View
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setShowDrawModeModal(true)}>
+                <PenTool className="h-4 w-4 mr-2" />
+                Draw Floor Plan
+              </Button>
+              {floorPlanFiles && isDrawnFloorPlan(floorPlanFiles, floorNumber) && (
+                <Button variant="ghost" size="sm" onClick={() => setShowDrawModeModal(true)}>
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit Drawing
+                </Button>
+              )}
+              <FloorPlanFilterDialog filters={filters} onFiltersChange={setFilters} />
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowDeleteConfirmation(true)}
-                      disabled={isDeleting}
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                    >
-                      <Trash2 className={`h-4 w-4 ${isDeleting ? 'animate-pulse' : ''}`} />
-                    </Button>
+                    <span className="inline-block">
+                      <Button
+                        variant={isAddingPoint ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => { setIsAddingPoint(!isAddingPoint); setIsAddingRoomView(false); }}
+                        disabled={!validLocationId}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Drop Point
+                      </Button>
+                    </span>
                   </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Delete Floor Plan</p>
-                  </TooltipContent>
+                  {!validLocationId && (
+                    <TooltipContent><p>Save the location first to add drop points</p></TooltipContent>
+                  )}
                 </Tooltip>
               </TooltipProvider>
-            )}
-            {!actualFileUrl && filePath && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleRepairFiles}
-                disabled={isRepairing}
-              >
-                <RefreshCw className={`h-4 w-4 mr-2 ${isRepairing ? 'animate-spin' : ''}`} />
-                Repair Files
-              </Button>
-            )}
-            <div className="flex items-center gap-1">
-              <Button variant="outline" size="sm" onClick={() => adjustScale(false)}>
-                <ZoomOut className="h-4 w-4" />
-              </Button>
-              <Badge variant="outline" className="px-2">
-                {Math.round(scale * 100)}%
-              </Badge>
-              <Button variant="outline" size="sm" onClick={() => adjustScale(true)}>
-                <ZoomIn className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" size="sm" onClick={resetScale}>
-                <RotateCcw className="h-4 w-4" />
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="inline-block">
+                      <Button
+                        variant={isAddingRoomView ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => { setIsAddingRoomView(!isAddingRoomView); setIsAddingPoint(false); setIsDrawingWirePath(false); }}
+                        disabled={!validLocationId}
+                      >
+                        <Camera className="h-4 w-4 mr-2" />
+                        Add Room View
+                      </Button>
+                    </span>
+                  </TooltipTrigger>
+                  {!validLocationId && (
+                    <TooltipContent><p>Save the location first to add room views</p></TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="inline-block">
+                      <Button
+                        variant={isDrawingWirePath ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => {
+                          setIsDrawingWirePath(!isDrawingWirePath);
+                          setIsAddingPoint(false);
+                          setIsAddingRoomView(false);
+                          if (isDrawingWirePath) setCurrentWirePathPoints([]);
+                        }}
+                        disabled={!validLocationId}
+                      >
+                        <Route className="h-4 w-4 mr-2" />
+                        {isDrawingWirePath ? 'Cancel' : 'Draw Wire Path'}
+                      </Button>
+                    </span>
+                  </TooltipTrigger>
+                  {!validLocationId && (
+                    <TooltipContent><p>Save the location first to draw wire paths</p></TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
+              {actualFileUrl && (
+                <Button variant="outline" size="sm" onClick={async () => {
+                  try {
+                    toast({ title: "Generating PDF", description: "Creating composite image with all annotations..." });
+                    const { createCompositeFloorPlan } = await import('@/lib/floor-plan-composite');
+                    const compositeUrl = await createCompositeFloorPlan({
+                      baseImageUrl: actualFileUrl,
+                      dropPoints: floorDropPoints.map(dp => ({ x: dp.x_coordinate || 0, y: dp.y_coordinate || 0, label: dp.label, type: dp.point_type || 'data', status: dp.status || 'planned' })),
+                      roomViews: floorRoomViews.map(rv => ({ x: rv.x_coordinate || 0, y: rv.y_coordinate || 0, label: rv.room_name || 'Room' })),
+                      width: containerDimensions.width || 800, height: containerDimensions.height || 600
+                    });
+                    const { exportFloorPlanToPDF } = await import('@/lib/floor-plan-exporter');
+                    await exportFloorPlanToPDF(locationId, floorNumber, actualFileUrl, { title: `Floor ${floorNumber} Plan`, includeDropPoints: true, includeRoomViews: true, includeMetadata: true }, compositeUrl);
+                    toast({ title: "PDF Export Complete", description: "Floor plan with all annotations has been exported successfully." });
+                  } catch (error) {
+                    console.error('Error exporting PDF:', error);
+                    toast({ title: "Export Failed", description: "Failed to export floor plan to PDF. Please try again.", variant: "destructive" });
+                  }
+                }}>
+                  <FileImage className="h-4 w-4 mr-2" />
+                  Export PDF
+                </Button>
+              )}
+              {actualFileUrl && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowDeleteConfirmation(true)}
+                        disabled={isDeleting}
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className={`h-4 w-4 ${isDeleting ? 'animate-pulse' : ''}`} />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent><p>Delete Floor Plan</p></TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+              {!actualFileUrl && filePath && (
+                <Button variant="outline" size="sm" onClick={handleRepairFiles} disabled={isRepairing}>
+                  <RefreshCw className={`h-4 w-4 mr-2 ${isRepairing ? 'animate-spin' : ''}`} />
+                  Repair Files
+                </Button>
+              )}
+              <div className="flex items-center gap-1">
+                <Button variant="outline" size="sm" onClick={() => adjustScale(false)}>
+                  <ZoomOut className="h-4 w-4" />
+                </Button>
+                <Badge variant="outline" className="px-2">
+                  {Math.round(scale * 100)}%
+                </Badge>
+                <Button variant="outline" size="sm" onClick={() => adjustScale(true)}>
+                  <ZoomIn className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" size="sm" onClick={resetScale}>
+                  <RotateCcw className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
         {/* Drop point count + legend */}
         {(floorDropPoints.length > 0 || floorRoomViews.length > 0) && (
