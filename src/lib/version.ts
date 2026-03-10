@@ -1,4 +1,4 @@
-export const APP_VERSION = "1.10.7";
+export const APP_VERSION = "1.10.8";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,16 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "1.10.8",
+    date: "2026-03-10",
+    changes: [
+      "Optimized Interactive Floor Plan toolbar for mobile and small screens",
+      "Added hamburger menu to collapse secondary toolbar actions on mobile",
+      "Primary actions (Add Drop Point, Add Room View) always visible on mobile toolbar",
+      "Compact zoom controls for mobile floor plan view",
+    ]
+  },
   {
     version: "1.10.7",
     date: "2026-03-01",
