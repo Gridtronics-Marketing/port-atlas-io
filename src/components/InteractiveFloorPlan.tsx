@@ -120,6 +120,7 @@ export const InteractiveFloorPlan = ({
   
   const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   
   // Only use hooks with valid UUID
   const validLocationId = locationId && isValidUUID(locationId) ? locationId : undefined;
