@@ -42,8 +42,8 @@ export const MultiLocationMap = ({
         markersRef.current = [];
 
         // Geocode all locations
-        const geocoder = new window.google.maps.Geocoder();
-        const locationCoords: Array<{location: Location, position: google.maps.LatLngLiteral}> = [];
+        const geocoder = new (window as any).google.maps.Geocoder();
+        const locationCoords: Array<{location: Location, position: any}> = [];
 
         for (const location of locations) {
           try {
