@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
 
     for (const invitation of invitations) {
       try {
-        const { clientId, clientName, inviteEmail, password, userRole, parentOrganizationId } = invitation;
+        const { clientId, clientName, inviteEmail, password, userName, userRole, parentOrganizationId } = invitation;
 
         if (!password || password.length < 6) {
           results.push({ clientId, success: false, error: 'Password must be at least 6 characters', status: 'failed' });
