@@ -8,7 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AddUserModal } from "@/components/AddUserModal";
 import { RoleManagementModal } from "@/components/RoleManagementModal";
-import { ManualRoleAssignmentModal } from "@/components/ManualRoleAssignmentModal";
+
 import { BulkRoleAssignmentModal } from "@/components/BulkRoleAssignmentModal";
 import { AssignOrganizationModal } from "@/components/AssignOrganizationModal";
 import { UserActivityLogViewer } from "@/components/UserActivityLogViewer";
@@ -51,7 +51,7 @@ const UserManagement = () => {
   const [selectedUserEmail, setSelectedUserEmail] = useState<string>("");
   const [selectedUserOrgs, setSelectedUserOrgs] = useState<Array<{ id: string; name: string; role: string }>>([]);
   const [showRoleModal, setShowRoleModal] = useState(false);
-  const [showManualRoleModal, setShowManualRoleModal] = useState(false);
+  
   const [showBulkRoleModal, setShowBulkRoleModal] = useState(false);
   const [showAssignOrgModal, setShowAssignOrgModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -287,14 +287,6 @@ const UserManagement = () => {
         <TabsContent value="users" className="space-y-6">
           {/* Action Buttons */}
           <div className="flex gap-2 flex-wrap">
-            <Button 
-              variant="outline"
-              onClick={() => setShowManualRoleModal(true)}
-              className="flex items-center gap-2"
-            >
-              <UserCog className="h-4 w-4" />
-              Assign Role to Existing User
-            </Button>
             <Button 
               onClick={() => setShowAddUser(true)}
               className="bg-gradient-primary hover:bg-primary-hover"
@@ -590,11 +582,6 @@ const UserManagement = () => {
         userEmail={selectedUserEmail}
       />
 
-      <ManualRoleAssignmentModal
-        open={showManualRoleModal}
-        onOpenChange={setShowManualRoleModal}
-        onRoleAssigned={fetchAllUserRoles}
-      />
 
       <BulkRoleAssignmentModal
         isOpen={showBulkRoleModal}
