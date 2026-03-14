@@ -15,15 +15,9 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -31,15 +25,15 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRoles, type AppRole } from "@/hooks/useUserRoles";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, UserPlus, Shield } from "lucide-react";
+import { Loader2, UserPlus } from "lucide-react";
 
 const formSchema = z.object({
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
   email: z.string().email("Please enter a valid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
-  roles: z.array(z.string()).min(1, "Please select at least one role"),
+  role: z.string().min(1, "Please select a role"),
   createEmployee: z.boolean().default(false),
-  firstName: z.string().optional(),
-  lastName: z.string().optional(),
 });
 
 interface AddUserModalProps {
@@ -49,36 +43,9 @@ interface AddUserModalProps {
 }
 
 const availableRoles: { value: AppRole; label: string; description: string }[] = [
-  { 
-    value: 'admin', 
-    label: 'Administrator', 
-    description: 'Full system access and user management' 
-  },
-  { 
-    value: 'hr_manager', 
-    label: 'HR Manager', 
-    description: 'Employee management and HR functions' 
-  },
-  { 
-    value: 'project_manager', 
-    label: 'Project Manager', 
-    description: 'Project oversight and team coordination' 
-  },
-  { 
-    value: 'employee', 
-    label: 'Employee', 
-    description: 'Organization member with HR data and skills tracking' 
-  },
-  { 
-    value: 'technician', 
-    label: 'Technician', 
-    description: 'Field operations and technical tasks' 
-  },
-  { 
-    value: 'viewer', 
-    label: 'Viewer', 
-    description: 'Read-only access to system data' 
-  },
+  { value: 'admin', label: 'Administrator', description: 'Full system access and user management' },
+  { value: 'project_manager', label: 'Manager', description: 'Project oversight and team coordination' },
+  { value: 'employee', label: 'Employee', description: 'Organization member with HR data and skills tracking' },
 ];
 
 export const AddUserModal = ({ open, onOpenChange, onUserCreated }: AddUserModalProps) => {
@@ -90,12 +57,12 @@ export const AddUserModal = ({ open, onOpenChange, onUserCreated }: AddUserModal
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: "",
-      password: "",
-      roles: [],
-      createEmployee: false,
       firstName: "",
       lastName: "",
+      email: "",
+      password: "",
+      role: "",
+      createEmployee: false,
     },
   });
 
@@ -104,35 +71,31 @@ export const AddUserModal = ({ open, onOpenChange, onUserCreated }: AddUserModal
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
     try {
-      // Create the user directly with Supabase client to get user data
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
         options: {
-          emailRedirectTo: `${window.location.origin}/`
-        }
+          emailRedirectTo: `${window.location.origin}/`,
+          data: {
+            first_name: values.firstName,
+            last_name: values.lastName,
+            full_name: `${values.firstName} ${values.lastName}`,
+          },
+        },
       });
-      
-      if (authError) {
-        throw new Error(authError.message);
-      }
 
-      // If user was created successfully and we have the user ID
+      if (authError) throw new Error(authError.message);
+
       if (authData?.user) {
-        // Wait a bit for the user to be fully created in the system
         await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Assign the selected roles
-        for (const roleValue of values.roles) {
-          try {
-            await assignRole(authData.user.id, roleValue as AppRole);
-          } catch (roleError: any) {
-            console.warn(`Failed to assign role ${roleValue}:`, roleError);
-          }
+
+        try {
+          await assignRole(authData.user.id, values.role as AppRole);
+        } catch (roleError: any) {
+          console.warn(`Failed to assign role ${values.role}:`, roleError);
         }
 
-        // Create employee record if requested
-        if (values.createEmployee && values.firstName && values.lastName) {
+        if (values.createEmployee) {
           try {
             const { error: employeeError } = await supabase
               .from('employees')
@@ -140,13 +103,10 @@ export const AddUserModal = ({ open, onOpenChange, onUserCreated }: AddUserModal
                 first_name: values.firstName,
                 last_name: values.lastName,
                 email: values.email,
-                role: 'Employee', // Default role for employee table
-                status: 'Active'
+                role: 'Employee',
+                status: 'Active',
               });
-
-            if (employeeError) {
-              console.warn('Failed to create employee record:', employeeError);
-            }
+            if (employeeError) console.warn('Failed to create employee record:', employeeError);
           } catch (employeeError) {
             console.warn('Failed to create employee record:', employeeError);
           }
@@ -154,19 +114,13 @@ export const AddUserModal = ({ open, onOpenChange, onUserCreated }: AddUserModal
 
         toast({
           title: "User Created Successfully",
-          description: `User ${values.email} has been created with the selected roles. They will receive an email confirmation.`,
-        });
-      } else {
-        toast({
-          title: "User Created",
-          description: `User ${values.email} has been created. Please check your email to confirm your account.`,
+          description: `User ${values.firstName} ${values.lastName} (${values.email}) has been created.`,
         });
       }
 
       form.reset();
       onOpenChange(false);
       onUserCreated?.();
-
     } catch (error: any) {
       console.error("Error creating user:", error);
       toast({
@@ -179,15 +133,6 @@ export const AddUserModal = ({ open, onOpenChange, onUserCreated }: AddUserModal
     }
   };
 
-  const handleRoleToggle = (roleValue: string, checked: boolean) => {
-    const currentRoles = form.getValues("roles");
-    if (checked) {
-      form.setValue("roles", [...currentRoles, roleValue]);
-    } else {
-      form.setValue("roles", currentRoles.filter(role => role !== roleValue));
-    }
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
@@ -197,12 +142,41 @@ export const AddUserModal = ({ open, onOpenChange, onUserCreated }: AddUserModal
             Add New User
           </DialogTitle>
           <DialogDescription>
-            Create a new user account and assign roles. The user will receive an email confirmation.
+            Create a new user account and assign a role.
           </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="firstName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>First Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="John" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="lastName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Last Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="Doe" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
             <FormField
               control={form.control}
               name="email"
@@ -231,27 +205,32 @@ export const AddUserModal = ({ open, onOpenChange, onUserCreated }: AddUserModal
               )}
             />
 
-            <div className="space-y-3">
-              <FormLabel className="flex items-center gap-2">
-                <Shield className="h-4 w-4" />
-                User Roles
-              </FormLabel>
-              <div className="grid grid-cols-1 gap-3 p-4 border rounded-lg bg-muted/30">
-                {availableRoles.map((role) => (
-                  <div key={role.value} className="flex items-start space-x-3">
-                    <Checkbox
-                      checked={form.watch("roles").includes(role.value)}
-                      onCheckedChange={(checked) => handleRoleToggle(role.value, checked as boolean)}
-                    />
-                    <div className="flex-1">
-                      <div className="font-medium">{role.label}</div>
-                      <div className="text-sm text-muted-foreground">{role.description}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <FormMessage />
-            </div>
+            <FormField
+              control={form.control}
+              name="role"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Role</FormLabel>
+                  <FormControl>
+                    <RadioGroup onValueChange={field.onChange} value={field.value} className="space-y-2">
+                      {availableRoles.map((role) => (
+                        <label
+                          key={role.value}
+                          className="flex items-start space-x-3 p-3 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                        >
+                          <RadioGroupItem value={role.value} className="mt-0.5" />
+                          <div className="flex-1">
+                            <div className="font-medium text-sm">{role.label}</div>
+                            <div className="text-xs text-muted-foreground">{role.description}</div>
+                          </div>
+                        </label>
+                      ))}
+                    </RadioGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <FormField
               control={form.control}
@@ -259,15 +238,10 @@ export const AddUserModal = ({ open, onOpenChange, onUserCreated }: AddUserModal
               render={({ field }) => (
                 <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                   <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
+                    <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                   </FormControl>
                   <div className="space-y-1 leading-none">
-                    <FormLabel>
-                      Create Employee Record
-                    </FormLabel>
+                    <FormLabel>Create Employee Record</FormLabel>
                     <div className="text-sm text-muted-foreground">
                       Also create an employee profile for HR management
                     </div>
@@ -276,45 +250,8 @@ export const AddUserModal = ({ open, onOpenChange, onUserCreated }: AddUserModal
               )}
             />
 
-            {watchCreateEmployee && (
-              <div className="grid grid-cols-2 gap-4 p-4 border rounded-lg bg-muted/30">
-                <FormField
-                  control={form.control}
-                  name="firstName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>First Name</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="John" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="lastName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Last Name</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="Doe" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            )}
-
             <div className="flex justify-end space-x-2 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                disabled={isLoading}
-              >
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
                 Cancel
               </Button>
               <Button type="submit" disabled={isLoading}>
