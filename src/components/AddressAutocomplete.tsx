@@ -140,7 +140,7 @@ export const AddressAutocomplete = ({
       { placeId: prediction.place_id },
       (place, status) => {
         setIsLoading(false);
-        if (status === google.maps.places.PlacesServiceStatus.OK && place) {
+        if (status === (window as any).google.maps.places.PlacesServiceStatus.OK && place) {
           const components = extractAddressComponents(place);
           onChange(components.fullAddress);
           onAddressSelect?.(components);
