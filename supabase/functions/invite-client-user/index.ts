@@ -10,6 +10,7 @@ interface InviteRequest {
   clientName: string;
   inviteEmail: string;
   password: string;
+  userName?: string;
   userRole: 'admin' | 'member' | 'viewer';
   parentOrganizationId: string;
 }
