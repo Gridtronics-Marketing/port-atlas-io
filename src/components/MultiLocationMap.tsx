@@ -72,7 +72,7 @@ export const MultiLocationMap = ({
         }
 
         // Calculate center and bounds
-        const bounds = new window.google.maps.LatLngBounds();
+        const bounds = new (window as any).google.maps.LatLngBounds();
         locationCoords.forEach(({ position }) => bounds.extend(position));
         const center = bounds.getCenter().toJSON();
 
