@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AddUserModal } from "@/components/AddUserModal";
 import { RoleManagementModal } from "@/components/RoleManagementModal";
+import { EditUserModal } from "@/components/EditUserModal";
 
 import { BulkRoleAssignmentModal } from "@/components/BulkRoleAssignmentModal";
 import { AssignOrganizationModal } from "@/components/AssignOrganizationModal";
