@@ -155,64 +155,11 @@ const UserManagement = () => {
     }
   };
 
-  const handleManageRoles = (userId: string, userEmail: string | null) => {
-    setSelectedUserId(userId);
-    setSelectedUserEmail(userEmail || userId);
-    setShowRoleModal(true);
-  };
-
   const handleAssignOrg = (userId: string, userEmail: string | null, orgs: Array<{ id: string; name: string; role: string }>) => {
     setSelectedUserId(userId);
     setSelectedUserEmail(userEmail || userId);
     setSelectedUserOrgs(orgs);
     setShowAssignOrgModal(true);
-  };
-
-  const handleDeleteUser = async () => {
-    if (!userToDelete) return;
-    
-    try {
-      setIsDeleting(true);
-      
-      // Delete user roles first
-      await supabase
-        .from('user_roles')
-        .delete()
-        .eq('user_id', userToDelete.id);
-      
-      // Delete organization memberships
-      await supabase
-        .from('organization_members')
-        .delete()
-        .eq('user_id', userToDelete.id);
-      
-      // Delete profile
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', userToDelete.id);
-      
-      if (profileError) throw profileError;
-      
-      toast({
-        title: "User Deleted",
-        description: `${userToDelete.email || userToDelete.id} has been removed from the system.`,
-      });
-      
-      fetchAllUserRoles();
-      fetchProfiles();
-    } catch (error: any) {
-      console.error('Error deleting user:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to delete user",
-        variant: "destructive",
-      });
-    } finally {
-      setIsDeleting(false);
-      setShowDeleteConfirm(false);
-      setUserToDelete(null);
-    }
   };
 
   // Stats
