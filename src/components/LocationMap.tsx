@@ -15,7 +15,7 @@ interface LocationMapProps {
 
 export const LocationMap = ({ address, latitude, longitude, locationName }: LocationMapProps) => {
   const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<google.maps.Map | null>(null);
+  const mapInstanceRef = useRef<any>(null);
   const { isLoaded, isLoading, error } = useGoogleMapsAPI();
 
   useEffect(() => {
