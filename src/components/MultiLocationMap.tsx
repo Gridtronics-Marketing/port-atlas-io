@@ -136,7 +136,7 @@ export const MultiLocationMap = ({
           const lng = position.lng;
 
           // Create info window
-          const infoWindow = new window.google.maps.InfoWindow({
+          const infoWindow = new (window as any).google.maps.InfoWindow({
             content: `
               <div class="p-3 min-w-[200px]">
                 <h3 class="font-semibold text-base mb-1">${location.name}</h3>
