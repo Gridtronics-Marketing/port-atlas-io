@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Shield, Users, Mail, Activity, UserCog, CheckSquare, Briefcase, Building2, AlertTriangle, Settings, Trash2 } from "lucide-react";
+import { Plus, Shield, Users, Activity, UserCog, CheckSquare, Briefcase, Building2, AlertTriangle, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +9,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AddUserModal } from "@/components/AddUserModal";
 import { RoleManagementModal } from "@/components/RoleManagementModal";
 import { EditUserModal } from "@/components/EditUserModal";
-
 import { BulkRoleAssignmentModal } from "@/components/BulkRoleAssignmentModal";
 import { AssignOrganizationModal } from "@/components/AssignOrganizationModal";
 import { UserActivityLogViewer } from "@/components/UserActivityLogViewer";
@@ -18,18 +17,6 @@ import { useUserRoles } from "@/hooks/useUserRoles";
 import { useProfiles } from "@/hooks/useProfiles";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrganization } from "@/contexts/OrganizationContext";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import {
   Table,
   TableBody,
@@ -38,13 +25,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 const UserManagement = () => {
   const [showAddUser, setShowAddUser] = useState(false);
