@@ -151,7 +151,7 @@ const Auth = () => {
   }
 
   return (
-    <div className="min-h-screen relative flex items-center justify-center p-4 overflow-hidden">
+    <div className="min-h-[100dvh] relative flex items-center justify-center p-4 overflow-auto">
       {/* Background Image */}
       <img 
         src={tradeAtlasBackground}
@@ -164,16 +164,16 @@ const Auth = () => {
         <OfflineIndicator />
       </div>
       <Card className="w-full max-w-md shadow-medium backdrop-blur-md bg-card/95 relative" style={{ zIndex: 10 }}>
-        <CardHeader className="text-center space-y-4">
+         <CardHeader className="text-center space-y-2 sm:space-y-4">
           <div className="flex justify-center">
             <img 
               src={tradeAtlasLogo} 
               alt="Trade Atlas" 
-              className="h-16 w-auto"
+              className="h-10 sm:h-16 w-auto"
             />
           </div>
           <div>
-            <CardTitle className="text-2xl font-bold bg-gradient-hero bg-clip-text text-transparent">
+            <CardTitle className="text-xl sm:text-2xl font-bold bg-gradient-hero bg-clip-text text-transparent">
               Trade Atlas
             </CardTitle>
             <CardDescription className="flex items-center justify-center gap-2 mt-2">

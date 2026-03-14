@@ -1,20 +1,40 @@
 
 
-# Fix Login Page for iPhone / Small Screens
+# Update Version and Change Log
 
-## Problem
-On iPhone, the login card content overflows the viewport. The Sign In button is pushed below the visible area, requiring zooming and scrolling to tap it.
+## Version Bump
 
-## Root Cause
-The page uses `flex items-center justify-center min-h-screen` which vertically centers the card, but the card's content (logo at `h-16`, title, subtitle, tabs, form fields, button, checkbox) is too tall for small phone screens (~568-812px). The card doesn't scroll internally, and the outer container's `overflow-hidden` prevents page scrolling.
+Update from **v1.10.6** to **v1.10.7** with today's date (2026-03-01).
 
-## Fix — `src/pages/Auth.tsx`
+## Changes to Record
 
-1. **Remove `overflow-hidden`** from the outer container so the page can scroll on small screens
-2. **Add `py-safe` / `min-h-[100dvh]`** — use `dvh` (dynamic viewport height) which accounts for mobile browser chrome (address bar, toolbar)
-3. **Shrink logo on mobile** — reduce from `h-16` to `h-10` on small screens (`h-10 sm:h-16`)
-4. **Reduce card padding on mobile** — tighten `CardHeader` spacing with `space-y-2 sm:space-y-4` and smaller title text `text-xl sm:text-2xl`
-5. **Change outer div** from `overflow-hidden` to `overflow-auto` so content scrolls naturally if it still exceeds viewport
+The following features and fixes were implemented in this session:
 
-These are minimal, targeted changes — no layout restructuring needed.
+1. **Fixed Google Places Autocomplete selection in dialogs** -- Address suggestions can now be clicked without Radix Dialog stealing focus or closing
+2. **Fixed interactive map not loading after address selection** -- Deferred map initialization to ensure DOM container is mounted before attaching Google Maps
+3. **Fixed Google Maps API race condition** -- Added polling mechanism so multiple components correctly detect when the Maps script finishes loading
+4. **Added right-click context menus to room views and wire paths on floor plans** -- Room views now have "View Details" and "Delete" options; wire paths auto-select on right-click to reveal the action panel
+
+## File Changes
+
+### `src/lib/version.ts`
+
+- Update `APP_VERSION` from `"1.10.6"` to `"1.10.7"`
+- Add a new entry at the top of `VERSION_HISTORY` array:
+
+```typescript
+{
+  version: "1.10.7",
+  date: "2026-03-01",
+  changes: [
+    "Fixed Google Places Autocomplete selection inside dialogs (focus trap and pointer event conflicts)",
+    "Fixed interactive satellite map not loading after address selection or tab switch",
+    "Fixed Google Maps API loading race condition when multiple components request the script",
+    "Added right-click context menus to room views and wire paths on interactive floor plans",
+    "Room view context menu with View Details and Delete actions",
+    "Wire path right-click selects path and reveals action panel with edit/delete options",
+    "Added delete confirmation dialogs for room views and wire paths (replaces native confirm)",
+  ]
+}
+```
 
