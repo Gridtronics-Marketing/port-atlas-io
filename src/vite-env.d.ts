@@ -2,57 +2,59 @@
 
 declare namespace google {
   namespace maps {
+    const [key: string]: any;
     class Map {
       constructor(element: HTMLElement, options?: any);
-      setCenter(latlng: any): void;
-      setZoom(zoom: number): void;
-      fitBounds(bounds: any): void;
+      [key: string]: any;
     }
     class Marker {
       constructor(options?: any);
-      setMap(map: any): void;
-      addListener(event: string, handler: () => void): void;
+      [key: string]: any;
     }
     class LatLng {
       constructor(lat: number, lng: number);
-      lat(): number;
-      lng(): number;
+      [key: string]: any;
     }
     class LatLngBounds {
       constructor();
-      extend(latlng: any): this;
+      [key: string]: any;
     }
     class InfoWindow {
       constructor(options?: any);
-      open(options?: any): void;
-      close(): void;
+      [key: string]: any;
     }
+    class Geocoder {
+      constructor();
+      [key: string]: any;
+    }
+    function importLibrary(name: string): Promise<any>;
     namespace places {
       class AutocompleteService {
-        getPlacePredictions(request: any, callback: (results: any[], status: string) => void): void;
+        [key: string]: any;
       }
       class PlacesService {
         constructor(element: HTMLElement);
-        getDetails(request: any, callback: (result: any, status: string) => void): void;
+        [key: string]: any;
       }
-      interface AutocompletePrediction {
-        place_id: string;
-        description: string;
-        structured_formatting: {
-          main_text: string;
-          secondary_text: string;
-        };
+      class Autocomplete {
+        constructor(input: HTMLInputElement, options?: any);
+        [key: string]: any;
       }
-      const PlacesServiceStatus: {
-        OK: string;
-      };
+      const [key: string]: any;
+    }
+    namespace marker {
+      const [key: string]: any;
     }
     namespace event {
       function addListener(instance: any, event: string, handler: (...args: any[]) => void): any;
       function addListenerOnce(instance: any, event: string, handler: (...args: any[]) => void): any;
     }
-    const ControlPosition: Record<string, number>;
-    const MapTypeId: Record<string, string>;
+    const ControlPosition: any;
+    const MapTypeId: any;
+    type MapsLibrary = any;
+    type MarkerLibrary = any;
+    type LatLngLiteral = { lat: number; lng: number };
+    type PlaceResult = any;
   }
 }
 
