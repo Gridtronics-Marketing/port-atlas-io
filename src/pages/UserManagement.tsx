@@ -288,14 +288,6 @@ const UserManagement = () => {
           {/* Action Buttons */}
           <div className="flex gap-2 flex-wrap">
             <Button 
-              variant="outline"
-              onClick={() => setShowManualRoleModal(true)}
-              className="flex items-center gap-2"
-            >
-              <UserCog className="h-4 w-4" />
-              Assign Role to Existing User
-            </Button>
-            <Button 
               onClick={() => setShowAddUser(true)}
               className="bg-gradient-primary hover:bg-primary-hover"
             >
