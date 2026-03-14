@@ -2,7 +2,7 @@
 
 declare namespace google {
   namespace maps {
-    const [key: string]: any;
+    const SymbolPosition: any;
     class Map {
       constructor(element: HTMLElement, options?: any);
       [key: string]: any;
