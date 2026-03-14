@@ -76,7 +76,7 @@ export const AddressAutocomplete = ({
       { input: newValue },
       (results, status) => {
         setIsLoading(false);
-        if (status === google.maps.places.PlacesServiceStatus.OK && results) {
+        if (status === (window as any).google.maps.places.PlacesServiceStatus.OK && results) {
           setPredictions(results);
           setShowPredictions(true);
         } else {
