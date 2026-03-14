@@ -10,6 +10,7 @@ interface InviteRequest {
   clientName: string;
   inviteEmail: string;
   password: string;
+  userName?: string;
   userRole: 'admin' | 'member' | 'viewer';
   parentOrganizationId: string;
 }
@@ -59,7 +60,7 @@ Deno.serve(async (req) => {
 
     for (const invitation of invitations) {
       try {
-        const { clientId, clientName, inviteEmail, password, userRole, parentOrganizationId } = invitation;
+        const { clientId, clientName, inviteEmail, password, userName, userRole, parentOrganizationId } = invitation;
 
         if (!password || password.length < 6) {
           results.push({ clientId, success: false, error: 'Password must be at least 6 characters', status: 'failed' });
@@ -101,6 +102,7 @@ Deno.serve(async (req) => {
           password: password,
           email_confirm: true,
           user_metadata: {
+            full_name: userName || clientName,
             client_id: clientId,
             client_name: clientName,
             organization_id: parentOrganizationId,

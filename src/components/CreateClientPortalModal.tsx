@@ -3,9 +3,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building2, Mail, Loader2, AlertCircle, UserPlus, Key, RefreshCw, Copy, CheckCircle2, Eye, EyeOff } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Building2, Mail, Loader2, AlertCircle, UserPlus, Key, RefreshCw, Copy, CheckCircle2, Eye, EyeOff, User } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Client } from '@/hooks/useClients';
@@ -26,6 +25,7 @@ const generatePassword = () => {
 };
 
 interface CreatedCredentials {
+  name: string;
   email: string;
   password: string;
 }
@@ -34,10 +34,10 @@ export const CreateClientPortalModal = ({
   open, onOpenChange, client, onSuccess
 }: CreateClientPortalModalProps) => {
   const [loading, setLoading] = useState(false);
+  const [userName, setUserName] = useState('');
   const [inviteEmail, setInviteEmail] = useState(client.contact_email || '');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [userRole, setUserRole] = useState<'admin' | 'member' | 'viewer'>('admin');
   const [createdCredentials, setCreatedCredentials] = useState<CreatedCredentials | null>(null);
   const [copied, setCopied] = useState(false);
 
@@ -61,6 +61,7 @@ export const CreateClientPortalModal = ({
 
   useEffect(() => {
     if (open) {
+      setUserName(client.contact_name || '');
       setInviteEmail(client.contact_email || '');
       setPassword('');
       setCreatedCredentials(null);
@@ -69,8 +70,8 @@ export const CreateClientPortalModal = ({
   }, [open, client]);
 
   const handleCopyCredentials = async () => {
-    if (!createdCredentials) return;
-    const text = `Email: ${createdCredentials.email}\nPassword: ${createdCredentials.password}`;
+  if (!createdCredentials) return;
+    const text = `Name: ${createdCredentials.name}\nEmail: ${createdCredentials.email}\nPassword: ${createdCredentials.password}`;
     await navigator.clipboard.writeText(text);
     setCopied(true);
     toast.success('Credentials copied to clipboard');
@@ -92,7 +93,8 @@ export const CreateClientPortalModal = ({
           clientName: client.name,
           inviteEmail,
           password,
-          userRole,
+          userName,
+          userRole: 'admin',
           parentOrganizationId: parentOrgId
         }
       });
@@ -104,7 +106,7 @@ export const CreateClientPortalModal = ({
         throw new Error(result.results[0]?.error || 'Failed to create account');
       }
 
-      setCreatedCredentials({ email: inviteEmail, password });
+      setCreatedCredentials({ name: userName, email: inviteEmail, password });
       toast.success('Account created successfully');
       onSuccess?.();
     } catch (error: any) {
@@ -131,6 +133,10 @@ export const CreateClientPortalModal = ({
           </DialogHeader>
           <Card className="border-accent bg-accent/10">
             <CardContent className="pt-6 space-y-3">
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Name</Label>
+                <p className="font-mono text-sm">{createdCredentials.name}</p>
+              </div>
               <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">Email</Label>
                 <p className="font-mono text-sm">{createdCredentials.email}</p>
@@ -167,6 +173,15 @@ export const CreateClientPortalModal = ({
         </DialogHeader>
 
         <div className="space-y-4">
+          {/* Name */}
+          <div className="space-y-2">
+            <Label htmlFor="name">Name</Label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input id="name" value={userName} onChange={(e) => setUserName(e.target.value)} placeholder="Client user's name" className="pl-10" />
+            </div>
+          </div>
+
           {/* Email */}
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
@@ -203,19 +218,6 @@ export const CreateClientPortalModal = ({
                 <RefreshCw className="h-4 w-4" />
               </Button>
             </div>
-          </div>
-
-          {/* Role */}
-          <div className="space-y-2">
-            <Label htmlFor="role">User Role</Label>
-            <Select value={userRole} onValueChange={(v: any) => setUserRole(v)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="admin">Admin (Manage portal users)</SelectItem>
-                <SelectItem value="member">Member (Standard access)</SelectItem>
-                <SelectItem value="viewer">Viewer (Read-only)</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
 
           {/* Actions */}
