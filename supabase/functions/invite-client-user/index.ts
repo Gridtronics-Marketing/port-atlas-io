@@ -102,6 +102,7 @@ Deno.serve(async (req) => {
           password: password,
           email_confirm: true,
           user_metadata: {
+            full_name: userName || clientName,
             client_id: clientId,
             client_name: clientName,
             organization_id: parentOrganizationId,
