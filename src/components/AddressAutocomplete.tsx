@@ -38,15 +38,15 @@ export const AddressAutocomplete = ({
   const [predictions, setPredictions] = useState<any[]>([]);
   const [showPredictions, setShowPredictions] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const autocompleteService = useRef<google.maps.places.AutocompleteService | null>(null);
-  const placesService = useRef<google.maps.places.PlacesService | null>(null);
+  const autocompleteService = useRef<any>(null);
+  const placesService = useRef<any>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (isLoaded && window.google?.maps?.places) {
-      autocompleteService.current = new google.maps.places.AutocompleteService();
+    if (isLoaded && (window as any).google?.maps?.places) {
+      autocompleteService.current = new (window as any).google.maps.places.AutocompleteService();
       const div = document.createElement("div");
-      placesService.current = new google.maps.places.PlacesService(div);
+      placesService.current = new (window as any).google.maps.places.PlacesService(div);
     }
   }, [isLoaded]);
 
@@ -76,7 +76,7 @@ export const AddressAutocomplete = ({
       { input: newValue },
       (results, status) => {
         setIsLoading(false);
-        if (status === google.maps.places.PlacesServiceStatus.OK && results) {
+        if (status === (window as any).google.maps.places.PlacesServiceStatus.OK && results) {
           setPredictions(results);
           setShowPredictions(true);
         } else {
@@ -87,7 +87,7 @@ export const AddressAutocomplete = ({
     );
   };
 
-  const extractAddressComponents = (place: google.maps.places.PlaceResult): AddressComponents => {
+  const extractAddressComponents = (place: any): AddressComponents => {
     const components = place.address_components || [];
     let street = "";
     let city = "";
@@ -140,7 +140,7 @@ export const AddressAutocomplete = ({
       { placeId: prediction.place_id },
       (place, status) => {
         setIsLoading(false);
-        if (status === google.maps.places.PlacesServiceStatus.OK && place) {
+        if (status === (window as any).google.maps.places.PlacesServiceStatus.OK && place) {
           const components = extractAddressComponents(place);
           onChange(components.fullAddress);
           onAddressSelect?.(components);

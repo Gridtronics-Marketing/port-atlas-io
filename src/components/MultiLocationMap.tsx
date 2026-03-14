@@ -7,11 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { openNavigation } from '@/lib/navigation-utils';
 
-declare global {
-  interface Window {
-    google: typeof google;
-  }
-}
 
 interface MultiLocationMapProps {
   locations: Location[];
@@ -25,30 +20,30 @@ export const MultiLocationMap = ({
   height = "h-96"
 }: MultiLocationMapProps) => {
   const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<google.maps.Map | null>(null);
-  const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
+  const mapInstanceRef = useRef<any>(null);
+  const markersRef = useRef<any[]>([]);
   const [isInitializing, setIsInitializing] = useState(true);
   const { isLoaded, isLoading, error } = useGoogleMapsAPI();
 
   useEffect(() => {
     const initMap = async () => {
-      if (!mapRef.current || !isLoaded || typeof window.google === 'undefined') {
+      if (!mapRef.current || !isLoaded || typeof (window as any).google === 'undefined') {
         setIsInitializing(false);
         return;
       }
 
       try {
         setIsInitializing(true);
-        const { Map } = await window.google.maps.importLibrary("maps") as google.maps.MapsLibrary;
-        const { AdvancedMarkerElement } = await window.google.maps.importLibrary("marker") as google.maps.MarkerLibrary;
+        const { Map } = await (window as any).google.maps.importLibrary("maps") as any;
+        const { AdvancedMarkerElement } = await (window as any).google.maps.importLibrary("marker") as any;
 
         // Clear existing markers
         markersRef.current.forEach(marker => marker.map = null);
         markersRef.current = [];
 
         // Geocode all locations
-        const geocoder = new window.google.maps.Geocoder();
-        const locationCoords: Array<{location: Location, position: google.maps.LatLngLiteral}> = [];
+        const geocoder = new (window as any).google.maps.Geocoder();
+        const locationCoords: Array<{location: Location, position: any}> = [];
 
         for (const location of locations) {
           try {
@@ -77,7 +72,7 @@ export const MultiLocationMap = ({
         }
 
         // Calculate center and bounds
-        const bounds = new window.google.maps.LatLngBounds();
+        const bounds = new (window as any).google.maps.LatLngBounds();
         locationCoords.forEach(({ position }) => bounds.extend(position));
         const center = bounds.getCenter().toJSON();
 
@@ -141,7 +136,7 @@ export const MultiLocationMap = ({
           const lng = position.lng;
 
           // Create info window
-          const infoWindow = new window.google.maps.InfoWindow({
+          const infoWindow = new (window as any).google.maps.InfoWindow({
             content: `
               <div class="p-3 min-w-[200px]">
                 <h3 class="font-semibold text-base mb-1">${location.name}</h3>
@@ -173,10 +168,10 @@ export const MultiLocationMap = ({
               if (m.infoWindow) m.infoWindow.close();
             });
             
-            infoWindow.open(map, marker);
+            infoWindow.open({ map, anchor: marker });
             
             // Add click handler for navigate button
-            window.google.maps.event.addListenerOnce(infoWindow, 'domready', () => {
+            (window as any).google.maps.event.addListenerOnce(infoWindow, 'domready', () => {
               const navigateBtn = document.getElementById(`navigate-btn-${location.id}`);
               if (navigateBtn) {
                 navigateBtn.addEventListener('click', (e) => {

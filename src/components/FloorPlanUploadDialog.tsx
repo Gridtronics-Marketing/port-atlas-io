@@ -42,9 +42,9 @@ export const FloorPlanUploadDialog = ({
   const [isDragActive, setIsDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<google.maps.Map | null>(null);
+  const mapInstanceRef = useRef<any>(null);
   const autocompleteInputRef = useRef<HTMLInputElement>(null);
-  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+  const autocompleteRef = useRef<any>(null);
   const { toast } = useToast();
 
   // Satellite state
@@ -70,7 +70,7 @@ export const FloorPlanUploadDialog = ({
     const timerId = setTimeout(() => {
       if (!mapContainerRef.current || mapInstanceRef.current) return;
 
-      const map = new window.google.maps.Map(mapContainerRef.current, {
+      const map = new (window as any).google.maps.Map(mapContainerRef.current, {
         center: mapCoordinates || { lat: 37.7749, lng: -122.4194 },
         zoom: zoomLevel,
         mapTypeId: 'satellite',
@@ -106,7 +106,7 @@ export const FloorPlanUploadDialog = ({
       const input = autocompleteInputRef.current;
       if (!input || autocompleteRef.current) return;
 
-      const autocomplete = new window.google.maps.places.Autocomplete(
+      const autocomplete = new (window as any).google.maps.places.Autocomplete(
         input,
         { types: ['geocode', 'establishment'] }
       );

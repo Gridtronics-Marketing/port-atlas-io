@@ -5,11 +5,6 @@ import { useGoogleMapsAPI } from '@/hooks/useGoogleMapsAPI';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 
-declare global {
-  interface Window {
-    google: typeof google;
-  }
-}
 
 interface LocationMapProps {
   address: string;
@@ -20,26 +15,26 @@ interface LocationMapProps {
 
 export const LocationMap = ({ address, latitude, longitude, locationName }: LocationMapProps) => {
   const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<google.maps.Map | null>(null);
+  const mapInstanceRef = useRef<any>(null);
   const { isLoaded, isLoading, error } = useGoogleMapsAPI();
 
   useEffect(() => {
     const initMap = async () => {
-      if (!mapRef.current || !isLoaded || typeof window.google === 'undefined') return;
+      if (!mapRef.current || !isLoaded || typeof (window as any).google === 'undefined') return;
 
       try {
         // Initialize the map
-        const { Map } = await window.google.maps.importLibrary("maps") as google.maps.MapsLibrary;
-        const { AdvancedMarkerElement } = await window.google.maps.importLibrary("marker") as google.maps.MarkerLibrary;
+        const { Map } = await (window as any).google.maps.importLibrary("maps") as any;
+        const { AdvancedMarkerElement } = await (window as any).google.maps.importLibrary("marker") as any;
 
-        let center: google.maps.LatLngLiteral;
+        let center: any;
 
         // Use provided coordinates if available, otherwise geocode the address
         if (latitude && longitude) {
           center = { lat: Number(latitude), lng: Number(longitude) };
         } else if (address) {
           // Geocode the address
-          const geocoder = new window.google.maps.Geocoder();
+          const geocoder = new (window as any).google.maps.Geocoder();
           try {
             const response = await geocoder.geocode({ address });
             if (response.results[0]) {
