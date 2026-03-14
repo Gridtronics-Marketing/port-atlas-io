@@ -582,11 +582,6 @@ const UserManagement = () => {
         userEmail={selectedUserEmail}
       />
 
-      <ManualRoleAssignmentModal
-        open={showManualRoleModal}
-        onOpenChange={setShowManualRoleModal}
-        onRoleAssigned={fetchAllUserRoles}
-      />
 
       <BulkRoleAssignmentModal
         isOpen={showBulkRoleModal}
