@@ -20,8 +20,8 @@ export const MultiLocationMap = ({
   height = "h-96"
 }: MultiLocationMapProps) => {
   const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<google.maps.Map | null>(null);
-  const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
+  const mapInstanceRef = useRef<any>(null);
+  const markersRef = useRef<any[]>([]);
   const [isInitializing, setIsInitializing] = useState(true);
   const { isLoaded, isLoading, error } = useGoogleMapsAPI();
 
