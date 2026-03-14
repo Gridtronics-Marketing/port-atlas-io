@@ -43,7 +43,10 @@ declare namespace google {
       const PlacesServiceStatus: any;
     }
     namespace marker {
-      const [key: string]: any;
+      class AdvancedMarkerElement {
+        constructor(options?: any);
+        [key: string]: any;
+      }
     }
     namespace event {
       function addListener(instance: any, event: string, handler: (...args: any[]) => void): any;
