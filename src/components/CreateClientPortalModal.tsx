@@ -135,6 +135,10 @@ export const CreateClientPortalModal = ({
           <Card className="border-accent bg-accent/10">
             <CardContent className="pt-6 space-y-3">
               <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Name</Label>
+                <p className="font-mono text-sm">{createdCredentials.name}</p>
+              </div>
+              <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">Email</Label>
                 <p className="font-mono text-sm">{createdCredentials.email}</p>
               </div>
