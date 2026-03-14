@@ -51,7 +51,7 @@ const UserManagement = () => {
   const [selectedUserEmail, setSelectedUserEmail] = useState<string>("");
   const [selectedUserOrgs, setSelectedUserOrgs] = useState<Array<{ id: string; name: string; role: string }>>([]);
   const [showRoleModal, setShowRoleModal] = useState(false);
-  const [showManualRoleModal, setShowManualRoleModal] = useState(false);
+  
   const [showBulkRoleModal, setShowBulkRoleModal] = useState(false);
   const [showAssignOrgModal, setShowAssignOrgModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
