@@ -5,11 +5,6 @@ import { useGoogleMapsAPI } from '@/hooks/useGoogleMapsAPI';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 
-declare global {
-  interface Window {
-    google: typeof google;
-  }
-}
 
 interface LocationMapProps {
   address: string;
