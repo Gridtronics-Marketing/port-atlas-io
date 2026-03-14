@@ -34,8 +34,8 @@ export const MultiLocationMap = ({
 
       try {
         setIsInitializing(true);
-        const { Map } = await window.google.maps.importLibrary("maps") as google.maps.MapsLibrary;
-        const { AdvancedMarkerElement } = await window.google.maps.importLibrary("marker") as google.maps.MarkerLibrary;
+        const { Map } = await (window as any).google.maps.importLibrary("maps") as any;
+        const { AdvancedMarkerElement } = await (window as any).google.maps.importLibrary("marker") as any;
 
         // Clear existing markers
         markersRef.current.forEach(marker => marker.map = null);
