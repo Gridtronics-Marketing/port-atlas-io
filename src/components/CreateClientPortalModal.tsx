@@ -35,10 +35,10 @@ export const CreateClientPortalModal = ({
   open, onOpenChange, client, onSuccess
 }: CreateClientPortalModalProps) => {
   const [loading, setLoading] = useState(false);
+  const [userName, setUserName] = useState('');
   const [inviteEmail, setInviteEmail] = useState(client.contact_email || '');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [userRole, setUserRole] = useState<'admin' | 'member' | 'viewer'>('admin');
   const [createdCredentials, setCreatedCredentials] = useState<CreatedCredentials | null>(null);
   const [copied, setCopied] = useState(false);
 
