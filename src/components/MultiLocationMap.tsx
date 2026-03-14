@@ -27,7 +27,7 @@ export const MultiLocationMap = ({
 
   useEffect(() => {
     const initMap = async () => {
-      if (!mapRef.current || !isLoaded || typeof window.google === 'undefined') {
+      if (!mapRef.current || !isLoaded || typeof (window as any).google === 'undefined') {
         setIsInitializing(false);
         return;
       }
