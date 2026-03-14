@@ -151,7 +151,7 @@ const Auth = () => {
   }
 
   return (
-    <div className="min-h-screen relative flex items-center justify-center p-4 overflow-hidden">
+    <div className="min-h-[100dvh] relative flex items-center justify-center p-4 overflow-auto">
       {/* Background Image */}
       <img 
         src={tradeAtlasBackground}
