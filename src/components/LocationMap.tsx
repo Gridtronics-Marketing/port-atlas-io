@@ -24,10 +24,10 @@ export const LocationMap = ({ address, latitude, longitude, locationName }: Loca
 
       try {
         // Initialize the map
-        const { Map } = await window.google.maps.importLibrary("maps") as google.maps.MapsLibrary;
-        const { AdvancedMarkerElement } = await window.google.maps.importLibrary("marker") as google.maps.MarkerLibrary;
+        const { Map } = await (window as any).google.maps.importLibrary("maps") as any;
+        const { AdvancedMarkerElement } = await (window as any).google.maps.importLibrary("marker") as any;
 
-        let center: google.maps.LatLngLiteral;
+        let center: any;
 
         // Use provided coordinates if available, otherwise geocode the address
         if (latitude && longitude) {
