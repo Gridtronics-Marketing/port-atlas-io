@@ -34,7 +34,7 @@ export const LocationMap = ({ address, latitude, longitude, locationName }: Loca
           center = { lat: Number(latitude), lng: Number(longitude) };
         } else if (address) {
           // Geocode the address
-          const geocoder = new window.google.maps.Geocoder();
+          const geocoder = new (window as any).google.maps.Geocoder();
           try {
             const response = await geocoder.geocode({ address });
             if (response.results[0]) {

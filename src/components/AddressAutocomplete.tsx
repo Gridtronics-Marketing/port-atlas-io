@@ -87,7 +87,7 @@ export const AddressAutocomplete = ({
     );
   };
 
-  const extractAddressComponents = (place: google.maps.places.PlaceResult): AddressComponents => {
+  const extractAddressComponents = (place: any): AddressComponents => {
     const components = place.address_components || [];
     let street = "";
     let city = "";
