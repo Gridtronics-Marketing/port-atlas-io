@@ -62,6 +62,7 @@ export const CreateClientPortalModal = ({
 
   useEffect(() => {
     if (open) {
+      setUserName(client.contact_name || '');
       setInviteEmail(client.contact_email || '');
       setPassword('');
       setCreatedCredentials(null);
