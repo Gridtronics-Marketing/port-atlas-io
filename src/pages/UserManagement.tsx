@@ -529,6 +529,19 @@ const UserManagement = () => {
         userEmail={selectedUserEmail}
       />
 
+      <EditUserModal
+        isOpen={showEditUserModal}
+        onClose={() => setShowEditUserModal(false)}
+        userId={editUserData.id}
+        userEmail={editUserData.email}
+        userFullName={editUserData.fullName}
+        userRolesList={editUserData.roles}
+        canDelete={isSuperAdmin}
+        onUpdated={() => {
+          fetchAllUserRoles();
+          fetchProfiles();
+        }}
+      />
 
       <BulkRoleAssignmentModal
         isOpen={showBulkRoleModal}
@@ -549,34 +562,6 @@ const UserManagement = () => {
           fetchProfiles();
         }}
       />
-
-      {/* Delete User Confirmation */}
-      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete User Account</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete {userToDelete?.email || userToDelete?.id}? This will remove:
-              <ul className="list-disc list-inside mt-2 space-y-1">
-                <li>Their profile</li>
-                <li>All role assignments</li>
-                <li>All organization memberships</li>
-              </ul>
-              <p className="mt-2 font-medium text-destructive">This action cannot be undone.</p>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleDeleteUser}
-              disabled={isDeleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {isDeleting ? 'Deleting...' : 'Delete User'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </main>
   );
 };
