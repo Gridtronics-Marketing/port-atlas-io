@@ -40,7 +40,7 @@ declare namespace google {
         constructor(input: HTMLInputElement, options?: any);
         [key: string]: any;
       }
-      const [key: string]: any;
+      const PlacesServiceStatus: any;
     }
     namespace marker {
       const [key: string]: any;
