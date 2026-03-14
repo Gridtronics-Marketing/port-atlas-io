@@ -70,7 +70,7 @@ export const FloorPlanUploadDialog = ({
     const timerId = setTimeout(() => {
       if (!mapContainerRef.current || mapInstanceRef.current) return;
 
-      const map = new window.google.maps.Map(mapContainerRef.current, {
+      const map = new (window as any).google.maps.Map(mapContainerRef.current, {
         center: mapCoordinates || { lat: 37.7749, lng: -122.4194 },
         zoom: zoomLevel,
         mapTypeId: 'satellite',
