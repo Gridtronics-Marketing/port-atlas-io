@@ -221,19 +221,6 @@ export const CreateClientPortalModal = ({
             </div>
           </div>
 
-          {/* Role */}
-          <div className="space-y-2">
-            <Label htmlFor="role">User Role</Label>
-            <Select value={userRole} onValueChange={(v: any) => setUserRole(v)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="admin">Admin (Manage portal users)</SelectItem>
-                <SelectItem value="member">Member (Standard access)</SelectItem>
-                <SelectItem value="viewer">Viewer (Read-only)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
           {/* Actions */}
           <div className="flex justify-end gap-2 pt-4 border-t">
             <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>Cancel</Button>
