@@ -1,40 +1,26 @@
 
 
-# Update Version and Change Log
+# Simplify Add User Modal — Name Fields + 3 Roles
 
-## Version Bump
+## Changes to `src/components/AddUserModal.tsx`
 
-Update from **v1.10.6** to **v1.10.7** with today's date (2026-03-01).
+### 1. Move First Name / Last Name to always-visible top of form
+Currently these fields only appear when "Create Employee Record" is checked. Move them above the email field and make them required.
 
-## Changes to Record
+Update `formSchema`:
+- `firstName: z.string().min(1, "First name is required")`
+- `lastName: z.string().min(1, "Last name is required")`
 
-The following features and fixes were implemented in this session:
+### 2. Reduce roles to 3
+Replace the `availableRoles` array with only:
+- **Administrator** (`admin`) — Full system access and user management
+- **Manager** (`project_manager`) — Project oversight and team coordination
+- **Employee** (`employee`) — Organization member with HR data and skills tracking
 
-1. **Fixed Google Places Autocomplete selection in dialogs** -- Address suggestions can now be clicked without Radix Dialog stealing focus or closing
-2. **Fixed interactive map not loading after address selection** -- Deferred map initialization to ensure DOM container is mounted before attaching Google Maps
-3. **Fixed Google Maps API race condition** -- Added polling mechanism so multiple components correctly detect when the Maps script finishes loading
-4. **Added right-click context menus to room views and wire paths on floor plans** -- Room views now have "View Details" and "Delete" options; wire paths auto-select on right-click to reveal the action panel
+Remove `hr_manager`, `technician`, `viewer` from the selectable list. Existing users with those roles are unaffected — this only changes what's offered in the creation form.
 
-## File Changes
-
-### `src/lib/version.ts`
-
-- Update `APP_VERSION` from `"1.10.6"` to `"1.10.7"`
-- Add a new entry at the top of `VERSION_HISTORY` array:
-
-```typescript
-{
-  version: "1.10.7",
-  date: "2026-03-01",
-  changes: [
-    "Fixed Google Places Autocomplete selection inside dialogs (focus trap and pointer event conflicts)",
-    "Fixed interactive satellite map not loading after address selection or tab switch",
-    "Fixed Google Maps API loading race condition when multiple components request the script",
-    "Added right-click context menus to room views and wire paths on interactive floor plans",
-    "Room view context menu with View Details and Delete actions",
-    "Wire path right-click selects path and reveals action panel with edit/delete options",
-    "Added delete confirmation dialogs for room views and wire paths (replaces native confirm)",
-  ]
-}
-```
+### 3. Pass first/last name to profile and employee record
+Update `onSubmit` to:
+- Include `first_name`/`last_name` in the `signUp` metadata so the profile trigger can populate `full_name`
+- Always pass names when creating the employee record (no longer conditional on fields being filled since they're required)
 
