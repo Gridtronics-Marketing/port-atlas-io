@@ -7,11 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { openNavigation } from '@/lib/navigation-utils';
 
-declare global {
-  interface Window {
-    google: typeof google;
-  }
-}
 
 interface MultiLocationMapProps {
   locations: Location[];
