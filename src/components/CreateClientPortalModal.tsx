@@ -174,6 +174,15 @@ export const CreateClientPortalModal = ({
         </DialogHeader>
 
         <div className="space-y-4">
+          {/* Name */}
+          <div className="space-y-2">
+            <Label htmlFor="name">Name</Label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input id="name" value={userName} onChange={(e) => setUserName(e.target.value)} placeholder="Client user's name" className="pl-10" />
+            </div>
+          </div>
+
           {/* Email */}
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
