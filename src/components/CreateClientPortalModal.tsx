@@ -94,7 +94,8 @@ export const CreateClientPortalModal = ({
           clientName: client.name,
           inviteEmail,
           password,
-          userRole,
+          userName,
+          userRole: 'admin',
           parentOrganizationId: parentOrgId
         }
       });
