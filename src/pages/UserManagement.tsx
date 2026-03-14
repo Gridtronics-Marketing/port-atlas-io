@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Shield, Users, Mail, Activity, UserCog, CheckSquare, Briefcase, Building2, AlertTriangle, Settings, Trash2 } from "lucide-react";
+import { Plus, Shield, Users, Activity, UserCog, CheckSquare, Briefcase, Building2, AlertTriangle, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,7 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AddUserModal } from "@/components/AddUserModal";
 import { RoleManagementModal } from "@/components/RoleManagementModal";
-
+import { EditUserModal } from "@/components/EditUserModal";
 import { BulkRoleAssignmentModal } from "@/components/BulkRoleAssignmentModal";
 import { AssignOrganizationModal } from "@/components/AssignOrganizationModal";
 import { UserActivityLogViewer } from "@/components/UserActivityLogViewer";
@@ -17,18 +17,6 @@ import { useUserRoles } from "@/hooks/useUserRoles";
 import { useProfiles } from "@/hooks/useProfiles";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrganization } from "@/contexts/OrganizationContext";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import {
   Table,
   TableBody,
@@ -37,13 +25,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 const UserManagement = () => {
   const [showAddUser, setShowAddUser] = useState(false);
@@ -51,12 +32,11 @@ const UserManagement = () => {
   const [selectedUserEmail, setSelectedUserEmail] = useState<string>("");
   const [selectedUserOrgs, setSelectedUserOrgs] = useState<Array<{ id: string; name: string; role: string }>>([]);
   const [showRoleModal, setShowRoleModal] = useState(false);
+  const [showEditUserModal, setShowEditUserModal] = useState(false);
+  const [editUserData, setEditUserData] = useState<{ id: string; email: string | null; fullName: string | null; roles: string[] }>({ id: '', email: null, fullName: null, roles: [] });
   
   const [showBulkRoleModal, setShowBulkRoleModal] = useState(false);
   const [showAssignOrgModal, setShowAssignOrgModal] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [userToDelete, setUserToDelete] = useState<{ id: string; email: string | null } | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
   
@@ -64,7 +44,6 @@ const UserManagement = () => {
   const { profiles, loading: profilesLoading, fetchProfiles } = useProfiles();
   const { user } = useAuth();
   const { isSuperAdmin, isGlobalView } = useOrganization();
-  const { toast } = useToast();
 
   const isAdmin = hasRole('admin') || isSuperAdmin;
   const canViewHRData = hasAnyRole(['admin', 'hr_manager']) || isSuperAdmin;
@@ -176,64 +155,11 @@ const UserManagement = () => {
     }
   };
 
-  const handleManageRoles = (userId: string, userEmail: string | null) => {
-    setSelectedUserId(userId);
-    setSelectedUserEmail(userEmail || userId);
-    setShowRoleModal(true);
-  };
-
   const handleAssignOrg = (userId: string, userEmail: string | null, orgs: Array<{ id: string; name: string; role: string }>) => {
     setSelectedUserId(userId);
     setSelectedUserEmail(userEmail || userId);
     setSelectedUserOrgs(orgs);
     setShowAssignOrgModal(true);
-  };
-
-  const handleDeleteUser = async () => {
-    if (!userToDelete) return;
-    
-    try {
-      setIsDeleting(true);
-      
-      // Delete user roles first
-      await supabase
-        .from('user_roles')
-        .delete()
-        .eq('user_id', userToDelete.id);
-      
-      // Delete organization memberships
-      await supabase
-        .from('organization_members')
-        .delete()
-        .eq('user_id', userToDelete.id);
-      
-      // Delete profile
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', userToDelete.id);
-      
-      if (profileError) throw profileError;
-      
-      toast({
-        title: "User Deleted",
-        description: `${userToDelete.email || userToDelete.id} has been removed from the system.`,
-      });
-      
-      fetchAllUserRoles();
-      fetchProfiles();
-    } catch (error: any) {
-      console.error('Error deleting user:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to delete user",
-        variant: "destructive",
-      });
-    } finally {
-      setIsDeleting(false);
-      setShowDeleteConfirm(false);
-      setUserToDelete(null);
-    }
   };
 
   // Stats
@@ -416,17 +342,16 @@ const UserManagement = () => {
                         aria-label="Select all users"
                       />
                     </TableHead>
-                    <TableHead>Email / User ID</TableHead>
-                    <TableHead>Organization(s)</TableHead>
-                    <TableHead>Roles</TableHead>
-                    <TableHead>Created</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Role</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredUsers.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8">
+                      <TableCell colSpan={5} className="text-center py-8">
                         <div className="space-y-2">
                           <p className="text-muted-foreground">No users found</p>
                           <p className="text-sm text-orange-600">
@@ -437,7 +362,7 @@ const UserManagement = () => {
                     </TableRow>
                   ) : (
                     filteredUsers.map((user) => (
-                      <TableRow key={user.id} className={user.hasNoRoles || user.hasNoOrg ? 'bg-amber-50/50 dark:bg-amber-950/20' : ''}>
+                      <TableRow key={user.id} className={user.hasNoRoles ? 'bg-amber-50/50 dark:bg-amber-950/20' : ''}>
                         <TableCell>
                           <Checkbox
                             checked={selectedUsers.has(user.id)}
@@ -446,49 +371,18 @@ const UserManagement = () => {
                           />
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
-                            <div className="flex flex-col">
-                              {user.email ? (
-                                <>
-                                  <span className="text-sm font-medium">{user.email}</span>
-                                  {user.fullName && (
-                                    <span className="text-xs text-muted-foreground">{user.fullName}</span>
-                                  )}
-                                  <code className="text-xs text-muted-foreground">
-                                    {user.id.slice(0, 8)}...
-                                  </code>
-                                </>
-                              ) : (
-                                <code className="text-sm bg-muted px-2 py-1 rounded">
-                                  {user.id.slice(0, 8)}...
-                                </code>
-                              )}
-                            </div>
-                          </div>
+                          <span className="font-medium">
+                            {user.fullName || <span className="text-muted-foreground italic">No name</span>}
+                          </span>
                         </TableCell>
                         <TableCell>
-                          <div className="flex flex-wrap gap-1">
-                            {user.organizations.length === 0 ? (
-                              <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800">
-                                ⚠️ No organization
-                              </Badge>
-                            ) : (
-                              user.organizations.map((org) => (
-                                <Badge key={org.id} variant="outline" className="text-xs">
-                                  <Building2 className="h-3 w-3 mr-1" />
-                                  {org.name}
-                                  <span className="ml-1 text-muted-foreground">({org.role})</span>
-                                </Badge>
-                              ))
-                            )}
-                          </div>
+                          <span className="text-sm">{user.email || user.id.slice(0, 8)}</span>
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-wrap gap-1">
                             {user.roles.length === 0 ? (
                               <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800">
-                                ⚠️ No roles assigned
+                                ⚠️ No role
                               </Badge>
                             ) : (
                               user.roles.map((userRole) => (
@@ -504,46 +398,22 @@ const UserManagement = () => {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <span className="text-sm text-muted-foreground">
-                            {new Date(user.created_at).toLocaleDateString()}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="outline" size="sm">
-                                <Settings className="h-4 w-4 mr-2" />
-                                Manage
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleManageRoles(user.id, user.email)}>
-                                <Shield className="h-4 w-4 mr-2" />
-                                Manage Roles
-                              </DropdownMenuItem>
-                              {isSuperAdmin && (
-                                <DropdownMenuItem onClick={() => handleAssignOrg(user.id, user.email, user.organizations)}>
-                                  <Building2 className="h-4 w-4 mr-2" />
-                                  Assign to Organization
-                                </DropdownMenuItem>
-                              )}
-                              {isSuperAdmin && (
-                                <>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem 
-                                    onClick={() => {
-                                      setUserToDelete({ id: user.id, email: user.email });
-                                      setShowDeleteConfirm(true);
-                                    }}
-                                    className="text-destructive focus:text-destructive"
-                                  >
-                                    <Trash2 className="h-4 w-4 mr-2" />
-                                    Delete User
-                                  </DropdownMenuItem>
-                                </>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setEditUserData({
+                                id: user.id,
+                                email: user.email,
+                                fullName: user.fullName,
+                                roles: user.roles.map(r => r.role),
+                              });
+                              setShowEditUserModal(true);
+                            }}
+                          >
+                            <Settings className="h-4 w-4 mr-2" />
+                            Manage
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))
@@ -582,6 +452,19 @@ const UserManagement = () => {
         userEmail={selectedUserEmail}
       />
 
+      <EditUserModal
+        isOpen={showEditUserModal}
+        onClose={() => setShowEditUserModal(false)}
+        userId={editUserData.id}
+        userEmail={editUserData.email}
+        userFullName={editUserData.fullName}
+        userRolesList={editUserData.roles}
+        canDelete={isSuperAdmin}
+        onUpdated={() => {
+          fetchAllUserRoles();
+          fetchProfiles();
+        }}
+      />
 
       <BulkRoleAssignmentModal
         isOpen={showBulkRoleModal}
@@ -602,34 +485,6 @@ const UserManagement = () => {
           fetchProfiles();
         }}
       />
-
-      {/* Delete User Confirmation */}
-      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete User Account</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete {userToDelete?.email || userToDelete?.id}? This will remove:
-              <ul className="list-disc list-inside mt-2 space-y-1">
-                <li>Their profile</li>
-                <li>All role assignments</li>
-                <li>All organization memberships</li>
-              </ul>
-              <p className="mt-2 font-medium text-destructive">This action cannot be undone.</p>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleDeleteUser}
-              disabled={isDeleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {isDeleting ? 'Deleting...' : 'Delete User'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </main>
   );
 };
