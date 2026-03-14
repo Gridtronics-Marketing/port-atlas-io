@@ -171,7 +171,7 @@ export const MultiLocationMap = ({
             infoWindow.open({ map, anchor: marker });
             
             // Add click handler for navigate button
-            window.google.maps.event.addListenerOnce(infoWindow, 'domready', () => {
+            (window as any).google.maps.event.addListenerOnce(infoWindow, 'domready', () => {
               const navigateBtn = document.getElementById(`navigate-btn-${location.id}`);
               if (navigateBtn) {
                 navigateBtn.addEventListener('click', (e) => {

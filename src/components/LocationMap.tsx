@@ -20,7 +20,7 @@ export const LocationMap = ({ address, latitude, longitude, locationName }: Loca
 
   useEffect(() => {
     const initMap = async () => {
-      if (!mapRef.current || !isLoaded || typeof window.google === 'undefined') return;
+      if (!mapRef.current || !isLoaded || typeof (window as any).google === 'undefined') return;
 
       try {
         // Initialize the map

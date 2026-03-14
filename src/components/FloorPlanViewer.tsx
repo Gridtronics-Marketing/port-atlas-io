@@ -55,7 +55,7 @@ export const FloorPlanViewer = ({
       }
       return;
     }
-    const geocoder = new google.maps.Geocoder();
+    const geocoder = new (window as any).google.maps.Geocoder();
     geocoder.geocode({ address: addressInput }, (results, status) => {
       if (status === 'OK' && results?.[0]) {
         const loc = results[0].geometry.location;

@@ -106,7 +106,7 @@ export const FloorPlanUploadDialog = ({
       const input = autocompleteInputRef.current;
       if (!input || autocompleteRef.current) return;
 
-      const autocomplete = new window.google.maps.places.Autocomplete(
+      const autocomplete = new (window as any).google.maps.places.Autocomplete(
         input,
         { types: ['geocode', 'establishment'] }
       );

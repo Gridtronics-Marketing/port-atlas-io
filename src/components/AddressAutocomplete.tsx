@@ -38,15 +38,15 @@ export const AddressAutocomplete = ({
   const [predictions, setPredictions] = useState<any[]>([]);
   const [showPredictions, setShowPredictions] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const autocompleteService = useRef<google.maps.places.AutocompleteService | null>(null);
-  const placesService = useRef<google.maps.places.PlacesService | null>(null);
+  const autocompleteService = useRef<any>(null);
+  const placesService = useRef<any>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (isLoaded && window.google?.maps?.places) {
-      autocompleteService.current = new google.maps.places.AutocompleteService();
+    if (isLoaded && (window as any).google?.maps?.places) {
+      autocompleteService.current = new (window as any).google.maps.places.AutocompleteService();
       const div = document.createElement("div");
-      placesService.current = new google.maps.places.PlacesService(div);
+      placesService.current = new (window as any).google.maps.places.PlacesService(div);
     }
   }, [isLoaded]);
 
