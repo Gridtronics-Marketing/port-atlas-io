@@ -37,9 +37,6 @@ const UserManagement = () => {
   
   const [showBulkRoleModal, setShowBulkRoleModal] = useState(false);
   const [showAssignOrgModal, setShowAssignOrgModal] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [userToDelete, setUserToDelete] = useState<{ id: string; email: string | null } | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
   
@@ -47,7 +44,6 @@ const UserManagement = () => {
   const { profiles, loading: profilesLoading, fetchProfiles } = useProfiles();
   const { user } = useAuth();
   const { isSuperAdmin, isGlobalView } = useOrganization();
-  const { toast } = useToast();
 
   const isAdmin = hasRole('admin') || isSuperAdmin;
   const canViewHRData = hasAnyRole(['admin', 'hr_manager']) || isSuperAdmin;
