@@ -117,15 +117,17 @@ export const FloorPlanFilterDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-        >
-          <Filter className="h-4 w-4 mr-2" />
-          Filter
-        </Button>
-      </DialogTrigger>
+      {!hideTrigger && (
+        <DialogTrigger asChild>
+          <Button
+            variant="outline"
+            size="sm"
+          >
+            <Filter className="h-4 w-4 mr-2" />
+            Filter
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Floor Plan Filters</DialogTitle>
