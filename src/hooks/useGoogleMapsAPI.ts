@@ -57,7 +57,7 @@ export const useGoogleMapsAPI = () => {
     if (isScriptLoading) {
       setState(prev => ({ ...prev, isLoading: true }));
       const pollId = setInterval(() => {
-        if (isScriptLoaded && window.google?.maps) {
+        if (isScriptLoaded && (window as any).google?.maps) {
           clearInterval(pollId);
           setState({ isLoaded: true, isLoading: false, error: null, apiKey });
         }
