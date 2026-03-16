@@ -54,8 +54,13 @@ const DROP_POINT_STATUSES = [
 export const FloorPlanFilterDialog = ({
   filters,
   onFiltersChange,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
+  hideTrigger = false,
 }: FloorPlanFilterDialogProps) => {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const setOpen = controlledOnOpenChange || setInternalOpen;
 
   const handleToggleType = (type: string) => {
     const newTypes = filters.dropPointTypes.includes(type)
