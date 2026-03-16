@@ -28,6 +28,9 @@ export interface FloorPlanFilters {
 interface FloorPlanFilterDialogProps {
   filters: FloorPlanFilters;
   onFiltersChange: (filters: FloorPlanFilters) => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  hideTrigger?: boolean;
 }
 
 const DROP_POINT_TYPES = [
@@ -51,8 +54,13 @@ const DROP_POINT_STATUSES = [
 export const FloorPlanFilterDialog = ({
   filters,
   onFiltersChange,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
+  hideTrigger = false,
 }: FloorPlanFilterDialogProps) => {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const setOpen = controlledOnOpenChange || setInternalOpen;
 
   const handleToggleType = (type: string) => {
     const newTypes = filters.dropPointTypes.includes(type)
@@ -109,15 +117,17 @@ export const FloorPlanFilterDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-        >
-          <Filter className="h-4 w-4 mr-2" />
-          Filter
-        </Button>
-      </DialogTrigger>
+      {!hideTrigger && (
+        <DialogTrigger asChild>
+          <Button
+            variant="outline"
+            size="sm"
+          >
+            <Filter className="h-4 w-4 mr-2" />
+            Filter
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Floor Plan Filters</DialogTitle>

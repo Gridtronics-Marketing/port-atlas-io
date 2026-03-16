@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Plus, RotateCcw, ZoomIn, ZoomOut, RefreshCw, Camera, FileImage, Upload, PenTool, Edit, Trash2, Route, Lock, Unlock, Globe, Menu } from 'lucide-react';
+import { Plus, RotateCcw, ZoomIn, ZoomOut, RefreshCw, Camera, FileImage, Upload, PenTool, Edit, Trash2, Route, Lock, Unlock, Globe, Menu, Filter } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
   DropdownMenu,
@@ -102,6 +102,7 @@ export const InteractiveFloorPlan = ({
     markerScale: 1,
   });
   const [showUploadDialog, setShowUploadDialog] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
   const [uploadDialogDefaultTab, setUploadDialogDefaultTab] = useState<'upload' | 'satellite'>('upload');
   const [showDrawModeModal, setShowDrawModeModal] = useState(false);
   const [uploadedFileUrl, setUploadedFileUrl] = useState<string | undefined>(undefined);
@@ -684,14 +685,6 @@ export const InteractiveFloorPlan = ({
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <div className="p-0">
-                      <FloorPlanFilterDialog
-                        filters={filters}
-                        onFiltersChange={setFilters}
-                      />
-                    </div>
-                  </DropdownMenuItem>
                   <DropdownMenuItem
                     disabled={!validLocationId}
                     onClick={() => {
@@ -747,6 +740,23 @@ export const InteractiveFloorPlan = ({
                   )}
                 </DropdownMenuContent>
               </DropdownMenu>
+
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs px-2 h-9"
+                onClick={() => setFilterOpen(true)}
+              >
+                <Filter className="h-3.5 w-3.5 mr-1" />
+                Filter
+              </Button>
+              <FloorPlanFilterDialog
+                filters={filters}
+                onFiltersChange={setFilters}
+                open={filterOpen}
+                onOpenChange={setFilterOpen}
+                hideTrigger
+              />
 
               <Button
                 variant={isAddingPoint ? "default" : "outline"}
