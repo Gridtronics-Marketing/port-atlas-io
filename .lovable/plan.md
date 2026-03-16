@@ -1,45 +1,40 @@
 
 
-# Fix: Select Dropdown Closing Immediately on Mobile
+# Update Version and Change Log
 
-## Problem
-On mobile/touch devices, tapping the status filter Select opens the dropdown momentarily, then it closes. This is a known Radix Select issue where the `pointerup` event from the tap fires on the newly-opened content/overlay, immediately closing it.
+## Version Bump
 
-## Root Cause
-Radix Select's pointer event handling conflicts with touch interactions. When a user taps the trigger on mobile:
-1. `pointerdown` → opens the Select
-2. `pointerup` → fires on the overlay/content → closes the Select
+Update from **v1.10.6** to **v1.10.7** with today's date (2026-03-01).
 
-The `overflow-y-auto` on the `<main>` container may also contribute by causing scroll-related repositioning.
+## Changes to Record
 
-## Fix
+The following features and fixes were implemented in this session:
 
-**`src/components/ui/select.tsx`** — Add touch-safe event handling to `SelectContent`:
+1. **Fixed Google Places Autocomplete selection in dialogs** -- Address suggestions can now be clicked without Radix Dialog stealing focus or closing
+2. **Fixed interactive map not loading after address selection** -- Deferred map initialization to ensure DOM container is mounted before attaching Google Maps
+3. **Fixed Google Maps API race condition** -- Added polling mechanism so multiple components correctly detect when the Maps script finishes loading
+4. **Added right-click context menus to room views and wire paths on floor plans** -- Room views now have "View Details" and "Delete" options; wire paths auto-select on right-click to reveal the action panel
 
-```tsx
-<SelectPrimitive.Content
-  ref={ref}
-  onPointerDownOutside={(e) => {
-    // On touch devices, prevent the pointerup from immediately closing
-    const target = e.target as HTMLElement;
-    if (target?.closest('[data-radix-select-trigger]')) {
-      e.preventDefault();
-    }
-  }}
-  ...
+## File Changes
+
+### `src/lib/version.ts`
+
+- Update `APP_VERSION` from `"1.10.6"` to `"1.10.7"`
+- Add a new entry at the top of `VERSION_HISTORY` array:
+
+```typescript
+{
+  version: "1.10.7",
+  date: "2026-03-01",
+  changes: [
+    "Fixed Google Places Autocomplete selection inside dialogs (focus trap and pointer event conflicts)",
+    "Fixed interactive satellite map not loading after address selection or tab switch",
+    "Fixed Google Maps API loading race condition when multiple components request the script",
+    "Added right-click context menus to room views and wire paths on interactive floor plans",
+    "Room view context menu with View Details and Delete actions",
+    "Wire path right-click selects path and reveals action panel with edit/delete options",
+    "Added delete confirmation dialogs for room views and wire paths (replaces native confirm)",
+  ]
+}
 ```
-
-However, the more reliable and simpler fix is to **replace `position="popper"` default with `position="item-aligned"`** which uses Radix's native mobile-friendly positioning, or to add a small `onOpenChange` guard.
-
-**Recommended approach** — In `SelectContent`, wrap the content with a touch guard using CSS `touch-action: none` on the overlay:
-
-```tsx
-// In SelectContent, add to the className:
-"touch-action-none"
-```
-
-And add `onCloseAutoFocus={(e) => e.preventDefault()}` to prevent focus-stealing that triggers re-renders.
-
-## Scope
-- Single file: `src/components/ui/select.tsx`
 
