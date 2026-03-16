@@ -28,6 +28,9 @@ export interface FloorPlanFilters {
 interface FloorPlanFilterDialogProps {
   filters: FloorPlanFilters;
   onFiltersChange: (filters: FloorPlanFilters) => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  hideTrigger?: boolean;
 }
 
 const DROP_POINT_TYPES = [
