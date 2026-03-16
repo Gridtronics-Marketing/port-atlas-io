@@ -102,6 +102,7 @@ export const InteractiveFloorPlan = ({
     markerScale: 1,
   });
   const [showUploadDialog, setShowUploadDialog] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
   const [uploadDialogDefaultTab, setUploadDialogDefaultTab] = useState<'upload' | 'satellite'>('upload');
   const [showDrawModeModal, setShowDrawModeModal] = useState(false);
   const [uploadedFileUrl, setUploadedFileUrl] = useState<string | undefined>(undefined);
