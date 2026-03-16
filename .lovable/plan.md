@@ -1,40 +1,40 @@
 
+Goal: make the floor plan filter usable on mobile by moving it out of the nested dropdown flow that is closing it immediately.
 
-# Update Version and Change Log
+What I’ll change
+1. `src/components/InteractiveFloorPlan.tsx`
+   - Remove the mobile-only `FloorPlanFilterDialog` usage from inside the hamburger `DropdownMenuItem`.
+   - Add a dedicated mobile Filter action in the same action row as `Drop Point` and `Room View`.
+   - Keep desktop behavior unchanged unless needed for the shared dialog API.
 
-## Version Bump
+2. `src/components/FloorPlanFilterDialog.tsx`
+   - Refactor it so it can be opened in a controlled way from the parent instead of always owning its own `DialogTrigger`.
+   - Support two modes:
+     - desktop: existing inline Filter button trigger
+     - mobile: triggerless dialog controlled by `InteractiveFloorPlan`
 
-Update from **v1.10.6** to **v1.10.7** with today's date (2026-03-01).
+Design approach
+- Mobile toolbar becomes:
+  - menu button
+  - Filter
+  - Drop Point
+  - Room View
+  - zoom controls
+- The Filter control will open directly from its own button, not from a menu item nested inside another Radix overlay.
+- If space is tight on smaller phones, I’ll make the mobile Filter control compact so it fits without breaking the toolbar.
 
-## Changes to Record
+Technical details
+- Current issue is caused by this pattern in `InteractiveFloorPlan.tsx`:
+  - `DropdownMenuItem asChild` wrapping `FloorPlanFilterDialog`
+  - `FloorPlanFilterDialog` internally uses `DialogTrigger`
+- That creates a nested Radix overlay interaction on mobile: the dropdown closes at the same time the dialog tries to open, so the filter flashes and disappears.
+- The reliable fix is to separate the trigger from the dropdown lifecycle:
+  - parent owns `filterOpen`
+  - mobile button sets `filterOpen = true`
+  - `FloorPlanFilterDialog` renders from controlled props
+- This keeps the existing filter logic intact; only the open/trigger behavior changes.
 
-The following features and fixes were implemented in this session:
-
-1. **Fixed Google Places Autocomplete selection in dialogs** -- Address suggestions can now be clicked without Radix Dialog stealing focus or closing
-2. **Fixed interactive map not loading after address selection** -- Deferred map initialization to ensure DOM container is mounted before attaching Google Maps
-3. **Fixed Google Maps API race condition** -- Added polling mechanism so multiple components correctly detect when the Maps script finishes loading
-4. **Added right-click context menus to room views and wire paths on floor plans** -- Room views now have "View Details" and "Delete" options; wire paths auto-select on right-click to reveal the action panel
-
-## File Changes
-
-### `src/lib/version.ts`
-
-- Update `APP_VERSION` from `"1.10.6"` to `"1.10.7"`
-- Add a new entry at the top of `VERSION_HISTORY` array:
-
-```typescript
-{
-  version: "1.10.7",
-  date: "2026-03-01",
-  changes: [
-    "Fixed Google Places Autocomplete selection inside dialogs (focus trap and pointer event conflicts)",
-    "Fixed interactive satellite map not loading after address selection or tab switch",
-    "Fixed Google Maps API loading race condition when multiple components request the script",
-    "Added right-click context menus to room views and wire paths on interactive floor plans",
-    "Room view context menu with View Details and Delete actions",
-    "Wire path right-click selects path and reveals action panel with edit/delete options",
-    "Added delete confirmation dialogs for room views and wire paths (replaces native confirm)",
-  ]
-}
-```
-
+Expected result
+- On mobile, tapping Filter will keep the filter panel open reliably.
+- Drop Point and Room View actions remain easy to reach.
+- Desktop filter behavior stays the same.
