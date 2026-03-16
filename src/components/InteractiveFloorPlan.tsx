@@ -685,14 +685,6 @@ export const InteractiveFloorPlan = ({
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <div className="p-0">
-                      <FloorPlanFilterDialog
-                        filters={filters}
-                        onFiltersChange={setFilters}
-                      />
-                    </div>
-                  </DropdownMenuItem>
                   <DropdownMenuItem
                     disabled={!validLocationId}
                     onClick={() => {
