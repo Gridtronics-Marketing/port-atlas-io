@@ -1,34 +1,40 @@
 
 
-# Fix: Select Dropdown Closing Immediately on Click
+# Update Version and Change Log
 
-## Problem
-The status filter `Select` dropdown on the Locations page (and likely other pages) closes immediately when clicked. This is caused by the `overflow-auto` on the `<main>` element in `AppLayout.tsx` — Radix Select's positioning logic detects the scrollable container and can misfire, closing the popover.
+## Version Bump
 
-## Root Cause
-In `src/components/AppLayout.tsx` line 72:
+Update from **v1.10.6** to **v1.10.7** with today's date (2026-03-01).
+
+## Changes to Record
+
+The following features and fixes were implemented in this session:
+
+1. **Fixed Google Places Autocomplete selection in dialogs** -- Address suggestions can now be clicked without Radix Dialog stealing focus or closing
+2. **Fixed interactive map not loading after address selection** -- Deferred map initialization to ensure DOM container is mounted before attaching Google Maps
+3. **Fixed Google Maps API race condition** -- Added polling mechanism so multiple components correctly detect when the Maps script finishes loading
+4. **Added right-click context menus to room views and wire paths on floor plans** -- Room views now have "View Details" and "Delete" options; wire paths auto-select on right-click to reveal the action panel
+
+## File Changes
+
+### `src/lib/version.ts`
+
+- Update `APP_VERSION` from `"1.10.6"` to `"1.10.7"`
+- Add a new entry at the top of `VERSION_HISTORY` array:
+
+```typescript
+{
+  version: "1.10.7",
+  date: "2026-03-01",
+  changes: [
+    "Fixed Google Places Autocomplete selection inside dialogs (focus trap and pointer event conflicts)",
+    "Fixed interactive satellite map not loading after address selection or tab switch",
+    "Fixed Google Maps API loading race condition when multiple components request the script",
+    "Added right-click context menus to room views and wire paths on interactive floor plans",
+    "Room view context menu with View Details and Delete actions",
+    "Wire path right-click selects path and reveals action panel with edit/delete options",
+    "Added delete confirmation dialogs for room views and wire paths (replaces native confirm)",
+  ]
+}
 ```
-<main className="flex-1 overflow-auto">
-```
-The `overflow-auto` creates a scroll container that interferes with Radix Select's portal positioning. The Select content renders via a portal at the document root, but the trigger is inside the scrollable main area, causing a focus/position mismatch.
-
-## Fix
-
-**`src/components/AppLayout.tsx`** — Change `overflow-auto` to `overflow-y-auto overflow-x-hidden` and add `position: relative` to give Radix a stable reference:
-
-```tsx
-<main className="flex-1 overflow-y-auto overflow-x-hidden relative">
-```
-
-If that alone doesn't resolve it, the more robust fix is to move the scroll responsibility to the page level instead of the main container:
-
-```tsx
-<main className="flex-1 min-h-0">
-```
-
-This lets each page handle its own scrolling, preventing the parent scroll container from interfering with portaled Radix components (Select, Popover, DropdownMenu).
-
-## Scope
-- Single file change: `src/components/AppLayout.tsx`
-- Affects all pages using Select/Popover/DropdownMenu in the main content area
 

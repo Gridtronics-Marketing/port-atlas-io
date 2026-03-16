@@ -43,7 +43,7 @@ export const useGoogleMapsAPI = () => {
     setState(prev => ({ ...prev, apiKey }));
 
     // Check if already loaded
-    if (isScriptLoaded && typeof window.google !== 'undefined' && window.google.maps) {
+    if (isScriptLoaded && typeof (window as any).google !== 'undefined' && (window as any).google.maps) {
       setState({
         isLoaded: true,
         isLoading: false,
@@ -57,7 +57,7 @@ export const useGoogleMapsAPI = () => {
     if (isScriptLoading) {
       setState(prev => ({ ...prev, isLoading: true }));
       const pollId = setInterval(() => {
-        if (isScriptLoaded && window.google?.maps) {
+        if (isScriptLoaded && (window as any).google?.maps) {
           clearInterval(pollId);
           setState({ isLoaded: true, isLoading: false, error: null, apiKey });
         }
