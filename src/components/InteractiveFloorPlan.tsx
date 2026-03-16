@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Plus, RotateCcw, ZoomIn, ZoomOut, RefreshCw, Camera, FileImage, Upload, PenTool, Edit, Trash2, Route, Lock, Unlock, Globe, Menu } from 'lucide-react';
+import { Plus, RotateCcw, ZoomIn, ZoomOut, RefreshCw, Camera, FileImage, Upload, PenTool, Edit, Trash2, Route, Lock, Unlock, Globe, Menu, Filter } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
   DropdownMenu,
