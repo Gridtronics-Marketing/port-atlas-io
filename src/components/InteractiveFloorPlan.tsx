@@ -742,6 +742,23 @@ export const InteractiveFloorPlan = ({
               </DropdownMenu>
 
               <Button
+                variant="outline"
+                size="sm"
+                className="text-xs px-2 h-9"
+                onClick={() => setFilterOpen(true)}
+              >
+                <Filter className="h-3.5 w-3.5 mr-1" />
+                Filter
+              </Button>
+              <FloorPlanFilterDialog
+                filters={filters}
+                onFiltersChange={setFilters}
+                open={filterOpen}
+                onOpenChange={setFilterOpen}
+                hideTrigger
+              />
+
+              <Button
                 variant={isAddingPoint ? "default" : "outline"}
                 size="sm"
                 className="text-xs px-2 h-9"
