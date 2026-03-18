@@ -523,6 +523,7 @@ export const PhotoAnnotationCanvas = ({
   }, [fabricCanvas]);
 
   const handleCanvasChange = useCallback(() => {
+    if (isUndoRedoRef.current) return; // Skip history save during undo/redo
     console.log("🔄 Canvas changed, saving to history and scheduling auto-save");
     saveHistory();
     
@@ -534,7 +535,7 @@ export const PhotoAnnotationCanvas = ({
     autoSaveTimeoutRef.current = setTimeout(() => {
       console.log("💾 Auto-save triggered");
       handleSave(true);
-    }, 2000); // Increased to 2 seconds for better batching
+    }, 2000);
   }, [saveHistory]);
 
   const handleUndo = useCallback(async () => {
