@@ -374,9 +374,7 @@ export function usePhotoCapture() {
 
       if (uploadError) throw uploadError;
 
-      const { data: urlData } = await supabase.storage
-        .from(bucketName)
-        .createSignedUrl(`photos/${filename}`, 3600);
+      const galleryRelativePath = `photos/${filename}`;
 
       // Create a daily log entry for gallery photos too
       console.log('💾 Creating daily log entry from gallery...');
@@ -390,7 +388,7 @@ export function usePhotoCapture() {
           work_order_id: workOrderId || undefined,
           log_date: new Date().toISOString().split('T')[0],
           work_description: `${isPanoramic ? 'Panoramic photo' : 'Photo'} selected from gallery${isAdmin && !employeeId ? ' by Admin' : ''}: ${category}${description ? ` - ${description}` : ''}`,
-          photos: [urlData?.signedUrl || ''],
+          photos: [JSON.stringify({ bucket: bucketName, path: galleryRelativePath })],
           hours_worked: 0,
         })
         .select()
