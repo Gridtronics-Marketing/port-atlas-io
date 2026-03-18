@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { TradeTubeContent } from '@/hooks/useTradeTubeContent';
 import { cn } from '@/lib/utils';
+import { useSignedUrl } from '@/hooks/useSignedUrl';
 
 interface TradeTubeMediaPlayerProps {
   content: TradeTubeContent | null;
