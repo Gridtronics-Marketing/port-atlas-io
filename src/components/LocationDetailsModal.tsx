@@ -537,9 +537,9 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
                   <TabsContent value="diagnostics" className="mt-4">
                     <FloorPlanRepairTool 
                       location={location} 
-                      onRepairComplete={() => {
+                      onRepairComplete={async () => {
                         if (location.floor_plan_files) {
-                          setAllFloorPlanUrls(getAllFloorPlanUrls(location.floor_plan_files));
+                          setAllFloorPlanUrls(await getAllFloorPlanUrls(location.floor_plan_files));
                         }
                       }}
                     />
