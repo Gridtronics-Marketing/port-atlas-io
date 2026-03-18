@@ -198,14 +198,12 @@ export const validateFileAccess = async (url: string): Promise<boolean> => {
  */
 export const getFileInfo = async (bucket: string, path: string) => {
   try {
-    const { data } = supabase.storage
-      .from(bucket)
-      .getPublicUrl(path);
+    const signedUrl = await getSignedStorageUrl(bucket, path);
     
-    const isAccessible = await validateFileAccess(data.publicUrl);
+    const isAccessible = signedUrl ? await validateFileAccess(signedUrl) : false;
     
     return {
-      url: data.publicUrl,
+      url: signedUrl,
       isAccessible
     };
   } catch (error) {
