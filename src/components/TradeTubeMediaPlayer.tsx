@@ -188,7 +188,7 @@ export function TradeTubeMediaPlayer({
 
           {isImage && (
             <img
-              src={content.file_url}
+              src={resolvedUrl}
               alt={content.title}
               className="w-full max-h-[70vh] object-contain mx-auto"
             />
