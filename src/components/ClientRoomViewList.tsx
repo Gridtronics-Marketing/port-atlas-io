@@ -168,8 +168,9 @@ export const ClientRoomViewList = ({ locationId }: ClientRoomViewListProps) => {
               </TabsList>
 
               <TabsContent value="details" className="mt-4 space-y-4">
-                <img
-                  src={selectedView.photo_url}
+                <SignedImage
+                  bucket="room-views"
+                  path={selectedView.photo_url}
                   alt={selectedView.room_name || "Room view"}
                   className="w-full rounded-lg"
                 />
