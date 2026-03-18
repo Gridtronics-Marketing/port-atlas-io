@@ -707,6 +707,7 @@ export const DropPointDetailsModal: React.FC<DropPointDetailsModalProps> = ({
               photos={photos.map(photo => ({
                 id: photo.id,
                 photo_url: photo.photo_url,
+                storage_bucket: (photo as any).storage_bucket,
                 description: photo.description,
                 annotation_data: photo.annotation_data,
                 annotation_metadata: photo.annotation_metadata,

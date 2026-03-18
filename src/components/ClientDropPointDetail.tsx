@@ -38,6 +38,7 @@ interface Photo {
   photo_url: string;
   description: string | null;
   photo_type: string | null;
+  storage_bucket: string | null;
   created_at: string;
 }
 
