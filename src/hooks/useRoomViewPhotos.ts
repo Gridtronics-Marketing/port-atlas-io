@@ -100,9 +100,11 @@ export const useRoomViewPhotos = (roomViewId?: string) => {
 
   const updatePhoto = async (id: string, updates: Partial<RoomViewPhoto>) => {
     try {
+      // Strip virtual/joined fields before sending to Supabase
+      const { employee, ...validUpdates } = updates;
       const { data, error } = await supabase
         .from('room_view_photos')
-        .update(updates)
+        .update(validUpdates)
         .eq('id', id)
         .select(`
           *,

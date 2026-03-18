@@ -1,0 +1,1 @@
+ALTER TABLE public.room_view_photos ADD COLUMN IF NOT EXISTS annotation_data text, ADD COLUMN IF NOT EXISTS annotation_metadata jsonb;
