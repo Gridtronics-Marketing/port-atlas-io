@@ -734,9 +734,7 @@ export function usePhotoCapture() {
             throw uploadError;
           }
 
-          const { data: urlData } = await supabase.storage
-            .from(bucketName)
-            .createSignedUrl(`photos/${filename}`, 3600);
+          const webRelativePath = `photos/${filename}`;
 
           updateStatus('Saving photo record...', true);
 
@@ -750,7 +748,7 @@ export function usePhotoCapture() {
               work_order_id: workOrderId || undefined,
               log_date: new Date().toISOString().split('T')[0],
               work_description: `${isPanoramic ? 'Panoramic photo' : 'Photo'} captured: ${category}${description ? ` - ${description}` : ''}`,
-              photos: [urlData?.signedUrl || ''],
+              photos: [JSON.stringify({ bucket: bucketName, path: webRelativePath })],
               hours_worked: 0,
             })
             .select()
@@ -765,7 +763,7 @@ export function usePhotoCapture() {
 
           const capturedPhoto: CapturedPhoto = {
             id: uploadData.id || crypto.randomUUID(),
-            url: urlData?.signedUrl || '',
+            url: webRelativePath,
             filename,
             category,
             description,
@@ -774,6 +772,7 @@ export function usePhotoCapture() {
             work_order_id: workOrderId,
             employee_id: employeeId, // Now guaranteed to be valid
             created_at: new Date().toISOString(),
+            storage_bucket: bucketName,
           };
 
           // Show success message briefly then close
