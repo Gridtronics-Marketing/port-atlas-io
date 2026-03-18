@@ -240,7 +240,7 @@ export const ClientFloorPlanViewer = ({ locationId }: ClientFloorPlanViewerProps
                 <Tooltip key={rv.id}>
                   <TooltipTrigger asChild>
                     <div
-                      className="absolute w-6 h-6 rounded-full bg-orange-500 border-2 border-white shadow-md cursor-pointer hover:scale-150 transition-transform flex items-center justify-center z-10"
+                      className="absolute w-6 h-6 rounded-full bg-blue-500 border-2 border-white shadow-md cursor-pointer hover:scale-150 transition-transform flex items-center justify-center z-10"
                       style={{
                         left: `${rv.x_coordinate}%`,
                         top: `${rv.y_coordinate}%`,
