@@ -116,7 +116,7 @@ export const ClientFloorPlanViewer = ({ locationId }: ClientFloorPlanViewerProps
   const getStatusColor = (status: string | null) => {
     switch (status) {
       case "Planned": return "bg-red-500";
-      case "Roughed In": return "bg-yellow-500";
+      case "Roughed In": return "bg-orange-500";
       case "Finished": return "bg-green-500";
       case "Tested": return "bg-green-500";
       case "Proposed": return "bg-gray-400";
