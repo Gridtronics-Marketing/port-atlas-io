@@ -12,7 +12,20 @@ export interface FloorPlanConfig {
 }
 
 /**
+ * Generates a signed URL for a file in Supabase storage (1 hour expiry)
+ */
+export const getSignedStorageUrl = async (bucket: string, path: string): Promise<string> => {
+  const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, 3600);
+  if (error || !data?.signedUrl) {
+    console.warn('Failed to create signed URL for', bucket, path, error);
+    return '';
+  }
+  return data.signedUrl;
+};
+
+/**
  * Generates a public URL for a file in Supabase storage
+ * @deprecated Use getSignedStorageUrl for private buckets (floor-plans, room-views, tradetube-media)
  */
 export const getStorageUrl = (bucket: string, path: string): string => {
   const { data } = supabase.storage.from(bucket).getPublicUrl(path);
