@@ -150,6 +150,7 @@ export const LocationGrid = ({ searchTerm = "", statusFilter = "all" }: Location
         open={!!editingLocation}
         onOpenChange={(open) => !open && setEditingLocation(null)}
         onLocationUpdated={fetchLocations}
+        onDeleteLocation={canEditLocations ? deleteLocation : undefined}
       />
     </>
   );
