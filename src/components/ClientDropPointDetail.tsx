@@ -76,7 +76,7 @@ export const ClientDropPointDetail = ({ dropPoint, open, onClose }: ClientDropPo
       // Fetch photos
       const { data: photoData } = await supabase
         .from("drop_point_photos")
-        .select("id, photo_url, description, photo_type, created_at")
+        .select("id, photo_url, description, photo_type, storage_bucket, created_at")
         .eq("drop_point_id", dropPoint.id)
         .order("created_at", { ascending: false });
 
