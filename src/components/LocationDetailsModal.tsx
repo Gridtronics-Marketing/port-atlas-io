@@ -127,7 +127,7 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
 
   // Listen for floor plan upload events for real-time updates
   useEffect(() => {
-    const handleFloorPlanSavedEvent = (event: Event) => {
+    const handleFloorPlanSavedEvent = async (event: Event) => {
       const customEvent = event as CustomEvent;
       const { locationId, floorNumber, filePath } = customEvent.detail;
       

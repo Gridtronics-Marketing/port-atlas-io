@@ -133,7 +133,19 @@ export const InteractiveFloorPlan = ({
   const { wirePaths, loading: wirePathsLoading, deleteWirePath, refetch: fetchWirePaths } = useWirePaths(validLocationId, floorNumber);
 
   // Generate the actual file URL from path or use provided URL
-  const actualFileUrl = uploadedFileUrl || fileUrl || (filePath ? getStorageUrl('floor-plans', filePath) : undefined);
+  const [resolvedFileUrl, setResolvedFileUrl] = useState<string | undefined>(undefined);
+  
+  useEffect(() => {
+    if (uploadedFileUrl || fileUrl) {
+      setResolvedFileUrl(uploadedFileUrl || fileUrl);
+    } else if (filePath) {
+      getSignedStorageUrl('floor-plans', filePath).then(url => setResolvedFileUrl(url));
+    } else {
+      setResolvedFileUrl(undefined);
+    }
+  }, [uploadedFileUrl, fileUrl, filePath]);
+
+  const actualFileUrl = resolvedFileUrl;
 
   // Filter drop points and room views for current floor
   const floorDropPoints = dropPoints.filter(dp => dp.floor === floorNumber);
