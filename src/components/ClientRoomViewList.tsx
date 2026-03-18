@@ -114,8 +114,9 @@ export const ClientRoomViewList = ({ locationId }: ClientRoomViewListProps) => {
                   onClick={() => setSelectedView(rv)}
                 >
                   <div className="aspect-video relative overflow-hidden bg-muted">
-                    <img
-                      src={rv.photo_url}
+                    <SignedImage
+                      bucket="room-views"
+                      path={rv.photo_url}
                       alt={rv.room_name || "Room view"}
                       className="w-full h-full object-cover"
                     />
