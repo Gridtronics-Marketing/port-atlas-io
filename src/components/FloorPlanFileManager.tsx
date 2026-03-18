@@ -63,7 +63,7 @@ export const FloorPlanFileManager: React.FC<FloorPlanFileManagerProps> = ({
       // Process files and validate accessibility
       const filePromises = storageFiles.map(async (file) => {
         const path = `${locationId}/${file.name}`;
-        const url = getStorageUrl('floor-plans', path);
+        const url = await getSignedStorageUrl('floor-plans', path);
         
         // Extract floor number from filename
         const floorMatch = file.name.match(/^floor_(\d+)\./);

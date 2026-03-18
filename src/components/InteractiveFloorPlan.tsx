@@ -44,7 +44,7 @@ import { useDropPoints } from '@/hooks/useDropPoints';
 import { useRoomViews } from '@/hooks/useRoomViews';
 import { useWirePaths, WirePath } from '@/hooks/useWirePaths';
 import { useFloorPlanDrawing, isDrawnFloorPlan, getDrawingData } from '@/hooks/useFloorPlanDrawing';
-import { getStorageUrl, removeFloorPlanFromLocation } from '@/lib/storage-utils';
+import { getSignedStorageUrl, removeFloorPlanFromLocation } from '@/lib/storage-utils';
 import { useToast } from '@/hooks/use-toast';
 import { isValidUUID } from '@/lib/uuid-utils';
 import { supabase } from '@/integrations/supabase/client';

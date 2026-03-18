@@ -135,8 +135,8 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
       if (locationId === location?.id && filePath) {
         console.log('Floor plan saved event received:', { locationId, floorNumber, filePath });
         
-        // Generate the public URL for the new file
-        const newUrl = getStorageUrl('floor-plans', filePath);
+        // Generate signed URL for the new file
+        const newUrl = await getSignedStorageUrl('floor-plans', filePath);
         
         // Update the allFloorPlanUrls state with the new URL
         setAllFloorPlanUrls(prev => ({

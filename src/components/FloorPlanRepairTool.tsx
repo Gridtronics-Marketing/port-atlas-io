@@ -41,7 +41,7 @@ export const FloorPlanRepairTool: React.FC<FloorPlanRepairToolProps> = ({
       
       if (location.floor_plan_files) {
         for (const [floor, path] of Object.entries(location.floor_plan_files)) {
-          const url = getStorageUrl('floor-plans', path);
+          const url = await getSignedStorageUrl('floor-plans', path as string);
           const accessible = await validateFileAccess(url);
           accessibleFiles.push({
             floor: parseInt(floor),

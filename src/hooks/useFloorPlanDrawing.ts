@@ -178,7 +178,7 @@ export const useFloorPlanDrawing = (locationId: string, floorNumber: number) => 
 
       if (updateError) throw updateError;
 
-      const imageUrl = getStorageUrl('floor-plans', filePath);
+      const imageUrl = await getSignedStorageUrl('floor-plans', filePath);
 
       setDrawingState({
         isDrawn: true,
