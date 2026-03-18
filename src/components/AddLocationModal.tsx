@@ -231,27 +231,30 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
         formData.zipCode.trim()
       ].filter(part => part); // Remove empty parts
       
-      const locationData = {
+      const baseFields = {
         name: formData.name.trim(),
         address: addressParts.join(", "),
         building_type: formData.building_type.trim() || null,
         floors: formData.floors,
-        total_square_feet: null,
         access_instructions: formData.access_instructions.trim() || null,
         contact_onsite: formData.contact_onsite.trim() || null,
         contact_phone: formData.contact_phone.trim() || null,
-        project_id: null,
         client_id: selectedClientId,
-        status: "Active" as const,
-        completion_percentage: 0,
         latitude: coordinates.latitude,
         longitude: coordinates.longitude,
       };
 
-      // Create or update the location
-      await (isEditing 
-        ? updateLocation(location!.id, locationData)
-        : addLocation(locationData));
+      if (isEditing) {
+        await updateLocation(location!.id, baseFields);
+      } else {
+        await addLocation({
+          ...baseFields,
+          total_square_feet: null,
+          project_id: null,
+          status: "Active" as const,
+          completion_percentage: 0,
+        });
+      }
 
       // Notify parent to refresh data
       onLocationUpdated?.();
