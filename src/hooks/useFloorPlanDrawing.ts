@@ -109,7 +109,7 @@ export const useFloorPlanDrawing = (locationId: string, floorNumber: number) => 
           isDrawn: config.is_drawn,
           drawingData: config.drawing_data || null,
           imagePath: config.image_path,
-          imageUrl: getStorageUrl('floor-plans', config.image_path),
+          imageUrl: await getSignedStorageUrl('floor-plans', config.image_path),
         });
       }
 
