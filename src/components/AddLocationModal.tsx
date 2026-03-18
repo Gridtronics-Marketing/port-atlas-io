@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { X, MapPin, Plus, Minus, Building2, Users, Phone, FileText, Search, UserPlus } from "lucide-react";
+import { X, MapPin, Plus, Minus, Building2, Users, Phone, FileText, Search, UserPlus, Trash2 } from "lucide-react";
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import {
   Dialog,
