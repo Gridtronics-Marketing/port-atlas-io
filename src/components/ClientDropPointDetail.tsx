@@ -38,6 +38,7 @@ interface Photo {
   photo_url: string;
   description: string | null;
   photo_type: string | null;
+  storage_bucket: string | null;
   created_at: string;
 }
 
@@ -75,7 +76,7 @@ export const ClientDropPointDetail = ({ dropPoint, open, onClose }: ClientDropPo
       // Fetch photos
       const { data: photoData } = await supabase
         .from("drop_point_photos")
-        .select("id, photo_url, description, photo_type, created_at")
+        .select("id, photo_url, description, photo_type, storage_bucket, created_at")
         .eq("drop_point_id", dropPoint.id)
         .order("created_at", { ascending: false });
 
@@ -203,7 +204,7 @@ export const ClientDropPointDetail = ({ dropPoint, open, onClose }: ClientDropPo
                   {photos.map((photo) => (
                     <div key={photo.id} className="space-y-2">
                       <SignedImage
-                        bucket="floor-plans"
+                        bucket={photo.storage_bucket || "floor-plans"}
                         path={photo.photo_url}
                         alt={photo.description || "Drop point photo"}
                         className="w-full h-32 object-cover rounded-lg"
