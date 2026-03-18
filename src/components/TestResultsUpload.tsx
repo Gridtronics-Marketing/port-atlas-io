@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useCurrentEmployee } from '@/hooks/useCurrentEmployee';
+import { getSignedStorageUrl } from '@/lib/storage-utils';
 
 interface TestResultsUploadProps {
   dropPointId: string;
