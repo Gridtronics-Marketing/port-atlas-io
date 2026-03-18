@@ -194,8 +194,8 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = ({
 
     {/* Annotation Canvas, Panoramic Photo Viewer, or Standard Dialog */}
     {isAnnotating && expandedPhoto ? (
-      <PhotoAnnotationCanvas
-        photoUrl={expandedPhoto.photo_url}
+      <ResolvedAnnotationCanvas
+        photo={expandedPhoto}
         photoId={expandedPhoto.id}
         existingAnnotations={expandedPhoto.annotation_data}
         metadata={expandedPhoto.annotation_metadata}
