@@ -140,10 +140,8 @@ export const ClientLocationNotesTab = ({ locationId, totalFloors }: ClientLocati
                       </p>
                     </div>
                   </div>
-                  <Button variant="ghost" size="sm" asChild>
-                    <a href={getFileUrl(doc.file_path)} target="_blank" rel="noopener noreferrer">
-                      <Download className="h-4 w-4" />
-                    </a>
+                  <Button variant="ghost" size="sm" onClick={() => handleDownloadFile(doc.file_path)}>
+                    <Download className="h-4 w-4" />
                   </Button>
                 </div>
               ))}
