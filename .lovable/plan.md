@@ -1,55 +1,40 @@
 
 
-# Fix "New Request" Modal and Add Dual-Mode Request Flow
+# Update Version and Change Log
 
-## Problem
-The "New Request" button opens a blank white page instead of the modal dialog. Additionally, the request form needs to support two modes: a simple callback request and a detailed location-based request with drop point placement.
+## Version Bump
 
-## Root Cause Investigation
-The `CreateServiceRequestModal` uses `useClientPortalData` to get `accessibleLocations`. If the hook errors silently or the Dialog content fails to render, it could show blank. The modal code itself looks correct structurally, so the blank page may be a rendering/state issue.
+Update from **v1.10.6** to **v1.10.7** with today's date (2026-03-01).
 
-## Plan
+## Changes to Record
 
-### 1. Fix the blank modal (`CreateServiceRequestModal.tsx`)
-- Add error boundary / fallback handling around `useClientPortalData`
-- Ensure the dialog content renders even if locations fail to load
-- Add a loading state inside the modal while locations fetch
+The following features and fixes were implemented in this session:
 
-### 2. Redesign as a two-mode request form (`CreateServiceRequestModal.tsx`)
-Replace the current single form with a step-based flow:
+1. **Fixed Google Places Autocomplete selection in dialogs** -- Address suggestions can now be clicked without Radix Dialog stealing focus or closing
+2. **Fixed interactive map not loading after address selection** -- Deferred map initialization to ensure DOM container is mounted before attaching Google Maps
+3. **Fixed Google Maps API race condition** -- Added polling mechanism so multiple components correctly detect when the Maps script finishes loading
+4. **Added right-click context menus to room views and wire paths on floor plans** -- Room views now have "View Details" and "Delete" options; wire paths auto-select on right-click to reveal the action panel
 
-**Step 1 - Choose request type:**
-- **Quick Request** - "Request a callback or send a quick message" (just title + description + priority)
-- **Detailed Request** - "Select a location and specify exactly what you need" (location dropdown, request type, priority, description, optional floor plan placement)
+## File Changes
 
-**Step 2a - Quick Request form:**
-- Title (auto-filled as "Callback Request" or custom)
-- Description / message
-- Priority
-- Submit
+### `src/lib/version.ts`
 
-**Step 2b - Detailed Request form:**
-- Location dropdown (from `accessibleLocations`)
-- Request type (Service Addition, Support, Change Request, Maintenance)
-- Priority
-- Description
-- Optional: "Add drop points on map" button that opens the existing `ClientFloorPlanViewer` in placement mode for the selected location
-- Submit
+- Update `APP_VERSION` from `"1.10.6"` to `"1.10.7"`
+- Add a new entry at the top of `VERSION_HISTORY` array:
 
-### 3. Files to change
-
-**`src/components/CreateServiceRequestModal.tsx`** - Complete rewrite:
-- Add `requestMode` state: `null | 'quick' | 'detailed'`
-- Mode selection cards as first view
-- Quick mode: minimal form (title, description, priority)
-- Detailed mode: full form with location picker; when location selected, show a compact floor plan preview with placement capability
-- Use existing `ClientDropPointPlacementDialog` for drop point placement
-- Reset mode on close
-
-### 4. Technical details
-- Reuse `useClientPortalData` for location list
-- Reuse `useServiceRequests.createServiceRequest` for submission
-- For the floor plan integration: when a location is selected in detailed mode, show a "Place Drop Points" button that opens the existing placement flow
-- The modal will be wider (`sm:max-w-[600px]`) to accommodate the two-column mode selection cards
-- Keep the `request_type` as `"callback"` for quick requests to distinguish them on the admin side
+```typescript
+{
+  version: "1.10.7",
+  date: "2026-03-01",
+  changes: [
+    "Fixed Google Places Autocomplete selection inside dialogs (focus trap and pointer event conflicts)",
+    "Fixed interactive satellite map not loading after address selection or tab switch",
+    "Fixed Google Maps API loading race condition when multiple components request the script",
+    "Added right-click context menus to room views and wire paths on interactive floor plans",
+    "Room view context menu with View Details and Delete actions",
+    "Wire path right-click selects path and reveals action panel with edit/delete options",
+    "Added delete confirmation dialogs for room views and wire paths (replaces native confirm)",
+  ]
+}
+```
 
