@@ -226,13 +226,13 @@ export function usePhotoCapture() {
       console.log('Photo uploaded successfully:', uploadData);
 
       // Get public URL
-      const { data: urlData } = supabase.storage
+      const { data: urlData, error: signedUrlError } = await supabase.storage
         .from(bucketName)
-        .getPublicUrl(`photos/${filename}`);
+        .createSignedUrl(`photos/${filename}`, 3600);
 
       // Store photo metadata in daily_logs table with photos array
       const photoMetadata = {
-        url: urlData.publicUrl,
+        url: urlData?.signedUrl || '',
         filename,
         category,
         description,
