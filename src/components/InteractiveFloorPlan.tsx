@@ -607,7 +607,7 @@ export const InteractiveFloorPlan = ({
       case 'planned':
         return 'bg-red-500 border-red-600';
       case 'roughed_in':
-        return 'bg-yellow-500 border-yellow-600';
+        return 'bg-orange-500 border-orange-600';
       case 'finished':
         return 'bg-green-500 border-green-600';
       case 'tested':
