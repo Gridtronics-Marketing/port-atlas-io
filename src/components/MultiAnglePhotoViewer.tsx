@@ -269,8 +269,9 @@ export const MultiAnglePhotoViewer: React.FC<MultiAnglePhotoViewerProps> = ({
             <DialogTitle>Photo at {expandedPhoto?.angle}°</DialogTitle>
           </DialogHeader>
           {expandedPhoto && (
-            <img
-              src={expandedPhoto.photo_url}
+            <SignedImage
+              bucket={expandedPhoto.storage_bucket || 'floor-plans'}
+              path={expandedPhoto.photo_url}
               alt={`View at ${expandedPhoto.angle}°`}
               className="w-full h-auto max-h-[85vh] object-contain rounded-lg"
             />
