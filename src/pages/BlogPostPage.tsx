@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useBlogPosts } from "@/hooks/useBlogPosts";
 import { Calendar, Clock, ArrowLeft, Share2 } from "lucide-react";
 import { format } from "date-fns";
+import DOMPurify from "dompurify";
 
 export default function BlogPostPage() {
   const { slug } = useParams<{ slug: string }>();
