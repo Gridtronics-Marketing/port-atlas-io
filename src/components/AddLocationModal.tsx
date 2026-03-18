@@ -38,6 +38,7 @@ interface AddLocationModalProps {
   location?: Location | null;
   preSelectedClientId?: string;
   onLocationUpdated?: () => void;
+  onDeleteLocation?: (id: string) => void;
 }
 
 export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClientId, onLocationUpdated }: AddLocationModalProps) => {
