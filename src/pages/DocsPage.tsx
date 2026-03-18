@@ -28,8 +28,7 @@ const PRD_CONTENT = `# Trade Atlas — Product Requirements Document (PRD)
 **Version:** 2.0  
 **Date:** 2026-02-18  
 **Status:** Living Document  
-**Published URL:** https://port-atlas-io.lovable.app  
-**Project URL:** https://lovable.dev/projects/bfa70013-a03a-47bf-b8e2-fe95af6289c4
+**Published URL:** https://runwithatlas.com
 
 ---
 
