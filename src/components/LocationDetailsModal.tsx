@@ -548,9 +548,9 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
                   <TabsContent value="file-manager" className="mt-4">
                     <FloorPlanFileManager
                       locationId={location.id}
-                      onFilesChanged={() => {
+                      onFilesChanged={async () => {
                         if (location.floor_plan_files) {
-                          setAllFloorPlanUrls(getAllFloorPlanUrls(location.floor_plan_files));
+                          setAllFloorPlanUrls(await getAllFloorPlanUrls(location.floor_plan_files));
                         }
                         window.location.reload();
                       }}
