@@ -274,8 +274,9 @@ export function SafetyChecklistModal({
                               className="relative w-24 h-24 rounded-lg overflow-hidden border cursor-pointer hover:opacity-80 transition-opacity"
                               onClick={() => setExpandedPhoto(response.photo_url || null)}
                             >
-                              <img
-                                src={response.photo_url}
+                              <SignedImage
+                                bucket="floor-plans"
+                                path={response.photo_url}
                                 alt="Checklist item photo"
                                 className="w-full h-full object-cover"
                               />
