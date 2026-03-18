@@ -269,30 +269,7 @@ export const ClientFloorPlanViewer = ({ locationId }: ClientFloorPlanViewerProps
       </TooltipProvider>
 
       {/* Legend */}
-      <div className="flex flex-wrap gap-4 text-sm">
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-red-500" />
-          <span>Planned</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-orange-500" />
-          <span>Roughed In</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-green-500" />
-          <span>Finished/Tested</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-gray-400" />
-          <span>Proposed (Pending Approval)</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-orange-500 flex items-center justify-center">
-            <Camera className="h-2 w-2 text-white" />
-          </div>
-          <span>Room View</span>
-        </div>
-      </div>
+      <DropPointColorLegend />
 
       {/* Drop Point Detail Modal */}
       <ClientDropPointDetail
