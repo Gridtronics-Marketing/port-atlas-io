@@ -580,28 +580,24 @@ export const PhotoAnnotationCanvas = ({
   const handleRedo = useCallback(async () => {
     if (!fabricCanvas || historyStepRef.current >= historyRef.current.length - 1) return;
 
+    isUndoRedoRef.current = true;
     historyStepRef.current++;
     const json = historyRef.current[historyStepRef.current];
     
-    // Store the current background image before loading
     const bgImage = fabricCanvas.backgroundImage;
     
     try {
-      // Clear all objects first
       const objects = fabricCanvas.getObjects();
       objects.forEach(obj => fabricCanvas.remove(obj));
       
-      // Parse the saved state
       const parsed = JSON.parse(json);
       
-      // Restore objects from the saved state using Fabric.js v6 API
       if (parsed.objects && parsed.objects.length > 0) {
         const { util } = await import('fabric');
         const enlivenedObjects = await util.enlivenObjects(parsed.objects);
         enlivenedObjects.forEach((obj: any) => fabricCanvas.add(obj));
       }
       
-      // Restore background image if it was lost
       if (!fabricCanvas.backgroundImage && bgImage) {
         fabricCanvas.backgroundImage = bgImage;
       }
@@ -611,11 +607,12 @@ export const PhotoAnnotationCanvas = ({
       setCanRedo(historyStepRef.current < historyRef.current.length - 1);
     } catch (error) {
       console.error("Redo failed:", error);
-      // Restore background if operation failed
       if (bgImage && !fabricCanvas.backgroundImage) {
         fabricCanvas.backgroundImage = bgImage;
         fabricCanvas.renderAll();
       }
+    } finally {
+      isUndoRedoRef.current = false;
     }
   }, [fabricCanvas]);
 
