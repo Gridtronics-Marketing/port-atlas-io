@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { Shield, Camera, AlertTriangle, Maximize2, Upload } from 'lucide-react';
 import { SafetyChecklist, useSafetyChecklists } from '@/hooks/useSafetyChecklists';
 import { usePhotoCapture } from '@/hooks/usePhotoCapture';
+import { SignedImage } from '@/components/ui/signed-image';
 
 interface SafetyChecklistModalProps {
   open: boolean;
