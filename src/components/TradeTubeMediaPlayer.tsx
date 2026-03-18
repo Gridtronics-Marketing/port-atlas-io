@@ -160,7 +160,7 @@ export function TradeTubeMediaPlayer({
           {isVideo && (
             <video
               ref={videoRef}
-              src={content.file_url}
+              src={resolvedUrl}
               className="w-full max-h-[60vh] mx-auto"
               onTimeUpdate={handleTimeUpdate}
               onLoadedMetadata={handleLoadedMetadata}
