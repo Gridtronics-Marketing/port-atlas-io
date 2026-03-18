@@ -318,8 +318,9 @@ export function SafetyChecklistModal({
       <Dialog open={!!expandedPhoto} onOpenChange={() => setExpandedPhoto(null)}>
         <DialogContent className="max-w-4xl max-h-[90vh]">
           <div className="relative w-full h-full overflow-auto">
-            <img
-              src={expandedPhoto || ''}
+            <SignedImage
+              bucket="floor-plans"
+              path={expandedPhoto}
               alt="Checklist photo"
               className="w-full h-auto"
             />
