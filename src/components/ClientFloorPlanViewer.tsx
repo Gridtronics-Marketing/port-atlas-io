@@ -325,7 +325,8 @@ const RoomViewDetailDialog = ({
   onClose: () => void;
 }) => {
   const { photos, loading: photosLoading } = useRoomViewPhotos(roomView.id);
-  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+  const [lightboxItem, setLightboxItem] = useState<{ bucket: string; path: string } | null>(null);
+  const resolvedLightbox = useSignedUrl(lightboxItem?.bucket || '', lightboxItem?.path || null);
 
   return (
     <>
