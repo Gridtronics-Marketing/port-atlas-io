@@ -9,6 +9,8 @@ export interface RoomViewPhoto {
   description?: string;
   employee_id?: string;
   photo_type?: 'standard' | 'panoramic';
+  annotation_data?: string;
+  annotation_metadata?: Record<string, any>;
   created_at: string;
   updated_at: string;
   employee?: {
