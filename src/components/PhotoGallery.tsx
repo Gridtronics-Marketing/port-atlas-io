@@ -92,8 +92,9 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = ({
             }}
           >
           <div className="aspect-square rounded-lg overflow-hidden border">
-            <img
-              src={photo.photo_url}
+            <SignedImage
+              bucket={photo.storage_bucket || 'floor-plans'}
+              path={photo.photo_url}
               alt={photo.description || "Photo"}
               className="w-full h-full object-cover"
             />
