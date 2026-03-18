@@ -41,7 +41,7 @@ interface AddLocationModalProps {
   onDeleteLocation?: (id: string) => void;
 }
 
-export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClientId, onLocationUpdated }: AddLocationModalProps) => {
+export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClientId, onLocationUpdated, onDeleteLocation }: AddLocationModalProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedClientId, setSelectedClientId] = useState<string | null>(preSelectedClientId || null);
   const [showClientCreationForm, setShowClientCreationForm] = useState(false);
