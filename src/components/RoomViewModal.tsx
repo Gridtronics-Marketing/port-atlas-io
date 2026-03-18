@@ -16,6 +16,7 @@ import { usePhotoCapture } from '@/hooks/usePhotoCapture';
 import { useCurrentEmployee } from '@/hooks/useCurrentEmployee';
 import { useToast } from '@/hooks/use-toast';
 import { PhotoGallery } from '@/components/PhotoGallery';
+import { SignedImage } from '@/components/ui/signed-image';
 import { useUserRoles } from '@/hooks/useUserRoles';
 import { Json } from '@/integrations/supabase/types';
 
