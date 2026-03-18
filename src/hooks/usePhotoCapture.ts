@@ -268,7 +268,7 @@ export function usePhotoCapture() {
 
       const capturedPhoto: CapturedPhoto = {
         id: uploadData.id || crypto.randomUUID(),
-        url: urlData?.signedUrl || '',
+        url: relativePath,
         filename,
         category,
         description,
@@ -277,6 +277,7 @@ export function usePhotoCapture() {
         work_order_id: workOrderId,
         employee_id: employeeId,
         created_at: new Date().toISOString(),
+        storage_bucket: bucketName,
       };
 
       toast({
