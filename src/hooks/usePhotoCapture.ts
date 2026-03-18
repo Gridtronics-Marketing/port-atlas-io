@@ -760,7 +760,7 @@ export function usePhotoCapture() {
               work_order_id: workOrderId || undefined,
               log_date: new Date().toISOString().split('T')[0],
               work_description: `${isPanoramic ? 'Panoramic photo' : 'Photo'} captured: ${category}${description ? ` - ${description}` : ''}`,
-              photos: [urlData.publicUrl],
+              photos: [urlData?.signedUrl || ''],
               hours_worked: 0,
             })
             .select()
