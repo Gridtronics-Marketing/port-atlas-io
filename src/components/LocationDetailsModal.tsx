@@ -54,7 +54,7 @@ import { FloorPlanRepairTool } from "@/components/FloorPlanRepairTool";
 import { FloorPlanFileManager } from "@/components/FloorPlanFileManager";
 import { InteractiveFloorPlan } from "@/components/InteractiveFloorPlan";
 import { FloorBuildingManager } from "@/components/FloorBuildingManager";
-import { getFloorPlanUrls, getStorageUrl, getFloorPlanImagePath, getAllFloorPlanUrls, getFloorPlanMetadata } from "@/lib/storage-utils";
+import { getFloorPlanUrls, getStorageUrl, getSignedStorageUrl, getFloorPlanImagePath, getAllFloorPlanUrls, getFloorPlanMetadata } from "@/lib/storage-utils";
 import { useLocationTeam } from "@/hooks/useLocationTeam";
 import { useLocationNotes } from "@/hooks/useLocationNotes";
 import {
