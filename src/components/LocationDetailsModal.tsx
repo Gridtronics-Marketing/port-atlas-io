@@ -167,7 +167,7 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
     
     // Force re-render by updating floor plan URLs from location
     if (location?.floor_plan_files) {
-      const urls = getAllFloorPlanUrls(location.floor_plan_files);
+      const urls = await getAllFloorPlanUrls(location.floor_plan_files);
       setAllFloorPlanUrls(urls);
     }
   };
