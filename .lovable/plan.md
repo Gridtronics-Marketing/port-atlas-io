@@ -1,40 +1,59 @@
 
 
-# Update Version and Change Log
+# Fix Broken Photos Across All Components
 
-## Version Bump
+## Problem
+After migrating storage URLs to relative paths and making buckets private, several components still render `<img src={photo.photo_url}>` directly instead of using `SignedImage` or `useSignedUrl`. The relative paths don't resolve without a signed URL.
 
-Update from **v1.10.6** to **v1.10.7** with today's date (2026-03-01).
+## Affected Components (6 files)
 
-## Changes to Record
+### 1. `src/components/RoomViewModal.tsx` (line 355)
+- **Original Photo** section uses `<img src={roomView?.photo_url}>` directly
+- Replace with `<SignedImage bucket="room-views" path={roomView?.photo_url}>`
 
-The following features and fixes were implemented in this session:
+### 2. `src/components/ClientFloorPlanViewer.tsx` (lines 345-349, 379-383, 406-407)
+- Room view detail image: `<img src={roomView.photo_url}>` → `<SignedImage>`
+- Room photos grid: `<img src={photo.photo_url}>` → `<SignedImage>`
+- Lightbox: `<img src={lightboxUrl}>` → Change `lightboxUrl` state to store bucket+path, resolve with `useSignedUrl`, or use `SignedImage`
+- The `onClick={() => setLightboxUrl(roomView.photo_url!)}` pattern needs rework — store the path and resolve in the lightbox
 
-1. **Fixed Google Places Autocomplete selection in dialogs** -- Address suggestions can now be clicked without Radix Dialog stealing focus or closing
-2. **Fixed interactive map not loading after address selection** -- Deferred map initialization to ensure DOM container is mounted before attaching Google Maps
-3. **Fixed Google Maps API race condition** -- Added polling mechanism so multiple components correctly detect when the Maps script finishes loading
-4. **Added right-click context menus to room views and wire paths on floor plans** -- Room views now have "View Details" and "Delete" options; wire paths auto-select on right-click to reveal the action panel
+### 3. `src/components/EnhancedPhotoGallery.tsx` (lines 328, 359)
+- `PhotoAnnotationCanvas photoUrl={expandedPhoto.photo_url}` — passes relative path to canvas which uses it as `img.src`
+- `PanoramicPhotoViewer photoUrl={expandedPhoto.photo_url}` — same issue
+- Fix: resolve signed URL before passing to these components
 
-## File Changes
+### 4. `src/components/PhotoGallery.tsx` (lines 176, 195, 237)
+- Same pattern as EnhancedPhotoGallery — `PhotoAnnotationCanvas`, `PanoramicPhotoViewer`, `PhotoAnnotationViewer` all receive raw relative paths
+- Fix: resolve signed URL before passing
 
-### `src/lib/version.ts`
+### 5. `src/components/PanoramicPhotoViewer.tsx` (line 190)
+- `<img src={photoUrl}>` used directly
+- This component receives photoUrl as a prop — callers must pass signed URLs
 
-- Update `APP_VERSION` from `"1.10.6"` to `"1.10.7"`
-- Add a new entry at the top of `VERSION_HISTORY` array:
+### 6. `src/components/PhotoAnnotationViewer.tsx` (line ~50)
+- `img.src = photoUrl` and `FabricImage.fromURL(photoUrl)` — uses raw path
+- Same fix: callers must pass signed URLs
 
-```typescript
-{
-  version: "1.10.7",
-  date: "2026-03-01",
-  changes: [
-    "Fixed Google Places Autocomplete selection inside dialogs (focus trap and pointer event conflicts)",
-    "Fixed interactive satellite map not loading after address selection or tab switch",
-    "Fixed Google Maps API loading race condition when multiple components request the script",
-    "Added right-click context menus to room views and wire paths on interactive floor plans",
-    "Room view context menu with View Details and Delete actions",
-    "Wire path right-click selects path and reveals action panel with edit/delete options",
-    "Added delete confirmation dialogs for room views and wire paths (replaces native confirm)",
-  ]
-}
-```
+## Approach
+
+**Strategy**: Resolve signed URLs at the caller level (EnhancedPhotoGallery, PhotoGallery, RoomViewModal, ClientFloorPlanViewer) before passing to child components. This way `PhotoAnnotationCanvas`, `PanoramicPhotoViewer`, and `PhotoAnnotationViewer` receive working URLs without internal changes.
+
+### Changes per file:
+
+1. **RoomViewModal.tsx**: Import `SignedImage`, replace `<img src={roomView?.photo_url}>` with `<SignedImage bucket="room-views" path={roomView?.photo_url}>`
+
+2. **ClientFloorPlanViewer.tsx**: 
+   - Import `SignedImage` and `useSignedUrl`
+   - Replace room view image and photo grid images with `<SignedImage>`
+   - For lightbox: change state to `{bucket, path}`, render lightbox with `SignedImage`
+
+3. **EnhancedPhotoGallery.tsx**: 
+   - Import `useSignedUrl`
+   - Add `const resolvedPhotoUrl = useSignedUrl(expandedPhoto?.storage_bucket || 'floor-plans', expandedPhoto?.photo_url)` 
+   - Pass `resolvedPhotoUrl` to `PhotoAnnotationCanvas`, `PanoramicPhotoViewer`
+
+4. **PhotoGallery.tsx**: 
+   - Same pattern as EnhancedPhotoGallery — resolve signed URL for expanded photo, pass to child components
+
+5. **PanoramicPhotoViewer.tsx** and **PhotoAnnotationViewer.tsx**: No changes needed — they'll receive pre-resolved signed URLs from callers
 
