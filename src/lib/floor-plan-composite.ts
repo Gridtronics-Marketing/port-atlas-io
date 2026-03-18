@@ -158,26 +158,33 @@ export async function createCompositeFloorPlan(
 
   // Create canvas
   const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext('2d');
+  const ctx2d = canvas.getContext('2d');
 
-  if (!ctx) {
+  if (!ctx2d) {
     throw new Error('Failed to get canvas context');
   }
 
-  // Fill with white background
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, width, height);
-
-  // Load and draw base image if provided
+  // Load base image first to get natural dimensions
+  let baseImage: HTMLImageElement | null = null;
   if (baseImageUrl) {
     try {
-      const baseImage = await loadImage(baseImageUrl);
-      ctx.drawImage(baseImage, 0, 0, width, height);
+      baseImage = await loadImage(baseImageUrl);
     } catch (error) {
       console.warn('Failed to load base image:', error);
     }
+  }
+
+  // Use natural image dimensions to avoid stretching; fall back to passed dimensions
+  canvas.width = baseImage ? baseImage.naturalWidth : width;
+  canvas.height = baseImage ? baseImage.naturalHeight : height;
+
+  // Fill with white background
+  ctx2d.fillStyle = '#ffffff';
+  ctx2d.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Draw base image at its natural size
+  if (baseImage) {
+    ctx2d.drawImage(baseImage, 0, 0, canvas.width, canvas.height);
   }
 
   // Load and overlay canvas drawing if provided
