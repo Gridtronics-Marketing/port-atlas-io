@@ -59,8 +59,9 @@ export const ClientLocationNotesTab = ({ locationId, totalFloors }: ClientLocati
     fetchDocs();
   }, [locationId]);
 
-  const getFileUrl = (filePath: string) => {
-    return `https://mhrekppksiekhstnteyu.supabase.co/storage/v1/object/public/floor-plans/${filePath}`;
+  const handleDownloadFile = async (filePath: string) => {
+    const url = await getSignedStorageUrl('floor-plans', filePath);
+    if (url) window.open(url, '_blank');
   };
 
   return (
