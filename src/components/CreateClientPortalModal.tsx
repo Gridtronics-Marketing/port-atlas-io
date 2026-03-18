@@ -69,7 +69,7 @@ export const CreateClientPortalModal = ({
 
   const handleCopyCredentials = async () => {
   if (!createdCredentials) return;
-    const text = `Name: ${createdCredentials.name}\nEmail: ${createdCredentials.email}\nPassword: ${createdCredentials.password}`;
+    const text = `Email: ${createdCredentials.email}\nPassword: ${createdCredentials.password}`;
     await navigator.clipboard.writeText(text);
     setCopied(true);
     toast.success('Credentials copied to clipboard');
