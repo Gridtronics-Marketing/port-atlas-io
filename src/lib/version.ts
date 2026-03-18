@@ -1,4 +1,4 @@
-export const APP_VERSION = "1.10.8";
+export const APP_VERSION = "1.10.9";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,20 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "1.10.9",
+    date: "2026-03-18",
+    changes: [
+      "Synced client portal floor plan legend with admin view using shared DropPointColorLegend component",
+      "Updated room view marker color from orange to blue for consistency across admin and client views",
+      "Moved Delete Location button into Edit Location modal to prevent accidental deletion",
+      "Fixed 'Failed to update location' error by stripping virtual fields from update payload",
+      "Fixed back arrow button overlapping icons on annotation screens",
+      "Fixed undo/redo corrupting annotation history in photo annotation canvas",
+      "Added annotation_data and annotation_metadata columns to room_view_photos table",
+      "Fixed Room View annotation save button by stripping virtual fields from update payload",
+    ]
+  },
   {
     version: "1.10.8",
     date: "2026-03-10",

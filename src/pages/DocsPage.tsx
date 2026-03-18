@@ -1,11 +1,27 @@
-import { useState, useEffect, useRef, useCallback } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { Button } from "@/components/ui/button";
-import { Download, ArrowLeft, BookOpen, ChevronRight, Menu, X } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import {
+  Download,
+  BookOpen,
+  FileText,
+  Zap,
+  Shield,
+  Users,
+  Package,
+  BarChart3,
+  Settings,
+  Map,
+  Database,
+  Globe,
+  DollarSign,
+  AlertTriangle,
+} from "lucide-react";
+import { APP_VERSION } from "@/lib/version";
 
 // ─── PRD raw content ────────────────────────────────────────────────────────
 const PRD_CONTENT = `# Trade Atlas — Product Requirements Document (PRD)
@@ -1088,50 +1104,142 @@ App
 - Multi-language / i18n support
 `;
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, "")
-    .trim()
-    .replace(/\s+/g, "-");
-}
+// ─── Heading ID map ─────────────────────────────────────────────────────────
+const HEADING_ID_MAP: Record<string, string> = {
+  "1. Executive Summary": "executive-summary",
+  "2. Product Vision & Mission": "product-vision",
+  "3. Target Users & Personas": "target-users",
+  "4. Technology Stack": "technology-stack",
+  "5. Application Architecture": "architecture",
+  "6. Route Map": "route-map",
+  "7. Database Schema": "database-schema",
+  "8. Feature Modules": "feature-modules",
+  "9. Non-Functional Requirements": "nfr",
+  "10. Pricing Model": "pricing",
+  "11. Integrations Catalogue": "integrations",
+  "12. Security & Compliance": "security",
+  "13. Known Issues & Backlog": "known-issues",
+};
 
-function applyInlineFormatting(text: string): React.ReactNode {
-  // Bold **text**, inline `code`
-  const parts = text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g);
-  return parts.map((part, i) => {
-    if (part.startsWith("**") && part.endsWith("**")) {
-      return <strong key={i} className="font-semibold text-foreground">{part.slice(2, -2)}</strong>;
-    }
+const sections = [
+  { id: "executive-summary", label: "Overview", icon: FileText },
+  { id: "product-vision", label: "Vision & Mission", icon: Zap },
+  { id: "target-users", label: "Target Users", icon: Users },
+  { id: "technology-stack", label: "Tech Stack", icon: Package },
+  { id: "architecture", label: "Architecture", icon: Settings },
+  { id: "route-map", label: "Route Map", icon: Map },
+  { id: "database-schema", label: "Database", icon: Database },
+  { id: "feature-modules", label: "Features", icon: Globe },
+  { id: "nfr", label: "Non-Functional", icon: BarChart3 },
+  { id: "pricing", label: "Pricing", icon: DollarSign },
+  { id: "integrations", label: "Integrations", icon: Zap },
+  { id: "security", label: "Security", icon: Shield },
+  { id: "known-issues", label: "Known Issues", icon: AlertTriangle },
+];
+
+// ─── Inline renderer ────────────────────────────────────────────────────────
+function renderInline(text: string): React.ReactNode {
+  const parts = text.split(/(`[^`]+`|\*\*[^*]+\*\*|\[[^\]]+\]\([^)]+\))/g);
+  return parts.map((part, idx) => {
     if (part.startsWith("`") && part.endsWith("`")) {
-      return <code key={i} className="px-1 py-0.5 rounded text-xs bg-muted text-primary font-mono">{part.slice(1, -1)}</code>;
+      return (
+        <code key={idx} className="px-1.5 py-0.5 rounded bg-muted font-mono text-sm text-primary">
+          {part.slice(1, -1)}
+        </code>
+      );
     }
-    // Convert [text](url) links
-    const linkMatch = part.match(/\[([^\]]+)\]\(([^)]+)\)/);
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return (
+        <strong key={idx} className="font-semibold text-foreground">
+          {part.slice(2, -2)}
+        </strong>
+      );
+    }
+    const linkMatch = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
     if (linkMatch) {
-      return <a key={i} href={linkMatch[2]} className="text-primary hover:underline">{linkMatch[1]}</a>;
+      return (
+        <a key={idx} href={linkMatch[2]} className="text-primary hover:underline">
+          {linkMatch[1]}
+        </a>
+      );
     }
     return part;
   });
 }
 
-// ─── Markdown Renderer ───────────────────────────────────────────────────────
-interface Block {
-  type: "h1" | "h2" | "h3" | "h4" | "p" | "ul" | "ol" | "code" | "table" | "hr" | "blockquote" | "empty";
-  content: string;
-  items?: string[];
-  rows?: string[][];
-  headers?: string[];
-}
-
-function parseMarkdown(md: string): Block[] {
-  const lines = md.split("\n");
-  const blocks: Block[] = [];
+// ─── Markdown Renderer ──────────────────────────────────────────────────────
+function MarkdownRenderer({ content }: { content: string }) {
+  const lines = content.split("\n");
+  const elements: React.ReactNode[] = [];
   let i = 0;
+  let keyCounter = 0;
+
+  const key = () => `line-${keyCounter++}`;
 
   while (i < lines.length) {
     const line = lines[i];
+
+    // H1
+    if (line.startsWith("# ") && !line.startsWith("## ")) {
+      elements.push(
+        <div key={key()} className="mb-8">
+          <h1 className="text-3xl font-bold text-foreground mb-2">{line.slice(2)}</h1>
+          {lines[i + 1] && !lines[i + 1].startsWith("#") && (
+            <p className="text-sm text-muted-foreground">{lines[i + 1]}</p>
+          )}
+        </div>
+      );
+      i += 2;
+      continue;
+    }
+
+    // H2
+    if (line.startsWith("## ")) {
+      const headingText = line.slice(3);
+      const headingId =
+        HEADING_ID_MAP[headingText] ??
+        headingText.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+      elements.push(
+        <h2
+          key={key()}
+          id={headingId}
+          className="text-xl font-semibold text-foreground mt-8 mb-3 pb-2 border-b border-border scroll-mt-24"
+        >
+          {headingText}
+        </h2>
+      );
+      i++;
+      continue;
+    }
+
+    // H4
+    if (line.startsWith("#### ")) {
+      elements.push(
+        <h4 key={key()} className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mt-4 mb-1">
+          {renderInline(line.slice(5))}
+        </h4>
+      );
+      i++;
+      continue;
+    }
+
+    // H3
+    if (line.startsWith("### ")) {
+      elements.push(
+        <h3 key={key()} className="text-base font-semibold text-foreground mt-5 mb-2">
+          {renderInline(line.slice(4))}
+        </h3>
+      );
+      i++;
+      continue;
+    }
+
+    // Horizontal rule
+    if (line.trim() === "---") {
+      elements.push(<Separator key={key()} className="my-6" />);
+      i++;
+      continue;
+    }
 
     // Code fence
     if (line.startsWith("```")) {
@@ -1141,389 +1249,226 @@ function parseMarkdown(md: string): Block[] {
         codeLines.push(lines[i]);
         i++;
       }
-      blocks.push({ type: "code", content: codeLines.join("\n") });
-      i++;
-      continue;
-    }
-
-    // HR
-    if (/^---+$/.test(line.trim())) {
-      blocks.push({ type: "hr", content: "" });
-      i++;
-      continue;
-    }
-
-    // Headings
-    if (line.startsWith("#### ")) {
-      blocks.push({ type: "h4", content: line.slice(5) });
-      i++;
-      continue;
-    }
-    if (line.startsWith("### ")) {
-      blocks.push({ type: "h3", content: line.slice(4) });
-      i++;
-      continue;
-    }
-    if (line.startsWith("## ")) {
-      blocks.push({ type: "h2", content: line.slice(3) });
-      i++;
-      continue;
-    }
-    if (line.startsWith("# ")) {
-      blocks.push({ type: "h1", content: line.slice(2) });
-      i++;
-      continue;
-    }
-
-    // Blockquote
-    if (line.startsWith("> ")) {
-      blocks.push({ type: "blockquote", content: line.slice(2) });
+      elements.push(
+        <pre
+          key={key()}
+          className="bg-muted/60 border border-border rounded-lg p-4 mb-4 overflow-x-auto text-xs font-mono text-foreground/80 leading-relaxed"
+        >
+          <code>{codeLines.join("\n")}</code>
+        </pre>
+      );
       i++;
       continue;
     }
 
     // Table
-    if (line.startsWith("|") && i + 1 < lines.length && lines[i + 1].startsWith("|---")) {
-      const headerCells = line.split("|").filter(Boolean).map(c => c.trim());
-      i += 2; // skip header + separator
-      const rows: string[][] = [];
+    if (line.startsWith("|")) {
+      const tableLines: string[] = [];
       while (i < lines.length && lines[i].startsWith("|")) {
-        rows.push(lines[i].split("|").filter(Boolean).map(c => c.trim()));
+        tableLines.push(lines[i]);
         i++;
       }
-      blocks.push({ type: "table", content: "", headers: headerCells, rows });
-      continue;
-    }
-
-    // Unordered list
-    if (/^[-*] /.test(line)) {
-      const items: string[] = [];
-      while (i < lines.length && /^[-*] /.test(lines[i])) {
-        items.push(lines[i].replace(/^[-*] /, ""));
-        i++;
-      }
-      blocks.push({ type: "ul", content: "", items });
-      continue;
-    }
-
-    // Ordered list
-    if (/^\d+\. /.test(line)) {
-      const items: string[] = [];
-      while (i < lines.length && /^\d+\. /.test(lines[i])) {
-        items.push(lines[i].replace(/^\d+\. /, ""));
-        i++;
-      }
-      blocks.push({ type: "ol", content: "", items });
-      continue;
-    }
-
-    // Empty line
-    if (line.trim() === "") {
-      blocks.push({ type: "empty", content: "" });
-      i++;
-      continue;
-    }
-
-    // Paragraph
-    blocks.push({ type: "p", content: line });
-    i++;
-  }
-
-  return blocks;
-}
-
-function renderBlock(block: Block, idx: number): React.ReactNode {
-  switch (block.type) {
-    case "h1":
-      return (
-        <h1 key={idx} className="text-3xl font-bold text-foreground mt-8 mb-4 pb-3 border-b border-border">
-          {applyInlineFormatting(block.content)}
-        </h1>
-      );
-    case "h2": {
-      const id = slugify(block.content);
-      return (
-        <h2
-          key={idx}
-          id={id}
-          className="text-xl font-semibold text-foreground mt-10 mb-3 pl-3 border-l-4 border-primary scroll-mt-20"
-        >
-          {applyInlineFormatting(block.content)}
-        </h2>
-      );
-    }
-    case "h3": {
-      const id = slugify(block.content);
-      return (
-        <h3 key={idx} id={id} className="text-base font-semibold text-foreground mt-6 mb-2 scroll-mt-20">
-          {applyInlineFormatting(block.content)}
-        </h3>
-      );
-    }
-    case "h4":
-      return (
-        <h4 key={idx} className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mt-4 mb-1">
-          {applyInlineFormatting(block.content)}
-        </h4>
-      );
-    case "p":
-      return (
-        <p key={idx} className="text-sm text-muted-foreground leading-relaxed mb-2">
-          {applyInlineFormatting(block.content)}
-        </p>
-      );
-    case "ul":
-      return (
-        <ul key={idx} className="list-disc list-inside mb-3 space-y-1">
-          {block.items?.map((item, ii) => (
-            <li key={ii} className="text-sm text-muted-foreground leading-relaxed">
-              {applyInlineFormatting(item)}
-            </li>
-          ))}
-        </ul>
-      );
-    case "ol":
-      return (
-        <ol key={idx} className="list-decimal list-inside mb-3 space-y-1">
-          {block.items?.map((item, ii) => (
-            <li key={ii} className="text-sm text-muted-foreground leading-relaxed">
-              {applyInlineFormatting(item)}
-            </li>
-          ))}
-        </ol>
-      );
-    case "code":
-      return (
-        <pre key={idx} className="bg-muted/60 border border-border rounded-lg p-4 mb-4 overflow-x-auto text-xs font-mono text-foreground/80 leading-relaxed">
-          <code>{block.content}</code>
-        </pre>
-      );
-    case "table":
-      return (
-        <div key={idx} className="mb-4 overflow-x-auto rounded-lg border border-border">
-          <table className="w-full text-sm">
+      const rows = tableLines.filter((l) => !l.match(/^\|[-| ]+\|$/));
+      const headers =
+        rows[0]
+          ?.split("|")
+          .filter(Boolean)
+          .map((h) => h.trim()) || [];
+      const dataRows = rows.slice(1);
+      elements.push(
+        <div key={key()} className="overflow-x-auto my-4">
+          <table className="w-full text-sm border-collapse">
             <thead>
               <tr className="bg-muted/50">
-                {block.headers?.map((h, hi) => (
-                  <th key={hi} className="text-left px-3 py-2 text-xs font-semibold text-foreground border-b border-border">
-                    {applyInlineFormatting(h)}
+                {headers.map((h, idx) => (
+                  <th
+                    key={idx}
+                    className="text-left px-4 py-2 font-semibold text-foreground border border-border"
+                  >
+                    {h}
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {block.rows?.map((row, ri) => (
-                <tr key={ri} className={ri % 2 === 0 ? "bg-background" : "bg-muted/20"}>
-                  {row.map((cell, ci) => (
-                    <td key={ci} className="px-3 py-2 text-xs text-muted-foreground border-b border-border/50">
-                      {applyInlineFormatting(cell)}
-                    </td>
-                  ))}
-                </tr>
-              ))}
+              {dataRows.map((row, rIdx) => {
+                const cells = row
+                  .split("|")
+                  .filter(Boolean)
+                  .map((c) => c.trim());
+                return (
+                  <tr
+                    key={rIdx}
+                    className="even:bg-muted/20 hover:bg-muted/40 transition-colors"
+                  >
+                    {cells.map((cell, cIdx) => (
+                      <td
+                        key={cIdx}
+                        className="px-4 py-2 border border-border text-muted-foreground"
+                      >
+                        {renderInline(cell)}
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
       );
-    case "hr":
-      return <hr key={idx} className="my-6 border-border" />;
-    case "blockquote":
-      return (
-        <blockquote key={idx} className="border-l-4 border-primary/50 pl-4 py-1 my-3 bg-primary/5 rounded-r-lg">
-          <p className="text-sm text-muted-foreground italic">{applyInlineFormatting(block.content)}</p>
-        </blockquote>
+      continue;
+    }
+
+    // Bullet list item
+    if (line.startsWith("- ")) {
+      const listItems: string[] = [];
+      while (i < lines.length && lines[i].startsWith("- ")) {
+        listItems.push(lines[i].slice(2));
+        i++;
+      }
+      elements.push(
+        <ul key={key()} className="my-2 space-y-1">
+          {listItems.map((item, idx) => (
+            <li
+              key={idx}
+              className="flex items-start gap-2 text-sm text-muted-foreground"
+            >
+              <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary flex-shrink-0" />
+              <span>{renderInline(item)}</span>
+            </li>
+          ))}
+        </ul>
       );
-    case "empty":
-      return null;
-    default:
-      return null;
-  }
-}
+      continue;
+    }
 
-// ─── TOC extraction ──────────────────────────────────────────────────────────
-interface TocItem {
-  id: string;
-  text: string;
-  level: 2 | 3;
-}
+    // Ordered list
+    if (/^\d+\. /.test(line)) {
+      const listItems: string[] = [];
+      while (i < lines.length && /^\d+\. /.test(lines[i])) {
+        listItems.push(lines[i].replace(/^\d+\. /, ""));
+        i++;
+      }
+      elements.push(
+        <ol key={key()} className="my-2 space-y-1 list-decimal list-inside">
+          {listItems.map((item, idx) => (
+            <li key={idx} className="text-sm text-muted-foreground">
+              {renderInline(item)}
+            </li>
+          ))}
+        </ol>
+      );
+      continue;
+    }
 
-function extractToc(md: string): TocItem[] {
-  return md
-    .split("\n")
-    .filter(l => l.startsWith("## ") || l.startsWith("### "))
-    .map(l => {
-      const level = l.startsWith("### ") ? 3 : 2;
-      const text = l.replace(/^#{2,3} /, "");
-      return { id: slugify(text), text, level } as TocItem;
-    });
-}
+    // Empty line
+    if (line.trim() === "") {
+      i++;
+      continue;
+    }
 
-// ─── Main Component ──────────────────────────────────────────────────────────
-export default function DocsPage() {
-  const { isSuperAdmin, loadingOrganizations } = useOrganization();
-  const navigate = useNavigate();
-  const [activeId, setActiveId] = useState<string>("");
-  const [tocOpen, setTocOpen] = useState(false);
-  const contentRef = useRef<HTMLDivElement>(null);
-
-  const blocks = parseMarkdown(PRD_CONTENT);
-  const toc = extractToc(PRD_CONTENT);
-
-  // IntersectionObserver to highlight active TOC section
-  useEffect(() => {
-    const headings = contentRef.current?.querySelectorAll("h2[id], h3[id]");
-    if (!headings || headings.length === 0) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries.filter(e => e.isIntersecting);
-        if (visible.length > 0) {
-          setActiveId(visible[0].target.id);
-        }
-      },
-      { rootMargin: "-80px 0px -60% 0px", threshold: 0 }
+    // Regular paragraph
+    elements.push(
+      <p key={key()} className="text-sm text-muted-foreground leading-relaxed my-1">
+        {renderInline(line)}
+      </p>
     );
+    i++;
+  }
 
-    headings.forEach(h => observer.observe(h));
-    return () => observer.disconnect();
-  }, []);
+  return <>{elements}</>;
+}
 
-  const handleDownload = useCallback(() => {
+// ─── Main Component ─────────────────────────────────────────────────────────
+export default function DocsPage() {
+  const navigate = useNavigate();
+  const { isSuperAdmin, loadingOrganizations } = useOrganization();
+
+  useEffect(() => {
+    if (!loadingOrganizations && !isSuperAdmin) {
+      navigate("/auth");
+    }
+  }, [loadingOrganizations, isSuperAdmin, navigate]);
+
+  const handleDownload = () => {
     const blob = new Blob([PRD_CONTENT], { type: "text/markdown" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
     a.download = "trade-atlas-prd.md";
-    document.body.appendChild(a);
     a.click();
-    document.body.removeChild(a);
     URL.revokeObjectURL(url);
-  }, []);
+  };
 
   if (loadingOrganizations) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-pulse text-muted-foreground">Loading…</div>
       </div>
     );
   }
 
-  if (!isSuperAdmin) {
-    return <Navigate to="/dashboard" replace />;
-  }
+  if (!isSuperAdmin) return null;
 
   return (
-    <>
+    <div className="min-h-screen bg-background">
       <Helmet>
-        <title>PRD & Documentation | Trade Atlas</title>
+        <title>Trade Atlas — PRD Documentation</title>
+        <meta name="description" content="Trade Atlas Product Requirements Document for internal reference." />
       </Helmet>
 
-      {/* ── Sticky top bar ── */}
-      <div className="sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border px-4 md:px-6 py-3 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2 min-w-0">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate("/admin/platform")}
-            className="gap-1.5 text-muted-foreground hover:text-foreground shrink-0"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            <span className="hidden sm:inline">Platform Admin</span>
-          </Button>
-          <ChevronRight className="h-4 w-4 text-muted-foreground/50 shrink-0" />
-          <div className="flex items-center gap-2 min-w-0">
-            <BookOpen className="h-4 w-4 text-primary shrink-0" />
-            <span className="text-sm font-medium text-foreground truncate">PRD & Documentation</span>
+      {/* Header */}
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border px-8 py-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <BookOpen className="h-5 w-5 text-primary" />
+          <div>
+            <h1 className="font-semibold text-foreground text-sm">Trade Atlas</h1>
+            <p className="text-xs text-muted-foreground">Product Requirements Document</p>
           </div>
         </div>
-
         <div className="flex items-center gap-2">
-          {/* Mobile TOC toggle */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setTocOpen(v => !v)}
-            className="lg:hidden gap-1.5"
-          >
-            {tocOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
-            <span className="hidden sm:inline">Contents</span>
-          </Button>
-
-          <Button
-            onClick={handleDownload}
-            size="sm"
-            className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90 shrink-0"
-          >
+          <Badge variant="secondary" className="text-xs">
+            v{APP_VERSION}
+          </Badge>
+          <Badge className="text-xs bg-primary/10 text-primary border-0">
+            Living Document
+          </Badge>
+          <Button size="sm" onClick={handleDownload} className="ml-2 gap-2">
             <Download className="h-4 w-4" />
-            <span className="hidden sm:inline">Download PRD.md</span>
-            <span className="sm:hidden">Download</span>
+            Download PRD
           </Button>
         </div>
       </div>
 
-      {/* ── Mobile TOC drawer ── */}
-      {tocOpen && (
-        <div className="lg:hidden border-b border-border bg-muted/30 px-4 py-3 max-h-60 overflow-y-auto">
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Table of Contents</p>
-          <nav className="space-y-0.5">
-            {toc.map(item => (
-              <a
-                key={item.id}
-                href={`#${item.id}`}
-                onClick={() => setTocOpen(false)}
-                className={cn(
-                  "block py-1 text-xs rounded transition-colors",
-                  item.level === 3 ? "pl-4" : "pl-0",
-                  activeId === item.id
-                    ? "text-primary font-medium"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {item.text}
-              </a>
-            ))}
-          </nav>
-        </div>
-      )}
-
-      {/* ── Main layout ── */}
-      <div className="flex min-h-0 flex-1">
-        {/* Sidebar TOC — desktop only */}
-        <aside className="hidden lg:flex flex-col w-64 shrink-0 border-r border-border sticky top-[57px] h-[calc(100vh-57px)]">
-          <ScrollArea className="flex-1 px-4 py-4">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60 mb-3 px-1">
+      {/* Two-column layout: TOC + content */}
+      <div className="max-w-6xl mx-auto flex gap-8 px-8 py-8">
+        {/* Sidebar TOC */}
+        <aside className="hidden lg:block w-48 flex-shrink-0">
+          <div className="sticky top-24 space-y-1">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
               Contents
             </p>
-            <nav className="space-y-0.5">
-              {toc.map(item => (
+            {sections.map((s) => {
+              const Icon = s.icon;
+              return (
                 <a
-                  key={item.id}
-                  href={`#${item.id}`}
-                  className={cn(
-                    "block py-1.5 px-2 text-xs rounded-md transition-colors leading-tight",
-                    item.level === 3 ? "ml-3 text-[11px]" : "",
-                    activeId === item.id
-                      ? "bg-primary/10 text-primary font-medium"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                  )}
+                  key={s.id}
+                  href={`#${s.id}`}
+                  className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors py-1"
                 >
-                  {item.text}
+                  <Icon className="h-3 w-3" />
+                  {s.label}
                 </a>
-              ))}
-            </nav>
-          </ScrollArea>
+              );
+            })}
+          </div>
         </aside>
 
-        {/* Content */}
-        <main className="flex-1 min-w-0 overflow-y-auto">
-          <div
-            ref={contentRef}
-            className="max-w-4xl mx-auto px-4 md:px-8 py-8"
-          >
-            {blocks.map((block, idx) => renderBlock(block, idx))}
-          </div>
+        {/* Main content */}
+        <main className="flex-1 min-w-0 bg-card rounded-xl border border-border p-8 shadow-sm">
+          <MarkdownRenderer content={PRD_CONTENT} />
         </main>
       </div>
-    </>
+    </div>
   );
 }
