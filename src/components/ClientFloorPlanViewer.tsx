@@ -11,6 +11,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { ClientDropPointDetail } from "@/components/ClientDropPointDetail";
 import { ClientDropPointPlacementDialog } from "@/components/ClientDropPointPlacementDialog";
 import { getFloorPlanUrls, getFloorPlanMetadata } from "@/lib/storage-utils";
+import { SignedImage } from "@/components/ui/signed-image";
+import { useSignedUrl } from "@/hooks/useSignedUrl";
 
 interface DropPoint {
   id: string;
@@ -321,7 +323,8 @@ const RoomViewDetailDialog = ({
   onClose: () => void;
 }) => {
   const { photos, loading: photosLoading } = useRoomViewPhotos(roomView.id);
-  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+  const [lightboxItem, setLightboxItem] = useState<{ bucket: string; path: string } | null>(null);
+  const resolvedLightbox = useSignedUrl(lightboxItem?.bucket || '', lightboxItem?.path || null);
 
   return (
     <>
@@ -342,11 +345,12 @@ const RoomViewDetailDialog = ({
             </TabsList>
             <TabsContent value="details" className="space-y-4">
               {roomView.photo_url && (
-                <img
-                  src={roomView.photo_url}
+                <SignedImage
+                  bucket="room-views"
+                  path={roomView.photo_url}
                   alt={roomView.room_name || "Room view"}
                   className="w-full rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-                  onClick={() => setLightboxUrl(roomView.photo_url!)}
+                  onClick={() => setLightboxItem({ bucket: 'room-views', path: roomView.photo_url! })}
                 />
               )}
               <div className="grid grid-cols-2 gap-4 text-sm">
@@ -376,11 +380,12 @@ const RoomViewDetailDialog = ({
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   {photos.map((photo) => (
                     <div key={photo.id} className="space-y-1">
-                      <img
-                        src={photo.photo_url}
+                      <SignedImage
+                        bucket={photo.storage_bucket || 'floor-plans'}
+                        path={photo.photo_url}
                         alt={photo.description || "Room photo"}
                         className="w-full h-40 object-cover rounded-lg border cursor-pointer hover:opacity-90 transition-opacity"
-                        onClick={() => setLightboxUrl(photo.photo_url)}
+                        onClick={() => setLightboxItem({ bucket: photo.storage_bucket || 'floor-plans', path: photo.photo_url })}
                       />
                       {photo.description && (
                         <p className="text-xs text-muted-foreground truncate">{photo.description}</p>
@@ -398,13 +403,13 @@ const RoomViewDetailDialog = ({
       </Dialog>
 
       {/* Lightbox overlay */}
-      {lightboxUrl && (
+      {lightboxItem && resolvedLightbox && (
         <div
           className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center cursor-pointer"
-          onClick={() => setLightboxUrl(null)}
+          onClick={() => setLightboxItem(null)}
         >
           <img
-            src={lightboxUrl}
+            src={resolvedLightbox}
             alt="Full size"
             className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg"
             onClick={(e) => e.stopPropagation()}

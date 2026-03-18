@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Trash2, User, Calendar, FileText, MapPin, Tag, Filter, Maximize2, Pen } from 'lucide-react';
 import { SignedImage } from '@/components/ui/signed-image';
+import { useSignedUrl } from '@/hooks/useSignedUrl';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,6 +33,20 @@ import {
 import { useState } from 'react';
 import { PanoramicPhotoViewer } from './PanoramicPhotoViewer';
 import { PhotoAnnotationCanvas } from './PhotoAnnotationCanvas';
+
+// Wrapper that resolves signed URL before passing to PhotoAnnotationCanvas
+const ResolvedPhotoAnnotationCanvas: React.FC<{ expandedPhoto: PhotoItem } & Omit<React.ComponentProps<typeof PhotoAnnotationCanvas>, 'photoUrl'>> = ({ expandedPhoto, ...rest }) => {
+  const resolvedUrl = useSignedUrl(expandedPhoto.storage_bucket || 'floor-plans', expandedPhoto.photo_url);
+  if (!resolvedUrl) return null;
+  return <PhotoAnnotationCanvas photoUrl={resolvedUrl} {...rest} />;
+};
+
+// Wrapper that resolves signed URL before passing to PanoramicPhotoViewer
+const ResolvedPanoramicViewer: React.FC<{ expandedPhoto: PhotoItem } & Omit<React.ComponentProps<typeof PanoramicPhotoViewer>, 'photoUrl'>> = ({ expandedPhoto, ...rest }) => {
+  const resolvedUrl = useSignedUrl(expandedPhoto.storage_bucket || 'floor-plans', expandedPhoto.photo_url);
+  if (!resolvedUrl) return null;
+  return <PanoramicPhotoViewer photoUrl={resolvedUrl} {...rest} />;
+};
 
 interface PhotoItem {
   id: string;
@@ -324,8 +339,8 @@ export const EnhancedPhotoGallery: React.FC<EnhancedPhotoGalleryProps> = ({
       
       {/* Photo Viewer - Annotation Canvas, Panoramic Viewer, or Standard Dialog */}
       {isAnnotating && expandedPhoto ? (
-        <PhotoAnnotationCanvas
-          photoUrl={expandedPhoto.photo_url}
+      <ResolvedPhotoAnnotationCanvas
+          expandedPhoto={expandedPhoto}
           photoId={expandedPhoto.id}
           existingAnnotations={expandedPhoto.annotation_data}
           metadata={expandedPhoto.annotation_metadata}
@@ -355,8 +370,8 @@ export const EnhancedPhotoGallery: React.FC<EnhancedPhotoGalleryProps> = ({
           }}
         />
       ) : expandedPhoto?.photo_type === 'panoramic' ? (
-        <PanoramicPhotoViewer
-          photoUrl={expandedPhoto.photo_url}
+      <ResolvedPanoramicViewer
+          expandedPhoto={expandedPhoto}
           description={expandedPhoto.description}
           photoId={expandedPhoto.id}
           existingAnnotations={expandedPhoto.annotation_data}

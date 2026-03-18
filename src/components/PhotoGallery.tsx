@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Trash2, User, Calendar, FileText, Maximize2, Pen } from 'lucide-react';
 import { SignedImage } from '@/components/ui/signed-image';
+import { useSignedUrl } from '@/hooks/useSignedUrl';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,6 +19,27 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { PanoramicPhotoViewer } from './PanoramicPhotoViewer';
 import { PhotoAnnotationCanvas } from './PhotoAnnotationCanvas';
 import { PhotoAnnotationViewer } from './PhotoAnnotationViewer';
+
+// Wrapper that resolves signed URL before passing to PhotoAnnotationCanvas
+const ResolvedAnnotationCanvas: React.FC<{ photo: PhotoItem } & Omit<React.ComponentProps<typeof PhotoAnnotationCanvas>, 'photoUrl'>> = ({ photo, ...rest }) => {
+  const url = useSignedUrl(photo.storage_bucket || 'floor-plans', photo.photo_url);
+  if (!url) return null;
+  return <PhotoAnnotationCanvas photoUrl={url} {...rest} />;
+};
+
+// Wrapper that resolves signed URL before passing to PanoramicPhotoViewer
+const ResolvedPanoViewer: React.FC<{ photo: PhotoItem } & Omit<React.ComponentProps<typeof PanoramicPhotoViewer>, 'photoUrl'>> = ({ photo, ...rest }) => {
+  const url = useSignedUrl(photo.storage_bucket || 'floor-plans', photo.photo_url);
+  if (!url) return null;
+  return <PanoramicPhotoViewer photoUrl={url} {...rest} />;
+};
+
+// Wrapper that resolves signed URL before passing to PhotoAnnotationViewer
+const ResolvedAnnotationViewer: React.FC<{ photo: PhotoItem } & Omit<React.ComponentProps<typeof PhotoAnnotationViewer>, 'photoUrl'>> = ({ photo, ...rest }) => {
+  const url = useSignedUrl(photo.storage_bucket || 'floor-plans', photo.photo_url);
+  if (!url) return null;
+  return <PhotoAnnotationViewer photoUrl={url} {...rest} />;
+};
 
 interface PhotoItem {
   id: string;
@@ -172,8 +194,8 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = ({
 
     {/* Annotation Canvas, Panoramic Photo Viewer, or Standard Dialog */}
     {isAnnotating && expandedPhoto ? (
-      <PhotoAnnotationCanvas
-        photoUrl={expandedPhoto.photo_url}
+      <ResolvedAnnotationCanvas
+        photo={expandedPhoto}
         photoId={expandedPhoto.id}
         existingAnnotations={expandedPhoto.annotation_data}
         metadata={expandedPhoto.annotation_metadata}
@@ -191,8 +213,8 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = ({
         }}
       />
     ) : expandedPhoto?.photo_type === 'panoramic' ? (
-      <PanoramicPhotoViewer
-        photoUrl={expandedPhoto.photo_url}
+      <ResolvedPanoViewer
+        photo={expandedPhoto}
         description={expandedPhoto.description}
         photoId={expandedPhoto.id}
         existingAnnotations={expandedPhoto.annotation_data}
@@ -233,8 +255,8 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = ({
               
               <div className="relative w-full" style={{ minHeight: '400px', maxHeight: '70vh' }}>
                 {expandedPhoto.annotation_data ? (
-                  <PhotoAnnotationViewer
-                    photoUrl={expandedPhoto.photo_url}
+                  <ResolvedAnnotationViewer
+                    photo={expandedPhoto}
                     annotationData={expandedPhoto.annotation_data}
                     className="h-full"
                   />
