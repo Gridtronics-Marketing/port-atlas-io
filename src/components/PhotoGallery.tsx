@@ -255,8 +255,8 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = ({
               
               <div className="relative w-full" style={{ minHeight: '400px', maxHeight: '70vh' }}>
                 {expandedPhoto.annotation_data ? (
-                  <PhotoAnnotationViewer
-                    photoUrl={expandedPhoto.photo_url}
+                  <ResolvedAnnotationViewer
+                    photo={expandedPhoto}
                     annotationData={expandedPhoto.annotation_data}
                     className="h-full"
                   />
