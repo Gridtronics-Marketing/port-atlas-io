@@ -187,11 +187,13 @@ export function useTradeTubeContent(filters?: ContentFilters) {
 
       if (error) throw error;
 
-      // Try to delete from storage (non-blocking)
+      // Try to delete from storage (non-blocking) - file_url is now a relative path
       if (contentItem?.file_url) {
-        const filePath = contentItem.file_url.split('/tradetube-media/')[1];
-        if (filePath) {
-          await supabase.storage.from('tradetube-media').remove([filePath]);
+        const storagePath = contentItem.file_url.startsWith('http')
+          ? contentItem.file_url.split('/tradetube-media/')[1]
+          : contentItem.file_url;
+        if (storagePath) {
+          await supabase.storage.from('tradetube-media').remove([storagePath]);
         }
       }
       

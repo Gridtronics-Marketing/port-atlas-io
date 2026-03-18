@@ -403,15 +403,16 @@ export function usePhotoCapture() {
 
       const capturedPhoto: CapturedPhoto = {
         id: uploadData.id || crypto.randomUUID(),
-        url: urlData?.signedUrl || '',
+        url: galleryRelativePath,
         filename,
         category,
         description,
         project_id: projectId,
         location_id: locationId,
         work_order_id: workOrderId,
-        employee_id: employeeId, // Now guaranteed to be valid
+        employee_id: employeeId,
         created_at: new Date().toISOString(),
+        storage_bucket: bucketName,
       };
 
       toast({

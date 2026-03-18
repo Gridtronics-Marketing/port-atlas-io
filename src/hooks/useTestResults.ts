@@ -351,16 +351,13 @@ export function useTestResults() {
 
       if (uploadError) throw uploadError;
 
-      const { data: urlData } = await supabase.storage
-        .from('floor-plans')
-        .createSignedUrl(fileName, 3600);
-
       toast({
         title: 'Success',
         description: 'Test file uploaded successfully',
       });
 
-      return urlData?.signedUrl || '';
+      // Return relative path instead of signed URL
+      return fileName;
     } catch (error) {
       console.error('Error uploading test file:', error);
       toast({
