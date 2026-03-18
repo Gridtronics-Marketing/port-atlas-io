@@ -120,10 +120,10 @@ export function TradeTubeMediaPlayer({
   };
 
   const handleDownload = () => {
-    if (content?.file_url) {
+    if (resolvedUrl) {
       const link = document.createElement('a');
-      link.href = content.file_url;
-      link.download = content.title;
+      link.href = resolvedUrl;
+      link.download = content?.title || 'download';
       link.click();
     }
   };
