@@ -422,10 +422,10 @@ export const useUnifiedOfflineSync = () => {
 
             if (uploadError) throw uploadError;
 
-            // Get public URL
+            // Get signed URL
             const {
-              data: { publicUrl },
-            } = supabase.storage.from(bucket).getPublicUrl(media.fileName);
+              data: signedData,
+            } = await supabase.storage.from(bucket).createSignedUrl(media.fileName, 3600);
 
             // Insert record to database
             const { error: dbError } = await (supabase as any).from(media.tableName).insert({

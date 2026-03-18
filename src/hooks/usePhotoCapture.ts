@@ -744,10 +744,9 @@ export function usePhotoCapture() {
             throw uploadError;
           }
 
-          // Get public URL
-          const { data: urlData } = supabase.storage
+          const { data: urlData } = await supabase.storage
             .from(bucketName)
-            .getPublicUrl(`photos/${filename}`);
+            .createSignedUrl(`photos/${filename}`, 3600);
 
           updateStatus('Saving photo record...', true);
 

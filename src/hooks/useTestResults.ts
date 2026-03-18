@@ -351,9 +351,9 @@ export function useTestResults() {
 
       if (uploadError) throw uploadError;
 
-      const { data: urlData } = supabase.storage
+      const { data: urlData } = await supabase.storage
         .from('floor-plans')
-        .getPublicUrl(fileName);
+        .createSignedUrl(fileName, 3600);
 
       toast({
         title: 'Success',

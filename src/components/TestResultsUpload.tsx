@@ -83,9 +83,9 @@ export const TestResultsUpload = ({ dropPointId, onUploadComplete }: TestResults
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
+      const { data: signedData } = await supabase.storage
         .from('floor-plans')
-        .getPublicUrl(filePath);
+        .createSignedUrl(filePath, 3600);
 
       const { error: dbError } = await supabase
         .from('test_results_files')

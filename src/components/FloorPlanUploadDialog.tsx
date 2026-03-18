@@ -317,9 +317,9 @@ export const FloorPlanUploadDialog = ({
         .from('floor-plans')
         .upload(filePath, selectedFile, { upsert: true });
       if (uploadError) throw uploadError;
-      const { data: { publicUrl } } = supabase.storage
+      const { data: signedData } = await supabase.storage
         .from('floor-plans')
-        .getPublicUrl(filePath);
+        .createSignedUrl(filePath, 3600);
       const { data: location, error: fetchError } = await supabase
         .from('locations')
         .select('floor_plan_files')
