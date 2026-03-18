@@ -113,7 +113,7 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
       // Check for riser diagram (stored with key 'riser' or 'riser_diagram')
       const riserFile = location.floor_plan_files['riser'] || location.floor_plan_files['riser_diagram'];
       if (riserFile) {
-        const riserUrl = `https://mhrekppksiekhstnteyu.supabase.co/storage/v1/object/public/floor-plans/${riserFile}`;
+        const riserUrl = await getSignedStorageUrl('floor-plans', typeof riserFile === 'string' ? riserFile : riserFile.image_path);
         setRiserDiagramUrl(riserUrl);
       } else {
         setRiserDiagramUrl(null);
