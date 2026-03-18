@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
-import { Building2, Mail, Loader2, AlertCircle, UserPlus, Key, RefreshCw, Copy, CheckCircle2, Eye, EyeOff, User } from 'lucide-react';
+import { Building2, Mail, Loader2, AlertCircle, UserPlus, Key, RefreshCw, Copy, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Client } from '@/hooks/useClients';
