@@ -3,12 +3,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { X, ChevronLeft, ChevronRight, RotateCcw, Grid3X3, Maximize2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { SignedImage } from '@/components/ui/signed-image';
 
 interface AnglePhoto {
   id: string;
   photo_url: string;
   angle: number;
   description?: string;
+  storage_bucket?: string;
   created_at: string;
 }
 
@@ -183,8 +185,9 @@ export const MultiAnglePhotoViewer: React.FC<MultiAnglePhotoViewerProps> = ({
             {/* Current Photo */}
             {currentPhoto && (
               <div className="relative flex-1 w-full max-w-4xl flex items-center justify-center">
-                <img
-                  src={currentPhoto.photo_url}
+                <SignedImage
+                  bucket={currentPhoto.storage_bucket || 'floor-plans'}
+                  path={currentPhoto.photo_url}
                   alt={`View at ${currentPhoto.angle}°`}
                   className="max-w-full max-h-full object-contain rounded-lg shadow-lg cursor-zoom-in"
                   onClick={() => setExpandedPhoto(currentPhoto)}
@@ -232,10 +235,11 @@ export const MultiAnglePhotoViewer: React.FC<MultiAnglePhotoViewerProps> = ({
                     setExpandedPhoto(photo);
                   }}
                 >
-                  <img
-                    src={photo.photo_url}
-                    alt={`View at ${photo.angle}°`}
-                    className="w-full h-full object-cover"
+                    <SignedImage
+                      bucket={photo.storage_bucket || 'floor-plans'}
+                      path={photo.photo_url}
+                      alt={`View at ${photo.angle}°`}
+                      className="w-full h-full object-cover"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                   <Badge 
@@ -265,8 +269,9 @@ export const MultiAnglePhotoViewer: React.FC<MultiAnglePhotoViewerProps> = ({
             <DialogTitle>Photo at {expandedPhoto?.angle}°</DialogTitle>
           </DialogHeader>
           {expandedPhoto && (
-            <img
-              src={expandedPhoto.photo_url}
+            <SignedImage
+              bucket={expandedPhoto.storage_bucket || 'floor-plans'}
+              path={expandedPhoto.photo_url}
               alt={`View at ${expandedPhoto.angle}°`}
               className="w-full h-auto max-h-[85vh] object-contain rounded-lg"
             />

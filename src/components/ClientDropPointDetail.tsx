@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Network, CheckCircle, Calendar, MapPin, Image } from "lucide-react";
+import { SignedImage } from "@/components/ui/signed-image";
 import {
   Dialog,
   DialogContent,
@@ -201,8 +202,9 @@ export const ClientDropPointDetail = ({ dropPoint, open, onClose }: ClientDropPo
                 <div className="grid grid-cols-2 gap-4">
                   {photos.map((photo) => (
                     <div key={photo.id} className="space-y-2">
-                      <img
-                        src={photo.photo_url}
+                      <SignedImage
+                        bucket="floor-plans"
+                        path={photo.photo_url}
                         alt={photo.description || "Drop point photo"}
                         className="w-full h-32 object-cover rounded-lg"
                       />

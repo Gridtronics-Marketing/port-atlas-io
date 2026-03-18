@@ -1,4 +1,5 @@
 import { Video, FileText, Music, Image, Mic, Play, Eye, MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import { SignedImage } from '@/components/ui/signed-image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -75,8 +76,9 @@ export function TradeTubeContentCard({
       {/* Thumbnail area */}
       <div className="relative aspect-video bg-muted flex items-center justify-center overflow-hidden">
         {content.thumbnail_url ? (
-          <img 
-            src={content.thumbnail_url} 
+          <SignedImage
+            bucket="tradetube-media"
+            path={content.thumbnail_url} 
             alt={content.title}
             className="w-full h-full object-cover"
           />

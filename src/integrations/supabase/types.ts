@@ -1746,6 +1746,7 @@ export type Database = {
           organization_id: string | null
           photo_type: string | null
           photo_url: string
+          storage_bucket: string | null
           updated_at: string
         }
         Insert: {
@@ -1759,6 +1760,7 @@ export type Database = {
           organization_id?: string | null
           photo_type?: string | null
           photo_url: string
+          storage_bucket?: string | null
           updated_at?: string
         }
         Update: {
@@ -1772,6 +1774,7 @@ export type Database = {
           organization_id?: string | null
           photo_type?: string | null
           photo_url?: string
+          storage_bucket?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -4418,6 +4421,7 @@ export type Database = {
           photo_type: string | null
           photo_url: string
           room_view_id: string
+          storage_bucket: string | null
           updated_at: string
         }
         Insert: {
@@ -4431,6 +4435,7 @@ export type Database = {
           photo_type?: string | null
           photo_url: string
           room_view_id: string
+          storage_bucket?: string | null
           updated_at?: string
         }
         Update: {
@@ -4444,6 +4449,7 @@ export type Database = {
           photo_type?: string | null
           photo_url?: string
           room_view_id?: string
+          storage_bucket?: string | null
           updated_at?: string
         }
         Relationships: [

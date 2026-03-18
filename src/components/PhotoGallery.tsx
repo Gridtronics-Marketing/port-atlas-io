@@ -2,6 +2,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Trash2, User, Calendar, FileText, Maximize2, Pen } from 'lucide-react';
+import { SignedImage } from '@/components/ui/signed-image';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,6 +26,7 @@ interface PhotoItem {
   photo_type?: 'standard' | 'panoramic';
   annotation_data?: string;
   annotation_metadata?: Record<string, any>;
+  storage_bucket?: string;
   created_at: string;
   employee?: {
     first_name: string;
@@ -90,8 +92,9 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = ({
             }}
           >
           <div className="aspect-square rounded-lg overflow-hidden border">
-            <img
-              src={photo.photo_url}
+            <SignedImage
+              bucket={photo.storage_bucket || 'floor-plans'}
+              path={photo.photo_url}
               alt={photo.description || "Photo"}
               className="w-full h-full object-cover"
             />
@@ -236,7 +239,7 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = ({
                     className="h-full"
                   />
                 ) : (
-                  <img src={expandedPhoto.photo_url} alt={expandedPhoto.description || "Photo"} className="w-full h-auto" />
+                  <SignedImage bucket={expandedPhoto.storage_bucket || 'floor-plans'} path={expandedPhoto.photo_url} alt={expandedPhoto.description || "Photo"} className="w-full h-auto" />
                 )}
               </div>
               

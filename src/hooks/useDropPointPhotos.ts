@@ -212,17 +212,21 @@ export const useDropPointPhotos = (dropPointId?: string, locationId?: string) =>
 
       if (error) throw error;
 
-      // Delete from storage if it's a Supabase storage URL
-      if (photoUrl.includes('supabase')) {
-        const fileName = photoUrl.split('/').pop();
+      // Delete from storage - photoUrl is now a relative path or legacy full URL
+      if (photoUrl && !photoUrl.startsWith('http')) {
+        // New format: relative path — need to know the bucket
+        // Try both buckets since we may not have storage_bucket info here
+        const { error: storageError } = await supabase.storage
+          .from('floor-plans')
+          .remove([photoUrl]);
+        if (storageError) {
+          // Try the other bucket
+          await supabase.storage.from('room-views').remove([photoUrl]);
+        }
+      } else if (photoUrl?.includes('supabase')) {
+        const fileName = photoUrl.split('/').pop()?.split('?')[0];
         if (fileName) {
-          const { error: storageError } = await supabase.storage
-            .from('room-views')
-            .remove([fileName]);
-          
-          if (storageError) {
-            console.warn('Error deleting from storage:', storageError);
-          }
+          await supabase.storage.from('floor-plans').remove([fileName]);
         }
       }
 

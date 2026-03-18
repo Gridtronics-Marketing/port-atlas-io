@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { TradeTubeContent } from '@/hooks/useTradeTubeContent';
 import { cn } from '@/lib/utils';
+import { useSignedUrl } from '@/hooks/useSignedUrl';
 
 interface TradeTubeMediaPlayerProps {
   content: TradeTubeContent | null;
@@ -31,6 +32,7 @@ export function TradeTubeMediaPlayer({
   const [isMuted, setIsMuted] = useState(false);
   const [hasRecordedView, setHasRecordedView] = useState(false);
 
+  const resolvedUrl = useSignedUrl('tradetube-media', content?.file_url || null);
   const mediaRef = content?.media_type === 'video' ? videoRef : audioRef;
 
   useEffect(() => {
@@ -118,10 +120,10 @@ export function TradeTubeMediaPlayer({
   };
 
   const handleDownload = () => {
-    if (content?.file_url) {
+    if (resolvedUrl) {
       const link = document.createElement('a');
-      link.href = content.file_url;
-      link.download = content.title;
+      link.href = resolvedUrl;
+      link.download = content?.title || 'download';
       link.click();
     }
   };
@@ -158,7 +160,7 @@ export function TradeTubeMediaPlayer({
           {isVideo && (
             <video
               ref={videoRef}
-              src={content.file_url}
+              src={resolvedUrl}
               className="w-full max-h-[60vh] mx-auto"
               onTimeUpdate={handleTimeUpdate}
               onLoadedMetadata={handleLoadedMetadata}
@@ -175,7 +177,7 @@ export function TradeTubeMediaPlayer({
                 </div>
                 <audio
                   ref={audioRef}
-                  src={content.file_url}
+                  src={resolvedUrl}
                   onTimeUpdate={handleTimeUpdate}
                   onLoadedMetadata={handleLoadedMetadata}
                   onEnded={() => setIsPlaying(false)}
@@ -186,7 +188,7 @@ export function TradeTubeMediaPlayer({
 
           {isImage && (
             <img
-              src={content.file_url}
+              src={resolvedUrl}
               alt={content.title}
               className="w-full max-h-[70vh] object-contain mx-auto"
             />
@@ -195,7 +197,7 @@ export function TradeTubeMediaPlayer({
           {isDocument && (
             <div className="flex flex-col items-center justify-center p-16 bg-muted">
               <iframe
-                src={`${content.file_url}#toolbar=0`}
+                src={`${resolvedUrl}#toolbar=0`}
                 className="w-full h-[60vh] border-0"
                 title={content.title}
               />

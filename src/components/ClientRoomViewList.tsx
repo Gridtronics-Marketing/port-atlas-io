@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Camera, Search, Maximize2, ImageIcon } from "lucide-react";
+import { SignedImage } from "@/components/ui/signed-image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -113,8 +114,9 @@ export const ClientRoomViewList = ({ locationId }: ClientRoomViewListProps) => {
                   onClick={() => setSelectedView(rv)}
                 >
                   <div className="aspect-video relative overflow-hidden bg-muted">
-                    <img
-                      src={rv.photo_url}
+                    <SignedImage
+                      bucket="room-views"
+                      path={rv.photo_url}
                       alt={rv.room_name || "Room view"}
                       className="w-full h-full object-cover"
                     />
@@ -166,8 +168,9 @@ export const ClientRoomViewList = ({ locationId }: ClientRoomViewListProps) => {
               </TabsList>
 
               <TabsContent value="details" className="mt-4 space-y-4">
-                <img
-                  src={selectedView.photo_url}
+                <SignedImage
+                  bucket="room-views"
+                  path={selectedView.photo_url}
                   alt={selectedView.room_name || "Room view"}
                   className="w-full rounded-lg"
                 />
@@ -213,8 +216,9 @@ export const ClientRoomViewList = ({ locationId }: ClientRoomViewListProps) => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {photos.map((photo) => (
                       <div key={photo.id} className="rounded-lg border overflow-hidden bg-card">
-                        <img
-                          src={photo.photo_url}
+                        <SignedImage
+                          bucket={photo.storage_bucket || 'floor-plans'}
+                          path={photo.photo_url}
                           alt={photo.description || "Room photo"}
                           className="w-full aspect-video object-cover"
                         />

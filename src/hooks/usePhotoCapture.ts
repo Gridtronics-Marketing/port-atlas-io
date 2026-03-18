@@ -14,6 +14,7 @@ export interface CapturedPhoto {
   work_order_id?: string;
   employee_id: string;
   created_at: string;
+  storage_bucket?: string;
 }
 
 export function usePhotoCapture() {
@@ -225,19 +226,8 @@ export function usePhotoCapture() {
 
       console.log('Photo uploaded successfully:', uploadData);
 
-      // Get public URL
-      const { data: urlData, error: signedUrlError } = await supabase.storage
-        .from(bucketName)
-        .createSignedUrl(`photos/${filename}`, 3600);
-
-      // Store photo metadata in daily_logs table with photos array
-      const photoMetadata = {
-        url: urlData?.signedUrl || '',
-        filename,
-        category,
-        description,
-        captured_at: new Date().toISOString(),
-      };
+      // Store relative path instead of signed URL
+      const relativePath = `photos/${filename}`;
 
       // Create a daily log entry to store the photo
       console.log('💾 Creating daily log entry with photo...');
@@ -249,7 +239,7 @@ export function usePhotoCapture() {
         work_order_id: workOrderId || undefined,
         log_date: new Date().toISOString().split('T')[0],
         work_description: `${isPanoramic ? 'Panoramic photo' : 'Photo'} captured${isAdmin && !employeeId ? ' by Admin' : ''}: ${category}${description ? ` - ${description}` : ''}`,
-        photos: [urlData?.signedUrl || ''],
+        photos: [JSON.stringify({ bucket: bucketName, path: relativePath })],
         hours_worked: 0,
       };
       
@@ -279,7 +269,7 @@ export function usePhotoCapture() {
 
       const capturedPhoto: CapturedPhoto = {
         id: uploadData.id || crypto.randomUUID(),
-        url: urlData?.signedUrl || '',
+        url: relativePath,
         filename,
         category,
         description,
@@ -288,6 +278,7 @@ export function usePhotoCapture() {
         work_order_id: workOrderId,
         employee_id: employeeId,
         created_at: new Date().toISOString(),
+        storage_bucket: bucketName,
       };
 
       toast({
@@ -383,9 +374,7 @@ export function usePhotoCapture() {
 
       if (uploadError) throw uploadError;
 
-      const { data: urlData } = await supabase.storage
-        .from(bucketName)
-        .createSignedUrl(`photos/${filename}`, 3600);
+      const galleryRelativePath = `photos/${filename}`;
 
       // Create a daily log entry for gallery photos too
       console.log('💾 Creating daily log entry from gallery...');
@@ -399,7 +388,7 @@ export function usePhotoCapture() {
           work_order_id: workOrderId || undefined,
           log_date: new Date().toISOString().split('T')[0],
           work_description: `${isPanoramic ? 'Panoramic photo' : 'Photo'} selected from gallery${isAdmin && !employeeId ? ' by Admin' : ''}: ${category}${description ? ` - ${description}` : ''}`,
-          photos: [urlData?.signedUrl || ''],
+          photos: [JSON.stringify({ bucket: bucketName, path: galleryRelativePath })],
           hours_worked: 0,
         })
         .select()
@@ -414,15 +403,16 @@ export function usePhotoCapture() {
 
       const capturedPhoto: CapturedPhoto = {
         id: uploadData.id || crypto.randomUUID(),
-        url: urlData?.signedUrl || '',
+        url: galleryRelativePath,
         filename,
         category,
         description,
         project_id: projectId,
         location_id: locationId,
         work_order_id: workOrderId,
-        employee_id: employeeId, // Now guaranteed to be valid
+        employee_id: employeeId,
         created_at: new Date().toISOString(),
+        storage_bucket: bucketName,
       };
 
       toast({
@@ -744,9 +734,7 @@ export function usePhotoCapture() {
             throw uploadError;
           }
 
-          const { data: urlData } = await supabase.storage
-            .from(bucketName)
-            .createSignedUrl(`photos/${filename}`, 3600);
+          const webRelativePath = `photos/${filename}`;
 
           updateStatus('Saving photo record...', true);
 
@@ -760,7 +748,7 @@ export function usePhotoCapture() {
               work_order_id: workOrderId || undefined,
               log_date: new Date().toISOString().split('T')[0],
               work_description: `${isPanoramic ? 'Panoramic photo' : 'Photo'} captured: ${category}${description ? ` - ${description}` : ''}`,
-              photos: [urlData?.signedUrl || ''],
+              photos: [JSON.stringify({ bucket: bucketName, path: webRelativePath })],
               hours_worked: 0,
             })
             .select()
@@ -775,7 +763,7 @@ export function usePhotoCapture() {
 
           const capturedPhoto: CapturedPhoto = {
             id: uploadData.id || crypto.randomUUID(),
-            url: urlData?.signedUrl || '',
+            url: webRelativePath,
             filename,
             category,
             description,
@@ -784,6 +772,7 @@ export function usePhotoCapture() {
             work_order_id: workOrderId,
             employee_id: employeeId, // Now guaranteed to be valid
             created_at: new Date().toISOString(),
+            storage_bucket: bucketName,
           };
 
           // Show success message briefly then close

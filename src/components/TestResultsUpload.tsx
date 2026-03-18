@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useCurrentEmployee } from '@/hooks/useCurrentEmployee';
+import { getSignedStorageUrl } from '@/lib/storage-utils';
 
 interface TestResultsUploadProps {
   dropPointId: string;
@@ -83,16 +84,12 @@ export const TestResultsUpload = ({ dropPointId, onUploadComplete }: TestResults
 
       if (uploadError) throw uploadError;
 
-      const { data: signedData } = await supabase.storage
-        .from('floor-plans')
-        .createSignedUrl(filePath, 3600);
-
       const { error: dbError } = await supabase
         .from('test_results_files')
         .insert({
           drop_point_id: dropPointId,
           file_name: file.name,
-          file_url: signedData?.signedUrl || '',
+          file_url: filePath,
           file_size: file.size,
           uploaded_by: currentEmployee?.id,
           test_type: 'certification',
@@ -203,7 +200,10 @@ export const TestResultsUpload = ({ dropPointId, onUploadComplete }: TestResults
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => window.open(file.file_url, '_blank')}
+                    onClick={async () => {
+                      const url = file.file_url.startsWith('http') ? file.file_url : await getSignedStorageUrl('floor-plans', file.file_url);
+                      if (url) window.open(url, '_blank');
+                    }}
                   >
                     <Download className="h-4 w-4" />
                   </Button>

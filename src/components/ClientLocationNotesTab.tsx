@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { FileText, Download, StickyNote } from "lucide-react";
+import { getSignedStorageUrl } from "@/lib/storage-utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -58,8 +59,9 @@ export const ClientLocationNotesTab = ({ locationId, totalFloors }: ClientLocati
     fetchDocs();
   }, [locationId]);
 
-  const getFileUrl = (filePath: string) => {
-    return `https://mhrekppksiekhstnteyu.supabase.co/storage/v1/object/public/floor-plans/${filePath}`;
+  const handleDownloadFile = async (filePath: string) => {
+    const url = await getSignedStorageUrl('floor-plans', filePath);
+    if (url) window.open(url, '_blank');
   };
 
   return (
@@ -138,10 +140,8 @@ export const ClientLocationNotesTab = ({ locationId, totalFloors }: ClientLocati
                       </p>
                     </div>
                   </div>
-                  <Button variant="ghost" size="sm" asChild>
-                    <a href={getFileUrl(doc.file_path)} target="_blank" rel="noopener noreferrer">
-                      <Download className="h-4 w-4" />
-                    </a>
+                  <Button variant="ghost" size="sm" onClick={() => handleDownloadFile(doc.file_path)}>
+                    <Download className="h-4 w-4" />
                   </Button>
                 </div>
               ))}

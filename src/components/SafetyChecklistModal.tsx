@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { Shield, Camera, AlertTriangle, Maximize2, Upload } from 'lucide-react';
 import { SafetyChecklist, useSafetyChecklists } from '@/hooks/useSafetyChecklists';
 import { usePhotoCapture } from '@/hooks/usePhotoCapture';
+import { SignedImage } from '@/components/ui/signed-image';
 
 interface SafetyChecklistModalProps {
   open: boolean;
@@ -273,8 +274,9 @@ export function SafetyChecklistModal({
                               className="relative w-24 h-24 rounded-lg overflow-hidden border cursor-pointer hover:opacity-80 transition-opacity"
                               onClick={() => setExpandedPhoto(response.photo_url || null)}
                             >
-                              <img
-                                src={response.photo_url}
+                              <SignedImage
+                                bucket="floor-plans"
+                                path={response.photo_url}
                                 alt="Checklist item photo"
                                 className="w-full h-full object-cover"
                               />
@@ -316,8 +318,9 @@ export function SafetyChecklistModal({
       <Dialog open={!!expandedPhoto} onOpenChange={() => setExpandedPhoto(null)}>
         <DialogContent className="max-w-4xl max-h-[90vh]">
           <div className="relative w-full h-full overflow-auto">
-            <img
-              src={expandedPhoto || ''}
+            <SignedImage
+              bucket="floor-plans"
+              path={expandedPhoto}
               alt="Checklist photo"
               className="w-full h-auto"
             />

@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Trash2, User, Calendar, FileText, MapPin, Tag, Filter, Maximize2, Pen } from 'lucide-react';
+import { SignedImage } from '@/components/ui/signed-image';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -40,6 +41,7 @@ interface PhotoItem {
   photo_type?: 'standard' | 'panoramic';
   annotation_data?: string;
   annotation_metadata?: Record<string, any>;
+  storage_bucket?: string;
   employee?: {
     first_name: string;
     last_name: string;
@@ -206,8 +208,9 @@ export const EnhancedPhotoGallery: React.FC<EnhancedPhotoGalleryProps> = ({
                 <div 
                   className="aspect-square rounded-lg overflow-hidden border hover:ring-2 hover:ring-primary transition-all"
                 >
-                  <img
-                    src={photo.photo_url}
+                  <SignedImage
+                    bucket={photo.storage_bucket || 'floor-plans'}
+                    path={photo.photo_url}
                     alt={photo.description || "Photo"}
                     className="w-full h-full object-cover"
                   />
@@ -396,8 +399,9 @@ export const EnhancedPhotoGallery: React.FC<EnhancedPhotoGalleryProps> = ({
                 </DialogHeader>
                 
                 <div className="relative w-full group">
-                  <img
-                    src={expandedPhoto.photo_url}
+                  <SignedImage
+                    bucket={expandedPhoto.storage_bucket || 'floor-plans'}
+                    path={expandedPhoto.photo_url}
                     alt={expandedPhoto.description || "Photo"}
                     className="w-full h-auto rounded-lg"
                   />
