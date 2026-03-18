@@ -263,39 +263,6 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
                     Edit Location
                   </Button>
                 )}
-                {onDeleteLocation && (
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="flex items-center gap-2 text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        Delete
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Delete Location</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Are you sure you want to delete "{location.name}"? This action cannot be undone and will remove all associated drop points and data.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => {
-                            onDeleteLocation(location.id);
-                            onOpenChange(false);
-                          }}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                        >
-                          Delete Location
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                )}
                 <Button className="bg-gradient-primary hover:bg-primary-hover">
                   <Plus className="h-4 w-4 mr-2" />
                   Add Drop Point

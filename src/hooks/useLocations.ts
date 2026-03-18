@@ -236,9 +236,12 @@ export const useLocations = () => {
 
   const updateLocation = async (id: string, updates: Partial<Location>) => {
     try {
+      // Strip joined/virtual fields that are not real DB columns
+      const { client, project, drop_points_count, ...validUpdates } = updates;
+      
       const { data, error } = await supabase
         .from('locations')
-        .update(updates)
+        .update(validUpdates)
         .eq('id', id)
         .select()
         .single();

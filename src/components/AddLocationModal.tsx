@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { X, MapPin, Plus, Minus, Building2, Users, Phone, FileText, Search, UserPlus } from "lucide-react";
+import { X, MapPin, Plus, Minus, Building2, Users, Phone, FileText, Search, UserPlus, Trash2 } from "lucide-react";
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import {
   Dialog,
@@ -9,6 +9,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -38,9 +49,10 @@ interface AddLocationModalProps {
   location?: Location | null;
   preSelectedClientId?: string;
   onLocationUpdated?: () => void;
+  onDeleteLocation?: (id: string) => void;
 }
 
-export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClientId, onLocationUpdated }: AddLocationModalProps) => {
+export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClientId, onLocationUpdated, onDeleteLocation }: AddLocationModalProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedClientId, setSelectedClientId] = useState<string | null>(preSelectedClientId || null);
   const [showClientCreationForm, setShowClientCreationForm] = useState(false);
@@ -231,27 +243,30 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
         formData.zipCode.trim()
       ].filter(part => part); // Remove empty parts
       
-      const locationData = {
+      const baseFields = {
         name: formData.name.trim(),
         address: addressParts.join(", "),
         building_type: formData.building_type.trim() || null,
         floors: formData.floors,
-        total_square_feet: null,
         access_instructions: formData.access_instructions.trim() || null,
         contact_onsite: formData.contact_onsite.trim() || null,
         contact_phone: formData.contact_phone.trim() || null,
-        project_id: null,
         client_id: selectedClientId,
-        status: "Active" as const,
-        completion_percentage: 0,
         latitude: coordinates.latitude,
         longitude: coordinates.longitude,
       };
 
-      // Create or update the location
-      await (isEditing 
-        ? updateLocation(location!.id, locationData)
-        : addLocation(locationData));
+      if (isEditing) {
+        await updateLocation(location!.id, baseFields);
+      } else {
+        await addLocation({
+          ...baseFields,
+          total_square_feet: null,
+          project_id: null,
+          status: "Active" as const,
+          completion_percentage: 0,
+        });
+      }
 
       // Notify parent to refresh data
       onLocationUpdated?.();
@@ -715,20 +730,57 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
 
         <Separator className="flex-shrink-0" />
         
-        <DialogFooter className="flex-shrink-0 p-6">
-          <Button variant="outline" onClick={() => onOpenChange(false)} className="min-w-[100px]">
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleSubmit} 
-            className="bg-gradient-primary hover:bg-primary-hover min-w-[140px]"
-            disabled={isSubmitting}
-          >
-            {isSubmitting 
-              ? (isEditing ? "Updating..." : "Creating...") 
-              : (isEditing ? "Update Location" : "Create Location")
-            }
-          </Button>
+        <DialogFooter className="flex-shrink-0 p-6 flex justify-between">
+          <div>
+            {isEditing && onDeleteLocation && location && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="flex items-center gap-2 text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Delete Location
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Location</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to delete "{location.name}"? This action cannot be undone and will remove all associated drop points and data.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => {
+                        onDeleteLocation(location.id);
+                        onOpenChange(false);
+                      }}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Delete Location
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)} className="min-w-[100px]">
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSubmit} 
+              className="bg-gradient-primary hover:bg-primary-hover min-w-[140px]"
+              disabled={isSubmitting}
+            >
+              {isSubmitting 
+                ? (isEditing ? "Updating..." : "Creating...") 
+                : (isEditing ? "Update Location" : "Create Location")
+              }
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
