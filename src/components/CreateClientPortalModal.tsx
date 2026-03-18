@@ -104,7 +104,7 @@ export const CreateClientPortalModal = ({
         throw new Error(result.results[0]?.error || 'Failed to create account');
       }
 
-      setCreatedCredentials({ name: userName, email: inviteEmail, password });
+      setCreatedCredentials({ name: client.contact_name || client.name, email: inviteEmail, password });
       toast.success('Account created successfully');
       onSuccess?.();
     } catch (error: any) {
