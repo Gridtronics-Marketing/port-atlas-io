@@ -356,8 +356,8 @@ export const EnhancedPhotoGallery: React.FC<EnhancedPhotoGalleryProps> = ({
           }}
         />
       ) : expandedPhoto?.photo_type === 'panoramic' ? (
-        <PanoramicPhotoViewer
-          photoUrl={expandedPhoto.photo_url}
+      <ResolvedPanoramicViewer
+          expandedPhoto={expandedPhoto}
           description={expandedPhoto.description}
           photoId={expandedPhoto.id}
           existingAnnotations={expandedPhoto.annotation_data}

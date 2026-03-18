@@ -353,8 +353,9 @@ export const RoomViewModal: React.FC<RoomViewModalProps> = ({
             <div>
               <Label className="text-sm font-medium">Original Photo</Label>
               <div className="mt-2">
-                <img
-                  src={roomView?.photo_url}
+                <SignedImage
+                  bucket="room-views"
+                  path={roomView?.photo_url}
                   alt="Room view"
                   className="w-full max-w-md h-48 object-cover rounded-lg border"
                 />

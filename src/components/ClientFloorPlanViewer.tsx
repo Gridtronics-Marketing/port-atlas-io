@@ -404,13 +404,13 @@ const RoomViewDetailDialog = ({
       </Dialog>
 
       {/* Lightbox overlay */}
-      {lightboxUrl && (
+      {lightboxPath && resolvedLightboxUrl && (
         <div
           className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center cursor-pointer"
-          onClick={() => setLightboxUrl(null)}
+          onClick={() => setLightboxPath(null)}
         >
           <img
-            src={lightboxUrl}
+            src={resolvedLightboxUrl}
             alt="Full size"
             className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg"
             onClick={(e) => e.stopPropagation()}
