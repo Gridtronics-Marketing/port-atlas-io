@@ -197,7 +197,7 @@ export function TradeTubeMediaPlayer({
           {isDocument && (
             <div className="flex flex-col items-center justify-center p-16 bg-muted">
               <iframe
-                src={`${content.file_url}#toolbar=0`}
+                src={`${resolvedUrl}#toolbar=0`}
                 className="w-full h-[60vh] border-0"
                 title={content.title}
               />
