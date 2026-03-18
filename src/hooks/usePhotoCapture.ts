@@ -383,10 +383,9 @@ export function usePhotoCapture() {
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
-      const { data: urlData } = supabase.storage
+      const { data: urlData } = await supabase.storage
         .from(bucketName)
-        .getPublicUrl(`photos/${filename}`);
+        .createSignedUrl(`photos/${filename}`, 3600);
 
       // Create a daily log entry for gallery photos too
       console.log('💾 Creating daily log entry from gallery...');
