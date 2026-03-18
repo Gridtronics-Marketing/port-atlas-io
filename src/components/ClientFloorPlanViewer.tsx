@@ -387,7 +387,7 @@ const RoomViewDetailDialog = ({
                         path={photo.photo_url}
                         alt={photo.description || "Room photo"}
                         className="w-full h-40 object-cover rounded-lg border cursor-pointer hover:opacity-90 transition-opacity"
-                        onClick={() => setLightboxPath({ bucket: photo.storage_bucket || 'floor-plans', path: photo.photo_url })}
+                        onClick={() => setLightboxItem({ bucket: photo.storage_bucket || 'floor-plans', path: photo.photo_url })}
                       />
                       {photo.description && (
                         <p className="text-xs text-muted-foreground truncate">{photo.description}</p>
