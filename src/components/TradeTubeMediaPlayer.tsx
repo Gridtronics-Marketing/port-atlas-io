@@ -177,7 +177,7 @@ export function TradeTubeMediaPlayer({
                 </div>
                 <audio
                   ref={audioRef}
-                  src={content.file_url}
+                  src={resolvedUrl}
                   onTimeUpdate={handleTimeUpdate}
                   onLoadedMetadata={handleLoadedMetadata}
                   onEnded={() => setIsPlaying(false)}
