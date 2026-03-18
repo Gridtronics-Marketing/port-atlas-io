@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { FileImage, Layers, Camera, Plus, MousePointer2, ImageIcon } from "lucide-react";
+import { DropPointColorLegend } from "@/components/DropPointColorLegend";
 import { useRoomViewPhotos } from "@/hooks/useRoomViewPhotos";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -240,7 +241,7 @@ export const ClientFloorPlanViewer = ({ locationId }: ClientFloorPlanViewerProps
                 <Tooltip key={rv.id}>
                   <TooltipTrigger asChild>
                     <div
-                      className="absolute w-6 h-6 rounded-full bg-orange-500 border-2 border-white shadow-md cursor-pointer hover:scale-150 transition-transform flex items-center justify-center z-10"
+                      className="absolute w-6 h-6 rounded-full bg-blue-500 border-2 border-white shadow-md cursor-pointer hover:scale-150 transition-transform flex items-center justify-center z-10"
                       style={{
                         left: `${rv.x_coordinate}%`,
                         top: `${rv.y_coordinate}%`,
@@ -269,30 +270,7 @@ export const ClientFloorPlanViewer = ({ locationId }: ClientFloorPlanViewerProps
       </TooltipProvider>
 
       {/* Legend */}
-      <div className="flex flex-wrap gap-4 text-sm">
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-red-500" />
-          <span>Planned</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-orange-500" />
-          <span>Roughed In</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-green-500" />
-          <span>Finished/Tested</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-gray-400" />
-          <span>Proposed (Pending Approval)</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-orange-500 flex items-center justify-center">
-            <Camera className="h-2 w-2 text-white" />
-          </div>
-          <span>Room View</span>
-        </div>
-      </div>
+      <DropPointColorLegend />
 
       {/* Drop Point Detail Modal */}
       <ClientDropPointDetail
