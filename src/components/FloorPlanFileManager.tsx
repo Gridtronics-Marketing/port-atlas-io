@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Trash2, Upload, Eye, RefreshCw, FileX, CheckCircle, AlertTriangle, Paintbrush } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { getStorageUrl, deleteFloorPlanFile, validateFileAccess } from '@/lib/storage-utils';
+import { getSignedStorageUrl, deleteFloorPlanFile, validateFileAccess } from '@/lib/storage-utils';
 import { toast } from 'sonner';
 
 interface FloorPlanFile {
