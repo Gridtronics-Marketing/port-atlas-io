@@ -57,8 +57,6 @@ export const ClientFloorPlanViewer = ({ locationId }: ClientFloorPlanViewerProps
   const [selectedRoomView, setSelectedRoomView] = useState<RoomViewMarker | null>(null);
   const [placementMode, setPlacementMode] = useState(false);
   const [placementCoords, setPlacementCoords] = useState<{ x: number; y: number } | null>(null);
-  const [lightboxPath, setLightboxPath] = useState<{ bucket: string; path: string } | null>(null);
-  const resolvedLightboxUrl = useSignedUrl(lightboxPath?.bucket || '', lightboxPath?.path || null);
 
   const fetchData = useCallback(async () => {
     try {
