@@ -53,6 +53,7 @@ export const PhotoAnnotationCanvas = ({
   
   const historyRef = useRef<string[]>([]);
   const historyStepRef = useRef(0);
+  const isUndoRedoRef = useRef(false);
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Measurement state
@@ -522,6 +523,7 @@ export const PhotoAnnotationCanvas = ({
   }, [fabricCanvas]);
 
   const handleCanvasChange = useCallback(() => {
+    if (isUndoRedoRef.current) return; // Skip history save during undo/redo
     console.log("🔄 Canvas changed, saving to history and scheduling auto-save");
     saveHistory();
     
@@ -533,34 +535,30 @@ export const PhotoAnnotationCanvas = ({
     autoSaveTimeoutRef.current = setTimeout(() => {
       console.log("💾 Auto-save triggered");
       handleSave(true);
-    }, 2000); // Increased to 2 seconds for better batching
+    }, 2000);
   }, [saveHistory]);
 
   const handleUndo = useCallback(async () => {
     if (!fabricCanvas || historyStepRef.current <= 0) return;
 
+    isUndoRedoRef.current = true;
     historyStepRef.current--;
     const json = historyRef.current[historyStepRef.current];
     
-    // Store the current background image before loading
     const bgImage = fabricCanvas.backgroundImage;
     
     try {
-      // Clear all objects first
       const objects = fabricCanvas.getObjects();
       objects.forEach(obj => fabricCanvas.remove(obj));
       
-      // Parse the saved state
       const parsed = JSON.parse(json);
       
-      // Restore objects from the saved state using Fabric.js v6 API
       if (parsed.objects && parsed.objects.length > 0) {
         const { util } = await import('fabric');
         const enlivenedObjects = await util.enlivenObjects(parsed.objects);
         enlivenedObjects.forEach((obj: any) => fabricCanvas.add(obj));
       }
       
-      // Restore background image if it was lost
       if (!fabricCanvas.backgroundImage && bgImage) {
         fabricCanvas.backgroundImage = bgImage;
       }
@@ -570,39 +568,36 @@ export const PhotoAnnotationCanvas = ({
       setCanRedo(true);
     } catch (error) {
       console.error("Undo failed:", error);
-      // Restore background if operation failed
       if (bgImage && !fabricCanvas.backgroundImage) {
         fabricCanvas.backgroundImage = bgImage;
         fabricCanvas.renderAll();
       }
+    } finally {
+      isUndoRedoRef.current = false;
     }
   }, [fabricCanvas]);
 
   const handleRedo = useCallback(async () => {
     if (!fabricCanvas || historyStepRef.current >= historyRef.current.length - 1) return;
 
+    isUndoRedoRef.current = true;
     historyStepRef.current++;
     const json = historyRef.current[historyStepRef.current];
     
-    // Store the current background image before loading
     const bgImage = fabricCanvas.backgroundImage;
     
     try {
-      // Clear all objects first
       const objects = fabricCanvas.getObjects();
       objects.forEach(obj => fabricCanvas.remove(obj));
       
-      // Parse the saved state
       const parsed = JSON.parse(json);
       
-      // Restore objects from the saved state using Fabric.js v6 API
       if (parsed.objects && parsed.objects.length > 0) {
         const { util } = await import('fabric');
         const enlivenedObjects = await util.enlivenObjects(parsed.objects);
         enlivenedObjects.forEach((obj: any) => fabricCanvas.add(obj));
       }
       
-      // Restore background image if it was lost
       if (!fabricCanvas.backgroundImage && bgImage) {
         fabricCanvas.backgroundImage = bgImage;
       }
@@ -612,11 +607,12 @@ export const PhotoAnnotationCanvas = ({
       setCanRedo(historyStepRef.current < historyRef.current.length - 1);
     } catch (error) {
       console.error("Redo failed:", error);
-      // Restore background if operation failed
       if (bgImage && !fabricCanvas.backgroundImage) {
         fabricCanvas.backgroundImage = bgImage;
         fabricCanvas.renderAll();
       }
+    } finally {
+      isUndoRedoRef.current = false;
     }
   }, [fabricCanvas]);
 

@@ -14,7 +14,7 @@ export const MacOSWindowControls = ({
   CloseWrapper = React.Fragment,
 }: BackButtonProps) => {
   return (
-    <div className={cn("absolute top-3 left-3 z-50", className)}>
+    <div className={cn("absolute top-3 left-3 z-50 bg-background rounded-full shadow-sm", className)}>
       <CloseWrapper>
         <button
           onClick={onClose}
