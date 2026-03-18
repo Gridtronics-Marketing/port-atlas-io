@@ -11,6 +11,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { ClientDropPointDetail } from "@/components/ClientDropPointDetail";
 import { ClientDropPointPlacementDialog } from "@/components/ClientDropPointPlacementDialog";
 import { getFloorPlanUrls, getFloorPlanMetadata } from "@/lib/storage-utils";
+import { SignedImage } from "@/components/ui/signed-image";
+import { useSignedUrl } from "@/hooks/useSignedUrl";
 
 interface DropPoint {
   id: string;
