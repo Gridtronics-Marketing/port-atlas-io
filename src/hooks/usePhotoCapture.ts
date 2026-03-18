@@ -775,7 +775,7 @@ export function usePhotoCapture() {
 
           const capturedPhoto: CapturedPhoto = {
             id: uploadData.id || crypto.randomUUID(),
-            url: urlData.publicUrl,
+            url: urlData?.signedUrl || '',
             filename,
             category,
             description,

@@ -430,7 +430,7 @@ export const useUnifiedOfflineSync = () => {
             // Insert record to database
             const { error: dbError } = await (supabase as any).from(media.tableName).insert({
               ...media.metadata,
-              photo_url: publicUrl,
+              photo_url: signedData?.signedUrl || '',
             });
 
             if (dbError) throw dbError;

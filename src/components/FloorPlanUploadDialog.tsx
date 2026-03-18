@@ -339,7 +339,7 @@ export const FloorPlanUploadDialog = ({
         detail: { locationId, floorNumber, filePath }
       }));
       toast({ title: "Upload Successful", description: "Floor plan map uploaded and saved to location." });
-      onUploadSuccess(publicUrl);
+      onUploadSuccess(signedData?.signedUrl || '');
       handleClose();
     } catch (error) {
       console.error('Upload error:', error);

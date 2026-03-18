@@ -705,7 +705,7 @@ export const PhotoAnnotationCanvas = ({
       const annotationData = JSON.stringify(fabricCanvas.toJSON());
 
       // Call onReupload to update the photo URL in the database
-      await onReupload(publicUrl, annotationData);
+      await onReupload(signedData?.signedUrl || '', annotationData);
 
       toast.success(`Photo re-uploaded as ${newFileName}`);
 

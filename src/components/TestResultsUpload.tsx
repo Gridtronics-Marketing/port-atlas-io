@@ -92,7 +92,7 @@ export const TestResultsUpload = ({ dropPointId, onUploadComplete }: TestResults
         .insert({
           drop_point_id: dropPointId,
           file_name: file.name,
-          file_url: publicUrl,
+          file_url: signedData?.signedUrl || '',
           file_size: file.size,
           uploaded_by: currentEmployee?.id,
           test_type: 'certification',

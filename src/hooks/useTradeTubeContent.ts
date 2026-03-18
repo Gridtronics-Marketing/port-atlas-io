@@ -273,7 +273,7 @@ export function useTradeTubeContent(filters?: ContentFilters) {
         .from('tradetube-media')
         .createSignedUrl(filePath, 3600);
 
-      return publicUrl;
+      return signedData?.signedUrl || null;
     } catch (error: any) {
       console.error('Error uploading file:', error);
       toast.error('Failed to upload file');

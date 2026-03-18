@@ -360,7 +360,7 @@ export function useTestResults() {
         description: 'Test file uploaded successfully',
       });
 
-      return urlData.publicUrl;
+      return urlData?.signedUrl || '';
     } catch (error) {
       console.error('Error uploading test file:', error);
       toast({
