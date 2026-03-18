@@ -32,6 +32,7 @@ export function TradeTubeMediaPlayer({
   const [isMuted, setIsMuted] = useState(false);
   const [hasRecordedView, setHasRecordedView] = useState(false);
 
+  const resolvedUrl = useSignedUrl('tradetube-media', content?.file_url || null);
   const mediaRef = content?.media_type === 'video' ? videoRef : audioRef;
 
   useEffect(() => {
