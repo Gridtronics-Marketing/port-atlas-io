@@ -312,7 +312,7 @@ export const repairFloorPlanFiles = async (locationId: string): Promise<{
       if (match) {
         const floor = parseInt(match[1]);
         const filePath = `${locationId}/${file.name}`;
-        const fileUrl = getStorageUrl('floor-plans', filePath);
+        const fileUrl = await getSignedStorageUrl('floor-plans', filePath);
         
         // Check if file is accessible
         const isAccessible = await validateFileAccess(fileUrl);
