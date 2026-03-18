@@ -152,9 +152,9 @@ export const getFloorPlanMetadata = (floorPlanFiles: Record<string, any> = {}, k
  * Gets the floor plan URL for a specific floor
  * Handles both legacy string format and new object format
  */
-export const getFloorPlanUrl = (floorPlanFiles: Record<string, any> = {}, floor: number): string | undefined => {
+export const getFloorPlanUrl = async (floorPlanFiles: Record<string, any> = {}, floor: number): Promise<string | undefined> => {
   const config = parseFloorPlanConfig(floorPlanFiles, floor);
-  return config?.image_path ? getStorageUrl('floor-plans', config.image_path) : undefined;
+  return config?.image_path ? await getSignedStorageUrl('floor-plans', config.image_path) : undefined;
 };
 
 /**
