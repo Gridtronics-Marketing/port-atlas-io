@@ -1,34 +1,40 @@
 
 
-# Fix Floor Plan Export Stretching
+# Update Version and Change Log
 
-## Problem
-When exporting floor plans to PDF, the composite image is created using the **container's on-screen dimensions** (`containerDimensions.width/height`, e.g. 800x600) rather than the **original image's natural dimensions**. This stretches/distorts the floor plan to fit the container's aspect ratio.
+## Version Bump
 
-Then in the PDF exporter, the image is stretched again to fill the page width.
+Update from **v1.10.6** to **v1.10.7** with today's date (2026-03-01).
 
-## Root Cause
+## Changes to Record
 
-Two places cause distortion:
+The following features and fixes were implemented in this session:
 
-1. **`src/lib/floor-plan-composite.ts` (line 160-177)**: The canvas is sized to the passed `width`/`height` (container dimensions), and `drawImage` stretches the base image to fill that canvas: `ctx.drawImage(baseImage, 0, 0, width, height)`.
+1. **Fixed Google Places Autocomplete selection in dialogs** -- Address suggestions can now be clicked without Radix Dialog stealing focus or closing
+2. **Fixed interactive map not loading after address selection** -- Deferred map initialization to ensure DOM container is mounted before attaching Google Maps
+3. **Fixed Google Maps API race condition** -- Added polling mechanism so multiple components correctly detect when the Maps script finishes loading
+4. **Added right-click context menus to room views and wire paths on floor plans** -- Room views now have "View Details" and "Delete" options; wire paths auto-select on right-click to reveal the action panel
 
-2. **`src/components/InteractiveFloorPlan.tsx` (lines ~723, ~902)**: Passes `containerDimensions` to the composite function instead of the image's natural dimensions.
+## File Changes
 
-## Fix
+### `src/lib/version.ts`
 
-### 1. `src/lib/floor-plan-composite.ts`
-- Use the **base image's natural dimensions** for the canvas size instead of the passed `width`/`height`.
-- Load the base image first, set `canvas.width = baseImage.naturalWidth`, `canvas.height = baseImage.naturalHeight`.
-- Scale drop point and room view marker positions using the ratio between the container dimensions (where % positions were calculated) and the natural image dimensions — but since markers use percentage-based coordinates (0-100), they already scale correctly.
-- Fall back to passed `width`/`height` only if there's no base image.
+- Update `APP_VERSION` from `"1.10.6"` to `"1.10.7"`
+- Add a new entry at the top of `VERSION_HISTORY` array:
 
-### 2. `src/lib/floor-plan-exporter.ts` (lines 61-74)
-- The current logic already preserves aspect ratio when fitting to page, but it starts by setting `imgWidth = contentWidth` which stretches wide. This is actually correct — it fits the image to page width while maintaining aspect ratio. The real distortion comes from the composite step above. No changes needed here.
-
-### 3. `src/components/InteractiveFloorPlan.tsx`
-- No changes needed — once the composite function uses natural image dimensions, the container dimensions become irrelevant for sizing (though they're still passed, the composite function will ignore them for canvas sizing when a base image is available).
-
-## Summary
-Single-file fix in `floor-plan-composite.ts`: use `baseImage.naturalWidth/Height` for canvas dimensions instead of the passed container dimensions.
+```typescript
+{
+  version: "1.10.7",
+  date: "2026-03-01",
+  changes: [
+    "Fixed Google Places Autocomplete selection inside dialogs (focus trap and pointer event conflicts)",
+    "Fixed interactive satellite map not loading after address selection or tab switch",
+    "Fixed Google Maps API loading race condition when multiple components request the script",
+    "Added right-click context menus to room views and wire paths on interactive floor plans",
+    "Room view context menu with View Details and Delete actions",
+    "Wire path right-click selects path and reveals action panel with edit/delete options",
+    "Added delete confirmation dialogs for room views and wire paths (replaces native confirm)",
+  ]
+}
+```
 
