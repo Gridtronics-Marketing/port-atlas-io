@@ -41,6 +41,7 @@ interface PhotoItem {
   photo_type?: 'standard' | 'panoramic';
   annotation_data?: string;
   annotation_metadata?: Record<string, any>;
+  storage_bucket?: string;
   employee?: {
     first_name: string;
     last_name: string;
