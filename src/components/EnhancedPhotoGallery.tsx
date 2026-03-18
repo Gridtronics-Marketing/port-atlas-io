@@ -34,6 +34,20 @@ import { useState } from 'react';
 import { PanoramicPhotoViewer } from './PanoramicPhotoViewer';
 import { PhotoAnnotationCanvas } from './PhotoAnnotationCanvas';
 
+// Wrapper that resolves signed URL before passing to PhotoAnnotationCanvas
+const ResolvedPhotoAnnotationCanvas: React.FC<{ expandedPhoto: PhotoItem } & Omit<React.ComponentProps<typeof PhotoAnnotationCanvas>, 'photoUrl'>> = ({ expandedPhoto, ...rest }) => {
+  const resolvedUrl = useSignedUrl(expandedPhoto.storage_bucket || 'floor-plans', expandedPhoto.photo_url);
+  if (!resolvedUrl) return null;
+  return <PhotoAnnotationCanvas photoUrl={resolvedUrl} {...rest} />;
+};
+
+// Wrapper that resolves signed URL before passing to PanoramicPhotoViewer
+const ResolvedPanoramicViewer: React.FC<{ expandedPhoto: PhotoItem } & Omit<React.ComponentProps<typeof PanoramicPhotoViewer>, 'photoUrl'>> = ({ expandedPhoto, ...rest }) => {
+  const resolvedUrl = useSignedUrl(expandedPhoto.storage_bucket || 'floor-plans', expandedPhoto.photo_url);
+  if (!resolvedUrl) return null;
+  return <PanoramicPhotoViewer photoUrl={resolvedUrl} {...rest} />;
+};
+
 interface PhotoItem {
   id: string;
   photo_url: string;
