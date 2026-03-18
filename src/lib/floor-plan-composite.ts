@@ -191,7 +191,7 @@ export async function createCompositeFloorPlan(
   if (canvasDrawingDataUrl) {
     try {
       const drawingImage = await loadImage(canvasDrawingDataUrl);
-      ctx.drawImage(drawingImage, 0, 0, width, height);
+      ctx2d.drawImage(drawingImage, 0, 0, canvas.width, canvas.height);
     } catch (error) {
       console.warn('Failed to load canvas drawing:', error);
     }
@@ -199,12 +199,12 @@ export async function createCompositeFloorPlan(
 
   // Draw drop points
   dropPoints.forEach(marker => {
-    drawDropPointMarker(ctx, marker, true);
+    drawDropPointMarker(ctx2d, marker, true);
   });
 
   // Draw room views
   roomViews.forEach(marker => {
-    drawRoomViewMarker(ctx, marker, true);
+    drawRoomViewMarker(ctx2d, marker, true);
   });
 
   // Convert canvas to data URL
