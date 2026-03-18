@@ -45,17 +45,23 @@ async function loadImage(url: string): Promise<HTMLImageElement> {
 function getStatusColor(status: string): string {
   switch (status) {
     case 'planned':
-      return '#6b7280'; // gray
+      return '#ef4444'; // red
+    case 'roughed_in':
+      return '#f97316'; // orange
+    case 'finished':
+      return '#22c55e'; // green
+    case 'tested':
+      return '#22c55e'; // green
+    case 'proposed':
+      return '#9ca3af'; // gray
     case 'installed':
       return '#3b82f6'; // blue
-    case 'tested':
-      return '#eab308'; // yellow
     case 'active':
       return '#22c55e'; // green
     case 'inactive':
       return '#ef4444'; // red
     default:
-      return '#6b7280'; // gray
+      return '#ef4444'; // red
   }
 }
 

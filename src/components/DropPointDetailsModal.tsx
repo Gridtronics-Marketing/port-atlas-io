@@ -500,7 +500,7 @@ export const DropPointDetailsModal: React.FC<DropPointDetailsModalProps> = ({
                     <Badge 
                       className={
                         dropPoint.status === 'planned' ? 'bg-red-500/20 text-red-700 border-red-500/40' :
-                        dropPoint.status === 'roughed_in' ? 'bg-yellow-500/20 text-yellow-700 border-yellow-500/40' :
+                        dropPoint.status === 'roughed_in' ? 'bg-orange-500/20 text-orange-700 border-orange-500/40' :
                         dropPoint.status === 'finished' ? 'bg-green-500/20 text-green-700 border-green-500/40' :
                         dropPoint.status === 'tested' ? 'bg-green-500/20 text-green-700 border-green-500/40' :
                         'bg-secondary text-secondary-foreground'
