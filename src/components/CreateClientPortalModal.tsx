@@ -34,7 +34,6 @@ export const CreateClientPortalModal = ({
   open, onOpenChange, client, onSuccess
 }: CreateClientPortalModalProps) => {
   const [loading, setLoading] = useState(false);
-  const [userName, setUserName] = useState('');
   const [inviteEmail, setInviteEmail] = useState(client.contact_email || '');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
