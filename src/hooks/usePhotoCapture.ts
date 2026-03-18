@@ -14,6 +14,7 @@ export interface CapturedPhoto {
   work_order_id?: string;
   employee_id: string;
   created_at: string;
+  storage_bucket?: string;
 }
 
 export function usePhotoCapture() {
