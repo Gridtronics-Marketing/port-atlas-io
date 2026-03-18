@@ -225,19 +225,8 @@ export function usePhotoCapture() {
 
       console.log('Photo uploaded successfully:', uploadData);
 
-      // Get public URL
-      const { data: urlData, error: signedUrlError } = await supabase.storage
-        .from(bucketName)
-        .createSignedUrl(`photos/${filename}`, 3600);
-
-      // Store photo metadata in daily_logs table with photos array
-      const photoMetadata = {
-        url: urlData?.signedUrl || '',
-        filename,
-        category,
-        description,
-        captured_at: new Date().toISOString(),
-      };
+      // Store relative path instead of signed URL
+      const relativePath = `photos/${filename}`;
 
       // Create a daily log entry to store the photo
       console.log('💾 Creating daily log entry with photo...');
@@ -249,7 +238,7 @@ export function usePhotoCapture() {
         work_order_id: workOrderId || undefined,
         log_date: new Date().toISOString().split('T')[0],
         work_description: `${isPanoramic ? 'Panoramic photo' : 'Photo'} captured${isAdmin && !employeeId ? ' by Admin' : ''}: ${category}${description ? ` - ${description}` : ''}`,
-        photos: [urlData?.signedUrl || ''],
+        photos: [JSON.stringify({ bucket: bucketName, path: relativePath })],
         hours_worked: 0,
       };
       
