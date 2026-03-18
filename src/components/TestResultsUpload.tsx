@@ -200,7 +200,10 @@ export const TestResultsUpload = ({ dropPointId, onUploadComplete }: TestResults
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => window.open(file.file_url, '_blank')}
+                    onClick={async () => {
+                      const url = file.file_url.startsWith('http') ? file.file_url : await getSignedStorageUrl('floor-plans', file.file_url);
+                      if (url) window.open(url, '_blank');
+                    }}
                   >
                     <Download className="h-4 w-4" />
                   </Button>
