@@ -205,7 +205,7 @@ export const FloorPlanUploadDialog = ({
         description: "Satellite view saved as floor plan.",
       });
 
-      onUploadSuccess(publicUrl);
+      onUploadSuccess(signedData?.signedUrl || '');
       handleClose();
     } catch (error) {
       console.error('Satellite capture error:', error);
