@@ -76,8 +76,9 @@ export function TradeTubeContentCard({
       {/* Thumbnail area */}
       <div className="relative aspect-video bg-muted flex items-center justify-center overflow-hidden">
         {content.thumbnail_url ? (
-          <img 
-            src={content.thumbnail_url} 
+          <SignedImage
+            bucket="tradetube-media"
+            path={content.thumbnail_url} 
             alt={content.title}
             className="w-full h-full object-cover"
           />
