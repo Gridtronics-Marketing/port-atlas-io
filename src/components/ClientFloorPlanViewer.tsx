@@ -381,11 +381,12 @@ const RoomViewDetailDialog = ({
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   {photos.map((photo) => (
                     <div key={photo.id} className="space-y-1">
-                      <img
-                        src={photo.photo_url}
+                      <SignedImage
+                        bucket={photo.storage_bucket || 'floor-plans'}
+                        path={photo.photo_url}
                         alt={photo.description || "Room photo"}
                         className="w-full h-40 object-cover rounded-lg border cursor-pointer hover:opacity-90 transition-opacity"
-                        onClick={() => setLightboxUrl(photo.photo_url)}
+                        onClick={() => setLightboxPath({ bucket: photo.storage_bucket || 'floor-plans', path: photo.photo_url })}
                       />
                       {photo.description && (
                         <p className="text-xs text-muted-foreground truncate">{photo.description}</p>
