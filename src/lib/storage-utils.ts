@@ -104,38 +104,36 @@ export const getFloorPlanImagePath = (
  * Generates URLs for floor plan files from location data
  * Handles both legacy string format and new object format
  */
-export const getFloorPlanUrls = (floorPlanFiles: Record<string, any> = {}): Record<number, string> => {
+export const getFloorPlanUrls = async (floorPlanFiles: Record<string, any> = {}): Promise<Record<number, string>> => {
   const urls: Record<number, string> = {};
   
-  Object.entries(floorPlanFiles).forEach(([floor, value]) => {
-    // Only include numeric floor keys for backward compatibility
-    if (!isNaN(parseInt(floor))) {
-      const path = typeof value === 'string' ? value : value?.image_path;
-      if (path) {
-        urls[parseInt(floor)] = getStorageUrl('floor-plans', path);
-      }
+  const entries = Object.entries(floorPlanFiles).filter(([floor]) => !isNaN(parseInt(floor)));
+  
+  await Promise.all(entries.map(async ([floor, value]) => {
+    const path = typeof value === 'string' ? value : value?.image_path;
+    if (path) {
+      urls[parseInt(floor)] = await getSignedStorageUrl('floor-plans', path);
     }
-  });
+  }));
   
   return urls;
 };
 
 /**
- * Generates URLs for all floor plan files including outbuildings
+ * Generates signed URLs for all floor plan files including outbuildings
  * Returns string-keyed URLs for both numeric floors and outbuilding keys
  */
-export const getAllFloorPlanUrls = (floorPlanFiles: Record<string, any> = {}): Record<string, string> => {
+export const getAllFloorPlanUrls = async (floorPlanFiles: Record<string, any> = {}): Promise<Record<string, string>> => {
   const urls: Record<string, string> = {};
   
-  Object.entries(floorPlanFiles).forEach(([key, value]) => {
-    // Skip riser diagrams
-    if (key === 'riser' || key === 'riser_diagram') return;
-    
+  const entries = Object.entries(floorPlanFiles).filter(([key]) => key !== 'riser' && key !== 'riser_diagram');
+  
+  await Promise.all(entries.map(async ([key, value]) => {
     const path = typeof value === 'string' ? value : value?.image_path;
     if (path) {
-      urls[key] = getStorageUrl('floor-plans', path);
+      urls[key] = await getSignedStorageUrl('floor-plans', path);
     }
-  });
+  }));
   
   return urls;
 };
