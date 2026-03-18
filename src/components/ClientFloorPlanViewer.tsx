@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { FileImage, Layers, Camera, Plus, MousePointer2, ImageIcon } from "lucide-react";
+import { DropPointColorLegend } from "@/components/DropPointColorLegend";
 import { useRoomViewPhotos } from "@/hooks/useRoomViewPhotos";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
