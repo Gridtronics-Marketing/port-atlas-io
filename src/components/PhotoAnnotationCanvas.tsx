@@ -53,6 +53,7 @@ export const PhotoAnnotationCanvas = ({
   
   const historyRef = useRef<string[]>([]);
   const historyStepRef = useRef(0);
+  const isUndoRedoRef = useRef(false);
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Measurement state
