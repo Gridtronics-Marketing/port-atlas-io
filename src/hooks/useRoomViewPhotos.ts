@@ -11,6 +11,7 @@ export interface RoomViewPhoto {
   photo_type?: 'standard' | 'panoramic';
   annotation_data?: string;
   annotation_metadata?: Record<string, any>;
+  storage_bucket?: string;
   created_at: string;
   updated_at: string;
   employee?: {
