@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { FileText, Download, StickyNote } from "lucide-react";
+import { getSignedStorageUrl } from "@/lib/storage-utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
