@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { CheckCircle, AlertTriangle, Wrench, FileX, RefreshCw, HardDrive } from 'lucide-react';
-import { repairFloorPlanFiles, validateFileAccess, getStorageUrl } from '@/lib/storage-utils';
+import { repairFloorPlanFiles, validateFileAccess, getSignedStorageUrl } from '@/lib/storage-utils';
 import { toast } from 'sonner';
 import { type Location } from '@/hooks/useLocations';
 
