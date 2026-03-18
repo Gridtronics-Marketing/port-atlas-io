@@ -2,6 +2,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Trash2, User, Calendar, FileText, Maximize2, Pen } from 'lucide-react';
+import { SignedImage } from '@/components/ui/signed-image';
 import {
   AlertDialog,
   AlertDialogAction,
