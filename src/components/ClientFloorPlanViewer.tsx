@@ -346,11 +346,12 @@ const RoomViewDetailDialog = ({
             </TabsList>
             <TabsContent value="details" className="space-y-4">
               {roomView.photo_url && (
-                <img
-                  src={roomView.photo_url}
+                <SignedImage
+                  bucket="room-views"
+                  path={roomView.photo_url}
                   alt={roomView.room_name || "Room view"}
                   className="w-full rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-                  onClick={() => setLightboxUrl(roomView.photo_url!)}
+                  onClick={() => setLightboxPath({ bucket: 'room-views', path: roomView.photo_url! })}
                 />
               )}
               <div className="grid grid-cols-2 gap-4 text-sm">
