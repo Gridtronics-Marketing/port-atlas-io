@@ -719,20 +719,57 @@ export const AddLocationModal = ({ open, onOpenChange, location, preSelectedClie
 
         <Separator className="flex-shrink-0" />
         
-        <DialogFooter className="flex-shrink-0 p-6">
-          <Button variant="outline" onClick={() => onOpenChange(false)} className="min-w-[100px]">
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleSubmit} 
-            className="bg-gradient-primary hover:bg-primary-hover min-w-[140px]"
-            disabled={isSubmitting}
-          >
-            {isSubmitting 
-              ? (isEditing ? "Updating..." : "Creating...") 
-              : (isEditing ? "Update Location" : "Create Location")
-            }
-          </Button>
+        <DialogFooter className="flex-shrink-0 p-6 flex justify-between">
+          <div>
+            {isEditing && onDeleteLocation && location && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="flex items-center gap-2 text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Delete Location
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Location</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to delete "{location.name}"? This action cannot be undone and will remove all associated drop points and data.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => {
+                        onDeleteLocation(location.id);
+                        onOpenChange(false);
+                      }}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Delete Location
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)} className="min-w-[100px]">
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSubmit} 
+              className="bg-gradient-primary hover:bg-primary-hover min-w-[140px]"
+              disabled={isSubmitting}
+            >
+              {isSubmitting 
+                ? (isEditing ? "Updating..." : "Creating...") 
+                : (isEditing ? "Update Location" : "Create Location")
+              }
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
