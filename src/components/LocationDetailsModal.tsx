@@ -107,7 +107,7 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
       }
 
       // Use the utility function to generate URLs for all floors including outbuildings
-      const urls = getAllFloorPlanUrls(location.floor_plan_files);
+      const urls = await getAllFloorPlanUrls(location.floor_plan_files);
       setAllFloorPlanUrls(urls);
       
       // Check for riser diagram (stored with key 'riser' or 'riser_diagram')
