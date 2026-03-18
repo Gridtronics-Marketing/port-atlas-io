@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { getStorageUrl } from '@/lib/storage-utils';
+import { getSignedStorageUrl } from '@/lib/storage-utils';
 
 export interface FloorPlanConfig {
   image_path: string;
