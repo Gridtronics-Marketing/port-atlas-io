@@ -3,12 +3,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { X, ChevronLeft, ChevronRight, RotateCcw, Grid3X3, Maximize2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { SignedImage } from '@/components/ui/signed-image';
 
 interface AnglePhoto {
   id: string;
   photo_url: string;
   angle: number;
   description?: string;
+  storage_bucket?: string;
   created_at: string;
 }
 
