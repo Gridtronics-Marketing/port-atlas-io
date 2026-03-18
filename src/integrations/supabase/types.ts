@@ -4408,6 +4408,8 @@ export type Database = {
       }
       room_view_photos: {
         Row: {
+          annotation_data: string | null
+          annotation_metadata: Json | null
           created_at: string
           description: string | null
           employee_id: string | null
@@ -4419,6 +4421,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          annotation_data?: string | null
+          annotation_metadata?: Json | null
           created_at?: string
           description?: string | null
           employee_id?: string | null
@@ -4430,6 +4434,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          annotation_data?: string | null
+          annotation_metadata?: Json | null
           created_at?: string
           description?: string | null
           employee_id?: string | null

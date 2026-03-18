@@ -193,9 +193,9 @@ export const RoomViewModal: React.FC<RoomViewModalProps> = ({
     }
   };
 
-  const handleUpdatePhoto = async (photoId: string, updates: { annotation_data?: Json; description?: string }) => {
+  const handleUpdatePhoto = async (photoId: string, updates: { annotation_data?: string; annotation_metadata?: Record<string, any>; description?: string }) => {
     try {
-      await updatePhoto(photoId, updates as Partial<RoomViewPhoto>);
+      await updatePhoto(photoId, updates);
     } catch (error) {
       console.error('Error updating photo:', error);
     }
