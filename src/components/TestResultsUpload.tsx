@@ -83,16 +83,16 @@ export const TestResultsUpload = ({ dropPointId, onUploadComplete }: TestResults
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
+      const { data: signedData } = await supabase.storage
         .from('floor-plans')
-        .getPublicUrl(filePath);
+        .createSignedUrl(filePath, 3600);
 
       const { error: dbError } = await supabase
         .from('test_results_files')
         .insert({
           drop_point_id: dropPointId,
           file_name: file.name,
-          file_url: publicUrl,
+          file_url: signedData?.signedUrl || '',
           file_size: file.size,
           uploaded_by: currentEmployee?.id,
           test_type: 'certification',

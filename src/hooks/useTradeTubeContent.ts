@@ -269,11 +269,11 @@ export function useTradeTubeContent(filters?: ContentFilters) {
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
+      const { data: signedData } = await supabase.storage
         .from('tradetube-media')
-        .getPublicUrl(filePath);
+        .createSignedUrl(filePath, 3600);
 
-      return publicUrl;
+      return signedData?.signedUrl || null;
     } catch (error: any) {
       console.error('Error uploading file:', error);
       toast.error('Failed to upload file');

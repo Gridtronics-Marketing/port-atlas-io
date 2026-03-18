@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Trash2, Upload, Eye, RefreshCw, FileX, CheckCircle, AlertTriangle, Paintbrush } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { getStorageUrl, deleteFloorPlanFile, validateFileAccess } from '@/lib/storage-utils';
+import { getSignedStorageUrl, deleteFloorPlanFile, validateFileAccess } from '@/lib/storage-utils';
 import { toast } from 'sonner';
 
 interface FloorPlanFile {
@@ -63,7 +63,7 @@ export const FloorPlanFileManager: React.FC<FloorPlanFileManagerProps> = ({
       // Process files and validate accessibility
       const filePromises = storageFiles.map(async (file) => {
         const path = `${locationId}/${file.name}`;
-        const url = getStorageUrl('floor-plans', path);
+        const url = await getSignedStorageUrl('floor-plans', path);
         
         // Extract floor number from filename
         const floorMatch = file.name.match(/^floor_(\d+)\./);

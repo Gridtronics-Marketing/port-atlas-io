@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { CheckCircle, AlertTriangle, Wrench, FileX, RefreshCw, HardDrive } from 'lucide-react';
-import { repairFloorPlanFiles, validateFileAccess, getStorageUrl } from '@/lib/storage-utils';
+import { repairFloorPlanFiles, validateFileAccess, getSignedStorageUrl } from '@/lib/storage-utils';
 import { toast } from 'sonner';
 import { type Location } from '@/hooks/useLocations';
 
@@ -41,7 +41,7 @@ export const FloorPlanRepairTool: React.FC<FloorPlanRepairToolProps> = ({
       
       if (location.floor_plan_files) {
         for (const [floor, path] of Object.entries(location.floor_plan_files)) {
-          const url = getStorageUrl('floor-plans', path);
+          const url = await getSignedStorageUrl('floor-plans', path as string);
           const accessible = await validateFileAccess(url);
           accessibleFiles.push({
             floor: parseInt(floor),

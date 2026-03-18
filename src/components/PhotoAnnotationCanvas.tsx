@@ -696,16 +696,16 @@ export const PhotoAnnotationCanvas = ({
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
+      // Get signed URL
+      const { data: signedData } = await supabase.storage
         .from('room-views')
-        .getPublicUrl(newFileName);
+        .createSignedUrl(newFileName, 3600);
 
       // Get current annotation data
       const annotationData = JSON.stringify(fabricCanvas.toJSON());
 
       // Call onReupload to update the photo URL in the database
-      await onReupload(publicUrl, annotationData);
+      await onReupload(signedData?.signedUrl || '', annotationData);
 
       toast.success(`Photo re-uploaded as ${newFileName}`);
 

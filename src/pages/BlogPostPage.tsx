@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useBlogPosts } from "@/hooks/useBlogPosts";
 import { Calendar, Clock, ArrowLeft, Share2 } from "lucide-react";
 import { format } from "date-fns";
+import DOMPurify from "dompurify";
 
 export default function BlogPostPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -94,7 +95,11 @@ export default function BlogPostPage() {
       <section className="py-12 md:py-16">
         <div className="container px-4 md:px-6">
           <article className="max-w-3xl mx-auto prose prose-lg dark:prose-invert">
-            <div dangerouslySetInnerHTML={{ __html: post.content }} />
+            <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.content, {
+              ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'a', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'blockquote', 'code', 'pre', 'img', 'span', 'div', 'table', 'thead', 'tbody', 'tr', 'th', 'td'],
+              ALLOWED_ATTR: ['href', 'class', 'src', 'alt', 'title', 'target', 'rel'],
+              ALLOW_DATA_ATTR: false
+            }) }} />
           </article>
 
           {/* Tags */}

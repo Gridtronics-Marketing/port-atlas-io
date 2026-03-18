@@ -54,7 +54,7 @@ import { FloorPlanRepairTool } from "@/components/FloorPlanRepairTool";
 import { FloorPlanFileManager } from "@/components/FloorPlanFileManager";
 import { InteractiveFloorPlan } from "@/components/InteractiveFloorPlan";
 import { FloorBuildingManager } from "@/components/FloorBuildingManager";
-import { getFloorPlanUrls, getStorageUrl, getFloorPlanImagePath, getAllFloorPlanUrls, getFloorPlanMetadata } from "@/lib/storage-utils";
+import { getFloorPlanUrls, getStorageUrl, getSignedStorageUrl, getFloorPlanImagePath, getAllFloorPlanUrls, getFloorPlanMetadata } from "@/lib/storage-utils";
 import { useLocationTeam } from "@/hooks/useLocationTeam";
 import { useLocationNotes } from "@/hooks/useLocationNotes";
 import {
@@ -107,13 +107,13 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
       }
 
       // Use the utility function to generate URLs for all floors including outbuildings
-      const urls = getAllFloorPlanUrls(location.floor_plan_files);
+      const urls = await getAllFloorPlanUrls(location.floor_plan_files);
       setAllFloorPlanUrls(urls);
       
       // Check for riser diagram (stored with key 'riser' or 'riser_diagram')
       const riserFile = location.floor_plan_files['riser'] || location.floor_plan_files['riser_diagram'];
       if (riserFile) {
-        const riserUrl = `https://mhrekppksiekhstnteyu.supabase.co/storage/v1/object/public/floor-plans/${riserFile}`;
+        const riserUrl = await getSignedStorageUrl('floor-plans', typeof riserFile === 'string' ? riserFile : riserFile.image_path);
         setRiserDiagramUrl(riserUrl);
       } else {
         setRiserDiagramUrl(null);
@@ -127,7 +127,7 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
 
   // Listen for floor plan upload events for real-time updates
   useEffect(() => {
-    const handleFloorPlanSavedEvent = (event: Event) => {
+    const handleFloorPlanSavedEvent = async (event: Event) => {
       const customEvent = event as CustomEvent;
       const { locationId, floorNumber, filePath } = customEvent.detail;
       
@@ -135,8 +135,8 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
       if (locationId === location?.id && filePath) {
         console.log('Floor plan saved event received:', { locationId, floorNumber, filePath });
         
-        // Generate the public URL for the new file
-        const newUrl = getStorageUrl('floor-plans', filePath);
+        // Generate signed URL for the new file
+        const newUrl = await getSignedStorageUrl('floor-plans', filePath);
         
         // Update the allFloorPlanUrls state with the new URL
         setAllFloorPlanUrls(prev => ({
@@ -167,7 +167,7 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
     
     // Force re-render by updating floor plan URLs from location
     if (location?.floor_plan_files) {
-      const urls = getAllFloorPlanUrls(location.floor_plan_files);
+      const urls = await getAllFloorPlanUrls(location.floor_plan_files);
       setAllFloorPlanUrls(urls);
     }
   };
@@ -537,9 +537,9 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
                   <TabsContent value="diagnostics" className="mt-4">
                     <FloorPlanRepairTool 
                       location={location} 
-                      onRepairComplete={() => {
+                      onRepairComplete={async () => {
                         if (location.floor_plan_files) {
-                          setAllFloorPlanUrls(getAllFloorPlanUrls(location.floor_plan_files));
+                          setAllFloorPlanUrls(await getAllFloorPlanUrls(location.floor_plan_files));
                         }
                       }}
                     />
@@ -548,9 +548,9 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
                   <TabsContent value="file-manager" className="mt-4">
                     <FloorPlanFileManager
                       locationId={location.id}
-                      onFilesChanged={() => {
+                      onFilesChanged={async () => {
                         if (location.floor_plan_files) {
-                          setAllFloorPlanUrls(getAllFloorPlanUrls(location.floor_plan_files));
+                          setAllFloorPlanUrls(await getAllFloorPlanUrls(location.floor_plan_files));
                         }
                         window.location.reload();
                       }}

@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { getStorageUrl } from '@/lib/storage-utils';
+import { getSignedStorageUrl } from '@/lib/storage-utils';
 
 export interface FloorPlanConfig {
   image_path: string;
@@ -109,7 +109,7 @@ export const useFloorPlanDrawing = (locationId: string, floorNumber: number) => 
           isDrawn: config.is_drawn,
           drawingData: config.drawing_data || null,
           imagePath: config.image_path,
-          imageUrl: getStorageUrl('floor-plans', config.image_path),
+          imageUrl: await getSignedStorageUrl('floor-plans', config.image_path),
         });
       }
 
@@ -178,7 +178,7 @@ export const useFloorPlanDrawing = (locationId: string, floorNumber: number) => 
 
       if (updateError) throw updateError;
 
-      const imageUrl = getStorageUrl('floor-plans', filePath);
+      const imageUrl = await getSignedStorageUrl('floor-plans', filePath);
 
       setDrawingState({
         isDrawn: true,

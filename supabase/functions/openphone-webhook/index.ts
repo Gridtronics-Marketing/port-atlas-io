@@ -122,18 +122,24 @@ serve(async (req) => {
       .eq('integration_type', 'openphone')
       .single();
 
-    // Verify webhook signature if secret is configured
-    if (credentials?.webhook_secret) {
-      const signature = req.headers.get('x-openphone-signature');
-      const isValid = await verifySignature(rawBody, signature, credentials.webhook_secret);
-      
-      if (!isValid) {
-        console.error('Invalid webhook signature for org:', organizationId);
-        return new Response(JSON.stringify({ error: 'Invalid signature' }), {
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
+    // Verify webhook signature - fail closed if no secret configured
+    if (!credentials?.webhook_secret) {
+      console.error('Webhook secret not configured for org:', organizationId);
+      return new Response(JSON.stringify({ error: 'Webhook not configured' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const signature = req.headers.get('x-openphone-signature');
+    const isValid = await verifySignature(rawBody, signature, credentials.webhook_secret);
+    
+    if (!isValid) {
+      console.error('Invalid webhook signature for org:', organizationId);
+      return new Response(JSON.stringify({ error: 'Invalid signature' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     if (!credentials?.is_active) {

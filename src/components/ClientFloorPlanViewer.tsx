@@ -66,7 +66,7 @@ export const ClientFloorPlanViewer = ({ locationId }: ClientFloorPlanViewerProps
 
       if (locationData?.floor_plan_files) {
         const floorPlanFiles = locationData.floor_plan_files as Record<string, any>;
-        const urls = getFloorPlanUrls(floorPlanFiles);
+        const urls = await getFloorPlanUrls(floorPlanFiles);
         const names: Record<number, string> = {};
         const floorNumbers = Object.keys(urls).map(Number).sort((a, b) => a - b);
 

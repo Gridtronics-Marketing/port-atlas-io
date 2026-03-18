@@ -174,9 +174,9 @@ export const FloorPlanUploadDialog = ({
         .upload(filePath, file, { upsert: true });
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
+      const { data: signedData } = await supabase.storage
         .from('floor-plans')
-        .getPublicUrl(filePath);
+        .createSignedUrl(filePath, 3600);
 
       const { data: location, error: fetchError } = await supabase
         .from('locations')
@@ -205,7 +205,7 @@ export const FloorPlanUploadDialog = ({
         description: "Satellite view saved as floor plan.",
       });
 
-      onUploadSuccess(publicUrl);
+      onUploadSuccess(signedData?.signedUrl || '');
       handleClose();
     } catch (error) {
       console.error('Satellite capture error:', error);
@@ -317,9 +317,9 @@ export const FloorPlanUploadDialog = ({
         .from('floor-plans')
         .upload(filePath, selectedFile, { upsert: true });
       if (uploadError) throw uploadError;
-      const { data: { publicUrl } } = supabase.storage
+      const { data: signedData } = await supabase.storage
         .from('floor-plans')
-        .getPublicUrl(filePath);
+        .createSignedUrl(filePath, 3600);
       const { data: location, error: fetchError } = await supabase
         .from('locations')
         .select('floor_plan_files')
@@ -339,7 +339,7 @@ export const FloorPlanUploadDialog = ({
         detail: { locationId, floorNumber, filePath }
       }));
       toast({ title: "Upload Successful", description: "Floor plan map uploaded and saved to location." });
-      onUploadSuccess(publicUrl);
+      onUploadSuccess(signedData?.signedUrl || '');
       handleClose();
     } catch (error) {
       console.error('Upload error:', error);

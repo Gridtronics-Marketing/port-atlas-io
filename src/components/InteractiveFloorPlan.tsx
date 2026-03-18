@@ -44,7 +44,7 @@ import { useDropPoints } from '@/hooks/useDropPoints';
 import { useRoomViews } from '@/hooks/useRoomViews';
 import { useWirePaths, WirePath } from '@/hooks/useWirePaths';
 import { useFloorPlanDrawing, isDrawnFloorPlan, getDrawingData } from '@/hooks/useFloorPlanDrawing';
-import { getStorageUrl, removeFloorPlanFromLocation } from '@/lib/storage-utils';
+import { getSignedStorageUrl, removeFloorPlanFromLocation } from '@/lib/storage-utils';
 import { useToast } from '@/hooks/use-toast';
 import { isValidUUID } from '@/lib/uuid-utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -133,7 +133,19 @@ export const InteractiveFloorPlan = ({
   const { wirePaths, loading: wirePathsLoading, deleteWirePath, refetch: fetchWirePaths } = useWirePaths(validLocationId, floorNumber);
 
   // Generate the actual file URL from path or use provided URL
-  const actualFileUrl = uploadedFileUrl || fileUrl || (filePath ? getStorageUrl('floor-plans', filePath) : undefined);
+  const [resolvedFileUrl, setResolvedFileUrl] = useState<string | undefined>(undefined);
+  
+  useEffect(() => {
+    if (uploadedFileUrl || fileUrl) {
+      setResolvedFileUrl(uploadedFileUrl || fileUrl);
+    } else if (filePath) {
+      getSignedStorageUrl('floor-plans', filePath).then(url => setResolvedFileUrl(url));
+    } else {
+      setResolvedFileUrl(undefined);
+    }
+  }, [uploadedFileUrl, fileUrl, filePath]);
+
+  const actualFileUrl = resolvedFileUrl;
 
   // Filter drop points and room views for current floor
   const floorDropPoints = dropPoints.filter(dp => dp.floor === floorNumber);

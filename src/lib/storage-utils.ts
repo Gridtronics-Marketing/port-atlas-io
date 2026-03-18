@@ -12,7 +12,20 @@ export interface FloorPlanConfig {
 }
 
 /**
+ * Generates a signed URL for a file in Supabase storage (1 hour expiry)
+ */
+export const getSignedStorageUrl = async (bucket: string, path: string): Promise<string> => {
+  const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, 3600);
+  if (error || !data?.signedUrl) {
+    console.warn('Failed to create signed URL for', bucket, path, error);
+    return '';
+  }
+  return data.signedUrl;
+};
+
+/**
  * Generates a public URL for a file in Supabase storage
+ * @deprecated Use getSignedStorageUrl for private buckets (floor-plans, room-views, tradetube-media)
  */
 export const getStorageUrl = (bucket: string, path: string): string => {
   const { data } = supabase.storage.from(bucket).getPublicUrl(path);
@@ -91,38 +104,36 @@ export const getFloorPlanImagePath = (
  * Generates URLs for floor plan files from location data
  * Handles both legacy string format and new object format
  */
-export const getFloorPlanUrls = (floorPlanFiles: Record<string, any> = {}): Record<number, string> => {
+export const getFloorPlanUrls = async (floorPlanFiles: Record<string, any> = {}): Promise<Record<number, string>> => {
   const urls: Record<number, string> = {};
   
-  Object.entries(floorPlanFiles).forEach(([floor, value]) => {
-    // Only include numeric floor keys for backward compatibility
-    if (!isNaN(parseInt(floor))) {
-      const path = typeof value === 'string' ? value : value?.image_path;
-      if (path) {
-        urls[parseInt(floor)] = getStorageUrl('floor-plans', path);
-      }
+  const entries = Object.entries(floorPlanFiles).filter(([floor]) => !isNaN(parseInt(floor)));
+  
+  await Promise.all(entries.map(async ([floor, value]) => {
+    const path = typeof value === 'string' ? value : value?.image_path;
+    if (path) {
+      urls[parseInt(floor)] = await getSignedStorageUrl('floor-plans', path);
     }
-  });
+  }));
   
   return urls;
 };
 
 /**
- * Generates URLs for all floor plan files including outbuildings
+ * Generates signed URLs for all floor plan files including outbuildings
  * Returns string-keyed URLs for both numeric floors and outbuilding keys
  */
-export const getAllFloorPlanUrls = (floorPlanFiles: Record<string, any> = {}): Record<string, string> => {
+export const getAllFloorPlanUrls = async (floorPlanFiles: Record<string, any> = {}): Promise<Record<string, string>> => {
   const urls: Record<string, string> = {};
   
-  Object.entries(floorPlanFiles).forEach(([key, value]) => {
-    // Skip riser diagrams
-    if (key === 'riser' || key === 'riser_diagram') return;
-    
+  const entries = Object.entries(floorPlanFiles).filter(([key]) => key !== 'riser' && key !== 'riser_diagram');
+  
+  await Promise.all(entries.map(async ([key, value]) => {
     const path = typeof value === 'string' ? value : value?.image_path;
     if (path) {
-      urls[key] = getStorageUrl('floor-plans', path);
+      urls[key] = await getSignedStorageUrl('floor-plans', path);
     }
-  });
+  }));
   
   return urls;
 };
@@ -141,9 +152,9 @@ export const getFloorPlanMetadata = (floorPlanFiles: Record<string, any> = {}, k
  * Gets the floor plan URL for a specific floor
  * Handles both legacy string format and new object format
  */
-export const getFloorPlanUrl = (floorPlanFiles: Record<string, any> = {}, floor: number): string | undefined => {
+export const getFloorPlanUrl = async (floorPlanFiles: Record<string, any> = {}, floor: number): Promise<string | undefined> => {
   const config = parseFloorPlanConfig(floorPlanFiles, floor);
-  return config?.image_path ? getStorageUrl('floor-plans', config.image_path) : undefined;
+  return config?.image_path ? await getSignedStorageUrl('floor-plans', config.image_path) : undefined;
 };
 
 /**
@@ -187,14 +198,12 @@ export const validateFileAccess = async (url: string): Promise<boolean> => {
  */
 export const getFileInfo = async (bucket: string, path: string) => {
   try {
-    const { data } = supabase.storage
-      .from(bucket)
-      .getPublicUrl(path);
+    const signedUrl = await getSignedStorageUrl(bucket, path);
     
-    const isAccessible = await validateFileAccess(data.publicUrl);
+    const isAccessible = signedUrl ? await validateFileAccess(signedUrl) : false;
     
     return {
-      url: data.publicUrl,
+      url: signedUrl,
       isAccessible
     };
   } catch (error) {
@@ -303,7 +312,7 @@ export const repairFloorPlanFiles = async (locationId: string): Promise<{
       if (match) {
         const floor = parseInt(match[1]);
         const filePath = `${locationId}/${file.name}`;
-        const fileUrl = getStorageUrl('floor-plans', filePath);
+        const fileUrl = await getSignedStorageUrl('floor-plans', filePath);
         
         // Check if file is accessible
         const isAccessible = await validateFileAccess(fileUrl);
