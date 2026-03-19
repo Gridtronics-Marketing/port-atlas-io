@@ -1,23 +1,25 @@
 import { Helmet } from "react-helmet-async";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { usePageContent } from "@/hooks/usePageContent";
 import { Code, Key, Zap, BookOpen, ArrowRight, Terminal, Webhook, Database } from "lucide-react";
 
+const BASE_URL = "https://mhrekppksiekhstnteyu.supabase.co/functions/v1/api-v1";
+
 const endpoints = [
-  { method: "GET", path: "/api/v1/locations", description: "List all locations" },
-  { method: "POST", path: "/api/v1/locations", description: "Create a new location" },
-  { method: "GET", path: "/api/v1/drop-points", description: "List drop points" },
-  { method: "POST", path: "/api/v1/work-orders", description: "Create a work order" },
-  { method: "GET", path: "/api/v1/employees", description: "List employees" },
+  { method: "GET", path: "/locations", description: "List all locations (paginated)" },
+  { method: "POST", path: "/locations", description: "Create a new location" },
+  { method: "GET", path: "/drop-points", description: "List drop points (filterable by location_id)" },
+  { method: "POST", path: "/work-orders", description: "Create a work order" },
+  { method: "GET", path: "/employees", description: "List employees" },
 ];
 
 const features = [
   { icon: Key, title: "API Keys", description: "Secure authentication with API keys" },
-  { icon: Webhook, title: "Webhooks", description: "Real-time event notifications" },
-  { icon: Database, title: "REST API", description: "Standard RESTful endpoints" },
-  { icon: Zap, title: "Rate Limits", description: "Generous rate limits for all plans" },
+  { icon: Webhook, title: "Scoped Access", description: "Fine-grained scope controls per key" },
+  { icon: Database, title: "REST API", description: "Standard RESTful JSON endpoints" },
+  { icon: Zap, title: "Pagination", description: "Built-in pagination on all list endpoints" },
 ];
 
 export default function APIPage() {
@@ -35,7 +37,6 @@ export default function APIPage() {
       <section className="relative overflow-hidden hero-dark py-20 md:py-28">
         <div className="absolute inset-0 tech-lines opacity-30" />
         <div className="absolute top-20 right-10 w-3 h-3 rounded-full bg-primary animate-pulse" />
-        
         <div className="container px-4 md:px-6 relative z-10">
           <div className="text-center max-w-3xl mx-auto">
             <span className="inline-block px-4 py-1.5 mb-6 text-xs font-semibold tracking-wider uppercase bg-primary/10 text-primary border border-primary/30 rounded-full">
@@ -48,9 +49,8 @@ export default function APIPage() {
               {page?.hero_subtitle || "Build powerful integrations with Trade Atlas."}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_20px_rgba(212,175,55,0.3)]">
-                <BookOpen className="mr-2 h-5 w-5" />
-                View Full Docs
+              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_20px_rgba(212,175,55,0.3)]" asChild>
+                <a href="/settings"><BookOpen className="mr-2 h-5 w-5" />Get API Key</a>
               </Button>
               <Button size="lg" variant="outline" className="border-primary/50 text-white bg-white/10 hover:bg-white/20">
                 <Terminal className="mr-2 h-5 w-5" />
@@ -96,7 +96,7 @@ export default function APIPage() {
               <CardContent className="p-6">
                 <pre className="overflow-x-auto text-sm">
                   <code>{`# Authenticate with your API key
-curl -X GET "https://api.runwithatlas.com/v1/locations" \\
+curl -X GET "${BASE_URL}/locations" \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json"
 
@@ -104,17 +104,27 @@ curl -X GET "https://api.runwithatlas.com/v1/locations" \\
 {
   "data": [
     {
-      "id": "loc_abc123",
+      "id": "uuid-here",
       "name": "Building A",
       "address": "123 Main St",
-      "floors": 5
+      "city": "Chicago",
+      "state": "IL",
+      "num_floors": 5,
+      "created_at": "2026-01-15T..."
     }
   ],
   "meta": {
-    "total": 1,
-    "page": 1
+    "total": 42,
+    "page": 1,
+    "per_page": 25
   }
-}`}</code>
+}
+
+# Create a work order
+curl -X POST "${BASE_URL}/work-orders" \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"title": "Install drops floor 3", "priority": "high"}'`}</code>
                 </pre>
               </CardContent>
             </Card>
@@ -122,7 +132,7 @@ curl -X GET "https://api.runwithatlas.com/v1/locations" \\
         </div>
       </section>
 
-      {/* Endpoints Preview */}
+      {/* Endpoints */}
       <section className="py-16 md:py-24">
         <div className="container px-4 md:px-6">
           <div className="max-w-4xl mx-auto">
@@ -130,7 +140,7 @@ curl -X GET "https://api.runwithatlas.com/v1/locations" \\
               <h2 className="text-3xl font-bold text-foreground mb-4">
                 Available <span className="text-gradient-gold">Endpoints</span>
               </h2>
-              <p className="text-muted-foreground">A preview of the API endpoints available.</p>
+              <p className="text-muted-foreground">All endpoints require a valid API key in the Authorization header.</p>
             </div>
 
             <Card className="border-primary/20">
@@ -138,10 +148,7 @@ curl -X GET "https://api.runwithatlas.com/v1/locations" \\
                 <div className="divide-y">
                   {endpoints.map((endpoint, i) => (
                     <div key={i} className="flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors">
-                      <Badge 
-                        variant="outline" 
-                        className={endpoint.method === "GET" ? "border-green-500 text-green-600" : "border-blue-500 text-blue-600"}
-                      >
+                      <Badge variant="outline" className={endpoint.method === "GET" ? "border-green-500 text-green-600" : "border-blue-500 text-blue-600"}>
                         {endpoint.method}
                       </Badge>
                       <code className="text-sm font-mono text-foreground flex-1">{endpoint.path}</code>
@@ -152,11 +159,9 @@ curl -X GET "https://api.runwithatlas.com/v1/locations" \\
               </CardContent>
             </Card>
 
-            <div className="text-center mt-8">
-              <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
-                View All Endpoints
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
+            <div className="mt-8 rounded-lg border border-border bg-muted/50 p-4">
+              <h4 className="text-sm font-medium mb-2">Base URL</h4>
+              <code className="text-sm text-primary break-all">{BASE_URL}</code>
             </div>
           </div>
         </div>
@@ -169,11 +174,13 @@ curl -X GET "https://api.runwithatlas.com/v1/locations" \\
             Ready to <span className="text-gradient-gold">Build</span>?
           </h2>
           <p className="text-white/70 max-w-xl mx-auto mb-6">
-            Get your API key and start integrating Trade Atlas into your workflow.
+            Generate your API key in Settings and start integrating Trade Atlas into your workflow.
           </p>
-          <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_20px_rgba(212,175,55,0.3)]">
-            Get API Key
-            <ArrowRight className="ml-2 h-4 w-4" />
+          <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_20px_rgba(212,175,55,0.3)]" asChild>
+            <a href="/settings">
+              Get API Key
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </a>
           </Button>
         </div>
       </section>
