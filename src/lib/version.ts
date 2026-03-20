@@ -1,4 +1,4 @@
-export const APP_VERSION = "1.10.10";
+export const APP_VERSION = "1.11.0";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,20 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "1.11.0",
+    date: "2026-03-20",
+    changes: [
+      "Batch drop point placement session — place multiple points on the floor plan and submit as a single service request",
+      "Draft markers shown as grey dashed circles on floor plan before submission",
+      "Session panel with draft count, point list, and remove/submit controls",
+      "Editable proposals — clients can add/remove points on pending requests until accepted",
+      "New service_request_drop_points junction table linking multiple drop points to one request",
+      "Added 'New Requests' KPI card to admin dashboard showing pending service request count",
+      "Recent Requests sidebar panel on dashboard with quick links to pending requests",
+      "Clickable MetricCard component with navigation support",
+    ]
+  },
   {
     version: "1.10.10",
     date: "2026-03-20",
