@@ -7,6 +7,7 @@ import {
   Building2, 
   Activity, 
   FileText, 
+  MessageSquarePlus,
   TrendingUp, 
   TrendingDown,
   AlertTriangle, 
