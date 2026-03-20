@@ -29,7 +29,7 @@ const ResolvedAnnotationCanvas: React.FC<{ photo: PhotoItem } & Omit<React.Compo
 
 // Wrapper that resolves signed URL before passing to PanoramicPhotoViewer
 const ResolvedPanoViewer: React.FC<{ photo: PhotoItem } & Omit<React.ComponentProps<typeof PanoramicPhotoViewer>, 'photoUrl'>> = ({ photo, ...rest }) => {
-  const url = useSignedUrl(photo.storage_bucket || 'floor-plans', photo.photo_url);
+  const url = useSignedUrl(photo.storage_bucket || 'room-views', photo.photo_url);
   if (!url) return null;
   return <PanoramicPhotoViewer photoUrl={url} {...rest} />;
 };
