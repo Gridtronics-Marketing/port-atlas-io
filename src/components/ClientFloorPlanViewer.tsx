@@ -118,17 +118,18 @@ export const ClientFloorPlanViewer = ({ locationId }: ClientFloorPlanViewerProps
   );
 
   const getStatusColor = (status: string | null) => {
-    switch (status) {
-      case "Planned": return "bg-red-500";
-      case "Roughed In": return "bg-orange-500";
-      case "Finished": return "bg-green-500";
-      case "Tested": return "bg-green-500";
-      case "Proposed": return "bg-gray-400";
-      case "Active":
-      case "Installed": return "bg-green-500";
-      case "Pending": return "bg-yellow-500";
-      case "Issue": return "bg-red-500";
-      default: return "bg-blue-500";
+    switch (status?.toLowerCase()) {
+      case "planned": return "bg-red-500 border-red-600";
+      case "roughed_in": return "bg-orange-500 border-orange-600";
+      case "finished": return "bg-green-500 border-green-600";
+      case "tested": return "bg-green-500 border-green-600";
+      case "proposed": return "bg-gray-400 border-gray-500";
+      case "active":
+      case "installed": return "bg-green-500 border-green-600";
+      case "inactive":
+      case "issue": return "bg-red-500 border-red-600";
+      case "pending": return "bg-yellow-500 border-yellow-600";
+      default: return "bg-red-500 border-red-600";
     }
   };
 
