@@ -171,6 +171,7 @@ export const RoomViewModal: React.FC<RoomViewModalProps> = ({
           description: `${isPanoramic ? 'Panoramic ' : ''}${roomView.room_name || 'Room View'}`,
           employee_id: employee?.id || null,
           photo_type: isPanoramic ? 'panoramic' : 'standard',
+          storage_bucket: 'room-views',
         });
         toast({
           title: 'Success',
