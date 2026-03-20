@@ -224,7 +224,7 @@ export const EnhancedPhotoGallery: React.FC<EnhancedPhotoGalleryProps> = ({
                   className="aspect-square rounded-lg overflow-hidden border hover:ring-2 hover:ring-primary transition-all"
                 >
                   <SignedImage
-                    bucket={photo.storage_bucket || 'floor-plans'}
+                    bucket={resolvePhotoBucket(photo.storage_bucket, photo.photo_url)}
                     path={photo.photo_url}
                     alt={photo.description || "Photo"}
                     className="w-full h-full object-cover"
