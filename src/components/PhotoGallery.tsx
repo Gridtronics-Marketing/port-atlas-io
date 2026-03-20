@@ -262,7 +262,7 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = ({
                     className="h-full"
                   />
                 ) : (
-                  <SignedImage bucket={expandedPhoto.storage_bucket || 'floor-plans'} path={expandedPhoto.photo_url} alt={expandedPhoto.description || "Photo"} className="w-full h-auto" />
+                  <SignedImage bucket={resolvePhotoBucket(expandedPhoto.storage_bucket, expandedPhoto.photo_url)} path={expandedPhoto.photo_url} alt={expandedPhoto.description || "Photo"} className="w-full h-auto" />
                 )}
               </div>
               

@@ -217,7 +217,7 @@ export const ClientRoomViewList = ({ locationId }: ClientRoomViewListProps) => {
                     {photos.map((photo) => (
                       <div key={photo.id} className="rounded-lg border overflow-hidden bg-card">
                         <SignedImage
-                          bucket={photo.storage_bucket || 'floor-plans'}
+                          bucket={resolvePhotoBucket(photo.storage_bucket, photo.photo_url)}
                           path={photo.photo_url}
                           alt={photo.description || "Room photo"}
                           className="w-full aspect-video object-cover"

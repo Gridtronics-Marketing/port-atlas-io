@@ -270,7 +270,7 @@ export const MultiAnglePhotoViewer: React.FC<MultiAnglePhotoViewerProps> = ({
           </DialogHeader>
           {expandedPhoto && (
             <SignedImage
-              bucket={expandedPhoto.storage_bucket || 'floor-plans'}
+              bucket={resolvePhotoBucket(expandedPhoto.storage_bucket, expandedPhoto.photo_url)}
               path={expandedPhoto.photo_url}
               alt={`View at ${expandedPhoto.angle}°`}
               className="w-full h-auto max-h-[85vh] object-contain rounded-lg"

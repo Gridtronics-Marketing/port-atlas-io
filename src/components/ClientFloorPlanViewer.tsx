@@ -382,11 +382,11 @@ const RoomViewDetailDialog = ({
                   {photos.map((photo) => (
                     <div key={photo.id} className="space-y-1">
                       <SignedImage
-                        bucket={photo.storage_bucket || 'floor-plans'}
+                        bucket={resolvePhotoBucket(photo.storage_bucket, photo.photo_url)}
                         path={photo.photo_url}
                         alt={photo.description || "Room photo"}
                         className="w-full h-40 object-cover rounded-lg border cursor-pointer hover:opacity-90 transition-opacity"
-                        onClick={() => setLightboxItem({ bucket: photo.storage_bucket || 'floor-plans', path: photo.photo_url })}
+                        onClick={() => setLightboxItem({ bucket: resolvePhotoBucket(photo.storage_bucket, photo.photo_url), path: photo.photo_url })}
                       />
                       {photo.description && (
                         <p className="text-xs text-muted-foreground truncate">{photo.description}</p>

@@ -45,7 +45,11 @@ export const useRoomViewPhotos = (roomViewId?: string) => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setPhotos((data || []) as RoomViewPhoto[]);
+      const normalized = (data || []).map((p: any) => ({
+        ...p,
+        storage_bucket: resolvePhotoBucket(p.storage_bucket, p.photo_url),
+      }));
+      setPhotos(normalized as RoomViewPhoto[]);
     } catch (error) {
       console.error('Error fetching room view photos:', error);
       toast({

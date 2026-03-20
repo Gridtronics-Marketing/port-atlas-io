@@ -415,7 +415,7 @@ export const EnhancedPhotoGallery: React.FC<EnhancedPhotoGalleryProps> = ({
                 
                 <div className="relative w-full group">
                   <SignedImage
-                    bucket={expandedPhoto.storage_bucket || 'floor-plans'}
+                    bucket={resolvePhotoBucket(expandedPhoto.storage_bucket, expandedPhoto.photo_url)}
                     path={expandedPhoto.photo_url}
                     alt={expandedPhoto.description || "Photo"}
                     className="w-full h-auto rounded-lg"

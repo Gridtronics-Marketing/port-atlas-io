@@ -204,7 +204,7 @@ export const ClientDropPointDetail = ({ dropPoint, open, onClose }: ClientDropPo
                   {photos.map((photo) => (
                     <div key={photo.id} className="space-y-2">
                       <SignedImage
-                        bucket={photo.storage_bucket || "floor-plans"}
+                        bucket={resolvePhotoBucket(photo.storage_bucket, photo.photo_url)}
                         path={photo.photo_url}
                         alt={photo.description || "Drop point photo"}
                         className="w-full h-32 object-cover rounded-lg"
