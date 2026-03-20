@@ -141,7 +141,15 @@ const Index = () => {
         )}
 
         {/* KPI Metrics Row */}
-        <div className="grid-metrics">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+          <MetricCard
+            title="New Requests"
+            value={pendingRequests}
+            icon={MessageSquarePlus}
+            subtitle={`${newRequestsToday} today`}
+            variant={pendingRequests > 0 ? "warning" : "default"}
+            onClick={() => navigate('/service-requests')}
+          />
           <MetricCard
             title="Active Sites"
             value={activeLocations}
