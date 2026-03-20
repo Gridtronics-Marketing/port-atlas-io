@@ -28,6 +28,7 @@ const MetricCard = React.forwardRef<HTMLDivElement, MetricCardProps>(
       trend,
       variant = "default",
       size = "md",
+      onClick,
       ...props
     },
     ref
