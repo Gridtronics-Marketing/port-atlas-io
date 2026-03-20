@@ -350,8 +350,9 @@ export const AddRoomViewModal = ({
         ) : capturedPhoto ? (
           <div className="space-y-4">
             <div className="relative">
-              <img
-                src={capturedPhoto}
+              <SignedImage
+                bucket="room-views"
+                path={capturedPhoto}
                 alt="Captured room view"
                 className="w-full h-48 object-cover rounded-lg border"
               />
