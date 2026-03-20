@@ -36,7 +36,7 @@ import { PhotoAnnotationCanvas } from './PhotoAnnotationCanvas';
 
 // Wrapper that resolves signed URL before passing to PhotoAnnotationCanvas
 const ResolvedPhotoAnnotationCanvas: React.FC<{ expandedPhoto: PhotoItem } & Omit<React.ComponentProps<typeof PhotoAnnotationCanvas>, 'photoUrl'>> = ({ expandedPhoto, ...rest }) => {
-  const resolvedUrl = useSignedUrl(expandedPhoto.storage_bucket || 'floor-plans', expandedPhoto.photo_url);
+  const resolvedUrl = useSignedUrl(resolvePhotoBucket(expandedPhoto.storage_bucket, expandedPhoto.photo_url), expandedPhoto.photo_url);
   if (!resolvedUrl) return null;
   return <PhotoAnnotationCanvas photoUrl={resolvedUrl} {...rest} />;
 };
