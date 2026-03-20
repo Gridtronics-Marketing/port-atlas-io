@@ -40,12 +40,14 @@ import ClientPortalDashboard from "@/pages/ClientPortalDashboard";
 
 const Index = () => {
   const { isClientPortalUser } = useOrganization();
+  const navigate = useNavigate();
   const [showAddLocation, setShowAddLocation] = useState(false);
   const { locations } = useLocations();
   const { workOrders } = useWorkOrders();
   const { clients } = useClients();
   const { projects } = useProjects();
   const { dropPoints } = useDropPoints();
+  const { serviceRequests } = useServiceRequests();
   const { toast } = useToast();
   
   // If client portal user, show client dashboard
