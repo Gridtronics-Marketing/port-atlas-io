@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Trash2, User, Calendar, FileText, Maximize2, Pen } from 'lucide-react';
 import { SignedImage } from '@/components/ui/signed-image';
 import { useSignedUrl } from '@/hooks/useSignedUrl';
+import { resolvePhotoBucket } from '@/lib/photo-bucket-resolver';
 import {
   AlertDialog,
   AlertDialogAction,
