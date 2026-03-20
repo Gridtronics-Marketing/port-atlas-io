@@ -236,7 +236,7 @@ export const MultiAnglePhotoViewer: React.FC<MultiAnglePhotoViewerProps> = ({
                   }}
                 >
                     <SignedImage
-                      bucket={photo.storage_bucket || 'floor-plans'}
+                      bucket={resolvePhotoBucket(photo.storage_bucket, photo.photo_url)}
                       path={photo.photo_url}
                       alt={`View at ${photo.angle}°`}
                       className="w-full h-full object-cover"
