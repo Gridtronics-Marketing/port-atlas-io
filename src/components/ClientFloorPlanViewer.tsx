@@ -118,17 +118,18 @@ export const ClientFloorPlanViewer = ({ locationId }: ClientFloorPlanViewerProps
   );
 
   const getStatusColor = (status: string | null) => {
-    switch (status) {
-      case "Planned": return "bg-red-500";
-      case "Roughed In": return "bg-orange-500";
-      case "Finished": return "bg-green-500";
-      case "Tested": return "bg-green-500";
-      case "Proposed": return "bg-gray-400";
-      case "Active":
-      case "Installed": return "bg-green-500";
-      case "Pending": return "bg-yellow-500";
-      case "Issue": return "bg-red-500";
-      default: return "bg-blue-500";
+    switch (status?.toLowerCase()) {
+      case "planned": return "bg-red-500 border-red-600";
+      case "roughed_in": return "bg-orange-500 border-orange-600";
+      case "finished": return "bg-green-500 border-green-600";
+      case "tested": return "bg-green-500 border-green-600";
+      case "proposed": return "bg-gray-400 border-gray-500";
+      case "active":
+      case "installed": return "bg-green-500 border-green-600";
+      case "inactive":
+      case "issue": return "bg-red-500 border-red-600";
+      case "pending": return "bg-yellow-500 border-yellow-600";
+      default: return "bg-red-500 border-red-600";
     }
   };
 
@@ -221,7 +222,7 @@ export const ClientFloorPlanViewer = ({ locationId }: ClientFloorPlanViewerProps
                 <Tooltip key={dp.id}>
                   <TooltipTrigger asChild>
                     <div
-                      className={`absolute w-4 h-4 rounded-full ${getStatusColor(dp.status)} border-2 border-white shadow-md cursor-pointer hover:scale-150 transition-transform z-10`}
+                      className={`absolute w-4 h-4 rounded-full ${getStatusColor(dp.status)} border-2 shadow-md cursor-pointer hover:scale-150 transition-transform z-10 flex items-center justify-center`}
                       style={{
                         left: `${dp.x_coordinate}%`,
                         top: `${dp.y_coordinate}%`,
@@ -231,7 +232,11 @@ export const ClientFloorPlanViewer = ({ locationId }: ClientFloorPlanViewerProps
                         e.stopPropagation();
                         if (!placementMode) setSelectedDropPoint(dp);
                       }}
-                    />
+                    >
+                      {dp.status?.toLowerCase() === "tested" && (
+                        <span className="text-white text-[8px] font-bold leading-none">✓</span>
+                      )}
+                    </div>
                   </TooltipTrigger>
                   <TooltipContent>
                     <p className="font-medium">{dp.label || "Drop Point"}</p>
