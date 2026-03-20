@@ -1,24 +1,33 @@
 
 
-## Update Version to 1.10.10
+# Fix Client Portal Floor Plan Colors to Match Admin
 
-Bump the version and add a changelog entry for the room view photo grey box fix.
+## Problem
+The client portal's `getStatusColor` in `ClientFloorPlanViewer.tsx` checks for **Title Case** statuses (`"Planned"`, `"Roughed In"`) but the database stores **lowercase with underscores** (`planned`, `roughed_in`). No cases match, so every marker falls through to `default: return "bg-blue-500"` — making them all blue.
 
-### File: `src/lib/version.ts`
+## Fix
 
-**Line 1**: Change `APP_VERSION` from `"1.10.9"` to `"1.10.10"`
+### File: `src/components/ClientFloorPlanViewer.tsx`
 
-**Lines 9-23**: Add new version entry at the top of `VERSION_HISTORY`:
+Replace the `getStatusColor` function (lines 120-133) to match the admin's `getDropPointColor` from `InteractiveFloorPlan.tsx`, using lowercase DB values and including border colors:
+
 ```typescript
-{
-  version: "1.10.10",
-  date: "2026-03-20",
-  changes: [
-    "Fixed grey box on room view photo upload preview by using SignedImage component",
-    "Fixed room view photos tab showing grey boxes due to incorrect storage bucket metadata",
-    "Added photo-bucket-resolver utility to automatically route room view photos to correct storage bucket",
-    "Database migration to repair existing room view photo records with wrong bucket reference",
-  ]
-},
+const getStatusColor = (status: string | null) => {
+  switch (status?.toLowerCase()) {
+    case "planned": return "bg-red-500 border-red-600";
+    case "roughed_in": return "bg-orange-500 border-orange-600";
+    case "finished": return "bg-green-500 border-green-600";
+    case "tested": return "bg-green-500 border-green-600";
+    case "proposed": return "bg-gray-400 border-gray-500";
+    case "active":
+    case "installed": return "bg-green-500 border-green-600";
+    case "inactive":
+    case "issue": return "bg-red-500 border-red-600";
+    case "pending": return "bg-yellow-500 border-yellow-600";
+    default: return "bg-red-500 border-red-600";
+  }
+};
 ```
+
+Also add the tested checkmark overlay to the drop point marker div (around line 225) to match admin behavior — show a `✓` when `dp.status === 'tested'`.
 
