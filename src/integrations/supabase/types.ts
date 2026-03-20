@@ -4977,6 +4977,42 @@ export type Database = {
           },
         ]
       }
+      service_request_drop_points: {
+        Row: {
+          created_at: string | null
+          drop_point_id: string
+          id: string
+          service_request_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          drop_point_id: string
+          id?: string
+          service_request_id: string
+        }
+        Update: {
+          created_at?: string | null
+          drop_point_id?: string
+          id?: string
+          service_request_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_request_drop_points_drop_point_id_fkey"
+            columns: ["drop_point_id"]
+            isOneToOne: false
+            referencedRelation: "drop_points"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_request_drop_points_service_request_id_fkey"
+            columns: ["service_request_id"]
+            isOneToOne: false
+            referencedRelation: "service_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       service_requests: {
         Row: {
           created_at: string | null

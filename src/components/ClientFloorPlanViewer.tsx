@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { FileImage, Layers, Camera, Plus, MousePointer2, ImageIcon } from "lucide-react";
+import { FileImage, Layers, Camera, Plus, MousePointer2, ImageIcon, Edit2 } from "lucide-react";
 import { DropPointColorLegend } from "@/components/DropPointColorLegend";
 import { useRoomViewPhotos } from "@/hooks/useRoomViewPhotos";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -9,7 +9,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { ClientDropPointDetail } from "@/components/ClientDropPointDetail";
-import { ClientDropPointPlacementDialog } from "@/components/ClientDropPointPlacementDialog";
+import { ClientDropPointPlacementSession, DraftDropPoint } from "@/components/ClientDropPointPlacementSession";
+import { useEditableProposal } from "@/hooks/useEditableProposal";
 import { getFloorPlanUrls, getFloorPlanMetadata } from "@/lib/storage-utils";
 import { SignedImage } from "@/components/ui/signed-image";
 import { useSignedUrl } from "@/hooks/useSignedUrl";
@@ -52,12 +53,18 @@ export const ClientFloorPlanViewer = ({ locationId }: ClientFloorPlanViewerProps
   const [roomViewMarkers, setRoomViewMarkers] = useState<RoomViewMarker[]>([]);
   const [loading, setLoading] = useState(true);
   const [floors, setFloors] = useState<number[]>([]);
-  
+
   // Interactive state
   const [selectedDropPoint, setSelectedDropPoint] = useState<DropPoint | null>(null);
   const [selectedRoomView, setSelectedRoomView] = useState<RoomViewMarker | null>(null);
-  const [placementMode, setPlacementMode] = useState(false);
-  const [placementCoords, setPlacementCoords] = useState<{ x: number; y: number } | null>(null);
+
+  // Session-based placement state
+  const [sessionActive, setSessionActive] = useState(false);
+  const [drafts, setDrafts] = useState<DraftDropPoint[]>([]);
+  const [pendingCoords, setPendingCoords] = useState<{ x: number; y: number } | null>(null);
+
+  // Editable proposals
+  const { proposals, refetch: refetchProposals } = useEditableProposal(locationId);
 
   const fetchData = useCallback(async () => {
     try {
@@ -73,14 +80,13 @@ export const ClientFloorPlanViewer = ({ locationId }: ClientFloorPlanViewerProps
         const names: Record<number, string> = {};
         const floorNumbers = Object.keys(urls).map(Number).sort((a, b) => a - b);
 
-        // Extract custom floor names from metadata
         for (const floorNum of floorNumbers) {
           const meta = getFloorPlanMetadata(floorPlanFiles, floorNum.toString());
           if (meta?.name) {
             names[floorNum] = meta.name;
           }
         }
-        
+
         setFloors(floorNumbers);
         setFloorPlanUrls(urls);
         setFloorNames(names);
@@ -116,6 +122,7 @@ export const ClientFloorPlanViewer = ({ locationId }: ClientFloorPlanViewerProps
   const currentRoomViews = roomViewMarkers.filter(
     rv => rv.x_coordinate && rv.y_coordinate && rv.floor === selectedFloor
   );
+  const currentDrafts = drafts.filter(d => d.floor === selectedFloor);
 
   const getStatusColor = (status: string | null) => {
     switch (status?.toLowerCase()) {
@@ -134,11 +141,21 @@ export const ClientFloorPlanViewer = ({ locationId }: ClientFloorPlanViewerProps
   };
 
   const handleFloorPlanClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!placementMode) return;
+    if (!sessionActive) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
-    setPlacementCoords({ x, y });
+    setPendingCoords({ x, y });
+  };
+
+  const handleSessionEnd = () => {
+    setSessionActive(false);
+    setPendingCoords(null);
+  };
+
+  const handleDataChange = () => {
+    fetchData();
+    refetchProposals();
   };
 
   if (loading) {
@@ -185,29 +202,55 @@ export const ClientFloorPlanViewer = ({ locationId }: ClientFloorPlanViewerProps
           )}
         </div>
 
-        <Button
-          variant={placementMode ? "default" : "outline"}
-          size="sm"
-          onClick={() => setPlacementMode(!placementMode)}
-        >
-          {placementMode ? (
-            <><MousePointer2 className="h-4 w-4 mr-1" />Click to Place</>
-          ) : (
-            <><Plus className="h-4 w-4 mr-1" />Place New Drop Point</>
-          )}
-        </Button>
+        {!sessionActive ? (
+          <Button variant="outline" size="sm" onClick={() => setSessionActive(true)}>
+            <Plus className="h-4 w-4 mr-1" />Place New Drop Points
+          </Button>
+        ) : (
+          <div className="text-sm font-medium text-primary flex items-center gap-1">
+            <MousePointer2 className="h-4 w-4" /> Click floor plan to add points
+          </div>
+        )}
       </div>
 
-      {placementMode && (
-        <div className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">
-          Click on the floor plan to place a proposed drop point. It will appear as a grey marker until approved.
+      {/* Session banner */}
+      {sessionActive && drafts.length === 0 && (
+        <div className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg flex items-center justify-between">
+          <span>Click on the floor plan to place proposed drop points. Add as many as you need, then submit once.</span>
+          <Button variant="ghost" size="sm" onClick={handleSessionEnd}>Cancel</Button>
+        </div>
+      )}
+
+      {/* Session panel with drafts */}
+      <ClientDropPointPlacementSession
+        locationId={locationId}
+        selectedFloor={selectedFloor}
+        active={sessionActive}
+        onEnd={handleSessionEnd}
+        onDataChange={handleDataChange}
+        drafts={drafts}
+        setDrafts={setDrafts}
+        pendingCoords={pendingCoords}
+        clearPendingCoords={() => setPendingCoords(null)}
+      />
+
+      {/* Pending editable proposals */}
+      {proposals.length > 0 && !sessionActive && (
+        <div className="border rounded-lg p-3 bg-muted/20 space-y-2">
+          <p className="text-sm font-medium">Pending Proposals</p>
+          {proposals.map((p) => (
+            <div key={p.id} className="flex items-center justify-between text-sm">
+              <span>{p.title} ({p.dropPoints.length} points)</span>
+              <Badge variant="outline" className="text-xs">Editable</Badge>
+            </div>
+          ))}
         </div>
       )}
 
       {/* Floor plan with overlays */}
       <TooltipProvider>
         <div
-          className={`relative border rounded-lg overflow-hidden bg-muted/20 ${placementMode ? 'cursor-crosshair' : ''}`}
+          className={`relative border rounded-lg overflow-hidden bg-muted/20 ${sessionActive ? 'cursor-crosshair' : ''}`}
           onClick={handleFloorPlanClick}
         >
           {currentFloorPlanUrl ? (
@@ -230,7 +273,7 @@ export const ClientFloorPlanViewer = ({ locationId }: ClientFloorPlanViewerProps
                       }}
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (!placementMode) setSelectedDropPoint(dp);
+                        if (!sessionActive) setSelectedDropPoint(dp);
                       }}
                     >
                       {dp.status?.toLowerCase() === "tested" && (
@@ -241,6 +284,27 @@ export const ClientFloorPlanViewer = ({ locationId }: ClientFloorPlanViewerProps
                   <TooltipContent>
                     <p className="font-medium">{dp.label || "Drop Point"}</p>
                     <p className="text-xs">{dp.point_type || "Unknown"} • {dp.status || "Unknown"}</p>
+                  </TooltipContent>
+                </Tooltip>
+              ))}
+              {/* Draft ghost markers */}
+              {currentDrafts.map((d) => (
+                <Tooltip key={d.id}>
+                  <TooltipTrigger asChild>
+                    <div
+                      className="absolute w-5 h-5 rounded-full border-2 border-dashed border-gray-400 bg-gray-300/50 shadow-sm z-20 flex items-center justify-center"
+                      style={{
+                        left: `${d.x}%`,
+                        top: `${d.y}%`,
+                        transform: "translate(-50%, -50%)",
+                      }}
+                    >
+                      <span className="text-gray-600 text-[7px] font-bold">+</span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="font-medium">{d.label} (draft)</p>
+                    <p className="text-xs">{d.pointType}</p>
                   </TooltipContent>
                 </Tooltip>
               ))}
@@ -257,7 +321,7 @@ export const ClientFloorPlanViewer = ({ locationId }: ClientFloorPlanViewerProps
                       }}
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (!placementMode) setSelectedRoomView(rv);
+                        if (!sessionActive) setSelectedRoomView(rv);
                       }}
                     >
                       <Camera className="h-3 w-3 text-white" />
@@ -295,23 +359,6 @@ export const ClientFloorPlanViewer = ({ locationId }: ClientFloorPlanViewerProps
           onClose={() => setSelectedRoomView(null)}
         />
       )}
-
-      {/* Drop Point Placement Dialog */}
-      <ClientDropPointPlacementDialog
-        open={!!placementCoords}
-        onClose={() => {
-          setPlacementCoords(null);
-          setPlacementMode(false);
-        }}
-        locationId={locationId}
-        floor={selectedFloor}
-        coordinates={placementCoords}
-        onSuccess={() => {
-          setPlacementCoords(null);
-          setPlacementMode(false);
-          fetchData();
-        }}
-      />
     </div>
   );
 };
