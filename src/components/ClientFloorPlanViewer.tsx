@@ -13,6 +13,7 @@ import { ClientDropPointPlacementDialog } from "@/components/ClientDropPointPlac
 import { getFloorPlanUrls, getFloorPlanMetadata } from "@/lib/storage-utils";
 import { SignedImage } from "@/components/ui/signed-image";
 import { useSignedUrl } from "@/hooks/useSignedUrl";
+import { resolvePhotoBucket } from "@/lib/photo-bucket-resolver";
 
 interface DropPoint {
   id: string;
