@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Trash2, User, Calendar, FileText, MapPin, Tag, Filter, Maximize2, Pen } from 'lucide-react';
 import { SignedImage } from '@/components/ui/signed-image';
 import { useSignedUrl } from '@/hooks/useSignedUrl';
+import { resolvePhotoBucket } from '@/lib/photo-bucket-resolver';
 import {
   AlertDialog,
   AlertDialogAction,

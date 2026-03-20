@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Network, CheckCircle, Calendar, MapPin, Image } from "lucide-react";
 import { SignedImage } from "@/components/ui/signed-image";
+import { resolvePhotoBucket } from "@/lib/photo-bucket-resolver";
 import {
   Dialog,
   DialogContent,
