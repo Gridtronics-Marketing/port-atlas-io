@@ -14,6 +14,7 @@ interface MetricCardProps extends React.HTMLAttributes<HTMLDivElement> {
   };
   variant?: "default" | "primary" | "success" | "warning" | "destructive";
   size?: "sm" | "md" | "lg";
+  onClick?: () => void;
 }
 
 const MetricCard = React.forwardRef<HTMLDivElement, MetricCardProps>(
