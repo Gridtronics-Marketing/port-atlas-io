@@ -1,4 +1,4 @@
-export const APP_VERSION = "1.10.9";
+export const APP_VERSION = "1.10.10";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,16 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "1.10.10",
+    date: "2026-03-20",
+    changes: [
+      "Fixed grey box on room view photo upload preview by using SignedImage component",
+      "Fixed room view photos tab showing grey boxes due to incorrect storage bucket metadata",
+      "Added photo-bucket-resolver utility to automatically route room view photos to correct storage bucket",
+      "Database migration to repair existing room view photo records with wrong bucket reference",
+    ]
+  },
   {
     version: "1.10.9",
     date: "2026-03-18",
