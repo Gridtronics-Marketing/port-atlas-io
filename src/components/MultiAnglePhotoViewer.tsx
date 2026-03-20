@@ -186,7 +186,7 @@ export const MultiAnglePhotoViewer: React.FC<MultiAnglePhotoViewerProps> = ({
             {currentPhoto && (
               <div className="relative flex-1 w-full max-w-4xl flex items-center justify-center">
                 <SignedImage
-                  bucket={currentPhoto.storage_bucket || 'floor-plans'}
+                  bucket={resolvePhotoBucket(currentPhoto.storage_bucket, currentPhoto.photo_url)}
                   path={currentPhoto.photo_url}
                   alt={`View at ${currentPhoto.angle}°`}
                   className="max-w-full max-h-full object-contain rounded-lg shadow-lg cursor-zoom-in"
