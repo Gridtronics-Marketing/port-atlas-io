@@ -71,6 +71,17 @@ const Index = () => {
   const totalDropPoints = dropPoints.length;
   const completedDropPoints = dropPoints.filter(dp => dp.status === 'tested' || dp.status === 'finished').length;
 
+  // Service request metrics
+  const pendingRequests = serviceRequests.filter(sr => sr.status === 'pending').length;
+  const newRequestsToday = serviceRequests.filter(sr => {
+    const created = new Date(sr.created_at);
+    const today = new Date();
+    return created.toDateString() === today.toDateString();
+  }).length;
+  const recentPendingRequests = serviceRequests
+    .filter(sr => sr.status === 'pending')
+    .slice(0, 3);
+
   return (
     <div className="min-h-full bg-background">
       {/* Page Header */}
