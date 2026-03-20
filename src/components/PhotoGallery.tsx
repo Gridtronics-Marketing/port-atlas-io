@@ -36,7 +36,7 @@ const ResolvedPanoViewer: React.FC<{ photo: PhotoItem } & Omit<React.ComponentPr
 
 // Wrapper that resolves signed URL before passing to PhotoAnnotationViewer
 const ResolvedAnnotationViewer: React.FC<{ photo: PhotoItem } & Omit<React.ComponentProps<typeof PhotoAnnotationViewer>, 'photoUrl'>> = ({ photo, ...rest }) => {
-  const url = useSignedUrl(photo.storage_bucket || 'floor-plans', photo.photo_url);
+  const url = useSignedUrl(photo.storage_bucket || 'room-views', photo.photo_url);
   if (!url) return null;
   return <PhotoAnnotationViewer photoUrl={url} {...rest} />;
 };
