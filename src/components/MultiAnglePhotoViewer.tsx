@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { X, ChevronLeft, ChevronRight, RotateCcw, Grid3X3, Maximize2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { SignedImage } from '@/components/ui/signed-image';
+import { resolvePhotoBucket } from '@/lib/photo-bucket-resolver';
 
 interface AnglePhoto {
   id: string;
@@ -186,7 +187,7 @@ export const MultiAnglePhotoViewer: React.FC<MultiAnglePhotoViewerProps> = ({
             {currentPhoto && (
               <div className="relative flex-1 w-full max-w-4xl flex items-center justify-center">
                 <SignedImage
-                  bucket={currentPhoto.storage_bucket || 'floor-plans'}
+                  bucket={resolvePhotoBucket(currentPhoto.storage_bucket, currentPhoto.photo_url)}
                   path={currentPhoto.photo_url}
                   alt={`View at ${currentPhoto.angle}°`}
                   className="max-w-full max-h-full object-contain rounded-lg shadow-lg cursor-zoom-in"
@@ -236,7 +237,7 @@ export const MultiAnglePhotoViewer: React.FC<MultiAnglePhotoViewerProps> = ({
                   }}
                 >
                     <SignedImage
-                      bucket={photo.storage_bucket || 'floor-plans'}
+                      bucket={resolvePhotoBucket(photo.storage_bucket, photo.photo_url)}
                       path={photo.photo_url}
                       alt={`View at ${photo.angle}°`}
                       className="w-full h-full object-cover"
@@ -270,7 +271,7 @@ export const MultiAnglePhotoViewer: React.FC<MultiAnglePhotoViewerProps> = ({
           </DialogHeader>
           {expandedPhoto && (
             <SignedImage
-              bucket={expandedPhoto.storage_bucket || 'floor-plans'}
+              bucket={resolvePhotoBucket(expandedPhoto.storage_bucket, expandedPhoto.photo_url)}
               path={expandedPhoto.photo_url}
               alt={`View at ${expandedPhoto.angle}°`}
               className="w-full h-auto max-h-[85vh] object-contain rounded-lg"

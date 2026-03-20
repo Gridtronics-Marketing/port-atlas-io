@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Camera, Search, Maximize2, ImageIcon } from "lucide-react";
 import { SignedImage } from "@/components/ui/signed-image";
+import { resolvePhotoBucket } from "@/lib/photo-bucket-resolver";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -217,7 +218,7 @@ export const ClientRoomViewList = ({ locationId }: ClientRoomViewListProps) => {
                     {photos.map((photo) => (
                       <div key={photo.id} className="rounded-lg border overflow-hidden bg-card">
                         <SignedImage
-                          bucket={photo.storage_bucket || 'floor-plans'}
+                          bucket={resolvePhotoBucket(photo.storage_bucket, photo.photo_url)}
                           path={photo.photo_url}
                           alt={photo.description || "Room photo"}
                           className="w-full aspect-video object-cover"

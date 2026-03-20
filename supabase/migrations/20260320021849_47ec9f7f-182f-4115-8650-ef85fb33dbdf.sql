@@ -1,0 +1,1 @@
+UPDATE room_view_photos SET storage_bucket = 'room-views' WHERE storage_bucket = 'floor-plans' AND photo_url LIKE 'photos/room_view-%';

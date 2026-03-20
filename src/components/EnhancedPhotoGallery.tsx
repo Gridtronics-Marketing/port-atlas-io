@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Trash2, User, Calendar, FileText, MapPin, Tag, Filter, Maximize2, Pen } from 'lucide-react';
 import { SignedImage } from '@/components/ui/signed-image';
 import { useSignedUrl } from '@/hooks/useSignedUrl';
+import { resolvePhotoBucket } from '@/lib/photo-bucket-resolver';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,14 +37,14 @@ import { PhotoAnnotationCanvas } from './PhotoAnnotationCanvas';
 
 // Wrapper that resolves signed URL before passing to PhotoAnnotationCanvas
 const ResolvedPhotoAnnotationCanvas: React.FC<{ expandedPhoto: PhotoItem } & Omit<React.ComponentProps<typeof PhotoAnnotationCanvas>, 'photoUrl'>> = ({ expandedPhoto, ...rest }) => {
-  const resolvedUrl = useSignedUrl(expandedPhoto.storage_bucket || 'floor-plans', expandedPhoto.photo_url);
+  const resolvedUrl = useSignedUrl(resolvePhotoBucket(expandedPhoto.storage_bucket, expandedPhoto.photo_url), expandedPhoto.photo_url);
   if (!resolvedUrl) return null;
   return <PhotoAnnotationCanvas photoUrl={resolvedUrl} {...rest} />;
 };
 
 // Wrapper that resolves signed URL before passing to PanoramicPhotoViewer
 const ResolvedPanoramicViewer: React.FC<{ expandedPhoto: PhotoItem } & Omit<React.ComponentProps<typeof PanoramicPhotoViewer>, 'photoUrl'>> = ({ expandedPhoto, ...rest }) => {
-  const resolvedUrl = useSignedUrl(expandedPhoto.storage_bucket || 'floor-plans', expandedPhoto.photo_url);
+  const resolvedUrl = useSignedUrl(resolvePhotoBucket(expandedPhoto.storage_bucket, expandedPhoto.photo_url), expandedPhoto.photo_url);
   if (!resolvedUrl) return null;
   return <PanoramicPhotoViewer photoUrl={resolvedUrl} {...rest} />;
 };
@@ -224,7 +225,7 @@ export const EnhancedPhotoGallery: React.FC<EnhancedPhotoGalleryProps> = ({
                   className="aspect-square rounded-lg overflow-hidden border hover:ring-2 hover:ring-primary transition-all"
                 >
                   <SignedImage
-                    bucket={photo.storage_bucket || 'floor-plans'}
+                    bucket={resolvePhotoBucket(photo.storage_bucket, photo.photo_url)}
                     path={photo.photo_url}
                     alt={photo.description || "Photo"}
                     className="w-full h-full object-cover"
@@ -415,7 +416,7 @@ export const EnhancedPhotoGallery: React.FC<EnhancedPhotoGalleryProps> = ({
                 
                 <div className="relative w-full group">
                   <SignedImage
-                    bucket={expandedPhoto.storage_bucket || 'floor-plans'}
+                    bucket={resolvePhotoBucket(expandedPhoto.storage_bucket, expandedPhoto.photo_url)}
                     path={expandedPhoto.photo_url}
                     alt={expandedPhoto.description || "Photo"}
                     className="w-full h-auto rounded-lg"

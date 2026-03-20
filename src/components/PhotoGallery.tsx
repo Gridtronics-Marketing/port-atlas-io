@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Trash2, User, Calendar, FileText, Maximize2, Pen } from 'lucide-react';
 import { SignedImage } from '@/components/ui/signed-image';
 import { useSignedUrl } from '@/hooks/useSignedUrl';
+import { resolvePhotoBucket } from '@/lib/photo-bucket-resolver';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,7 +23,7 @@ import { PhotoAnnotationViewer } from './PhotoAnnotationViewer';
 
 // Wrapper that resolves signed URL before passing to PhotoAnnotationCanvas
 const ResolvedAnnotationCanvas: React.FC<{ photo: PhotoItem } & Omit<React.ComponentProps<typeof PhotoAnnotationCanvas>, 'photoUrl'>> = ({ photo, ...rest }) => {
-  const url = useSignedUrl(photo.storage_bucket || 'room-views', photo.photo_url);
+  const url = useSignedUrl(resolvePhotoBucket(photo.storage_bucket, photo.photo_url), photo.photo_url);
   if (!url) return null;
   return <PhotoAnnotationCanvas photoUrl={url} {...rest} />;
 };
@@ -261,7 +262,7 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = ({
                     className="h-full"
                   />
                 ) : (
-                  <SignedImage bucket={expandedPhoto.storage_bucket || 'floor-plans'} path={expandedPhoto.photo_url} alt={expandedPhoto.description || "Photo"} className="w-full h-auto" />
+                  <SignedImage bucket={resolvePhotoBucket(expandedPhoto.storage_bucket, expandedPhoto.photo_url)} path={expandedPhoto.photo_url} alt={expandedPhoto.description || "Photo"} className="w-full h-auto" />
                 )}
               </div>
               
