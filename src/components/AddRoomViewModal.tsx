@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Camera, Upload, X, Maximize2, RotateCcw } from 'lucide-react';
+import { SignedImage } from '@/components/ui/signed-image';
 import { usePhotoCapture } from '@/hooks/usePhotoCapture';
 import { useRoomViews } from '@/hooks/useRoomViews';
 import { useRoomViewPhotos } from '@/hooks/useRoomViewPhotos';
