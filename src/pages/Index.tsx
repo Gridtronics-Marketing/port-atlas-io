@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { 
   Plus, 
   MapPin, 
@@ -6,6 +7,7 @@ import {
   Building2, 
   Activity, 
   FileText, 
+  MessageSquarePlus,
   TrendingUp, 
   TrendingDown,
   AlertTriangle, 
@@ -32,17 +34,29 @@ import { useClients } from "@/hooks/useClients";
 import { useProjects } from "@/hooks/useProjects";
 import { useDropPoints } from "@/hooks/useDropPoints";
 import { useToast } from "@/hooks/use-toast";
+import { useServiceRequests } from "@/hooks/useServiceRequests";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import ClientPortalDashboard from "@/pages/ClientPortalDashboard";
 
+const formatTimeAgo = (dateStr: string) => {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
+};
+
 const Index = () => {
   const { isClientPortalUser } = useOrganization();
+  const navigate = useNavigate();
   const [showAddLocation, setShowAddLocation] = useState(false);
   const { locations } = useLocations();
   const { workOrders } = useWorkOrders();
   const { clients } = useClients();
   const { projects } = useProjects();
   const { dropPoints } = useDropPoints();
+  const { serviceRequests } = useServiceRequests();
   const { toast } = useToast();
   
   // If client portal user, show client dashboard
@@ -65,6 +79,17 @@ const Index = () => {
     Math.round((dropPoints.filter(dp => dp.status === 'tested' || dp.status === 'finished').length / dropPoints.length) * 100) : 0;
   const totalDropPoints = dropPoints.length;
   const completedDropPoints = dropPoints.filter(dp => dp.status === 'tested' || dp.status === 'finished').length;
+
+  // Service request metrics
+  const pendingRequests = serviceRequests.filter(sr => sr.status === 'pending').length;
+  const newRequestsToday = serviceRequests.filter(sr => {
+    const created = new Date(sr.created_at);
+    const today = new Date();
+    return created.toDateString() === today.toDateString();
+  }).length;
+  const recentPendingRequests = serviceRequests
+    .filter(sr => sr.status === 'pending')
+    .slice(0, 3);
 
   return (
     <div className="min-h-full bg-background">
@@ -125,7 +150,15 @@ const Index = () => {
         )}
 
         {/* KPI Metrics Row */}
-        <div className="grid-metrics">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+          <MetricCard
+            title="New Requests"
+            value={pendingRequests}
+            icon={MessageSquarePlus}
+            subtitle={`${newRequestsToday} today`}
+            variant={pendingRequests > 0 ? "warning" : "default"}
+            onClick={() => navigate('/service-requests')}
+          />
           <MetricCard
             title="Active Sites"
             value={activeLocations}
@@ -271,6 +304,55 @@ const Index = () => {
                   icon={Calendar}
                   label="Scheduling"
                 />
+              </CardContent>
+            </Card>
+
+            {/* Recent Requests */}
+            <Card className="shadow-card">
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-3">
+                  <div className="h-8 w-8 rounded-lg bg-warning/10 flex items-center justify-center">
+                    <MessageSquarePlus className="h-4 w-4 text-warning" />
+                  </div>
+                  <CardTitle className="text-base">Recent Requests</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {recentPendingRequests.length > 0 ? (
+                  recentPendingRequests.map((req) => (
+                    <div
+                      key={req.id}
+                      className="flex items-start justify-between gap-2 p-2.5 rounded-lg border bg-muted/30 hover:bg-muted/50 cursor-pointer transition-colors"
+                      onClick={() => navigate('/service-requests')}
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium truncate">{req.title}</p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {req.requesting_organization?.name || 'Unknown'}
+                        </p>
+                      </div>
+                      <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                        <Badge
+                          variant={req.priority === 'urgent' ? 'destructive' : 'secondary'}
+                          className="text-[10px] px-1.5 py-0"
+                        >
+                          {req.priority}
+                        </Badge>
+                        <span className="text-[10px] text-muted-foreground">
+                          {formatTimeAgo(req.created_at)}
+                        </span>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-4">No pending requests</p>
+                )}
+                <Button variant="outline" size="sm" className="w-full" asChild>
+                  <Link to="/service-requests">
+                    View All Requests
+                    <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
+                  </Link>
+                </Button>
               </CardContent>
             </Card>
           </div>

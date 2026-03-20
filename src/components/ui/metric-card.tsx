@@ -14,6 +14,7 @@ interface MetricCardProps extends React.HTMLAttributes<HTMLDivElement> {
   };
   variant?: "default" | "primary" | "success" | "warning" | "destructive";
   size?: "sm" | "md" | "lg";
+  onClick?: () => void;
 }
 
 const MetricCard = React.forwardRef<HTMLDivElement, MetricCardProps>(
@@ -27,6 +28,7 @@ const MetricCard = React.forwardRef<HTMLDivElement, MetricCardProps>(
       trend,
       variant = "default",
       size = "md",
+      onClick,
       ...props
     },
     ref
@@ -92,8 +94,10 @@ const MetricCard = React.forwardRef<HTMLDivElement, MetricCardProps>(
           "rounded-lg border shadow-card transition-card hover:shadow-card-hover",
           sizeStyles.padding,
           getVariantStyles(),
+          onClick && "cursor-pointer",
           className
         )}
+        onClick={onClick}
         {...props}
       >
         <div className="flex items-start justify-between gap-3">
