@@ -34,6 +34,7 @@ import { useClients } from "@/hooks/useClients";
 import { useProjects } from "@/hooks/useProjects";
 import { useDropPoints } from "@/hooks/useDropPoints";
 import { useToast } from "@/hooks/use-toast";
+import { useServiceRequests } from "@/hooks/useServiceRequests";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import ClientPortalDashboard from "@/pages/ClientPortalDashboard";
 
