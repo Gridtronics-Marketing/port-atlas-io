@@ -23,7 +23,7 @@ import { PhotoAnnotationViewer } from './PhotoAnnotationViewer';
 
 // Wrapper that resolves signed URL before passing to PhotoAnnotationCanvas
 const ResolvedAnnotationCanvas: React.FC<{ photo: PhotoItem } & Omit<React.ComponentProps<typeof PhotoAnnotationCanvas>, 'photoUrl'>> = ({ photo, ...rest }) => {
-  const url = useSignedUrl(photo.storage_bucket || 'room-views', photo.photo_url);
+  const url = useSignedUrl(resolvePhotoBucket(photo.storage_bucket, photo.photo_url), photo.photo_url);
   if (!url) return null;
   return <PhotoAnnotationCanvas photoUrl={url} {...rest} />;
 };
