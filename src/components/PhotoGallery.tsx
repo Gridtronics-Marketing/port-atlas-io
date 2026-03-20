@@ -22,21 +22,21 @@ import { PhotoAnnotationViewer } from './PhotoAnnotationViewer';
 
 // Wrapper that resolves signed URL before passing to PhotoAnnotationCanvas
 const ResolvedAnnotationCanvas: React.FC<{ photo: PhotoItem } & Omit<React.ComponentProps<typeof PhotoAnnotationCanvas>, 'photoUrl'>> = ({ photo, ...rest }) => {
-  const url = useSignedUrl(photo.storage_bucket || 'floor-plans', photo.photo_url);
+  const url = useSignedUrl(photo.storage_bucket || 'room-views', photo.photo_url);
   if (!url) return null;
   return <PhotoAnnotationCanvas photoUrl={url} {...rest} />;
 };
 
 // Wrapper that resolves signed URL before passing to PanoramicPhotoViewer
 const ResolvedPanoViewer: React.FC<{ photo: PhotoItem } & Omit<React.ComponentProps<typeof PanoramicPhotoViewer>, 'photoUrl'>> = ({ photo, ...rest }) => {
-  const url = useSignedUrl(photo.storage_bucket || 'floor-plans', photo.photo_url);
+  const url = useSignedUrl(photo.storage_bucket || 'room-views', photo.photo_url);
   if (!url) return null;
   return <PanoramicPhotoViewer photoUrl={url} {...rest} />;
 };
 
 // Wrapper that resolves signed URL before passing to PhotoAnnotationViewer
 const ResolvedAnnotationViewer: React.FC<{ photo: PhotoItem } & Omit<React.ComponentProps<typeof PhotoAnnotationViewer>, 'photoUrl'>> = ({ photo, ...rest }) => {
-  const url = useSignedUrl(photo.storage_bucket || 'floor-plans', photo.photo_url);
+  const url = useSignedUrl(photo.storage_bucket || 'room-views', photo.photo_url);
   if (!url) return null;
   return <PhotoAnnotationViewer photoUrl={url} {...rest} />;
 };
@@ -115,7 +115,7 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = ({
           >
           <div className="aspect-square rounded-lg overflow-hidden border">
             <SignedImage
-              bucket={photo.storage_bucket || 'floor-plans'}
+              bucket={photo.storage_bucket || 'room-views'}
               path={photo.photo_url}
               alt={photo.description || "Photo"}
               className="w-full h-full object-cover"
