@@ -94,8 +94,10 @@ const MetricCard = React.forwardRef<HTMLDivElement, MetricCardProps>(
           "rounded-lg border shadow-card transition-card hover:shadow-card-hover",
           sizeStyles.padding,
           getVariantStyles(),
+          onClick && "cursor-pointer",
           className
         )}
+        onClick={onClick}
         {...props}
       >
         <div className="flex items-start justify-between gap-3">
