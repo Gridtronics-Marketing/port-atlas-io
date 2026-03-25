@@ -116,7 +116,7 @@ export const EditProjectModal = ({ isOpen, onClose, onUpdateProject, project }: 
             Edit Job
           </DialogTitle>
           <DialogDescription>
-            Update project details, timeline, and configuration.
+            Update job details, timeline, and configuration.
           </DialogDescription>
         </DialogHeader>
 
