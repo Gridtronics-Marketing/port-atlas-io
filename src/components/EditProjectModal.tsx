@@ -277,7 +277,7 @@ export const EditProjectModal = ({ isOpen, onClose, onUpdateProject, project }: 
               disabled={isLoading}
               className="bg-gradient-primary hover:bg-primary-hover"
             >
-              {isLoading ? "Updating..." : "Update Project"}
+              {isLoading ? "Updating..." : "Update Job"}
             </Button>
           </div>
         </form>
