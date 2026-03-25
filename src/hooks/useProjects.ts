@@ -48,7 +48,7 @@ export function useProjects() {
       console.error('Error fetching projects:', error);
       toast({
         title: 'Error',
-        description: 'Failed to fetch projects',
+        description: 'Failed to fetch jobs',
         variant: 'destructive',
       });
     } finally {
