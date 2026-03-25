@@ -241,6 +241,28 @@ export const ConvertToWorkOrderModal = ({
             </Select>
           </div>
 
+          <div className="space-y-2">
+            <Label>Assign to Job (Optional)</Label>
+            <Select
+              value={formData.project_id}
+              onValueChange={(v) => setFormData({ ...formData, project_id: v })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a job" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">No Job</SelectItem>
+                {projects
+                  .filter((p) => p.status === "active" || p.status === "in_progress")
+                  .map((project) => (
+                    <SelectItem key={project.id} value={project.id}>
+                      {project.name}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           {serviceRequest.location && (
             <div className="p-3 rounded-lg bg-muted/50">
               <p className="text-sm text-muted-foreground">Location</p>
