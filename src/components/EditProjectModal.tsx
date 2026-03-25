@@ -172,7 +172,7 @@ export const EditProjectModal = ({ isOpen, onClose, onUpdateProject, project }: 
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="project_type">Project Type</Label>
+                <Label htmlFor="project_type">Job Type</Label>
                 <Select value={formData.project_type} onValueChange={(value) => handleInputChange("project_type", value)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select type" />
