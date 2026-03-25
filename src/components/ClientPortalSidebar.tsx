@@ -57,6 +57,7 @@ export function ClientPortalSidebar() {
   const { user, signOut } = useAuth();
   const { currentOrganization } = useOrganization();
   const isMobile = useIsMobile();
+  const { theme, toggleTheme } = useTheme();
   
   const currentPath = location.pathname;
   const isActive = (path: string) => currentPath === path;
