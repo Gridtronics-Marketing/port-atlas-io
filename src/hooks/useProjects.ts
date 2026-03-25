@@ -101,7 +101,7 @@ export function useProjects() {
       
       toast({
         title: 'Success',
-        description: 'Project updated successfully',
+        description: 'Job updated successfully',
       });
       
       return data;
