@@ -128,7 +128,7 @@ export function useProjects() {
       setProjects(prev => prev.filter(p => p.id !== id));
       toast({
         title: 'Success',
-        description: 'Project deleted successfully',
+        description: 'Job deleted successfully',
       });
     } catch (error) {
       console.error('Error deleting project:', error);
