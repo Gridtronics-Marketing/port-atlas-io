@@ -87,7 +87,7 @@ const ClientProjectsView = () => {
             <p className="text-sm mb-4">Request a new project to get started.</p>
             <Button onClick={() => setShowRequestProject(true)}>
               <Plus className="h-4 w-4 mr-2" />
-              Request New Project
+              Request New Job
             </Button>
           </CardContent>
         </Card>
