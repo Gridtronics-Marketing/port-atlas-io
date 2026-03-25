@@ -55,7 +55,7 @@ const ClientProjectsView = () => {
     return (
       <div className="container mx-auto px-4 py-6">
         <div className="flex items-center justify-center h-64 text-muted-foreground animate-pulse">
-          Loading projects...
+          Loading jobs...
         </div>
       </div>
     );
@@ -67,15 +67,15 @@ const ClientProjectsView = () => {
         <div>
           <h1 className="text-2xl font-semibold text-foreground flex items-center gap-3">
             <FolderOpen className="h-6 w-6 text-primary" />
-            My Projects
+            My Jobs
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            View your active and completed projects
+            View your active and completed jobs
           </p>
         </div>
         <Button onClick={() => setShowRequestProject(true)} size="sm" className="gap-2">
           <Plus className="h-4 w-4" />
-          Request New Project
+          Request New Job
         </Button>
       </div>
 
@@ -83,11 +83,11 @@ const ClientProjectsView = () => {
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
             <FolderOpen className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p className="text-lg mb-2">No projects yet</p>
-            <p className="text-sm mb-4">Request a new project to get started.</p>
+            <p className="text-lg mb-2">No jobs yet</p>
+            <p className="text-sm mb-4">Request a new job to get started.</p>
             <Button onClick={() => setShowRequestProject(true)}>
               <Plus className="h-4 w-4 mr-2" />
-              Request New Project
+              Request New Job
             </Button>
           </CardContent>
         </Card>
@@ -187,7 +187,7 @@ const AdminProjectsView = () => {
   };
 
   const handleDeleteProject = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
+    if (window.confirm('Are you sure you want to delete this job? This action cannot be undone.')) {
       await deleteProject(id);
     }
   };
@@ -196,7 +196,7 @@ const AdminProjectsView = () => {
     return (
       <div className="container mx-auto px-4 py-6">
         <div className="flex items-center justify-center h-64">
-          <div className="text-muted-foreground">Loading projects...</div>
+          <div className="text-muted-foreground">Loading jobs...</div>
         </div>
       </div>
     );
@@ -209,10 +209,10 @@ const AdminProjectsView = () => {
         <div>
           <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
             <FolderOpen className="h-8 w-8 text-primary" />
-            Project Management
+            Job Management
           </h1>
           <p className="text-muted-foreground mt-2">
-            Manage your projects, track progress, and coordinate teams
+            Manage your jobs, track progress, and coordinate teams
           </p>
         </div>
         
@@ -222,7 +222,7 @@ const AdminProjectsView = () => {
           className="bg-gradient-primary hover:bg-primary-hover shadow-medium"
         >
           <Plus className="h-5 w-5 mr-2" />
-          New Project
+          New Job
         </Button>
       </div>
 
@@ -232,7 +232,7 @@ const AdminProjectsView = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Projects</p>
+                <p className="text-sm font-medium text-muted-foreground">Total Jobs</p>
                 <p className="text-2xl font-bold text-foreground">{projects.length}</p>
               </div>
               <FolderOpen className="h-8 w-8 text-primary" />
@@ -244,7 +244,7 @@ const AdminProjectsView = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Active Projects</p>
+                <p className="text-sm font-medium text-muted-foreground">Active Jobs</p>
                 <p className="text-2xl font-bold text-primary">
                   {projects.filter(p => p.status === 'In Progress' || p.status === 'Planning').length}
                 </p>
@@ -258,7 +258,7 @@ const AdminProjectsView = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Completed Projects</p>
+                <p className="text-sm font-medium text-muted-foreground">Completed Jobs</p>
                 <p className="text-2xl font-bold text-success">
                   {projects.filter(p => p.status === 'Completed').length}
                 </p>
@@ -288,16 +288,16 @@ const AdminProjectsView = () => {
         <Card className="shadow-soft">
           <CardContent className="p-12 text-center">
             <FolderOpen className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-foreground mb-2">No Projects Yet</h3>
+            <h3 className="text-xl font-semibold text-foreground mb-2">No Jobs Yet</h3>
             <p className="text-muted-foreground mb-6">
-              Create your first project to start organizing your work orders and locations.
+              Create your first job to start organizing your work orders and locations.
             </p>
             <Button 
               onClick={() => setShowAddProject(true)}
               className="bg-gradient-primary hover:bg-primary-hover"
             >
               <Plus className="h-4 w-4 mr-2" />
-              Create First Project
+              Create First Job
             </Button>
           </CardContent>
         </Card>
@@ -335,14 +335,14 @@ const AdminProjectsView = () => {
                         <DropdownMenuContent align="end" className="bg-popover border">
                           <DropdownMenuItem onClick={() => handleEditProject(project)}>
                             <Edit className="h-4 w-4 mr-2" />
-                            Edit Project
+                            Edit Job
                           </DropdownMenuItem>
                           <DropdownMenuItem 
                             onClick={() => handleDeleteProject(project.id)}
                             className="text-destructive"
                           >
                             <Trash2 className="h-4 w-4 mr-2" />
-                            Delete Project
+                            Delete Job
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>

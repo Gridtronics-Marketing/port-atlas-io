@@ -68,7 +68,7 @@ export const EditProjectModal = ({ isOpen, onClose, onUpdateProject, project }: 
     if (!formData.name.trim()) {
       toast({
         title: "Error",
-        description: "Project name is required",
+        description: "Job name is required",
         variant: "destructive",
       });
       return;
@@ -89,13 +89,13 @@ export const EditProjectModal = ({ isOpen, onClose, onUpdateProject, project }: 
       await onUpdateProject(project.id, projectData);
       toast({
         title: "Success",
-        description: "Project updated successfully",
+        description: "Job updated successfully",
       });
       onClose();
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to update project",
+        description: "Failed to update job",
         variant: "destructive",
       });
     } finally {
@@ -113,26 +113,26 @@ export const EditProjectModal = ({ isOpen, onClose, onUpdateProject, project }: 
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Folder className="h-5 w-5 text-primary" />
-            Edit Project
+            Edit Job
           </DialogTitle>
           <DialogDescription>
-            Update project details, timeline, and configuration.
+            Update job details, timeline, and configuration.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Basic Information */}
           <div className="space-y-4">
-            <h3 className="font-semibold text-foreground">Project Details</h3>
+            <h3 className="font-semibold text-foreground">Job Details</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Project Name *</Label>
+                <Label htmlFor="name">Job Name *</Label>
                 <Input
                   id="name"
                   value={formData.name}
                   onChange={(e) => handleInputChange("name", e.target.value)}
-                  placeholder="Enter project name"
+                  placeholder="Enter job name"
                   required
                 />
               </div>
@@ -160,7 +160,7 @@ export const EditProjectModal = ({ isOpen, onClose, onUpdateProject, project }: 
                 id="description"
                 value={formData.description}
                 onChange={(e) => handleInputChange("description", e.target.value)}
-                placeholder="Describe the project scope and objectives"
+                placeholder="Describe the job scope and objectives"
                 rows={3}
               />
             </div>
@@ -172,7 +172,7 @@ export const EditProjectModal = ({ isOpen, onClose, onUpdateProject, project }: 
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="project_type">Project Type</Label>
+                <Label htmlFor="project_type">Job Type</Label>
                 <Select value={formData.project_type} onValueChange={(value) => handleInputChange("project_type", value)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select type" />
@@ -277,7 +277,7 @@ export const EditProjectModal = ({ isOpen, onClose, onUpdateProject, project }: 
               disabled={isLoading}
               className="bg-gradient-primary hover:bg-primary-hover"
             >
-              {isLoading ? "Updating..." : "Update Project"}
+              {isLoading ? "Updating..." : "Update Job"}
             </Button>
           </div>
         </form>

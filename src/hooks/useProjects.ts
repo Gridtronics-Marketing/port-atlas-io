@@ -48,7 +48,7 @@ export function useProjects() {
       console.error('Error fetching projects:', error);
       toast({
         title: 'Error',
-        description: 'Failed to fetch projects',
+        description: 'Failed to fetch jobs',
         variant: 'destructive',
       });
     } finally {
@@ -69,7 +69,7 @@ export function useProjects() {
       setProjects(prev => [data, ...prev]);
       toast({
         title: 'Success',
-        description: 'Project created successfully',
+        description: 'Job created successfully',
       });
       
       return data;
@@ -77,7 +77,7 @@ export function useProjects() {
       console.error('Error adding project:', error);
       toast({
         title: 'Error',
-        description: 'Failed to create project',
+        description: 'Failed to create job',
         variant: 'destructive',
       });
       throw error;
@@ -101,7 +101,7 @@ export function useProjects() {
       
       toast({
         title: 'Success',
-        description: 'Project updated successfully',
+        description: 'Job updated successfully',
       });
       
       return data;
@@ -109,7 +109,7 @@ export function useProjects() {
       console.error('Error updating project:', error);
       toast({
         title: 'Error',
-        description: 'Failed to update project',
+        description: 'Failed to update job',
         variant: 'destructive',
       });
       throw error;
@@ -128,13 +128,13 @@ export function useProjects() {
       setProjects(prev => prev.filter(p => p.id !== id));
       toast({
         title: 'Success',
-        description: 'Project deleted successfully',
+        description: 'Job deleted successfully',
       });
     } catch (error) {
       console.error('Error deleting project:', error);
       toast({
         title: 'Error',
-        description: 'Failed to delete project',
+        description: 'Failed to delete job',
         variant: 'destructive',
       });
       throw error;

@@ -137,7 +137,7 @@ const Index = () => {
                 {overdueWorkOrders} overdue work order{overdueWorkOrders > 1 ? 's' : ''} require attention
               </p>
               <p className="text-xs text-muted-foreground">
-                Review and update status to keep projects on track
+                Review and update status to keep jobs on track
               </p>
             </div>
             <Button variant="destructive" size="sm" asChild>
@@ -166,7 +166,7 @@ const Index = () => {
             trend={{ value: 12, direction: "up", label: "vs last month" }}
           />
           <MetricCard
-            title="Active Projects"
+            title="Active Jobs"
             value={activeProjects}
             icon={Briefcase}
             subtitle={`${completedProjects} completed`}
@@ -245,7 +245,7 @@ const Index = () => {
                   <div className="h-8 w-8 rounded-lg bg-success/10 flex items-center justify-center">
                     <TrendingUp className="h-4 w-4 text-success" />
                   </div>
-                  <CardTitle className="text-base">Project Progress</CardTitle>
+                  <CardTitle className="text-base">Job Progress</CardTitle>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -270,7 +270,7 @@ const Index = () => {
                 
                 <Button variant="outline" size="sm" className="w-full mt-2" asChild>
                   <Link to="/projects">
-                    View Projects
+                    View Jobs
                     <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
                   </Link>
                 </Button>

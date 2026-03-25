@@ -45,8 +45,8 @@ export function RequestProjectModal({ open, onOpenChange }: RequestProjectModalP
 
     setLoading(true);
     const result = await createServiceRequest({
-      title: `Request: New Project - ${formData.name}`,
-      description: `Project Name: ${formData.name}\nType: ${formData.project_type}\n\n${formData.description}`,
+      title: `Request: New Job - ${formData.name}`,
+      description: `Job Name: ${formData.name}\nType: ${formData.project_type}\n\n${formData.description}`,
       request_type: "new_project",
       priority: formData.priority,
       location_id: formData.location_id || undefined,
@@ -71,7 +71,7 @@ export function RequestProjectModal({ open, onOpenChange }: RequestProjectModalP
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="project-name">Project Name *</Label>
+            <Label htmlFor="project-name">Job Name *</Label>
             <Input
               id="project-name"
               value={formData.name}
@@ -130,7 +130,7 @@ export function RequestProjectModal({ open, onOpenChange }: RequestProjectModalP
               id="project-description"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Describe the scope and requirements of the project..."
+              placeholder="Describe the scope and requirements of the job..."
               rows={4}
             />
           </div>

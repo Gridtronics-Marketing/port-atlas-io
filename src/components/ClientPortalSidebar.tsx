@@ -46,7 +46,7 @@ import { APP_VERSION } from "@/lib/version";
 const clientNavigationItems = [
   { title: "Dashboard", url: "/dashboard", icon: Home },
   { title: "My Locations", url: "/locations", icon: MapPin },
-  { title: "Projects", url: "/projects", icon: FolderOpen },
+  { title: "Jobs", url: "/projects", icon: FolderOpen },
   { title: "Service Requests", url: "/service-requests", icon: MessageSquare },
   { title: "Request History", url: "/service-request-history", icon: History },
 ];

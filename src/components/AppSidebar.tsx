@@ -69,7 +69,7 @@ const navigationGroups = [
     label: "Overview",
     items: [
       { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-      { title: "Projects", url: "/projects", icon: FolderOpen },
+      { title: "Jobs", url: "/projects", icon: FolderOpen },
       { title: "Work Orders", url: "/work-orders", icon: ClipboardList },
     ]
   },
