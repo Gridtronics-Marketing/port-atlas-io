@@ -187,7 +187,7 @@ const AdminProjectsView = () => {
   };
 
   const handleDeleteProject = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
+    if (window.confirm('Are you sure you want to delete this job? This action cannot be undone.')) {
       await deleteProject(id);
     }
   };

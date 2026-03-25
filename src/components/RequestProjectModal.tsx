@@ -130,7 +130,7 @@ export function RequestProjectModal({ open, onOpenChange }: RequestProjectModalP
               id="project-description"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Describe the scope and requirements of the project..."
+              placeholder="Describe the scope and requirements of the job..."
               rows={4}
             />
           </div>

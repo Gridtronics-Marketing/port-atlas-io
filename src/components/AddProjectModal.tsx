@@ -86,7 +86,7 @@ export const AddProjectModal = ({ isOpen, onClose, onAddProject }: AddProjectMod
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to create project",
+        description: "Failed to create job",
         variant: "destructive",
       });
     } finally {

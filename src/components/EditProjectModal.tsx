@@ -95,7 +95,7 @@ export const EditProjectModal = ({ isOpen, onClose, onUpdateProject, project }: 
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to update project",
+        description: "Failed to update job",
         variant: "destructive",
       });
     } finally {

@@ -20,7 +20,7 @@ export function ProjectDashboard() {
   const { locations } = useLocations();
 
   if (projectsLoading) {
-    return <div className="text-center py-4">Loading projects...</div>;
+    return <div className="text-center py-4">Loading jobs...</div>;
   }
 
   const activeProjects = projects.filter(p => p.status !== 'Completed');

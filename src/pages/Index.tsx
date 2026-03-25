@@ -137,7 +137,7 @@ const Index = () => {
                 {overdueWorkOrders} overdue work order{overdueWorkOrders > 1 ? 's' : ''} require attention
               </p>
               <p className="text-xs text-muted-foreground">
-                Review and update status to keep projects on track
+                Review and update status to keep jobs on track
               </p>
             </div>
             <Button variant="destructive" size="sm" asChild>
