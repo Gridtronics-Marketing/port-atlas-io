@@ -160,7 +160,7 @@ export const EditProjectModal = ({ isOpen, onClose, onUpdateProject, project }: 
                 id="description"
                 value={formData.description}
                 onChange={(e) => handleInputChange("description", e.target.value)}
-                placeholder="Describe the project scope and objectives"
+                placeholder="Describe the job scope and objectives"
                 rows={3}
               />
             </div>
