@@ -163,7 +163,7 @@ export const AddProjectModal = ({ isOpen, onClose, onAddProject }: AddProjectMod
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="project_type">Project Type</Label>
+                <Label htmlFor="project_type">Job Type</Label>
                 <ConfigurableSelect
                   category="project_types"
                   value={formData.project_type}
