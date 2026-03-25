@@ -196,7 +196,7 @@ const AdminProjectsView = () => {
     return (
       <div className="container mx-auto px-4 py-6">
         <div className="flex items-center justify-center h-64">
-          <div className="text-muted-foreground">Loading projects...</div>
+          <div className="text-muted-foreground">Loading jobs...</div>
         </div>
       </div>
     );
