@@ -222,7 +222,7 @@ const AdminProjectsView = () => {
           className="bg-gradient-primary hover:bg-primary-hover shadow-medium"
         >
           <Plus className="h-5 w-5 mr-2" />
-          New Project
+          New Job
         </Button>
       </div>
 
