@@ -118,7 +118,7 @@ export function ProjectDashboard() {
         <CardContent>
           {activeProjects.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              No active projects
+              No active jobs
             </div>
           ) : (
             <div className="space-y-4">
