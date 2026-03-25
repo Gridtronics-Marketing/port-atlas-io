@@ -134,7 +134,7 @@ export function useProjects() {
       console.error('Error deleting project:', error);
       toast({
         title: 'Error',
-        description: 'Failed to delete project',
+        description: 'Failed to delete job',
         variant: 'destructive',
       });
       throw error;
