@@ -237,16 +237,16 @@ export const ScheduleAssignmentModal: React.FC<ScheduleAssignmentModalProps> = (
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="project">Project (Optional)</Label>
+            <Label htmlFor="project">Job (Optional)</Label>
             <Select
               value={formData.project_id}
               onValueChange={(value) => handleInputChange('project_id', value === 'none' ? '' : value)}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select project" />
+                <SelectValue placeholder="Select job" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">No Project</SelectItem>
+                <SelectItem value="none">No Job</SelectItem>
                 {projects.map((project) => (
                   <SelectItem key={project.id} value={project.id}>
                     {project.name}
