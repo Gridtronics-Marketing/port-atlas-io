@@ -69,7 +69,7 @@ export const AddProjectModal = ({ isOpen, onClose, onAddProject }: AddProjectMod
       await onAddProject(projectData);
       toast({
         title: "Success",
-        description: "Project created successfully",
+        description: "Job created successfully",
       });
       setFormData({
         name: "",
