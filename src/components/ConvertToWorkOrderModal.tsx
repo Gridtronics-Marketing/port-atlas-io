@@ -112,6 +112,7 @@ export const ConvertToWorkOrderModal = ({
         work_type: formData.work_type,
         status: "pending",
         assigned_to: formData.assigned_to || undefined,
+        project_id: formData.project_id || undefined,
       });
 
       if (workOrder) {
