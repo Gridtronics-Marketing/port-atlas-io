@@ -38,6 +38,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import tradeAtlasLogo from "@/assets/trade-atlas-logo.png";
 import { PWAInstallButton } from "@/components/PWAInstallButton";
+import { useTheme } from "@/hooks/useTheme";
+import { Sun, Moon } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { APP_VERSION } from "@/lib/version";
 
