@@ -212,7 +212,7 @@ const AdminProjectsView = () => {
             Job Management
           </h1>
           <p className="text-muted-foreground mt-2">
-            Manage your projects, track progress, and coordinate teams
+            Manage your jobs, track progress, and coordinate teams
           </p>
         </div>
         
