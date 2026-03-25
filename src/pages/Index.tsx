@@ -166,7 +166,7 @@ const Index = () => {
             trend={{ value: 12, direction: "up", label: "vs last month" }}
           />
           <MetricCard
-            title="Active Projects"
+            title="Active Jobs"
             value={activeProjects}
             icon={Briefcase}
             subtitle={`${completedProjects} completed`}
