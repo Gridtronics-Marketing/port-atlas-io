@@ -69,7 +69,7 @@ export function useProjects() {
       setProjects(prev => [data, ...prev]);
       toast({
         title: 'Success',
-        description: 'Project created successfully',
+        description: 'Job created successfully',
       });
       
       return data;
