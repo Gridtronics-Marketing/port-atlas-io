@@ -297,7 +297,7 @@ const AdminProjectsView = () => {
               className="bg-gradient-primary hover:bg-primary-hover"
             >
               <Plus className="h-4 w-4 mr-2" />
-              Create First Project
+              Create First Job
             </Button>
           </CardContent>
         </Card>
