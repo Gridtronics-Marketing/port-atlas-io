@@ -68,7 +68,7 @@ export const EditProjectModal = ({ isOpen, onClose, onUpdateProject, project }: 
     if (!formData.name.trim()) {
       toast({
         title: "Error",
-        description: "Project name is required",
+        description: "Job name is required",
         variant: "destructive",
       });
       return;
