@@ -232,7 +232,7 @@ const AdminProjectsView = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Projects</p>
+                <p className="text-sm font-medium text-muted-foreground">Total Jobs</p>
                 <p className="text-2xl font-bold text-foreground">{projects.length}</p>
               </div>
               <FolderOpen className="h-8 w-8 text-primary" />
