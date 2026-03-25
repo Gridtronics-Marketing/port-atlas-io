@@ -45,8 +45,8 @@ export function RequestProjectModal({ open, onOpenChange }: RequestProjectModalP
 
     setLoading(true);
     const result = await createServiceRequest({
-      title: `Request: New Project - ${formData.name}`,
-      description: `Project Name: ${formData.name}\nType: ${formData.project_type}\n\n${formData.description}`,
+      title: `Request: New Job - ${formData.name}`,
+      description: `Job Name: ${formData.name}\nType: ${formData.project_type}\n\n${formData.description}`,
       request_type: "new_project",
       priority: formData.priority,
       location_id: formData.location_id || undefined,

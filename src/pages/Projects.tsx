@@ -83,8 +83,8 @@ const ClientProjectsView = () => {
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
             <FolderOpen className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p className="text-lg mb-2">No projects yet</p>
-            <p className="text-sm mb-4">Request a new project to get started.</p>
+            <p className="text-lg mb-2">No jobs yet</p>
+            <p className="text-sm mb-4">Request a new job to get started.</p>
             <Button onClick={() => setShowRequestProject(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Request New Job
