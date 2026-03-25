@@ -71,7 +71,7 @@ export function RequestProjectModal({ open, onOpenChange }: RequestProjectModalP
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="project-name">Project Name *</Label>
+            <Label htmlFor="project-name">Job Name *</Label>
             <Input
               id="project-name"
               value={formData.name}
