@@ -1,41 +1,29 @@
 
 
-# Rename "Projects" to "Jobs" Across the UI
+# Flow: Service Request → Approve → Create Work Order → Append to Job
 
-## Summary
-Rename all user-facing instances of "Project" / "Projects" to "Job" / "Jobs" throughout the application. Internal code (variable names, hooks, file names) stays the same — only visible text changes.
+## Current State
+- Service requests can be approved and converted to work orders via `ConvertToWorkOrderModal`
+- Work orders have a `project_id` field but the "Convert to Work Order" modal does NOT include a job selector
+- There's no way to link the created work order to an existing job during conversion
 
-## Files to Modify
+## What's Missing
+The `ConvertToWorkOrderModal` needs a **Job selector** so that when creating a work order from an approved service request, the user can assign it to an existing job (or leave unassigned).
 
-### 1. `src/components/AppSidebar.tsx`
-- Change sidebar item title from `"Projects"` to `"Jobs"`
+## Changes
 
-### 2. `src/components/ClientPortalSidebar.tsx`
-- Change `"Projects"` to `"Jobs"` in the navigation items array
+### 1. Modify: `src/components/ConvertToWorkOrderModal.tsx`
+- Import `useProjects` hook
+- Add `project_id` to `formData` state (default empty string)
+- Add a **"Assign to Job (Optional)"** select dropdown (similar pattern to the existing "Assign To" employee dropdown)
+  - Lists active jobs from `useProjects`
+  - Shows job name and client name
+- Pass `project_id` to `addWorkOrder()` call when creating the work order
 
-### 3. `src/pages/Projects.tsx`
-- All user-facing strings: "Project Management" → "Job Management", "My Projects" → "My Jobs", "No projects yet" → "No jobs yet", "Request New Project" → "Request New Job", "Total Projects" → "Total Jobs", "Active Projects" → "Active Jobs", "Completed Projects" → "Completed Jobs", "New Project" → "New Job", "Loading projects..." → "Loading jobs...", etc.
+### 2. Modify: `src/components/ServiceRequestsManager.tsx`
+- In the "Pending Requests" section, add a streamlined flow:
+  - When clicking "Approve", auto-prompt to convert to work order (currently these are separate steps)
+  - Add a combined **"Approve & Create Work Order"** action in the dropdown menu that approves the request AND opens the ConvertToWorkOrderModal in one step
 
-### 4. `src/components/AddProjectModal.tsx`
-- Dialog title: "Create New Project" → "Create New Job"
-- Description and labels: "project" → "job" in all visible text
-
-### 5. `src/components/EditProjectModal.tsx`
-- Dialog title and labels: "Project" → "Job" in all visible text
-
-### 6. `src/components/RequestProjectModal.tsx`
-- Dialog title: "Request New Project" → "Request New Job"
-- All user-facing text updated
-
-### 7. `src/components/ProjectDashboard.tsx`
-- Card titles: "Active Projects" → "Active Jobs", etc.
-- Section header: "Active Projects" → "Active Jobs"
-
-### 8. `src/pages/Index.tsx`
-- MetricCard title: "Active Projects" → "Active Jobs"
-- Card title: "Project Progress" → "Job Progress"
-- Button text: "View Projects" → "View Jobs"
-- Tooltip/subtitle text updates
-
-No route changes (`/projects` stays as-is), no file renames, no variable renames — purely UI label changes.
+This keeps the existing flow intact while adding the job assignment step to the work order creation modal.
 
