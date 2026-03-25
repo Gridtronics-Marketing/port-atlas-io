@@ -335,7 +335,7 @@ const AdminProjectsView = () => {
                         <DropdownMenuContent align="end" className="bg-popover border">
                           <DropdownMenuItem onClick={() => handleEditProject(project)}>
                             <Edit className="h-4 w-4 mr-2" />
-                            Edit Project
+                            Edit Job
                           </DropdownMenuItem>
                           <DropdownMenuItem 
                             onClick={() => handleDeleteProject(project.id)}
