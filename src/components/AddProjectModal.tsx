@@ -107,7 +107,7 @@ export const AddProjectModal = ({ isOpen, onClose, onAddProject }: AddProjectMod
             Create New Job
           </DialogTitle>
           <DialogDescription>
-            Create a new project to manage work orders, locations, and team assignments.
+            Create a new job to manage work orders, locations, and team assignments.
           </DialogDescription>
         </DialogHeader>
 
