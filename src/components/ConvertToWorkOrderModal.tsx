@@ -23,6 +23,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useWorkOrders } from "@/hooks/useWorkOrders";
 import { useServiceRequests, type ServiceRequest } from "@/hooks/useServiceRequests";
 import { useEmployees } from "@/hooks/useEmployees";
+import { useProjects } from "@/hooks/useProjects";
 
 interface ConvertToWorkOrderModalProps {
   serviceRequest: ServiceRequest | null;
