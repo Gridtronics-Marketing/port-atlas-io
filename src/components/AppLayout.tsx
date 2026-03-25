@@ -56,6 +56,15 @@ export function AppLayout({ children }: AppLayoutProps) {
               <OfflineIndicator />
               <NotificationBell />
               <ViewAsDropdown />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={toggleTheme}
+                className="h-9 w-9 p-0 text-muted-foreground hover:text-foreground"
+                title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              >
+                {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              </Button>
               <Separator orientation="vertical" className="h-5 mx-1 hidden lg:block" />
               <Button
                 variant="ghost"

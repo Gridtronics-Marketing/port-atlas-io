@@ -125,7 +125,19 @@ export function ClientPortalSidebar() {
 
       <SidebarFooter className="p-4">
         <div className={`${isCollapsed ? "flex justify-center" : ""} mb-2`}>
-          <PWAInstallButton 
+          <Button
+            variant="outline"
+            size={isCollapsed ? "icon" : "default"}
+            onClick={toggleTheme}
+            className="w-full"
+            title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+          >
+            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            {!isCollapsed && <span className="ml-2">{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>}
+          </Button>
+        </div>
+        <div className={`${isCollapsed ? "flex justify-center" : ""} mb-2`}>
+          <PWAInstallButton
             variant="outline" 
             size={isCollapsed ? "icon" : "default"}
             showLabel={!isCollapsed}
