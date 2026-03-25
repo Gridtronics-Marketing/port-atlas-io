@@ -123,7 +123,7 @@ export const AddProjectModal = ({ isOpen, onClose, onAddProject }: AddProjectMod
                   id="name"
                   value={formData.name}
                   onChange={(e) => handleInputChange("name", e.target.value)}
-                  placeholder="Enter project name"
+                  placeholder="Enter job name"
                   required
                 />
               </div>
