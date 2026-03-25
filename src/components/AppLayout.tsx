@@ -29,6 +29,7 @@ interface PageHeaderContextType {
 export function AppLayout({ children }: AppLayoutProps) {
   const { signOut } = useAuth();
   const { isImpersonating, isClientPortalUser } = useOrganization();
+  const { theme, toggleTheme } = useTheme();
 
   return (
     <SidebarProvider>
