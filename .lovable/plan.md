@@ -1,24 +1,41 @@
 
 
-# Add Light/Dark Mode Toggle
+# Rename "Projects" to "Jobs" Across the UI
 
 ## Summary
-The dark theme CSS is already defined in `index.css` (`.dark` class). We need a theme provider to manage the state and a toggle button in the header.
+Rename all user-facing instances of "Project" / "Projects" to "Job" / "Jobs" throughout the application. Internal code (variable names, hooks, file names) stays the same — only visible text changes.
 
-## Changes
+## Files to Modify
 
-### 1. New: `src/hooks/useTheme.ts`
-- Simple hook using `localStorage` key `"theme"` with values `"light"` | `"dark"` | `"system"`
-- On mount, read from localStorage (default `"light"`), apply/remove `.dark` class on `document.documentElement`
-- Export `theme`, `setTheme`, `toggleTheme`
+### 1. `src/components/AppSidebar.tsx`
+- Change sidebar item title from `"Projects"` to `"Jobs"`
 
-### 2. Modify: `src/components/AppLayout.tsx`
-- Import `useTheme` and `Sun`/`Moon` icons from lucide-react
-- Add a toggle button in the header right section (before the sign-out separator):
-  - Shows `Sun` icon in dark mode, `Moon` icon in light mode
-  - Calls `toggleTheme()` on click
-  - Ghost button matching existing header button styling
+### 2. `src/components/ClientPortalSidebar.tsx`
+- Change `"Projects"` to `"Jobs"` in the navigation items array
 
-### 3. Modify: `src/components/ClientPortalSidebar.tsx`
-- Add the same theme toggle in the sidebar footer (above the PWA install button) so client portal users also get it
+### 3. `src/pages/Projects.tsx`
+- All user-facing strings: "Project Management" → "Job Management", "My Projects" → "My Jobs", "No projects yet" → "No jobs yet", "Request New Project" → "Request New Job", "Total Projects" → "Total Jobs", "Active Projects" → "Active Jobs", "Completed Projects" → "Completed Jobs", "New Project" → "New Job", "Loading projects..." → "Loading jobs...", etc.
+
+### 4. `src/components/AddProjectModal.tsx`
+- Dialog title: "Create New Project" → "Create New Job"
+- Description and labels: "project" → "job" in all visible text
+
+### 5. `src/components/EditProjectModal.tsx`
+- Dialog title and labels: "Project" → "Job" in all visible text
+
+### 6. `src/components/RequestProjectModal.tsx`
+- Dialog title: "Request New Project" → "Request New Job"
+- All user-facing text updated
+
+### 7. `src/components/ProjectDashboard.tsx`
+- Card titles: "Active Projects" → "Active Jobs", etc.
+- Section header: "Active Projects" → "Active Jobs"
+
+### 8. `src/pages/Index.tsx`
+- MetricCard title: "Active Projects" → "Active Jobs"
+- Card title: "Project Progress" → "Job Progress"
+- Button text: "View Projects" → "View Jobs"
+- Tooltip/subtitle text updates
+
+No route changes (`/projects` stays as-is), no file renames, no variable renames — purely UI label changes.
 
