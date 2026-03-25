@@ -23,6 +23,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useWorkOrders } from "@/hooks/useWorkOrders";
 import { useServiceRequests, type ServiceRequest } from "@/hooks/useServiceRequests";
 import { useEmployees } from "@/hooks/useEmployees";
+import { useProjects } from "@/hooks/useProjects";
 
 interface ConvertToWorkOrderModalProps {
   serviceRequest: ServiceRequest | null;
@@ -41,6 +42,7 @@ export const ConvertToWorkOrderModal = ({
   const { addWorkOrder } = useWorkOrders();
   const { updateServiceRequest } = useServiceRequests();
   const { employees } = useEmployees();
+  const { projects } = useProjects();
   const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -49,6 +51,7 @@ export const ConvertToWorkOrderModal = ({
     priority: "medium",
     work_type: "installation",
     assigned_to: "",
+    project_id: "",
   });
 
   // Initialize form when service request changes
@@ -60,6 +63,7 @@ export const ConvertToWorkOrderModal = ({
         priority: mapPriority(serviceRequest.priority),
         work_type: mapRequestType(serviceRequest.request_type),
         assigned_to: "",
+        project_id: "",
       });
     }
   });
@@ -108,6 +112,7 @@ export const ConvertToWorkOrderModal = ({
         work_type: formData.work_type,
         status: "pending",
         assigned_to: formData.assigned_to || undefined,
+        project_id: formData.project_id || undefined,
       });
 
       if (workOrder) {
@@ -230,6 +235,28 @@ export const ConvertToWorkOrderModal = ({
                   .map((emp) => (
                     <SelectItem key={emp.id} value={emp.id}>
                       {emp.first_name} {emp.last_name}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Assign to Job (Optional)</Label>
+            <Select
+              value={formData.project_id}
+              onValueChange={(v) => setFormData({ ...formData, project_id: v })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a job" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">No Job</SelectItem>
+                {projects
+                  .filter((p) => p.status === "active" || p.status === "in_progress")
+                  .map((project) => (
+                    <SelectItem key={project.id} value={project.id}>
+                      {project.name}
                     </SelectItem>
                   ))}
               </SelectContent>

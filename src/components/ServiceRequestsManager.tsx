@@ -232,6 +232,13 @@ export function ServiceRequestsManager() {
                         <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
                         Approve
                       </DropdownMenuItem>
+                      <DropdownMenuItem onClick={async () => {
+                        await handleStatusUpdate(request.id, 'approved');
+                        setConvertRequest(request);
+                      }}>
+                        <Wrench className="h-4 w-4 mr-2 text-primary" />
+                        Approve & Create Work Order
+                      </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handleStatusUpdate(request.id, 'in_progress')}>
                         <PlayCircle className="h-4 w-4 mr-2 text-purple-600" />
                         Start Work
