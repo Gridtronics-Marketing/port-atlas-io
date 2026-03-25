@@ -246,7 +246,7 @@ export const ScheduleAssignmentModal: React.FC<ScheduleAssignmentModalProps> = (
                 <SelectValue placeholder="Select job" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">No Project</SelectItem>
+                <SelectItem value="none">No Job</SelectItem>
                 {projects.map((project) => (
                   <SelectItem key={project.id} value={project.id}>
                     {project.name}
