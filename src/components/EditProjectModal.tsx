@@ -123,7 +123,7 @@ export const EditProjectModal = ({ isOpen, onClose, onUpdateProject, project }: 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Basic Information */}
           <div className="space-y-4">
-            <h3 className="font-semibold text-foreground">Project Details</h3>
+            <h3 className="font-semibold text-foreground">Job Details</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
