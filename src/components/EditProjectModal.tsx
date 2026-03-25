@@ -113,7 +113,7 @@ export const EditProjectModal = ({ isOpen, onClose, onUpdateProject, project }: 
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Folder className="h-5 w-5 text-primary" />
-            Edit Project
+            Edit Job
           </DialogTitle>
           <DialogDescription>
             Update project details, timeline, and configuration.
