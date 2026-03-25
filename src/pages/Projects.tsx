@@ -55,7 +55,7 @@ const ClientProjectsView = () => {
     return (
       <div className="container mx-auto px-4 py-6">
         <div className="flex items-center justify-center h-64 text-muted-foreground animate-pulse">
-          Loading projects...
+          Loading jobs...
         </div>
       </div>
     );
