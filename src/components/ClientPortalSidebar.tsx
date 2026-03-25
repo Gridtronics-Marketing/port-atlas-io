@@ -38,6 +38,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import tradeAtlasLogo from "@/assets/trade-atlas-logo.png";
 import { PWAInstallButton } from "@/components/PWAInstallButton";
+import { useTheme } from "@/hooks/useTheme";
+import { Sun, Moon } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { APP_VERSION } from "@/lib/version";
 
@@ -55,6 +57,7 @@ export function ClientPortalSidebar() {
   const { user, signOut } = useAuth();
   const { currentOrganization } = useOrganization();
   const isMobile = useIsMobile();
+  const { theme, toggleTheme } = useTheme();
   
   const currentPath = location.pathname;
   const isActive = (path: string) => currentPath === path;
@@ -122,7 +125,19 @@ export function ClientPortalSidebar() {
 
       <SidebarFooter className="p-4">
         <div className={`${isCollapsed ? "flex justify-center" : ""} mb-2`}>
-          <PWAInstallButton 
+          <Button
+            variant="outline"
+            size={isCollapsed ? "icon" : "default"}
+            onClick={toggleTheme}
+            className="w-full"
+            title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+          >
+            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            {!isCollapsed && <span className="ml-2">{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>}
+          </Button>
+        </div>
+        <div className={`${isCollapsed ? "flex justify-center" : ""} mb-2`}>
+          <PWAInstallButton
             variant="outline" 
             size={isCollapsed ? "icon" : "default"}
             showLabel={!isCollapsed}

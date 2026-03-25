@@ -3,8 +3,9 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { ClientPortalSidebar } from "@/components/ClientPortalSidebar";
 import { Button } from "@/components/ui/button";
-import { LogOut, Bell, Search, ChevronDown } from "lucide-react";
+import { LogOut, Sun, Moon } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useTheme } from "@/hooks/useTheme";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { OrganizationSwitcher } from "@/components/OrganizationSwitcher";
 import { ViewAsDropdown } from "@/components/ViewAsDropdown";
@@ -28,6 +29,7 @@ interface PageHeaderContextType {
 export function AppLayout({ children }: AppLayoutProps) {
   const { signOut } = useAuth();
   const { isImpersonating, isClientPortalUser } = useOrganization();
+  const { theme, toggleTheme } = useTheme();
 
   return (
     <SidebarProvider>
@@ -54,6 +56,15 @@ export function AppLayout({ children }: AppLayoutProps) {
               <OfflineIndicator />
               <NotificationBell />
               <ViewAsDropdown />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={toggleTheme}
+                className="h-9 w-9 p-0 text-muted-foreground hover:text-foreground"
+                title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              >
+                {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              </Button>
               <Separator orientation="vertical" className="h-5 mx-1 hidden lg:block" />
               <Button
                 variant="ghost"
