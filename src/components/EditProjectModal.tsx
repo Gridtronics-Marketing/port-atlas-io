@@ -89,7 +89,7 @@ export const EditProjectModal = ({ isOpen, onClose, onUpdateProject, project }: 
       await onUpdateProject(project.id, projectData);
       toast({
         title: "Success",
-        description: "Project updated successfully",
+        description: "Job updated successfully",
       });
       onClose();
     } catch (error) {
