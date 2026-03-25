@@ -112,7 +112,7 @@ export function ProjectDashboard() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5 text-primary" />
-            Active Projects
+            Active Jobs
           </CardTitle>
         </CardHeader>
         <CardContent>
