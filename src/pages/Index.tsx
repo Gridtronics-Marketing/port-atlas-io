@@ -245,7 +245,7 @@ const Index = () => {
                   <div className="h-8 w-8 rounded-lg bg-success/10 flex items-center justify-center">
                     <TrendingUp className="h-4 w-4 text-success" />
                   </div>
-                  <CardTitle className="text-base">Project Progress</CardTitle>
+                  <CardTitle className="text-base">Job Progress</CardTitle>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
