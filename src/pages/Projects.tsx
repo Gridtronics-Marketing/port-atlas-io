@@ -288,9 +288,9 @@ const AdminProjectsView = () => {
         <Card className="shadow-soft">
           <CardContent className="p-12 text-center">
             <FolderOpen className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-foreground mb-2">No Projects Yet</h3>
+            <h3 className="text-xl font-semibold text-foreground mb-2">No Jobs Yet</h3>
             <p className="text-muted-foreground mb-6">
-              Create your first project to start organizing your work orders and locations.
+              Create your first job to start organizing your work orders and locations.
             </p>
             <Button 
               onClick={() => setShowAddProject(true)}
