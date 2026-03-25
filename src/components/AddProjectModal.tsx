@@ -250,7 +250,7 @@ export const AddProjectModal = ({ isOpen, onClose, onAddProject }: AddProjectMod
               disabled={isLoading}
               className="bg-gradient-primary hover:bg-primary-hover"
             >
-              {isLoading ? "Creating..." : "Create Project"}
+              {isLoading ? "Creating..." : "Create Job"}
             </Button>
           </div>
         </form>
