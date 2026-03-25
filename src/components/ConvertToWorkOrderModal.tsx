@@ -63,6 +63,7 @@ export const ConvertToWorkOrderModal = ({
         priority: mapPriority(serviceRequest.priority),
         work_type: mapRequestType(serviceRequest.request_type),
         assigned_to: "",
+        project_id: "",
       });
     }
   });
