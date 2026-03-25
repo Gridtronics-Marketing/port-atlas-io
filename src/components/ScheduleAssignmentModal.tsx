@@ -243,7 +243,7 @@ export const ScheduleAssignmentModal: React.FC<ScheduleAssignmentModalProps> = (
               onValueChange={(value) => handleInputChange('project_id', value === 'none' ? '' : value)}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select project" />
+                <SelectValue placeholder="Select job" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">No Project</SelectItem>
