@@ -77,7 +77,7 @@ export function useProjects() {
       console.error('Error adding project:', error);
       toast({
         title: 'Error',
-        description: 'Failed to create project',
+        description: 'Failed to create job',
         variant: 'destructive',
       });
       throw error;
