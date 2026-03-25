@@ -42,6 +42,7 @@ export const ConvertToWorkOrderModal = ({
   const { addWorkOrder } = useWorkOrders();
   const { updateServiceRequest } = useServiceRequests();
   const { employees } = useEmployees();
+  const { projects } = useProjects();
   const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -50,6 +51,7 @@ export const ConvertToWorkOrderModal = ({
     priority: "medium",
     work_type: "installation",
     assigned_to: "",
+    project_id: "",
   });
 
   // Initialize form when service request changes
