@@ -104,7 +104,7 @@ export const AddProjectModal = ({ isOpen, onClose, onAddProject }: AddProjectMod
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Folder className="h-5 w-5 text-primary" />
-            Create New Project
+            Create New Job
           </DialogTitle>
           <DialogDescription>
             Create a new project to manage work orders, locations, and team assignments.
