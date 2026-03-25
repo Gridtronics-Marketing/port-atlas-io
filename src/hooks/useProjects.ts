@@ -109,7 +109,7 @@ export function useProjects() {
       console.error('Error updating project:', error);
       toast({
         title: 'Error',
-        description: 'Failed to update project',
+        description: 'Failed to update job',
         variant: 'destructive',
       });
       throw error;
