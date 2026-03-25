@@ -258,7 +258,7 @@ const AdminProjectsView = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Completed Projects</p>
+                <p className="text-sm font-medium text-muted-foreground">Completed Jobs</p>
                 <p className="text-2xl font-bold text-success">
                   {projects.filter(p => p.status === 'Completed').length}
                 </p>
