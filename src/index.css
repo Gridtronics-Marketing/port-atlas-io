@@ -9,8 +9,8 @@
 
 @layer base {
   :root {
-    /* Core backgrounds - Industrial steel gray */
-    --background: 220 15% 97%;
+    /* Core backgrounds - Warm industrial gray */
+    --background: 220 14% 98%;
     --foreground: 220 25% 10%;
 
     /* Card surfaces - Clean white with subtle warmth */
