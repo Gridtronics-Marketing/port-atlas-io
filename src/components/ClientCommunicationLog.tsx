@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Mail, StickyNote, Plus, Loader2 } from "lucide-react";
+import { Mail, StickyNote, Plus, Loader2, Paperclip } from "lucide-react";
 import { useClientCommunications } from "@/hooks/useClientCommunications";
 import { formatDistanceToNow } from "date-fns";
 
