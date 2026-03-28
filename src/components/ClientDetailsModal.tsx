@@ -67,6 +67,7 @@ interface ClientDetailsModalProps {
 export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onUpdateClient, onDeleteClient, onRefreshClient }: ClientDetailsModalProps) => {
   const { locations, loading: locationsLoading, refetch: refetchLocations } = useClientLocations(client?.id);
   const { deleteLocation, updateLocation } = useLocations();
+  const { contacts, loading: contactsLoading, addContact, updateContact, deleteContact: deleteClientContact } = useClientContacts(client?.id);
   const { toast } = useToast();
   const { isSuperAdmin, userOrgRole } = useOrganization();
   const navigate = useNavigate();
@@ -78,6 +79,8 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onUp
   const [isAddLocationModalOpen, setIsAddLocationModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
   const [isPortalModalOpen, setIsPortalModalOpen] = useState(false);
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const [editingContact, setEditingContact] = useState<ClientContact | null>(null);
   const [editForm, setEditForm] = useState<{
     name: string;
     contact_name: string;
