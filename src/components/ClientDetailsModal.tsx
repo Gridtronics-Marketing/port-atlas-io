@@ -53,6 +53,8 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useClientContacts, type ClientContact } from "@/hooks/useClientContacts";
 import { AddClientContactModal } from "@/components/AddClientContactModal";
+import { SendClientEmailModal } from "@/components/SendClientEmailModal";
+import { ClientCommunicationLog } from "@/components/ClientCommunicationLog";
 
 interface ClientDetailsModalProps {
   client: Client | null;
@@ -81,6 +83,7 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onUp
   const [isPortalModalOpen, setIsPortalModalOpen] = useState(false);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [editingContact, setEditingContact] = useState<ClientContact | null>(null);
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [editForm, setEditForm] = useState<{
     name: string;
     contact_name: string;
@@ -232,11 +235,9 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onUp
               </Button>
             )}
             {client.contact_email && (
-              <Button variant="outline" size="sm" asChild>
-                <a href={`mailto:${client.contact_email}`}>
-                  <Mail className="h-4 w-4 mr-1" />
-                  Email
-                </a>
+              <Button variant="outline" size="sm" onClick={() => setIsEmailModalOpen(true)}>
+                <Mail className="h-4 w-4 mr-1" />
+                Email
               </Button>
             )}
             <Button variant="outline" size="sm" onClick={() => setIsEditMode(!isEditMode)}>
@@ -545,6 +546,12 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onUp
               </CardContent>
             </Card>
 
+            {/* Communication Log */}
+            <ClientCommunicationLog
+              clientId={client.id}
+              onSendEmail={() => setIsEmailModalOpen(true)}
+            />
+
             {/* Client Portal Card */}
             <Card className="shadow-none">
               <CardHeader className="pb-2">
@@ -670,6 +677,15 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onUp
           }
         }}
         existingContact={editingContact}
+      />
+
+      <SendClientEmailModal
+        isOpen={isEmailModalOpen}
+        onClose={() => setIsEmailModalOpen(false)}
+        clientId={client.id}
+        clientName={client.name}
+        defaultTo={client.contact_email || ''}
+        replyTo={client.reply_to_email || undefined}
       />
     </Dialog>
   );
