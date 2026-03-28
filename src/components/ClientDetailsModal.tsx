@@ -372,39 +372,35 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onUp
 
             {/* Contacts Section */}
             <div>
-              <h3 className="text-base font-semibold text-foreground flex items-center gap-2 mb-3">
-                <Users className="h-4 w-4 text-primary" />
-                Contacts
-              </h3>
-              {isEditMode ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border rounded-lg p-4">
-                  <div className="space-y-2">
-                    <Label>Contact Person</Label>
-                    <Input
-                      value={editForm.contact_name}
-                      onChange={(e) => setEditForm(f => ({ ...f, contact_name: e.target.value }))}
-                      placeholder="Primary contact name"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Email</Label>
-                    <Input
-                      type="email"
-                      value={editForm.contact_email}
-                      onChange={(e) => setEditForm(f => ({ ...f, contact_email: e.target.value }))}
-                      placeholder="contact@company.com"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Phone</Label>
-                    <Input
-                      value={editForm.contact_phone}
-                      onChange={(e) => setEditForm(f => ({ ...f, contact_phone: e.target.value }))}
-                      placeholder="(555) 123-4567"
-                    />
-                  </div>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
+                  <Users className="h-4 w-4 text-primary" />
+                  Contacts
+                  {contacts.length > 0 && (
+                    <Badge variant="secondary" className="ml-1 text-xs">{contacts.length}</Badge>
+                  )}
+                </h3>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => { setEditingContact(null); setIsContactModalOpen(true); }}
+                  className="h-7 text-xs"
+                >
+                  <Plus className="h-3 w-3 mr-1" />
+                  Add Contact
+                </Button>
+              </div>
+
+              {contactsLoading ? (
+                <div className="flex items-center justify-center py-6">
+                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                 </div>
-              ) : client.contact_name || client.contact_email || client.contact_phone ? (
+              ) : contacts.length === 0 && !client.contact_name ? (
+                <div className="text-center py-6 border border-dashed border-border rounded-lg">
+                  <User className="h-6 w-6 mx-auto mb-2 text-muted-foreground opacity-50" />
+                  <p className="text-sm text-muted-foreground">No contacts added yet</p>
+                </div>
+              ) : (
                 <div className="border rounded-lg overflow-hidden">
                   <Table>
                     <TableHeader>
@@ -412,21 +408,41 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onUp
                         <TableHead>Name</TableHead>
                         <TableHead>Phone</TableHead>
                         <TableHead>Email</TableHead>
+                        <TableHead>Role</TableHead>
+                        <TableHead className="w-[50px]">Edit</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      <TableRow>
-                        <TableCell className="font-medium">{client.contact_name || "—"}</TableCell>
-                        <TableCell className="text-muted-foreground">{client.contact_phone || "—"}</TableCell>
-                        <TableCell className="text-muted-foreground">{client.contact_email || "—"}</TableCell>
-                      </TableRow>
+                      {contacts.map((contact) => (
+                        <TableRow key={contact.id}>
+                          <TableCell className="font-medium">{contact.name}</TableCell>
+                          <TableCell className="text-muted-foreground">{contact.phone || "—"}</TableCell>
+                          <TableCell className="text-muted-foreground">{contact.email || "—"}</TableCell>
+                          <TableCell className="text-muted-foreground">{contact.role || "—"}</TableCell>
+                          <TableCell>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={() => { setEditingContact(contact); setIsContactModalOpen(true); }}
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      {/* Show legacy contact if no contacts in new table */}
+                      {contacts.length === 0 && client.contact_name && (
+                        <TableRow>
+                          <TableCell className="font-medium">{client.contact_name}</TableCell>
+                          <TableCell className="text-muted-foreground">{client.contact_phone || "—"}</TableCell>
+                          <TableCell className="text-muted-foreground">{client.contact_email || "—"}</TableCell>
+                          <TableCell className="text-muted-foreground">—</TableCell>
+                          <TableCell>—</TableCell>
+                        </TableRow>
+                      )}
                     </TableBody>
                   </Table>
-                </div>
-              ) : (
-                <div className="text-center py-6 border border-dashed border-border rounded-lg">
-                  <User className="h-6 w-6 mx-auto mb-2 text-muted-foreground opacity-50" />
-                  <p className="text-sm text-muted-foreground">No contacts added yet</p>
                 </div>
               )}
             </div>
