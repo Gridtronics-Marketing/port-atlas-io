@@ -1,44 +1,76 @@
 
 
-# Add Multiple Contacts per Client
+# Client Email Dialog & Communication Log
 
 ## Summary
-Create a `client_contacts` table and update the Client Details modal to support multiple contacts with Name, Phone, Email, Role columns and Edit/Add functionality.
+Add a Jobber-style "Send Email" dialog triggered by the Email button in Client Details, backed by a new `client_communications` table to log all outbound emails and internal notes. Emails sent via Resend from `outbound@runwithatlas.com`. Each client gets a configurable reply-to address. The right sidebar gains a "Recent Communication" section showing the log.
 
 ## Changes
 
-### 1. New Migration: `client_contacts` table
+### 1. New Migration: `client_communications` table
+
 ```sql
-CREATE TABLE public.client_contacts (
+CREATE TABLE public.client_communications (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   client_id UUID NOT NULL REFERENCES public.clients(id) ON DELETE CASCADE,
-  name TEXT NOT NULL,
-  email TEXT,
-  phone TEXT,
-  role TEXT,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
+  type TEXT NOT NULL DEFAULT 'email', -- 'email' | 'note'
+  direction TEXT DEFAULT 'outgoing',  -- 'outgoing' | 'incoming'
+  to_email TEXT,
+  cc_emails TEXT[],
+  subject TEXT,
+  body TEXT,
+  status TEXT DEFAULT 'sent', -- 'sent' | 'delivered' | 'failed'
+  created_by UUID REFERENCES auth.users(id),
+  created_at TIMESTAMPTZ DEFAULT now()
 );
-
-ALTER TABLE public.client_contacts ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users can manage client contacts"
-  ON public.client_contacts FOR ALL TO authenticated
+ALTER TABLE public.client_communications ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Authenticated users can manage client communications"
+  ON public.client_communications FOR ALL TO authenticated
   USING (true) WITH CHECK (true);
 ```
 
-### 2. New Hook: `src/hooks/useClientContacts.ts`
-- CRUD operations for `client_contacts` table filtered by `client_id`
-- `fetchContacts(clientId)`, `addContact(...)`, `updateContact(...)`, `deleteContact(...)`
+Also add a `reply_to_email` column to `clients`:
+```sql
+ALTER TABLE public.clients ADD COLUMN IF NOT EXISTS reply_to_email TEXT;
+```
 
-### 3. New Component: `src/components/AddClientContactModal.tsx`
-- Simple dialog with fields: Name, Email, Phone, Role
-- Reused for both Add and Edit (pass existing contact data for edit mode)
+### 2. New Edge Function: `send-client-email`
+- Accepts: `to`, `cc`, `subject`, `body`, `clientId`, `clientName`
+- Sends via Resend using existing `RESEND_API_KEY`
+- From: `outbound@runwithatlas.com`
+- Reply-To: client's `reply_to_email` or the sending user's email
+- Logs to `client_communications` table
+- Returns success/failure
 
-### 4. Modify: `src/components/ClientDetailsModal.tsx`
-- **Contacts section header**: Add "+ Add Contact" button next to the "Contacts" heading
-- **Table columns**: Name | Phone | Email | Role | Edit (pencil icon button)
-- Load contacts from `useClientContacts` hook instead of the single `client.contact_name/email/phone` fields
-- Each row has an Edit button that opens the `AddClientContactModal` in edit mode
-- Migrate the existing single contact display: if `client.contact_name` exists and no `client_contacts` rows, show the legacy data as a row with an option to migrate it
+### 3. New Component: `src/components/SendClientEmailModal.tsx`
+Jobber-style dialog matching the screenshots:
+- **To** field: pre-populated with primary contact email, removable chip, "..." menu with "Add CC Email"
+- **Subject** input
+- **Message** textarea
+- **"Send me a copy"** checkbox
+- **Cancel** / **Send Email** (green) buttons
+- On send: invokes `send-client-email` edge function
+
+### 4. New Component: `src/components/ClientCommunicationLog.tsx`
+Renders in the right sidebar of Client Details:
+- Header: "Recent communication" with "View All" link
+- Each entry shows: icon (green dot for email, yellow for note), type label, subject/preview, timestamp
+- "New Communication" / "Log Note" buttons at top
+
+### 5. New Hook: `src/hooks/useClientCommunications.ts`
+- `fetchCommunications(clientId)` — recent 5 for sidebar, all for full view
+- `addCommunication(...)` — insert log entry
+- Real-time subscription for updates
+
+### 6. Modify: `src/components/ClientDetailsModal.tsx`
+- **Email button**: Opens `SendClientEmailModal` instead of `mailto:` link
+- **Right sidebar**: Add `ClientCommunicationLog` section below Tags card
+- **Edit mode**: Add `reply_to_email` field in Contact Info card
+
+### 7. Modify: `src/hooks/useClients.ts` (if needed)
+- Ensure `reply_to_email` is included in client queries/types
+
+## File Summary
+- **New**: migration, `send-client-email` edge function, `SendClientEmailModal.tsx`, `ClientCommunicationLog.tsx`, `useClientCommunications.ts`
+- **Modified**: `ClientDetailsModal.tsx`, `types.ts` (auto-updated by migration)
 
