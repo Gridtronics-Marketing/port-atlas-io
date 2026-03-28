@@ -74,6 +74,46 @@ import {
 import { Label } from "@/components/ui/label";
 import { type Location } from "@/hooks/useLocations";
 
+// Inline sub-component for maintenance tab
+const MaintenanceTabContent = ({ locationId, onAddMaintenance }: { locationId: string; onAddMaintenance: () => void }) => {
+  const { schedules, loading } = useMaintenanceScheduling();
+  const filtered = schedules.filter((s) => s.location_id === locationId);
+
+  return (
+    <Card className="shadow-soft">
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle className="flex items-center gap-2">
+          <Wrench className="h-5 w-5 text-primary" />
+          Maintenance Schedules
+        </CardTitle>
+        <Button size="sm" onClick={onAddMaintenance}>
+          <Plus className="h-4 w-4 mr-2" />
+          Schedule
+        </Button>
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <p className="text-sm text-muted-foreground">Loading...</p>
+        ) : filtered.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No maintenance scheduled for this property.</p>
+        ) : (
+          <div className="space-y-3">
+            {filtered.map((s) => (
+              <div key={s.id} className="flex items-center justify-between p-3 border rounded-lg">
+                <div>
+                  <p className="font-medium text-foreground">{s.service_plan?.plan_name || "Maintenance"}</p>
+                  <p className="text-sm text-muted-foreground">{new Date(s.scheduled_date).toLocaleDateString()}{s.scheduled_time ? ` at ${s.scheduled_time}` : ""}</p>
+                </div>
+                <Badge variant={s.status === "completed" ? "default" : "secondary"}>{s.status}</Badge>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
 interface LocationDetailsModalProps {
   location: Location | null;
   open: boolean;
