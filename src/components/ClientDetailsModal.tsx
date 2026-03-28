@@ -72,6 +72,7 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onUp
   const { locations, loading: locationsLoading, refetch: refetchLocations } = useClientLocations(client?.id);
   const { deleteLocation, updateLocation } = useLocations();
   const { contacts, loading: contactsLoading, addContact, updateContact, deleteContact: deleteClientContact } = useClientContacts(client?.id);
+  const { stats: billingStats } = useClientBilling(client?.id);
   const { toast } = useToast();
   const { isSuperAdmin, userOrgRole } = useOrganization();
   const navigate = useNavigate();
