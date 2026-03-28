@@ -51,6 +51,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useClientContacts, type ClientContact } from "@/hooks/useClientContacts";
+import { AddClientContactModal } from "@/components/AddClientContactModal";
 
 interface ClientDetailsModalProps {
   client: Client | null;
