@@ -1,76 +1,172 @@
 
 
-# Client Email Dialog & Communication Log
+# Invoice / Quote / Expenses System (Client-Level)
 
 ## Summary
-Add a Jobber-style "Send Email" dialog triggered by the Email button in Client Details, backed by a new `client_communications` table to log all outbound emails and internal notes. Emails sent via Resend from `outbound@runwithatlas.com`. Each client gets a configurable reply-to address. The right sidebar gains a "Recent Communication" section showing the log.
+Build a full billing system tied to each client, with Invoices, Quotes, and Expenses tables, a per-client settings panel (business name, contact, logo, templates), and a tabbed UI inside Client Details. Designed for future QuickBooks sync.
 
-## Changes
+## Database Schema
 
-### 1. New Migration: `client_communications` table
-
+### `client_billing_settings`
+Per-client billing configuration (company name, logo, payment terms, default templates).
 ```sql
-CREATE TABLE public.client_communications (
+CREATE TABLE public.client_billing_settings (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id UUID NOT NULL UNIQUE REFERENCES public.clients(id) ON DELETE CASCADE,
+  business_name TEXT,
+  business_email TEXT,
+  business_phone TEXT,
+  business_address TEXT,
+  logo_url TEXT,
+  default_payment_terms INTEGER DEFAULT 30,
+  default_tax_rate NUMERIC(5,2) DEFAULT 0,
+  currency TEXT DEFAULT 'USD',
+  invoice_prefix TEXT DEFAULT 'INV',
+  quote_prefix TEXT DEFAULT 'QTE',
+  invoice_notes TEXT,
+  quote_notes TEXT,
+  quickbooks_customer_id TEXT, -- future QB sync
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+```
+
+### `client_invoices`
+```sql
+CREATE TABLE public.client_invoices (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   client_id UUID NOT NULL REFERENCES public.clients(id) ON DELETE CASCADE,
-  type TEXT NOT NULL DEFAULT 'email', -- 'email' | 'note'
-  direction TEXT DEFAULT 'outgoing',  -- 'outgoing' | 'incoming'
-  to_email TEXT,
-  cc_emails TEXT[],
-  subject TEXT,
-  body TEXT,
-  status TEXT DEFAULT 'sent', -- 'sent' | 'delivered' | 'failed'
+  invoice_number TEXT NOT NULL,
+  status TEXT DEFAULT 'draft', -- draft | sent | viewed | paid | overdue | void
+  issue_date DATE DEFAULT CURRENT_DATE,
+  due_date DATE,
+  subtotal NUMERIC(12,2) DEFAULT 0,
+  tax_amount NUMERIC(12,2) DEFAULT 0,
+  total NUMERIC(12,2) DEFAULT 0,
+  amount_paid NUMERIC(12,2) DEFAULT 0,
+  notes TEXT,
   created_by UUID REFERENCES auth.users(id),
-  created_at TIMESTAMPTZ DEFAULT now()
+  organization_id UUID REFERENCES organizations(id),
+  quickbooks_invoice_id TEXT,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
 );
-ALTER TABLE public.client_communications ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Authenticated users can manage client communications"
-  ON public.client_communications FOR ALL TO authenticated
-  USING (true) WITH CHECK (true);
 ```
 
-Also add a `reply_to_email` column to `clients`:
+### `client_quotes`
+Same structure as invoices but with quote-specific statuses.
 ```sql
-ALTER TABLE public.clients ADD COLUMN IF NOT EXISTS reply_to_email TEXT;
+CREATE TABLE public.client_quotes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id UUID NOT NULL REFERENCES public.clients(id) ON DELETE CASCADE,
+  quote_number TEXT NOT NULL,
+  status TEXT DEFAULT 'draft', -- draft | sent | accepted | declined | expired
+  issue_date DATE DEFAULT CURRENT_DATE,
+  valid_until DATE,
+  subtotal NUMERIC(12,2) DEFAULT 0,
+  tax_amount NUMERIC(12,2) DEFAULT 0,
+  total NUMERIC(12,2) DEFAULT 0,
+  notes TEXT,
+  created_by UUID REFERENCES auth.users(id),
+  organization_id UUID REFERENCES organizations(id),
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
 ```
 
-### 2. New Edge Function: `send-client-email`
-- Accepts: `to`, `cc`, `subject`, `body`, `clientId`, `clientName`
-- Sends via Resend using existing `RESEND_API_KEY`
-- From: `outbound@runwithatlas.com`
-- Reply-To: client's `reply_to_email` or the sending user's email
-- Logs to `client_communications` table
-- Returns success/failure
+### `billing_line_items`
+Shared line items for both invoices and quotes.
+```sql
+CREATE TABLE public.billing_line_items (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  invoice_id UUID REFERENCES public.client_invoices(id) ON DELETE CASCADE,
+  quote_id UUID REFERENCES public.client_quotes(id) ON DELETE CASCADE,
+  description TEXT NOT NULL,
+  quantity NUMERIC(10,2) DEFAULT 1,
+  unit_price NUMERIC(12,2) DEFAULT 0,
+  total NUMERIC(12,2) DEFAULT 0,
+  sort_order INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  CONSTRAINT line_item_parent CHECK (
+    (invoice_id IS NOT NULL AND quote_id IS NULL) OR
+    (invoice_id IS NULL AND quote_id IS NOT NULL)
+  )
+);
+```
 
-### 3. New Component: `src/components/SendClientEmailModal.tsx`
-Jobber-style dialog matching the screenshots:
-- **To** field: pre-populated with primary contact email, removable chip, "..." menu with "Add CC Email"
-- **Subject** input
-- **Message** textarea
-- **"Send me a copy"** checkbox
-- **Cancel** / **Send Email** (green) buttons
-- On send: invokes `send-client-email` edge function
+### `client_expenses`
+```sql
+CREATE TABLE public.client_expenses (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id UUID NOT NULL REFERENCES public.clients(id) ON DELETE CASCADE,
+  category TEXT NOT NULL,
+  amount NUMERIC(12,2) NOT NULL,
+  description TEXT,
+  expense_date DATE DEFAULT CURRENT_DATE,
+  vendor TEXT,
+  receipt_url TEXT,
+  status TEXT DEFAULT 'pending', -- pending | approved | rejected
+  created_by UUID REFERENCES auth.users(id),
+  organization_id UUID REFERENCES organizations(id),
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+```
 
-### 4. New Component: `src/components/ClientCommunicationLog.tsx`
-Renders in the right sidebar of Client Details:
-- Header: "Recent communication" with "View All" link
-- Each entry shows: icon (green dot for email, yellow for note), type label, subject/preview, timestamp
-- "New Communication" / "Log Note" buttons at top
+All tables get RLS with authenticated access policies.
 
-### 5. New Hook: `src/hooks/useClientCommunications.ts`
-- `fetchCommunications(clientId)` — recent 5 for sidebar, all for full view
-- `addCommunication(...)` — insert log entry
-- Real-time subscription for updates
+### Storage
+Create a `billing-assets` bucket (public) for client logos and receipt uploads.
 
-### 6. Modify: `src/components/ClientDetailsModal.tsx`
-- **Email button**: Opens `SendClientEmailModal` instead of `mailto:` link
-- **Right sidebar**: Add `ClientCommunicationLog` section below Tags card
-- **Edit mode**: Add `reply_to_email` field in Contact Info card
+## New Files
 
-### 7. Modify: `src/hooks/useClients.ts` (if needed)
-- Ensure `reply_to_email` is included in client queries/types
+### Hooks
+- **`src/hooks/useClientBilling.ts`** — CRUD for invoices, quotes, expenses, billing settings, and line items. Auto-generates sequential invoice/quote numbers using prefixes from settings. Includes summary stats (total outstanding, overdue count, etc.).
+
+### Components
+- **`src/components/ClientBillingTab.tsx`** — Main tabbed container with sub-tabs: **Invoices**, **Quotes**, **Expenses**, **Settings**. Renders inside Client Details modal as a new section below Overview.
+  
+- **`src/components/ClientInvoiceForm.tsx`** — Create/edit invoice dialog with line items editor (add row, description, qty, price, auto-calc total), tax, notes, and status selector. "Convert to Invoice" button when viewing a quote.
+
+- **`src/components/ClientQuoteForm.tsx`** — Similar to invoice form but with quote-specific fields (valid_until, quote statuses).
+
+- **`src/components/ClientExpenseForm.tsx`** — Simple dialog for logging expenses (category, amount, vendor, date, receipt upload).
+
+- **`src/components/ClientBillingSettings.tsx`** — Settings panel with: editable business name, email, phone, address, logo upload, default payment terms (Net 15/30/60/90), tax rate, invoice/quote number prefixes, default notes/templates, and a disabled "QuickBooks Sync" placeholder section.
+
+## Modified Files
+
+### `src/components/ClientDetailsModal.tsx`
+- Add a **"Billing"** tab/section in the left column below Overview
+- Wire up the `ClientBillingTab` component
+- Update the Overview counters to show real quote/invoice counts from the billing hook
+
+### `src/hooks/useClients.ts`
+- No changes needed — billing is separate from client record
+
+## UI Layout (inside Client Details)
+
+```text
+┌─────────────────────────────────────────────┐
+│ Overview                                     │
+│ [Active Work] [Requests] [Quotes] [Invoices]│ ← live counts
+├─────────────────────────────────────────────┤
+│ Billing                                      │
+│ ┌──────────────────────────────────────────┐ │
+│ │ [Invoices] [Quotes] [Expenses] [Settings]│ │
+│ ├──────────────────────────────────────────┤ │
+│ │  + New Invoice          Filter: All ▾    │ │
+│ │ ┌────┬──────────┬────────┬───────┬─────┐ │ │
+│ │ │ #  │ Date     │ Total  │Status │  ⋮  │ │ │
+│ │ │INV-│ Mar 28   │$1,250  │ Draft │     │ │ │
+│ │ └────┴──────────┴────────┴───────┴─────┘ │ │
+│ └──────────────────────────────────────────┘ │
+└─────────────────────────────────────────────┘
+```
 
 ## File Summary
-- **New**: migration, `send-client-email` edge function, `SendClientEmailModal.tsx`, `ClientCommunicationLog.tsx`, `useClientCommunications.ts`
-- **Modified**: `ClientDetailsModal.tsx`, `types.ts` (auto-updated by migration)
+- **New migration**: 6 tables + RLS + storage bucket
+- **New hooks**: `useClientBilling.ts`
+- **New components**: `ClientBillingTab.tsx`, `ClientInvoiceForm.tsx`, `ClientQuoteForm.tsx`, `ClientExpenseForm.tsx`, `ClientBillingSettings.tsx`
+- **Modified**: `ClientDetailsModal.tsx`
 
