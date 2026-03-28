@@ -1,46 +1,66 @@
 
 
-# Redesign Email Modal (Jobber-style) + File Attachments
+# App-Wide UI Refresh — Bolder, Smoother, Friendlier
 
 ## Summary
-Redesign the `SendClientEmailModal` to match the Jobber screenshot layout — two-column with email form on the left and attachments panel on the right, cleaner styling with inline To/Subject/Message fields, and drag-and-drop file upload support using Supabase Storage.
+Update the global design tokens and core UI primitives to produce a warmer, bolder, and more rounded look across the entire app. The Jobber screenshot shows the target aesthetic: generous padding, bolder headings, softer borders, larger radius, and an overall friendlier feel.
 
 ## Changes
 
-### 1. New Migration: `email-attachments` storage bucket
-```sql
-INSERT INTO storage.buckets (id, name, public) VALUES ('email-attachments', 'email-attachments', true);
--- RLS: authenticated users can upload/read
-```
+### 1. `index.html` — Add Inter font
+- Add Google Fonts link for **Inter** (weights 400, 500, 600, 700) for a modern, friendly typeface
 
-### 2. `src/components/SendClientEmailModal.tsx` — Full redesign
-- **Wider dialog**: `sm:max-w-[800px]` to accommodate two columns
-- **Two-column layout**: Left (email form), Right (attachments panel)
-- **Left column**:
-  - "Send email to {clientName}" as dialog title
-  - **To** row: inline label + email chips with `×` remove + red emoji button placeholder + `···` menu for CC
-  - **Subject**: borderless input with bottom border only (cleaner look)
-  - **Message**: borderless textarea filling remaining space
-  - **"Send me a copy"** checkbox at bottom
-  - **Cancel / Send Email** buttons in footer
-- **Right column — Attachments**:
-  - Dashed drop zone: "Drag your files here or **Select a File**"
-  - File input triggered by "Select a File" button
-  - Drag-and-drop handlers (`onDragOver`, `onDrop`)
-  - List of attached files with name, size, and remove button
-  - "Client attachments" count and size usage bar (X MB out of 10 MB limit)
-  - Files uploaded to `email-attachments` bucket on attach, URLs passed to edge function
-- **State additions**: `attachments` array (File objects), `uploadedUrls` array, `uploading` boolean
+### 2. `tailwind.config.ts` — Font family + larger radius
+- Add `fontFamily: { sans: ["Inter", ...defaultTheme.fontFamily.sans] }`
+- Increase `--radius` from `0.5rem` to `0.75rem` for softer corners everywhere
 
-### 3. `supabase/functions/send-client-email/index.ts` — Add attachments support
-- Accept `attachments` array of `{ filename, url }` in request body
-- Include attachment links in the HTML body as a styled "Attachments" section at the bottom of the email (since Resend supports attachments via URL, use Resend's `attachments` field with `path` URLs)
-- Log attachment count/names in `client_communications`
+### 3. `src/index.css` — Design token & typography refresh
+- **Radius**: `--radius: 0.75rem` (was 0.5rem)
+- **Body text**: bump from `text-sm` to `text-[0.9375rem]` (15px base)
+- **Headings**: increase weights to `font-bold` (was semibold), bump sizes up one step
+- **Background**: soften to a warmer tone `220 14% 98%` (less gray)
+- **Borders**: soften from `220 13% 88%` → `220 10% 91%` (lighter, less harsh)
+- **Shadows**: make softer and more diffused
+- **Muted foreground**: slightly darker for better readability `220 10% 42%` (was 46%)
 
-### 4. `src/components/ClientCommunicationLog.tsx` — Show attachment indicator
-- If a communication log entry has attachments, show a 📎 icon
+### 4. `src/components/ui/button.tsx` — Bolder, rounder buttons
+- Base: `rounded-lg` (was `rounded-md`), `font-semibold` (was `font-medium`)
+- Default size: `h-10 px-5` (slightly wider padding)
+- Add subtle `shadow-sm` to default and destructive variants
+- Smoother hover transitions: `transition-all duration-200`
+
+### 5. `src/components/ui/card.tsx` — Softer cards
+- `rounded-xl` (was `rounded-lg`)
+- `shadow-sm` default (consistent soft elevation)
+- `hover:shadow-md` implicit via `transition-card`
+
+### 6. `src/components/ui/input.tsx` — Friendlier inputs
+- `rounded-lg` (was `rounded-md`)
+- `h-11` (was `h-10`) — slightly taller, easier to tap
+- Lighter border color feel via softer `border-input` token
+
+### 7. `src/components/ui/badge.tsx` — Softer badges
+- Already `rounded-full` — keep
+- Bump to `font-bold` for bolder tag text
+
+### 8. `src/components/ui/dialog.tsx` — Smoother modals
+- `sm:rounded-xl` (was `sm:rounded-lg`)
+- Softer overlay: `bg-black/60` (was `bg-black/80`) — less aggressive
+- Add `shadow-xl` for more depth
+
+### 9. `src/components/ui/table.tsx` — Friendlier tables
+- Table header: remove uppercase, use `font-semibold text-sm` instead of `text-xs uppercase tracking-wider`
+- Slightly more row padding `py-3.5` (was `py-3`)
+- Softer row dividers
+
+### 10. `src/components/ui/sidebar.tsx` (minor)
+- If needed, bump sidebar font weight for menu labels
+
+## What stays the same
+- Color palette (Gold/Silver/Steel brand)
+- Component structure and functionality
+- Dark mode tokens (just inherits the radius/font changes)
 
 ## File Summary
-- **New**: storage bucket migration
-- **Modified**: `SendClientEmailModal.tsx` (major redesign), `send-client-email/index.ts` (attachments), `ClientCommunicationLog.tsx` (minor)
+- **Modified**: `index.html`, `tailwind.config.ts`, `src/index.css`, `button.tsx`, `card.tsx`, `input.tsx`, `badge.tsx`, `dialog.tsx`, `table.tsx`
 
