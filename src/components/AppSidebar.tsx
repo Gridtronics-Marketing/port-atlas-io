@@ -76,7 +76,7 @@ const navigationGroups = [
   {
     label: "Operations",
     items: [
-      { title: "Locations", url: "/locations", icon: MapPin },
+      
       { title: "Scheduling", url: "/scheduling", icon: Calendar },
       { title: "Field Operations", url: "/field-operations", icon: Briefcase },
       { title: "Maintenance", url: "/maintenance", icon: Wrench },
