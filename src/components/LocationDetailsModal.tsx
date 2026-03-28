@@ -15,7 +15,11 @@ import {
   Info,
   Trash2,
   Settings2,
-  Share2
+  Share2,
+  Briefcase,
+  Wrench,
+  Clock,
+  CheckCircle
 } from "lucide-react";
 import {
   Dialog,
@@ -49,7 +53,10 @@ import { AddLocationNoteModal } from "@/components/AddLocationNoteModal";
 import { WalkThroughNotesList } from "@/components/WalkThroughNotesList";
 import { CustomerNotesPanel } from "@/components/CustomerNotesPanel";
 import { InfrastructureTopologyView } from "@/components/InfrastructureTopologyView";
-
+import { TimeTrackingCard } from "@/components/TimeTrackingCard";
+import { PhotoCaptureCard } from "@/components/PhotoCaptureCard";
+import { useMaintenanceScheduling } from "@/hooks/useMaintenanceScheduling";
+import { AddMaintenanceModal } from "@/components/AddMaintenanceModal";
 import { FloorPlanRepairTool } from "@/components/FloorPlanRepairTool";
 import { FloorPlanFileManager } from "@/components/FloorPlanFileManager";
 import { InteractiveFloorPlan } from "@/components/InteractiveFloorPlan";
@@ -67,6 +74,46 @@ import {
 import { Label } from "@/components/ui/label";
 import { type Location } from "@/hooks/useLocations";
 
+// Inline sub-component for maintenance tab
+const MaintenanceTabContent = ({ locationId, onAddMaintenance }: { locationId: string; onAddMaintenance: () => void }) => {
+  const { schedules, loading } = useMaintenanceScheduling();
+  const filtered = schedules.filter((s) => s.location_id === locationId);
+
+  return (
+    <Card className="shadow-soft">
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle className="flex items-center gap-2">
+          <Wrench className="h-5 w-5 text-primary" />
+          Maintenance Schedules
+        </CardTitle>
+        <Button size="sm" onClick={onAddMaintenance}>
+          <Plus className="h-4 w-4 mr-2" />
+          Schedule
+        </Button>
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <p className="text-sm text-muted-foreground">Loading...</p>
+        ) : filtered.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No maintenance scheduled for this property.</p>
+        ) : (
+          <div className="space-y-3">
+            {filtered.map((s) => (
+              <div key={s.id} className="flex items-center justify-between p-3 border rounded-lg">
+                <div>
+                  <p className="font-medium text-foreground">{s.service_plan?.plan_name || "Maintenance"}</p>
+                  <p className="text-sm text-muted-foreground">{new Date(s.scheduled_date).toLocaleDateString()}{s.scheduled_time ? ` at ${s.scheduled_time}` : ""}</p>
+                </div>
+                <Badge variant={s.status === "completed" ? "default" : "secondary"}>{s.status}</Badge>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
 interface LocationDetailsModalProps {
   location: Location | null;
   open: boolean;
@@ -78,6 +125,7 @@ interface LocationDetailsModalProps {
 
 export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocation, onDeleteLocation, onLocationUpdate }: LocationDetailsModalProps) => {
   const [activeTab, setActiveTab] = useState("details");
+  const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
   const [selectedFloorKey, setSelectedFloorKey] = useState<string>("1");
   const [allFloorPlanUrls, setAllFloorPlanUrls] = useState<Record<string, string>>({});
   const [riserDiagramUrl, setRiserDiagramUrl] = useState<string | null>(null);
@@ -327,7 +375,7 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
 
             {/* Enhanced Tabs */}
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-6 bg-muted">
+              <TabsList className="grid w-full grid-cols-8 bg-muted">
                 <TabsTrigger value="details" className="flex items-center gap-2">
                   <Info className="h-4 w-4" />
                   Details
@@ -351,6 +399,14 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
                 <TabsTrigger value="topology" className="flex items-center gap-2">
                   <Share2 className="h-4 w-4" />
                   Topology
+                </TabsTrigger>
+                <TabsTrigger value="field-ops" className="flex items-center gap-2">
+                  <Briefcase className="h-4 w-4" />
+                  Field Ops
+                </TabsTrigger>
+                <TabsTrigger value="maintenance" className="flex items-center gap-2">
+                  <Wrench className="h-4 w-4" />
+                  Maintenance
                 </TabsTrigger>
               </TabsList>
 
@@ -702,6 +758,19 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
                   locationName={location.name}
                 />
               </TabsContent>
+
+              {/* Field Ops Tab */}
+              <TabsContent value="field-ops" className="mt-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <TimeTrackingCard />
+                  <PhotoCaptureCard locationId={location.id} />
+                </div>
+              </TabsContent>
+
+              {/* Maintenance Tab */}
+              <TabsContent value="maintenance" className="mt-6">
+                <MaintenanceTabContent locationId={location.id} onAddMaintenance={() => setShowMaintenanceModal(true)} />
+              </TabsContent>
             </Tabs>
           </div>
         </DialogContent>
@@ -803,6 +872,12 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
             onLocationUpdate();
           }
         }}
+      />
+
+      {/* Add Maintenance Modal */}
+      <AddMaintenanceModal
+        open={showMaintenanceModal}
+        onOpenChange={setShowMaintenanceModal}
       />
     </>
   );

@@ -52,6 +52,9 @@ import ClientPortalManagement from "./pages/ClientPortalManagement";
 import TradeTube from "./pages/TradeTube";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import DocsPage from "./pages/DocsPage";
+import Invoices from "./pages/Invoices";
+import Quotes from "./pages/Quotes";
+import Expenses from "./pages/Expenses";
 
 // Public pages
 import LandingPage from "./pages/LandingPage";
@@ -172,6 +175,9 @@ const App = () => (
                   <Route path="/client-locations/:locationId" element={<ProtectedRoute><AppLayout><ClientLocationDetail /></AppLayout></ProtectedRoute>} />
                   <Route path="/service-request-history" element={<ProtectedRoute><AppLayout><ServiceRequestHistory /></AppLayout></ProtectedRoute>} />
                   <Route path="/tradetube" element={<ProtectedRoute><AppLayout><TradeTube /></AppLayout></ProtectedRoute>} />
+                  <Route path="/invoices" element={<ProtectedRoute><AppLayout><Invoices /></AppLayout></ProtectedRoute>} />
+                  <Route path="/quotes" element={<ProtectedRoute><AppLayout><Quotes /></AppLayout></ProtectedRoute>} />
+                  <Route path="/expenses" element={<ProtectedRoute><AppLayout><Expenses /></AppLayout></ProtectedRoute>} />
                   
                   {/* Portal entry */}
                   <Route path="/p/:orgSlug" element={<PortalEntry />} />

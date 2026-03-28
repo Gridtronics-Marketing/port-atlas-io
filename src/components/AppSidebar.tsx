@@ -76,10 +76,7 @@ const navigationGroups = [
   {
     label: "Operations",
     items: [
-      
       { title: "Scheduling", url: "/scheduling", icon: Calendar },
-      { title: "Field Operations", url: "/field-operations", icon: Briefcase },
-      { title: "Maintenance", url: "/maintenance", icon: Wrench },
     ]
   },
   {
@@ -87,6 +84,9 @@ const navigationGroups = [
     items: [
       { title: "Clients", url: "/clients", icon: Building },
       { title: "Contracts", url: "/contracts", icon: FileText },
+      { title: "Invoices", url: "/invoices", icon: FileText },
+      { title: "Quotes", url: "/quotes", icon: FileText },
+      { title: "Expenses", url: "/expenses", icon: TrendingUp },
       { title: "Procurement", url: "/procurement", icon: Package },
       { title: "Service Requests", url: "/service-requests", icon: MessageSquare },
     ]
