@@ -55,6 +55,8 @@ import { useClientContacts, type ClientContact } from "@/hooks/useClientContacts
 import { AddClientContactModal } from "@/components/AddClientContactModal";
 import { SendClientEmailModal } from "@/components/SendClientEmailModal";
 import { ClientCommunicationLog } from "@/components/ClientCommunicationLog";
+import { ClientBillingTab } from "@/components/ClientBillingTab";
+import { useClientBilling } from "@/hooks/useClientBilling";
 
 interface ClientDetailsModalProps {
   client: Client | null;
