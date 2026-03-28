@@ -658,6 +658,19 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onUp
           onRefreshClient?.();
         }}
       />
+
+      <AddClientContactModal
+        isOpen={isContactModalOpen}
+        onClose={() => { setIsContactModalOpen(false); setEditingContact(null); }}
+        onSave={async (data) => {
+          if (editingContact) {
+            await updateContact(editingContact.id, data);
+          } else {
+            await addContact(data);
+          }
+        }}
+        existingContact={editingContact}
+      />
     </Dialog>
   );
 };
