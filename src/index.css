@@ -50,9 +50,9 @@
     --info: 210 92% 45%;
     --info-foreground: 0 0% 100%;
 
-    /* Borders - Steel lines */
-    --border: 220 13% 88%;
-    --input: 220 13% 90%;
+    /* Borders - Softer steel lines */
+    --border: 220 10% 91%;
+    --input: 220 10% 91%;
     --ring: 43 85% 48%;
 
     /* Tech Lines - Circuit board aesthetic */
