@@ -12,6 +12,7 @@ export interface Client {
   contact_phone: string | null;
   address: string | null;
   billing_address: string | null;
+  reply_to_email?: string | null;
   status: 'Active' | 'Inactive' | 'Pending';
   organization_id?: string;
   linked_organization_id?: string | null;

@@ -53,6 +53,8 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useClientContacts, type ClientContact } from "@/hooks/useClientContacts";
 import { AddClientContactModal } from "@/components/AddClientContactModal";
+import { SendClientEmailModal } from "@/components/SendClientEmailModal";
+import { ClientCommunicationLog } from "@/components/ClientCommunicationLog";
 
 interface ClientDetailsModalProps {
   client: Client | null;
