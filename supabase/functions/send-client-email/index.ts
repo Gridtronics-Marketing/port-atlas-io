@@ -7,6 +7,11 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const AttachmentSchema = z.object({
+  filename: z.string().min(1).max(255),
+  url: z.string().url(),
+});
+
 const BodySchema = z.object({
   to: z.string().email(),
   cc: z.array(z.string().email()).optional().default([]),
@@ -17,6 +22,7 @@ const BodySchema = z.object({
   replyTo: z.string().email().optional(),
   sendCopy: z.boolean().optional().default(false),
   senderEmail: z.string().email().optional(),
+  attachments: z.array(AttachmentSchema).optional().default([]),
 });
 
 Deno.serve(async (req) => {
@@ -33,7 +39,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { to, cc, subject, body, clientId, clientName, replyTo, sendCopy, senderEmail } = parsed.data;
+    const { to, cc, subject, body, clientId, clientName, replyTo, sendCopy, senderEmail, attachments } = parsed.data;
 
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
     if (!resendApiKey) {
@@ -50,16 +56,37 @@ Deno.serve(async (req) => {
       ccRecipients.push(senderEmail);
     }
 
+    // Build HTML body
+    let htmlBody = body.replace(/\n/g, "<br>");
+
+    // Append attachment links if any
+    if (attachments.length > 0) {
+      htmlBody += `<br><br><hr style="border:none;border-top:1px solid #e5e5e5;margin:16px 0;">`;
+      htmlBody += `<p style="font-size:13px;color:#666;margin-bottom:8px;">📎 Attachments (${attachments.length}):</p>`;
+      htmlBody += `<ul style="list-style:none;padding:0;margin:0;">`;
+      for (const att of attachments) {
+        htmlBody += `<li style="margin-bottom:4px;"><a href="${att.url}" style="color:#2563eb;text-decoration:underline;font-size:13px;" target="_blank">${att.filename}</a></li>`;
+      }
+      htmlBody += `</ul>`;
+    }
+
     // Send via Resend
     const resendPayload: Record<string, unknown> = {
       from: `Atlas <outbound@runwithatlas.com>`,
       to: toRecipients,
       subject,
-      html: body.replace(/\n/g, "<br>"),
+      html: htmlBody,
       reply_to: replyTo || senderEmail || undefined,
     };
     if (ccRecipients.length > 0) {
       resendPayload.cc = ccRecipients;
+    }
+    // Use Resend's attachments field for direct file attachment via URL
+    if (attachments.length > 0) {
+      resendPayload.attachments = attachments.map((att) => ({
+        filename: att.filename,
+        path: att.url,
+      }));
     }
 
     const resendRes = await fetch("https://api.resend.com/emails", {
