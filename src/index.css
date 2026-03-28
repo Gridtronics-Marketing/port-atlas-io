@@ -80,15 +80,15 @@
     --gradient-steel: linear-gradient(135deg, hsl(220 12% 85%), hsl(220 12% 75%));
     --gradient-gold-shine: linear-gradient(135deg, hsl(43 85% 48%), hsl(48 90% 55%), hsl(43 85% 48%));
 
-    /* Typography scale */
+    /* Typography scale — bumped for friendlier feel */
     --font-size-xs: 0.75rem;
     --font-size-sm: 0.8125rem;
-    --font-size-base: 0.875rem;
-    --font-size-lg: 1rem;
-    --font-size-xl: 1.125rem;
+    --font-size-base: 0.9375rem;
+    --font-size-lg: 1.0625rem;
+    --font-size-xl: 1.25rem;
     --font-size-2xl: 1.5rem;
-    --font-size-3xl: 1.875rem;
-    --font-size-4xl: 2.25rem;
+    --font-size-3xl: 2rem;
+    --font-size-4xl: 2.5rem;
 
     /* Spacing scale */
     --spacing-xs: 0.25rem;
