@@ -83,6 +83,7 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onUp
   const [isPortalModalOpen, setIsPortalModalOpen] = useState(false);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [editingContact, setEditingContact] = useState<ClientContact | null>(null);
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [editForm, setEditForm] = useState<{
     name: string;
     contact_name: string;
