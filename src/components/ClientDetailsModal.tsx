@@ -678,6 +678,15 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onUp
         }}
         existingContact={editingContact}
       />
+
+      <SendClientEmailModal
+        isOpen={isEmailModalOpen}
+        onClose={() => setIsEmailModalOpen(false)}
+        clientId={client.id}
+        clientName={client.name}
+        defaultTo={client.contact_email || ''}
+        replyTo={client.reply_to_email || undefined}
+      />
     </Dialog>
   );
 };
