@@ -52,6 +52,9 @@ import ClientPortalManagement from "./pages/ClientPortalManagement";
 import TradeTube from "./pages/TradeTube";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import DocsPage from "./pages/DocsPage";
+import Invoices from "./pages/Invoices";
+import Quotes from "./pages/Quotes";
+import Expenses from "./pages/Expenses";
 
 // Public pages
 import LandingPage from "./pages/LandingPage";
