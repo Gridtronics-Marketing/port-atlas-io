@@ -1,4 +1,4 @@
-export const APP_VERSION = "1.11.0";
+export const APP_VERSION = "1.12.0";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,19 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "1.12.0",
+    date: "2026-03-28",
+    changes: [
+      "App-wide UI refresh — bolder fonts (Inter), softer corners (0.75rem radius), warmer background tones",
+      "Updated buttons, cards, inputs, badges, dialogs, and tables for a friendlier, less system-like feel",
+      "Redesigned Send Email modal with Jobber-style two-column layout and drag-and-drop file attachments",
+      "Merged Field Operations and Maintenance into each client Property detail view as new tabs",
+      "Added cross-client Invoices, Quotes, and Expenses pages to sidebar for organization-wide billing overview",
+      "Removed Field Operations and Maintenance from top-level sidebar navigation",
+      "Client billing system with invoices, quotes, expenses, and per-client billing settings",
+    ]
+  },
   {
     version: "1.11.0",
     date: "2026-03-20",
