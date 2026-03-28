@@ -175,6 +175,9 @@ const App = () => (
                   <Route path="/client-locations/:locationId" element={<ProtectedRoute><AppLayout><ClientLocationDetail /></AppLayout></ProtectedRoute>} />
                   <Route path="/service-request-history" element={<ProtectedRoute><AppLayout><ServiceRequestHistory /></AppLayout></ProtectedRoute>} />
                   <Route path="/tradetube" element={<ProtectedRoute><AppLayout><TradeTube /></AppLayout></ProtectedRoute>} />
+                  <Route path="/invoices" element={<ProtectedRoute><AppLayout><Invoices /></AppLayout></ProtectedRoute>} />
+                  <Route path="/quotes" element={<ProtectedRoute><AppLayout><Quotes /></AppLayout></ProtectedRoute>} />
+                  <Route path="/expenses" element={<ProtectedRoute><AppLayout><Expenses /></AppLayout></ProtectedRoute>} />
                   
                   {/* Portal entry */}
                   <Route path="/p/:orgSlug" element={<PortalEntry />} />

@@ -15,7 +15,11 @@ import {
   Info,
   Trash2,
   Settings2,
-  Share2
+  Share2,
+  Briefcase,
+  Wrench,
+  Clock,
+  CheckCircle
 } from "lucide-react";
 import {
   Dialog,
