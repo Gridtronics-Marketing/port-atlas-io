@@ -718,6 +718,19 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
                   locationName={location.name}
                 />
               </TabsContent>
+
+              {/* Field Ops Tab */}
+              <TabsContent value="field-ops" className="mt-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <TimeTrackingCard />
+                  <PhotoCaptureCard locationId={location.id} />
+                </div>
+              </TabsContent>
+
+              {/* Maintenance Tab */}
+              <TabsContent value="maintenance" className="mt-6">
+                <MaintenanceTabContent locationId={location.id} onAddMaintenance={() => setShowMaintenanceModal(true)} />
+              </TabsContent>
             </Tabs>
           </div>
         </DialogContent>
