@@ -336,7 +336,7 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
 
             {/* Enhanced Tabs */}
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-6 bg-muted">
+              <TabsList className="grid w-full grid-cols-8 bg-muted">
                 <TabsTrigger value="details" className="flex items-center gap-2">
                   <Info className="h-4 w-4" />
                   Details
@@ -360,6 +360,14 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
                 <TabsTrigger value="topology" className="flex items-center gap-2">
                   <Share2 className="h-4 w-4" />
                   Topology
+                </TabsTrigger>
+                <TabsTrigger value="field-ops" className="flex items-center gap-2">
+                  <Briefcase className="h-4 w-4" />
+                  Field Ops
+                </TabsTrigger>
+                <TabsTrigger value="maintenance" className="flex items-center gap-2">
+                  <Wrench className="h-4 w-4" />
+                  Maintenance
                 </TabsTrigger>
               </TabsList>
 
