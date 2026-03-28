@@ -1158,6 +1158,56 @@ export type Database = {
           },
         ]
       }
+      client_communications: {
+        Row: {
+          body: string | null
+          cc_emails: string[] | null
+          client_id: string
+          created_at: string | null
+          created_by: string | null
+          direction: string | null
+          id: string
+          status: string | null
+          subject: string | null
+          to_email: string | null
+          type: string
+        }
+        Insert: {
+          body?: string | null
+          cc_emails?: string[] | null
+          client_id: string
+          created_at?: string | null
+          created_by?: string | null
+          direction?: string | null
+          id?: string
+          status?: string | null
+          subject?: string | null
+          to_email?: string | null
+          type?: string
+        }
+        Update: {
+          body?: string | null
+          cc_emails?: string[] | null
+          client_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          direction?: string | null
+          id?: string
+          status?: string | null
+          subject?: string | null
+          to_email?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_communications_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_contacts: {
         Row: {
           client_id: string
@@ -1313,6 +1363,7 @@ export type Database = {
           linked_organization_id: string | null
           name: string
           organization_id: string | null
+          reply_to_email: string | null
           slug: string | null
           status: string | null
           updated_at: string
@@ -1328,6 +1379,7 @@ export type Database = {
           linked_organization_id?: string | null
           name: string
           organization_id?: string | null
+          reply_to_email?: string | null
           slug?: string | null
           status?: string | null
           updated_at?: string
@@ -1343,6 +1395,7 @@ export type Database = {
           linked_organization_id?: string | null
           name?: string
           organization_id?: string | null
+          reply_to_email?: string | null
           slug?: string | null
           status?: string | null
           updated_at?: string
