@@ -235,11 +235,9 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onUp
               </Button>
             )}
             {client.contact_email && (
-              <Button variant="outline" size="sm" asChild>
-                <a href={`mailto:${client.contact_email}`}>
-                  <Mail className="h-4 w-4 mr-1" />
-                  Email
-                </a>
+              <Button variant="outline" size="sm" onClick={() => setIsEmailModalOpen(true)}>
+                <Mail className="h-4 w-4 mr-1" />
+                Email
               </Button>
             )}
             <Button variant="outline" size="sm" onClick={() => setIsEditMode(!isEditMode)}>
