@@ -85,6 +85,8 @@ interface LocationDetailsModalProps {
 
 export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocation, onDeleteLocation, onLocationUpdate }: LocationDetailsModalProps) => {
   const [activeTab, setActiveTab] = useState("details");
+  const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
+  const [activeTab, setActiveTab] = useState("details");
   const [selectedFloorKey, setSelectedFloorKey] = useState<string>("1");
   const [allFloorPlanUrls, setAllFloorPlanUrls] = useState<Record<string, string>>({});
   const [riserDiagramUrl, setRiserDiagramUrl] = useState<string | null>(null);
