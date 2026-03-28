@@ -53,7 +53,10 @@ import { AddLocationNoteModal } from "@/components/AddLocationNoteModal";
 import { WalkThroughNotesList } from "@/components/WalkThroughNotesList";
 import { CustomerNotesPanel } from "@/components/CustomerNotesPanel";
 import { InfrastructureTopologyView } from "@/components/InfrastructureTopologyView";
-
+import { TimeTrackingCard } from "@/components/TimeTrackingCard";
+import { PhotoCaptureCard } from "@/components/PhotoCaptureCard";
+import { useMaintenanceScheduling } from "@/hooks/useMaintenanceScheduling";
+import { AddMaintenanceModal } from "@/components/AddMaintenanceModal";
 import { FloorPlanRepairTool } from "@/components/FloorPlanRepairTool";
 import { FloorPlanFileManager } from "@/components/FloorPlanFileManager";
 import { InteractiveFloorPlan } from "@/components/InteractiveFloorPlan";
