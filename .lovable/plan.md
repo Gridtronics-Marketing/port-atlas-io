@@ -1,66 +1,53 @@
 
 
-# App-Wide UI Refresh — Bolder, Smoother, Friendlier
+# Merge Field Ops & Maintenance into Properties + Add Billing Overview to Sidebar
 
 ## Summary
-Update the global design tokens and core UI primitives to produce a warmer, bolder, and more rounded look across the entire app. The Jobber screenshot shows the target aesthetic: generous padding, bolder headings, softer borders, larger radius, and an overall friendlier feel.
+1. Remove **Field Operations** and **Maintenance** from the sidebar and merge their functionality into each client's Property (Location) detail view as new tabs.
+2. Add **Invoices**, **Quotes**, and **Expenses** as top-level sidebar items so users get a cross-client overview without drilling into each client.
 
 ## Changes
 
-### 1. `index.html` — Add Inter font
-- Add Google Fonts link for **Inter** (weights 400, 500, 600, 700) for a modern, friendly typeface
+### 1. `src/components/AppSidebar.tsx` — Update navigation
+- **Remove** "Field Operations" and "Maintenance" from the Operations group
+- **Add** to the Business group: "Invoices" (`/invoices`), "Quotes" (`/quotes`), "Expenses" (`/expenses`)
 
-### 2. `tailwind.config.ts` — Font family + larger radius
-- Add `fontFamily: { sans: ["Inter", ...defaultTheme.fontFamily.sans] }`
-- Increase `--radius` from `0.5rem` to `0.75rem` for softer corners everywhere
+### 2. `src/components/LocationDetailsModal.tsx` — Add Field Ops & Maintenance tabs
+- Add two new tabs to the existing `TabsList` (expand grid from 6 to 8 columns):
+  - **"Field Ops"** tab — embeds time tracking, photo capture, and safety checklists scoped to that location
+  - **"Maintenance"** tab — embeds maintenance schedules filtered to that location, with add/view functionality
+- Import `TimeTrackingCard`, `PhotoCaptureCard`, `SafetyChecklistModal` for Field Ops tab content
+- Import `useMaintenanceScheduling` and render filtered schedules + `AddMaintenanceModal` for Maintenance tab content
 
-### 3. `src/index.css` — Design token & typography refresh
-- **Radius**: `--radius: 0.75rem` (was 0.5rem)
-- **Body text**: bump from `text-sm` to `text-[0.9375rem]` (15px base)
-- **Headings**: increase weights to `font-bold` (was semibold), bump sizes up one step
-- **Background**: soften to a warmer tone `220 14% 98%` (less gray)
-- **Borders**: soften from `220 13% 88%` → `220 10% 91%` (lighter, less harsh)
-- **Shadows**: make softer and more diffused
-- **Muted foreground**: slightly darker for better readability `220 10% 42%` (was 46%)
+### 3. New page: `src/pages/Invoices.tsx` — Cross-client invoice overview
+- Query `client_invoices` joined with `clients.name` across all clients in the org
+- Table: Invoice # | Client | Date | Total | Status | Actions
+- Filter by status, search by client/invoice number
+- Click opens invoice in context (navigates to client details billing tab or inline edit)
 
-### 4. `src/components/ui/button.tsx` — Bolder, rounder buttons
-- Base: `rounded-lg` (was `rounded-md`), `font-semibold` (was `font-medium`)
-- Default size: `h-10 px-5` (slightly wider padding)
-- Add subtle `shadow-sm` to default and destructive variants
-- Smoother hover transitions: `transition-all duration-200`
+### 4. New page: `src/pages/Quotes.tsx` — Cross-client quotes overview
+- Same pattern as Invoices page but querying `client_quotes`
+- Table: Quote # | Client | Date | Total | Status | Actions
 
-### 5. `src/components/ui/card.tsx` — Softer cards
-- `rounded-xl` (was `rounded-lg`)
-- `shadow-sm` default (consistent soft elevation)
-- `hover:shadow-md` implicit via `transition-card`
+### 5. New page: `src/pages/Expenses.tsx` — Cross-client expenses overview
+- Query `client_expenses` joined with `clients.name`
+- Table: Date | Client | Category | Vendor | Amount | Status
+- Summary cards at top: Total Pending, Total Approved, Total This Month
 
-### 6. `src/components/ui/input.tsx` — Friendlier inputs
-- `rounded-lg` (was `rounded-md`)
-- `h-11` (was `h-10`) — slightly taller, easier to tap
-- Lighter border color feel via softer `border-input` token
+### 6. `src/App.tsx` — Add routes
+- Add `/invoices`, `/quotes`, `/expenses` as protected routes with AppLayout
 
-### 7. `src/components/ui/badge.tsx` — Softer badges
-- Already `rounded-full` — keep
-- Bump to `font-bold` for bolder tag text
+### 7. `src/components/ClientPortalSidebar.tsx` — No changes needed
+(Client portal users don't see these admin-level pages)
 
-### 8. `src/components/ui/dialog.tsx` — Smoother modals
-- `sm:rounded-xl` (was `sm:rounded-lg`)
-- Softer overlay: `bg-black/60` (was `bg-black/80`) — less aggressive
-- Add `shadow-xl` for more depth
+## Technical Details
 
-### 9. `src/components/ui/table.tsx` — Friendlier tables
-- Table header: remove uppercase, use `font-semibold text-sm` instead of `text-xs uppercase tracking-wider`
-- Slightly more row padding `py-3.5` (was `py-3`)
-- Softer row dividers
-
-### 10. `src/components/ui/sidebar.tsx` (minor)
-- If needed, bump sidebar font weight for menu labels
-
-## What stays the same
-- Color palette (Gold/Silver/Steel brand)
-- Component structure and functionality
-- Dark mode tokens (just inherits the radius/font changes)
+- **Field Ops in Location**: The existing `FieldOperations` page has employee/project/location selectors — when embedded in LocationDetailsModal, those selectors are pre-filled and hidden since the context (location) is already known
+- **Maintenance in Location**: Filter `useMaintenanceScheduling` results by `location_id` matching the current property
+- **Cross-client billing pages**: Use the existing `useClientBilling` hook pattern but query without a `client_id` filter (all org data), joining to `clients` for the client name column
+- **No DB changes needed** — all tables already exist with org-scoped RLS
 
 ## File Summary
-- **Modified**: `index.html`, `tailwind.config.ts`, `src/index.css`, `button.tsx`, `card.tsx`, `input.tsx`, `badge.tsx`, `dialog.tsx`, `table.tsx`
+- **New**: `Invoices.tsx`, `Quotes.tsx`, `Expenses.tsx`
+- **Modified**: `AppSidebar.tsx` (nav items), `LocationDetailsModal.tsx` (2 new tabs), `App.tsx` (3 new routes)
 
