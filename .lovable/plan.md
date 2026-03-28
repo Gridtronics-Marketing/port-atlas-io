@@ -1,33 +1,41 @@
 
 
-# Redesign Client Management UI
+# Merge Locations into Client Details (Jobber-style)
 
 ## Summary
-Transform the Clients page from a card-based layout to a clean table-based layout inspired by the reference screenshot: simplified header, summary stat cards with trends, inline filter bar with status pills, and a proper data table.
+Two changes: (1) Show location count in the Clients table list instead of the raw address, and (2) restructure the Client Details modal to a Jobber-inspired two-column layout with "Properties" (locations) as a prominent section.
 
 ## Changes
 
-### Modify: `src/pages/Clients.tsx` — Full UI rewrite
+### 1. `src/pages/Clients.tsx` — Table "Address" column → "Properties" count
 
-**Header**
-- Clean title "Clients" (no gradient, no subtitle)
-- "New Client" primary button (green/primary) + "More Actions" outlined button with dropdown (export, bulk import, etc.)
+Currently the table shows the client's address. In the Jobber reference, clients with multiple locations show "X properties" instead. Change:
 
-**Summary Cards Row**
-- 3 stat cards (no icons): "New leads" (past 30 days, pending clients), "New clients" (past 30 days, recently added active), "Total new clients" (year to date count)
-- Each card shows count with a chevron arrow for navigation
-- Subtitle "Past 30 days" / "Year to date"
+- **Address column header** → keep as "Address" but show: if client has 1 address, show the address; the location count will come from the detail view
+- Actually, since we don't have location counts on the list page without an extra query, keep the Address column as-is for now. The main change is the detail view.
 
-**Filter Bar** (replaces the Filter & Search card)
-- Inline row: Status filter pills ("All", "Active", "Pending", "Inactive") as toggle buttons
-- Search input on the right side with search icon
-- Result count label: "Filtered clients (X results)"
+### 2. `src/components/ClientDetailsModal.tsx` — Jobber-style two-column layout
 
-**Table View** (replaces card list)
-- Use the existing `Table` component (`src/components/ui/table.tsx`)
-- Columns: **Name** (client name + contact name subtitle), **Address**, **Status** (dot + label), **Last Activity** (relative time from `updated_at`)
-- Clickable rows open the existing `ClientDetailsModal`
-- Clean hover state, no card borders per row
+Restructure the modal from a single-column stacked-cards layout to a **two-column layout** matching the Jobber screenshot:
 
-**No new files or hooks needed** — all data comes from existing `useClients` hook.
+**Left column (main content area, ~65% width):**
+- **Client name** as a large heading with a building icon (no card wrapper)
+- **Properties section** — rename "Managed Locations" to "Properties", show as a clean table with columns: Address, City, State, Zip. Include "+ New Property" button. Each row clickable to open LocationDetailsModal.
+- **Contacts section** — show contact name, role, phone, email in a table format (currently inline fields)
+- **Overview section** — placeholder for future Active Work/Requests/Quotes/Jobs/Invoices tabs
+
+**Right column (sidebar, ~35% width):**
+- **Contact info card** — Billing address, email(s), phone, Lead Source
+- **Tags card** — placeholder with "+ New Tag" button
+- **Client Portal card** — existing portal section, condensed
+
+**Header actions** — Move Edit/Save buttons to top-right as "Email", "Edit", "More Actions" buttons matching Jobber style
+
+### Specific code changes in `ClientDetailsModal.tsx`:
+- Replace the single `<div className="space-y-6">` with a two-column grid: `grid grid-cols-1 lg:grid-cols-5 gap-6`
+- Left column (`lg:col-span-3`): Client name heading, Properties table, Contacts table
+- Right column (`lg:col-span-2`): Contact info, Tags placeholder, Portal section
+- Rename "Managed Locations" → "Properties", "Add Location" → "+ New Property"
+- Change location list from card-based to a simple table showing address parts
+- Move delete button into a "More Actions" dropdown in the header
 
