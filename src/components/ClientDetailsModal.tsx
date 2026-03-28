@@ -451,15 +451,15 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onUp
               )}
             </div>
 
-            {/* Overview Placeholder */}
+            {/* Overview */}
             <div>
               <h3 className="text-base font-semibold text-foreground mb-3">Overview</h3>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {[
                   { label: "Active Work", count: 0 },
                   { label: "Requests", count: 0 },
-                  { label: "Quotes", count: 0 },
-                  { label: "Invoices", count: 0 },
+                  { label: "Quotes", count: billingStats.totalQuotes },
+                  { label: "Invoices", count: billingStats.totalInvoices },
                 ].map((item) => (
                   <div key={item.label} className="border rounded-lg p-3 text-center">
                     <p className="text-2xl font-bold text-foreground">{item.count}</p>
@@ -467,6 +467,15 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onUp
                   </div>
                 ))}
               </div>
+            </div>
+
+            {/* Billing */}
+            <div>
+              <h3 className="text-base font-semibold text-foreground flex items-center gap-2 mb-3">
+                <Receipt className="h-4 w-4 text-primary" />
+                Billing
+              </h3>
+              <ClientBillingTab clientId={client.id} />
             </div>
           </div>
 
