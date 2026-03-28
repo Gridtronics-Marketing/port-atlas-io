@@ -873,6 +873,12 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
           }
         }}
       />
+
+      {/* Add Maintenance Modal */}
+      <AddMaintenanceModal
+        open={showMaintenanceModal}
+        onOpenChange={setShowMaintenanceModal}
+      />
     </>
   );
 };
