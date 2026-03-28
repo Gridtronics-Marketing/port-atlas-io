@@ -546,6 +546,12 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onUp
               </CardContent>
             </Card>
 
+            {/* Communication Log */}
+            <ClientCommunicationLog
+              clientId={client.id}
+              onSendEmail={() => setIsEmailModalOpen(true)}
+            />
+
             {/* Client Portal Card */}
             <Card className="shadow-none">
               <CardHeader className="pb-2">
