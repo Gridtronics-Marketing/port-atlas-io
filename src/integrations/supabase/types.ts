@@ -493,6 +493,57 @@ export type Database = {
           },
         ]
       }
+      billing_line_items: {
+        Row: {
+          created_at: string | null
+          description: string
+          id: string
+          invoice_id: string | null
+          quantity: number | null
+          quote_id: string | null
+          sort_order: number | null
+          total: number | null
+          unit_price: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          description: string
+          id?: string
+          invoice_id?: string | null
+          quantity?: number | null
+          quote_id?: string | null
+          sort_order?: number | null
+          total?: number | null
+          unit_price?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string
+          id?: string
+          invoice_id?: string | null
+          quantity?: number | null
+          quote_id?: string | null
+          sort_order?: number | null
+          total?: number | null
+          unit_price?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_line_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "client_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_line_items_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "client_quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       blog_categories: {
         Row: {
           color: string | null
@@ -1158,6 +1209,84 @@ export type Database = {
           },
         ]
       }
+      client_billing_settings: {
+        Row: {
+          business_address: string | null
+          business_email: string | null
+          business_name: string | null
+          business_phone: string | null
+          client_id: string
+          created_at: string | null
+          currency: string | null
+          default_payment_terms: number | null
+          default_tax_rate: number | null
+          id: string
+          invoice_notes: string | null
+          invoice_prefix: string | null
+          logo_url: string | null
+          organization_id: string | null
+          quickbooks_customer_id: string | null
+          quote_notes: string | null
+          quote_prefix: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          business_address?: string | null
+          business_email?: string | null
+          business_name?: string | null
+          business_phone?: string | null
+          client_id: string
+          created_at?: string | null
+          currency?: string | null
+          default_payment_terms?: number | null
+          default_tax_rate?: number | null
+          id?: string
+          invoice_notes?: string | null
+          invoice_prefix?: string | null
+          logo_url?: string | null
+          organization_id?: string | null
+          quickbooks_customer_id?: string | null
+          quote_notes?: string | null
+          quote_prefix?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          business_address?: string | null
+          business_email?: string | null
+          business_name?: string | null
+          business_phone?: string | null
+          client_id?: string
+          created_at?: string | null
+          currency?: string | null
+          default_payment_terms?: number | null
+          default_tax_rate?: number | null
+          id?: string
+          invoice_notes?: string | null
+          invoice_prefix?: string | null
+          logo_url?: string | null
+          organization_id?: string | null
+          quickbooks_customer_id?: string | null
+          quote_notes?: string | null
+          quote_prefix?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_billing_settings_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_billing_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_communications: {
         Row: {
           body: string | null
@@ -1249,6 +1378,69 @@ export type Database = {
           },
         ]
       }
+      client_expenses: {
+        Row: {
+          amount: number
+          category: string
+          client_id: string
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          expense_date: string | null
+          id: string
+          organization_id: string | null
+          receipt_url: string | null
+          status: string | null
+          updated_at: string | null
+          vendor: string | null
+        }
+        Insert: {
+          amount: number
+          category: string
+          client_id: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          expense_date?: string | null
+          id?: string
+          organization_id?: string | null
+          receipt_url?: string | null
+          status?: string | null
+          updated_at?: string | null
+          vendor?: string | null
+        }
+        Update: {
+          amount?: number
+          category?: string
+          client_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          expense_date?: string | null
+          id?: string
+          organization_id?: string | null
+          receipt_url?: string | null
+          status?: string | null
+          updated_at?: string | null
+          vendor?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_expenses_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_expenses_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_invitations: {
         Row: {
           accepted_at: string | null
@@ -1316,6 +1508,78 @@ export type Database = {
           },
         ]
       }
+      client_invoices: {
+        Row: {
+          amount_paid: number | null
+          client_id: string
+          created_at: string | null
+          created_by: string | null
+          due_date: string | null
+          id: string
+          invoice_number: string
+          issue_date: string | null
+          notes: string | null
+          organization_id: string | null
+          quickbooks_invoice_id: string | null
+          status: string | null
+          subtotal: number | null
+          tax_amount: number | null
+          total: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount_paid?: number | null
+          client_id: string
+          created_at?: string | null
+          created_by?: string | null
+          due_date?: string | null
+          id?: string
+          invoice_number: string
+          issue_date?: string | null
+          notes?: string | null
+          organization_id?: string | null
+          quickbooks_invoice_id?: string | null
+          status?: string | null
+          subtotal?: number | null
+          tax_amount?: number | null
+          total?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount_paid?: number | null
+          client_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          due_date?: string | null
+          id?: string
+          invoice_number?: string
+          issue_date?: string | null
+          notes?: string | null
+          organization_id?: string | null
+          quickbooks_invoice_id?: string | null
+          status?: string | null
+          subtotal?: number | null
+          tax_amount?: number | null
+          total?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_invoices_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_invoices_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_portal_users: {
         Row: {
           client_id: string
@@ -1347,6 +1611,72 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_quotes: {
+        Row: {
+          client_id: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          issue_date: string | null
+          notes: string | null
+          organization_id: string | null
+          quote_number: string
+          status: string | null
+          subtotal: number | null
+          tax_amount: number | null
+          total: number | null
+          updated_at: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          issue_date?: string | null
+          notes?: string | null
+          organization_id?: string | null
+          quote_number: string
+          status?: string | null
+          subtotal?: number | null
+          tax_amount?: number | null
+          total?: number | null
+          updated_at?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          issue_date?: string | null
+          notes?: string | null
+          organization_id?: string | null
+          quote_number?: string
+          status?: string | null
+          subtotal?: number | null
+          tax_amount?: number | null
+          total?: number | null
+          updated_at?: string | null
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_quotes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_quotes_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]

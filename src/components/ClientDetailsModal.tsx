@@ -33,7 +33,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Building2, User, Mail, Phone, MapPin, Calendar, ExternalLink, Loader2, Edit, Plus, Trash2, Map, Navigation, Users, Globe, Copy, Save, MoreHorizontal, Tag, Pencil } from "lucide-react";
+import { Building2, User, Mail, Phone, MapPin, Calendar, ExternalLink, Loader2, Edit, Plus, Trash2, Map, Navigation, Users, Globe, Copy, Save, MoreHorizontal, Tag, Pencil, Receipt } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
@@ -55,6 +55,8 @@ import { useClientContacts, type ClientContact } from "@/hooks/useClientContacts
 import { AddClientContactModal } from "@/components/AddClientContactModal";
 import { SendClientEmailModal } from "@/components/SendClientEmailModal";
 import { ClientCommunicationLog } from "@/components/ClientCommunicationLog";
+import { ClientBillingTab } from "@/components/ClientBillingTab";
+import { useClientBilling } from "@/hooks/useClientBilling";
 
 interface ClientDetailsModalProps {
   client: Client | null;
@@ -70,6 +72,7 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onUp
   const { locations, loading: locationsLoading, refetch: refetchLocations } = useClientLocations(client?.id);
   const { deleteLocation, updateLocation } = useLocations();
   const { contacts, loading: contactsLoading, addContact, updateContact, deleteContact: deleteClientContact } = useClientContacts(client?.id);
+  const { stats: billingStats } = useClientBilling(client?.id);
   const { toast } = useToast();
   const { isSuperAdmin, userOrgRole } = useOrganization();
   const navigate = useNavigate();
@@ -448,15 +451,15 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onUp
               )}
             </div>
 
-            {/* Overview Placeholder */}
+            {/* Overview */}
             <div>
               <h3 className="text-base font-semibold text-foreground mb-3">Overview</h3>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {[
                   { label: "Active Work", count: 0 },
                   { label: "Requests", count: 0 },
-                  { label: "Quotes", count: 0 },
-                  { label: "Invoices", count: 0 },
+                  { label: "Quotes", count: billingStats.totalQuotes },
+                  { label: "Invoices", count: billingStats.totalInvoices },
                 ].map((item) => (
                   <div key={item.label} className="border rounded-lg p-3 text-center">
                     <p className="text-2xl font-bold text-foreground">{item.count}</p>
@@ -464,6 +467,15 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onUp
                   </div>
                 ))}
               </div>
+            </div>
+
+            {/* Billing */}
+            <div>
+              <h3 className="text-base font-semibold text-foreground flex items-center gap-2 mb-3">
+                <Receipt className="h-4 w-4 text-primary" />
+                Billing
+              </h3>
+              <ClientBillingTab clientId={client.id} />
             </div>
           </div>
 
