@@ -203,12 +203,12 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onUp
         </DialogHeader>
 
         {/* Top Header Bar */}
-        <div className="flex items-center justify-between border-b border-border pb-4 mb-6">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-border pb-4 mb-6 gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
               <Building2 className="h-5 w-5 text-primary" />
             </div>
-            <div>
+            <div className="min-w-0">
               {isEditMode ? (
                 <Input
                   value={editForm.name}
@@ -216,7 +216,7 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onUp
                   className="text-xl font-semibold h-8 max-w-xs"
                 />
               ) : (
-                <h2 className="text-xl font-semibold text-foreground">{client.name}</h2>
+                <h2 className="text-xl font-semibold text-foreground truncate">{client.name}</h2>
               )}
               {isEditMode ? (
                 <ConfigurableSelect
@@ -230,22 +230,22 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onUp
               )}
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             {isEditMode && (
               <Button onClick={handleSave} disabled={isSaving} size="sm">
                 {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                Save
+                <span className="hidden sm:inline ml-1">Save</span>
               </Button>
             )}
             {client.contact_email && (
               <Button variant="outline" size="sm" onClick={() => setIsEmailModalOpen(true)}>
-                <Mail className="h-4 w-4 mr-1" />
-                Email
+                <Mail className="h-4 w-4" />
+                <span className="hidden sm:inline ml-1">Email</span>
               </Button>
             )}
             <Button variant="outline" size="sm" onClick={() => setIsEditMode(!isEditMode)}>
-              <Edit className="h-4 w-4 mr-1" />
-              {isEditMode ? 'Cancel' : 'Edit'}
+              <Edit className="h-4 w-4" />
+              <span className="hidden sm:inline ml-1">{isEditMode ? 'Cancel' : 'Edit'}</span>
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
