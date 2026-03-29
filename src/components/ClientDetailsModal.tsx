@@ -429,49 +429,90 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onUp
                   <p className="text-sm text-muted-foreground">No contacts added yet</p>
                 </div>
               ) : (
-                <div className="border rounded-lg overflow-hidden">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Phone</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Role</TableHead>
-                        <TableHead className="w-[50px]">Edit</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {contacts.map((contact) => (
-                        <TableRow key={contact.id}>
-                          <TableCell className="font-medium">{contact.name}</TableCell>
-                          <TableCell className="text-muted-foreground">{contact.phone || "—"}</TableCell>
-                          <TableCell className="text-muted-foreground">{contact.email || "—"}</TableCell>
-                          <TableCell className="text-muted-foreground">{contact.role || "—"}</TableCell>
-                          <TableCell>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7"
-                              onClick={() => { setEditingContact(contact); setIsContactModalOpen(true); }}
-                            >
-                              <Pencil className="h-3.5 w-3.5" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                      {/* Show legacy contact if no contacts in new table */}
-                      {contacts.length === 0 && client.contact_name && (
+                <>
+                  {/* Desktop table */}
+                  <div className="border rounded-lg overflow-hidden hidden sm:block">
+                    <Table>
+                      <TableHeader>
                         <TableRow>
-                          <TableCell className="font-medium">{client.contact_name}</TableCell>
-                          <TableCell className="text-muted-foreground">{client.contact_phone || "—"}</TableCell>
-                          <TableCell className="text-muted-foreground">{client.contact_email || "—"}</TableCell>
-                          <TableCell className="text-muted-foreground">—</TableCell>
-                          <TableCell>—</TableCell>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Phone</TableHead>
+                          <TableHead>Email</TableHead>
+                          <TableHead>Role</TableHead>
+                          <TableHead className="w-[50px]">Edit</TableHead>
                         </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
+                      </TableHeader>
+                      <TableBody>
+                        {contacts.map((contact) => (
+                          <TableRow key={contact.id}>
+                            <TableCell className="font-medium">{contact.name}</TableCell>
+                            <TableCell className="text-muted-foreground">{contact.phone || "—"}</TableCell>
+                            <TableCell className="text-muted-foreground">{contact.email || "—"}</TableCell>
+                            <TableCell className="text-muted-foreground">{contact.role || "—"}</TableCell>
+                            <TableCell>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7"
+                                onClick={() => { setEditingContact(contact); setIsContactModalOpen(true); }}
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                        {contacts.length === 0 && client.contact_name && (
+                          <TableRow>
+                            <TableCell className="font-medium">{client.contact_name}</TableCell>
+                            <TableCell className="text-muted-foreground">{client.contact_phone || "—"}</TableCell>
+                            <TableCell className="text-muted-foreground">{client.contact_email || "—"}</TableCell>
+                            <TableCell className="text-muted-foreground">—</TableCell>
+                            <TableCell>—</TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  {/* Mobile card list */}
+                  <div className="space-y-2 sm:hidden">
+                    {(contacts.length > 0 ? contacts : client.contact_name ? [{
+                      id: 'legacy',
+                      name: client.contact_name,
+                      phone: client.contact_phone || null,
+                      email: client.contact_email || null,
+                      role: null,
+                    }] : []).map((contact) => (
+                      <div key={contact.id} className="border rounded-lg p-3">
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="font-medium text-foreground">{contact.name}</p>
+                          <div className="flex items-center gap-1">
+                            {contact.role && <Badge variant="secondary" className="text-xs">{contact.role}</Badge>}
+                            {contact.id !== 'legacy' && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7"
+                                onClick={() => { setEditingContact(contact as any); setIsContactModalOpen(true); }}
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                        {contact.phone && (
+                          <a href={`tel:${contact.phone}`} className="flex items-center gap-1.5 text-sm text-primary hover:underline mb-0.5">
+                            <Phone className="h-3 w-3" /> {contact.phone}
+                          </a>
+                        )}
+                        {contact.email && (
+                          <a href={`mailto:${contact.email}`} className="flex items-center gap-1.5 text-sm text-primary hover:underline">
+                            <Mail className="h-3 w-3" /> {contact.email}
+                          </a>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </>
               )}
             </div>
 
