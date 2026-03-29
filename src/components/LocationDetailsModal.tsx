@@ -283,37 +283,40 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto bg-card border lg:max-w-[95vw] lg:w-[95vw] lg:h-[90vh]">
+        <DialogContent className="w-full h-full max-w-none max-h-none sm:max-w-[900px] sm:max-h-[90vh] lg:max-w-[95vw] lg:w-[95vw] lg:h-[90vh] overflow-y-auto bg-card border rounded-none sm:rounded-xl p-4 sm:p-6">
           <DialogHeader>
-            <div className="flex items-start justify-between">
-              <div>
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+              <div className="min-w-0">
                 <DialogTitle className="flex items-center gap-2 text-xl">
-                  <MapPin className="h-5 w-5 text-primary" />
-                  {location.name}
+                  <MapPin className="h-5 w-5 text-primary shrink-0" />
+                  <span className="truncate">{location.name}</span>
                 </DialogTitle>
-                <div className="flex items-center gap-2 mt-2">
+                <div className="flex flex-wrap items-center gap-2 mt-2">
                   <Badge className={getStatusColor(location.status)}>
                     {location.status}
                   </Badge>
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-sm text-muted-foreground truncate">
                     {location.project?.client?.name || 'No Client'} • {location.address}
                   </span>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
                 {onEditLocation && (
                   <Button
                     variant="outline"
+                    size="sm"
                     onClick={() => onEditLocation(location)}
                     className="flex items-center gap-2"
                   >
                     <MapPin className="h-4 w-4" />
-                    Edit Location
+                    <span className="hidden sm:inline">Edit Location</span>
+                    <span className="sm:hidden">Edit</span>
                   </Button>
                 )}
-                <Button className="bg-gradient-primary hover:bg-primary-hover">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Drop Point
+                <Button size="sm" className="bg-gradient-primary hover:bg-primary-hover">
+                  <Plus className="h-4 w-4 mr-1" />
+                  <span className="hidden sm:inline">Add Drop Point</span>
+                  <span className="sm:hidden">Add Drop</span>
                 </Button>
               </div>
             </div>
@@ -375,40 +378,42 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
 
             {/* Enhanced Tabs */}
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-8 bg-muted">
-                <TabsTrigger value="details" className="flex items-center gap-2">
-                  <Info className="h-4 w-4" />
-                  Details
-                </TabsTrigger>
-                <TabsTrigger value="floor-plans" className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4" />
-                  Floor Plans
-                </TabsTrigger>
-                <TabsTrigger value="drops" className="flex items-center gap-2">
-                  <Cable className="h-4 w-4" />
-                  Drop Points
-                </TabsTrigger>
-                <TabsTrigger value="team" className="flex items-center gap-2">
-                  <Users className="h-4 w-4" />
-                  Team & Notes
-                </TabsTrigger>
-                <TabsTrigger value="riser-diagrams" className="flex items-center gap-2">
-                  <Building2 className="h-4 w-4" />
-                  Riser Diagrams
-                </TabsTrigger>
-                <TabsTrigger value="topology" className="flex items-center gap-2">
-                  <Share2 className="h-4 w-4" />
-                  Topology
-                </TabsTrigger>
-                <TabsTrigger value="field-ops" className="flex items-center gap-2">
-                  <Briefcase className="h-4 w-4" />
-                  Field Ops
-                </TabsTrigger>
-                <TabsTrigger value="maintenance" className="flex items-center gap-2">
-                  <Wrench className="h-4 w-4" />
-                  Maintenance
-                </TabsTrigger>
-              </TabsList>
+              <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+                <TabsList className="inline-flex w-auto min-w-full sm:min-w-0 bg-muted h-auto p-1 gap-0.5">
+                  <TabsTrigger value="details" className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs sm:text-sm sm:px-3">
+                    <Info className="h-4 w-4 shrink-0" />
+                    <span className="hidden sm:inline">Details</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="floor-plans" className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs sm:text-sm sm:px-3">
+                    <MapPin className="h-4 w-4 shrink-0" />
+                    <span className="hidden sm:inline">Floor Plans</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="drops" className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs sm:text-sm sm:px-3">
+                    <Cable className="h-4 w-4 shrink-0" />
+                    <span className="hidden sm:inline">Drops</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="team" className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs sm:text-sm sm:px-3">
+                    <Users className="h-4 w-4 shrink-0" />
+                    <span className="hidden sm:inline">Team</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="riser-diagrams" className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs sm:text-sm sm:px-3">
+                    <Building2 className="h-4 w-4 shrink-0" />
+                    <span className="hidden sm:inline">Risers</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="topology" className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs sm:text-sm sm:px-3">
+                    <Share2 className="h-4 w-4 shrink-0" />
+                    <span className="hidden sm:inline">Topology</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="field-ops" className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs sm:text-sm sm:px-3">
+                    <Briefcase className="h-4 w-4 shrink-0" />
+                    <span className="hidden sm:inline">Field Ops</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="maintenance" className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs sm:text-sm sm:px-3">
+                    <Wrench className="h-4 w-4 shrink-0" />
+                    <span className="hidden sm:inline">Maint.</span>
+                  </TabsTrigger>
+                </TabsList>
+              </div>
 
               {/* Details Tab */}
               <TabsContent value="details" className="mt-6">

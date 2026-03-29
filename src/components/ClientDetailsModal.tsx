@@ -196,19 +196,19 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onUp
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-full h-full max-w-none max-h-none sm:w-[95vw] sm:h-[95vh] sm:max-w-[95vw] sm:max-h-[95vh] overflow-y-auto sm:rounded-lg">
+      <DialogContent className="w-full h-full max-w-none max-h-none sm:w-[95vw] sm:h-[95vh] sm:max-w-[95vw] sm:max-h-[95vh] overflow-y-auto rounded-none sm:rounded-xl p-4 sm:p-6">
         <DialogHeader className="sr-only">
           <DialogTitle>{client.name}</DialogTitle>
           <DialogDescription>Client details for {client.name}</DialogDescription>
         </DialogHeader>
 
         {/* Top Header Bar */}
-        <div className="flex items-center justify-between border-b border-border pb-4 mb-6">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-border pb-4 mb-6 gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
               <Building2 className="h-5 w-5 text-primary" />
             </div>
-            <div>
+            <div className="min-w-0">
               {isEditMode ? (
                 <Input
                   value={editForm.name}
@@ -216,7 +216,7 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onUp
                   className="text-xl font-semibold h-8 max-w-xs"
                 />
               ) : (
-                <h2 className="text-xl font-semibold text-foreground">{client.name}</h2>
+                <h2 className="text-xl font-semibold text-foreground truncate">{client.name}</h2>
               )}
               {isEditMode ? (
                 <ConfigurableSelect
@@ -230,22 +230,22 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onUp
               )}
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             {isEditMode && (
               <Button onClick={handleSave} disabled={isSaving} size="sm">
                 {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                Save
+                <span className="hidden sm:inline ml-1">Save</span>
               </Button>
             )}
             {client.contact_email && (
               <Button variant="outline" size="sm" onClick={() => setIsEmailModalOpen(true)}>
-                <Mail className="h-4 w-4 mr-1" />
-                Email
+                <Mail className="h-4 w-4" />
+                <span className="hidden sm:inline ml-1">Email</span>
               </Button>
             )}
             <Button variant="outline" size="sm" onClick={() => setIsEditMode(!isEditMode)}>
-              <Edit className="h-4 w-4 mr-1" />
-              {isEditMode ? 'Cancel' : 'Edit'}
+              <Edit className="h-4 w-4" />
+              <span className="hidden sm:inline ml-1">{isEditMode ? 'Cancel' : 'Edit'}</span>
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -339,38 +339,62 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onUp
                   <p className="text-xs text-muted-foreground text-center">Click pins to view details</p>
                 </div>
               ) : (
-                <div className="border rounded-lg overflow-hidden">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Address</TableHead>
-                        <TableHead>Floors</TableHead>
-                        <TableHead>Drops</TableHead>
-                        <TableHead>Status</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {locations.map((location) => (
-                        <TableRow
-                          key={location.id}
-                          className="cursor-pointer"
-                          onClick={() => setSelectedLocation(location)}
-                        >
-                          <TableCell className="font-medium">{location.name}</TableCell>
-                          <TableCell className="text-muted-foreground text-sm max-w-[200px] truncate">
-                            {location.address || "—"}
-                          </TableCell>
-                          <TableCell className="text-muted-foreground">{location.floors}</TableCell>
-                          <TableCell className="text-muted-foreground">{location.drop_points_count || 0}</TableCell>
-                          <TableCell>
-                            <Badge variant="secondary" className="text-xs">{location.status}</Badge>
-                          </TableCell>
+                <>
+                  {/* Desktop table */}
+                  <div className="border rounded-lg overflow-hidden hidden sm:block">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Address</TableHead>
+                          <TableHead>Floors</TableHead>
+                          <TableHead>Drops</TableHead>
+                          <TableHead>Status</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                      </TableHeader>
+                      <TableBody>
+                        {locations.map((location) => (
+                          <TableRow
+                            key={location.id}
+                            className="cursor-pointer"
+                            onClick={() => setSelectedLocation(location)}
+                          >
+                            <TableCell className="font-medium">{location.name}</TableCell>
+                            <TableCell className="text-muted-foreground text-sm max-w-[200px] truncate">
+                              {location.address || "—"}
+                            </TableCell>
+                            <TableCell className="text-muted-foreground">{location.floors}</TableCell>
+                            <TableCell className="text-muted-foreground">{location.drop_points_count || 0}</TableCell>
+                            <TableCell>
+                              <Badge variant="secondary" className="text-xs">{location.status}</Badge>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  {/* Mobile card list */}
+                  <div className="space-y-2 sm:hidden">
+                    {locations.map((location) => (
+                      <div
+                        key={location.id}
+                        className="border rounded-lg p-3 cursor-pointer hover:bg-muted/40 transition-colors active:bg-muted/60"
+                        onClick={() => setSelectedLocation(location)}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="font-medium text-foreground">{location.name}</p>
+                          <Badge variant="secondary" className="text-xs">{location.status}</Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground truncate">{location.address || "No address"}</p>
+                        <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
+                          <span>{location.floors} floor{location.floors > 1 ? 's' : ''}</span>
+                          <span>•</span>
+                          <span>{location.drop_points_count || 0} drops</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
               )}
             </div>
 
@@ -405,49 +429,90 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onUp
                   <p className="text-sm text-muted-foreground">No contacts added yet</p>
                 </div>
               ) : (
-                <div className="border rounded-lg overflow-hidden">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Phone</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Role</TableHead>
-                        <TableHead className="w-[50px]">Edit</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {contacts.map((contact) => (
-                        <TableRow key={contact.id}>
-                          <TableCell className="font-medium">{contact.name}</TableCell>
-                          <TableCell className="text-muted-foreground">{contact.phone || "—"}</TableCell>
-                          <TableCell className="text-muted-foreground">{contact.email || "—"}</TableCell>
-                          <TableCell className="text-muted-foreground">{contact.role || "—"}</TableCell>
-                          <TableCell>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7"
-                              onClick={() => { setEditingContact(contact); setIsContactModalOpen(true); }}
-                            >
-                              <Pencil className="h-3.5 w-3.5" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                      {/* Show legacy contact if no contacts in new table */}
-                      {contacts.length === 0 && client.contact_name && (
+                <>
+                  {/* Desktop table */}
+                  <div className="border rounded-lg overflow-hidden hidden sm:block">
+                    <Table>
+                      <TableHeader>
                         <TableRow>
-                          <TableCell className="font-medium">{client.contact_name}</TableCell>
-                          <TableCell className="text-muted-foreground">{client.contact_phone || "—"}</TableCell>
-                          <TableCell className="text-muted-foreground">{client.contact_email || "—"}</TableCell>
-                          <TableCell className="text-muted-foreground">—</TableCell>
-                          <TableCell>—</TableCell>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Phone</TableHead>
+                          <TableHead>Email</TableHead>
+                          <TableHead>Role</TableHead>
+                          <TableHead className="w-[50px]">Edit</TableHead>
                         </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
+                      </TableHeader>
+                      <TableBody>
+                        {contacts.map((contact) => (
+                          <TableRow key={contact.id}>
+                            <TableCell className="font-medium">{contact.name}</TableCell>
+                            <TableCell className="text-muted-foreground">{contact.phone || "—"}</TableCell>
+                            <TableCell className="text-muted-foreground">{contact.email || "—"}</TableCell>
+                            <TableCell className="text-muted-foreground">{contact.role || "—"}</TableCell>
+                            <TableCell>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7"
+                                onClick={() => { setEditingContact(contact); setIsContactModalOpen(true); }}
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                        {contacts.length === 0 && client.contact_name && (
+                          <TableRow>
+                            <TableCell className="font-medium">{client.contact_name}</TableCell>
+                            <TableCell className="text-muted-foreground">{client.contact_phone || "—"}</TableCell>
+                            <TableCell className="text-muted-foreground">{client.contact_email || "—"}</TableCell>
+                            <TableCell className="text-muted-foreground">—</TableCell>
+                            <TableCell>—</TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  {/* Mobile card list */}
+                  <div className="space-y-2 sm:hidden">
+                    {(contacts.length > 0 ? contacts : client.contact_name ? [{
+                      id: 'legacy',
+                      name: client.contact_name,
+                      phone: client.contact_phone || null,
+                      email: client.contact_email || null,
+                      role: null,
+                    }] : []).map((contact) => (
+                      <div key={contact.id} className="border rounded-lg p-3">
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="font-medium text-foreground">{contact.name}</p>
+                          <div className="flex items-center gap-1">
+                            {contact.role && <Badge variant="secondary" className="text-xs">{contact.role}</Badge>}
+                            {contact.id !== 'legacy' && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7"
+                                onClick={() => { setEditingContact(contact as any); setIsContactModalOpen(true); }}
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                        {contact.phone && (
+                          <a href={`tel:${contact.phone}`} className="flex items-center gap-1.5 text-sm text-primary hover:underline mb-0.5">
+                            <Phone className="h-3 w-3" /> {contact.phone}
+                          </a>
+                        )}
+                        {contact.email && (
+                          <a href={`mailto:${contact.email}`} className="flex items-center gap-1.5 text-sm text-primary hover:underline">
+                            <Mail className="h-3 w-3" /> {contact.email}
+                          </a>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </>
               )}
             </div>
 
