@@ -810,7 +810,6 @@ export const InteractiveFloorPlan = ({
                 <Globe className="h-4 w-4 mr-2" />
                 Satellite View
               </Button>
-              )}
               <FloorPlanFilterDialog filters={filters} onFiltersChange={setFilters} />
               <TooltipProvider>
                 <Tooltip>
