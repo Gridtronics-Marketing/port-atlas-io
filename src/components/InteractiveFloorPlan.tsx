@@ -1047,10 +1047,10 @@ export const InteractiveFloorPlan = ({
                             }}
                           >
                             <div
-                              className={`transform -translate-x-1/2 -translate-y-1/2 rounded-full border-2 flex items-center justify-center text-white font-bold hover:scale-110 transition-transform shadow-lg ${
+                              className={`transform -translate-x-1/2 -translate-y-1/2 flex items-center justify-center hover:scale-110 transition-transform drop-shadow-lg ${
                                 draggedPoint && draggedPoint.id === point.id 
-                                  ? `cursor-grabbing scale-110 ${getDropPointColor(point.status)}` 
-                                  : `cursor-grab ${getDropPointColor(point.status)}`
+                                  ? 'cursor-grabbing scale-110' 
+                                  : 'cursor-grab'
                               }`}
                               onMouseDown={(e) => handlePointerDown(e, point, 'dropPoint')}
                               onTouchStart={(e) => handlePointerDown(e, point, 'dropPoint')}
@@ -1064,9 +1064,10 @@ export const InteractiveFloorPlan = ({
                               style={{
                                 width: `${24 * filters.markerScale}px`,
                                 height: `${24 * filters.markerScale}px`,
+                                color: getStatusHexColor(point.status),
                               }}
                             >
-                              <span style={{ fontSize: `${10 * filters.markerScale}px` }}>{getDropPointIcon(point.point_type)}</span>
+                              <DropPointShape type={point.point_type} size={24 * filters.markerScale} />
                               {point.status === 'tested' && (
                                 <div className="absolute inset-0 flex items-center justify-center text-white font-bold" style={{ fontSize: `${8 * filters.markerScale}px` }}>✓</div>
                               )}
