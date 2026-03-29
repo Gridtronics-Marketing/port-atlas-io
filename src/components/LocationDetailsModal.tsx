@@ -537,59 +537,14 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
 
               {/* Floor Plans Tab */}
               <TabsContent value="floor-plans" className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <Label htmlFor="floor-select">Floor / Building:</Label>
-                    <Select value={selectedFloorKey} onValueChange={setSelectedFloorKey}>
-                      <SelectTrigger className="w-48 bg-background">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-popover border shadow-md z-50">
-                        {/* Regular Floors */}
-                        {Array.from({ length: location.floors || 1 }, (_, i) => i + 1).map((floor) => (
-                          <SelectItem key={floor} value={floor.toString()}>
-                            {getFloorDisplayName(floor)}
-                          </SelectItem>
-                        ))}
-                        {/* Outbuildings */}
-                        {outbuildings.length > 0 && (
-                          <>
-                            <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground border-t mt-1 pt-2">
-                              Outbuildings
-                            </div>
-                            {outbuildings.map((ob) => (
-                              <SelectItem key={ob.key} value={ob.key}>
-                                {ob.name}
-                              </SelectItem>
-                            ))}
-                          </>
-                        )}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowFloorManager(true)}
-                    className="flex items-center gap-2"
-                  >
-                    <Settings2 className="h-4 w-4" />
-                    Manage Floors
-                  </Button>
-                </div>
+                <FloorPlanListView
+                  locationId={location.id}
+                  locationName={location.name}
+                  floors={location.floors || 1}
+                  floorPlanFiles={location.floor_plan_files as Record<string, any> | null}
+                  onFloorPlanChanged={handleFloorPlanSaved}
+                />
 
-                <div className="space-y-4">
-                  <InteractiveFloorPlan
-                    locationId={location.id}
-                    floorNumber={selectedFloorNumber}
-                    fileUrl={currentFloorPlanUrl}
-                    filePath={getFloorPlanImagePath(location.floor_plan_files, selectedFloorKey) || ''}
-                    fileName={getFloorPlanImagePath(location.floor_plan_files, selectedFloorKey)?.split('/').pop() || ''}
-                    className="min-h-[500px]"
-                    onFloorPlanSaved={handleFloorPlanSaved}
-                  />
-                </div>
                 <Tabs defaultValue="diagnostics" className="w-full">
                   <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="diagnostics">Diagnostics</TabsTrigger>
