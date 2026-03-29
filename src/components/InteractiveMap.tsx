@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { MapPin, Plus, Zap, Shield, Wifi, Layers, Radio } from "lucide-react";
+import { DropPointShape } from "@/lib/drop-point-shapes";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -50,22 +51,7 @@ export const InteractiveMap = ({ locationId, floors = 1, currentFloor = 1, backg
       cable_count: dp.cable_count || 1
     }));
 
-  const getDropPointIcon = (type: string) => {
-    switch (type) {
-      case "data":
-        return Zap;
-      case "fiber":
-        return Wifi;
-      case "security":
-        return Shield;
-      case "wireless":
-        return Radio;
-      case "power":
-        return Plus;
-      default:
-        return MapPin;
-    }
-  };
+  // Drop point icon function removed — now using DropPointShape component
 
   const getDropPointColor = (status: string) => {
     switch (status) {
@@ -209,13 +195,12 @@ export const InteractiveMap = ({ locationId, floors = 1, currentFloor = 1, backg
 
         {/* Drop Points */}
         <TooltipProvider>
-          {dropPoints.map((point) => {
-            const IconComponent = getDropPointIcon(point.type);
+        {dropPoints.map((point) => {
             return (
               <Tooltip key={point.id}>
                 <TooltipTrigger asChild>
                   <button
-                    className={`absolute transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full border-2 flex items-center justify-center hover:scale-110 transition-transform ${getDropPointColor(point.status)}`}
+                    className={`absolute transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center hover:scale-110 transition-transform drop-shadow-lg ${getDropPointColor(point.status)}`}
                     style={{
                       left: `${point.x}%`,
                       top: `${point.y}%`,
@@ -225,10 +210,9 @@ export const InteractiveMap = ({ locationId, floors = 1, currentFloor = 1, backg
                       setSelectedPoint(point);
                     }}
                   >
-                    {point.status === 'tested' ? (
-                      <span className="text-white text-xs font-bold">✓</span>
-                    ) : (
-                      <IconComponent className="h-4 w-4" />
+                    <DropPointShape type={point.type} size={20} />
+                    {point.status === 'tested' && (
+                      <div className="absolute inset-0 flex items-center justify-center text-white text-xs font-bold">✓</div>
                     )}
                     {point.cable_count > 1 && (
                       <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center border border-background">

@@ -66,7 +66,7 @@ function getStatusColor(status: string): string {
 }
 
 /**
- * Draw a drop point marker on the canvas
+ * Draw a drop point marker on the canvas using type-specific shapes
  */
 function drawDropPointMarker(
   ctx: CanvasRenderingContext2D,
@@ -77,13 +77,13 @@ function drawDropPointMarker(
   const y = (marker.y / 100) * ctx.canvas.height;
   const color = getStatusColor(marker.status);
 
-  // Draw circle
-  ctx.beginPath();
-  ctx.arc(x, y, 8, 0, Math.PI * 2);
   ctx.fillStyle = color;
-  ctx.fill();
   ctx.strokeStyle = '#ffffff';
   ctx.lineWidth = 2;
+
+  // Import inline to avoid circular deps with tsx
+  drawShapeByType(ctx, marker.type, x, y, 18);
+
   ctx.stroke();
 
   // Draw label if enabled
@@ -93,12 +93,84 @@ function drawDropPointMarker(
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 3;
     
-    // Draw text with white outline for readability
-    const textX = x + 12;
+    const textX = x + 14;
     const textY = y + 4;
     ctx.strokeText(marker.label, textX, textY);
     ctx.fillText(marker.label, textX, textY);
   }
+}
+
+function drawShapeByType(ctx: CanvasRenderingContext2D, type: string, cx: number, cy: number, size: number) {
+  const s = size / 2;
+  const normalized = type?.toLowerCase().replace(/[\s_-]/g, '') || 'other';
+
+  ctx.beginPath();
+  switch (normalized) {
+    case 'data':
+      ctx.moveTo(cx, cy - s);
+      ctx.lineTo(cx + s, cy + s);
+      ctx.lineTo(cx - s, cy + s);
+      ctx.closePath();
+      break;
+    case 'wifi':
+    case 'wireless':
+      ctx.arc(cx, cy, s, 0, Math.PI * 2);
+      break;
+    case 'camera':
+    case 'security': {
+      const bw = s * 1.2;
+      const bh = s;
+      ctx.rect(cx - bw / 2 - s * 0.2, cy - bh / 2, bw, bh);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(cx + bw / 2 - s * 0.2, cy - bh * 0.3);
+      ctx.lineTo(cx + s, cy - bh / 2);
+      ctx.lineTo(cx + s, cy + bh / 2);
+      ctx.lineTo(cx + bw / 2 - s * 0.2, cy + bh * 0.3);
+      ctx.closePath();
+      break;
+    }
+    case 'mdf':
+    case 'idf': {
+      for (let i = 0; i < 5; i++) {
+        const outerAngle = (Math.PI / 2) + (i * 2 * Math.PI / 5);
+        const innerAngle = outerAngle + Math.PI / 5;
+        const ox = cx + s * Math.cos(-outerAngle);
+        const oy = cy - s * Math.sin(outerAngle);
+        const ix = cx + (s * 0.4) * Math.cos(-innerAngle);
+        const iy = cy - (s * 0.4) * Math.sin(innerAngle);
+        if (i === 0) ctx.moveTo(ox, oy);
+        else ctx.lineTo(ox, oy);
+        ctx.lineTo(ix, iy);
+      }
+      ctx.closePath();
+      break;
+    }
+    case 'accesscontrol':
+    case 'access_control':
+      ctx.rect(cx - s * 0.5, cy - s, s, s * 2);
+      break;
+    case 'av':
+    case 'a/v': {
+      ctx.rect(cx - s * 0.7, cy - s * 0.3, s * 1.4, s * 1.3);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - s * 0.3);
+      ctx.lineTo(cx, cy - s);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(cx, cy - s, s * 0.2, 0, Math.PI * 2);
+      break;
+    }
+    default:
+      ctx.moveTo(cx, cy - s);
+      ctx.lineTo(cx + s, cy);
+      ctx.lineTo(cx, cy + s);
+      ctx.lineTo(cx - s, cy);
+      ctx.closePath();
+      break;
+  }
+  ctx.fill();
 }
 
 /**

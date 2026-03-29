@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Plus, RotateCcw, ZoomIn, ZoomOut, RefreshCw, Camera, FileImage, Upload, PenTool, Edit, Trash2, Route, Lock, Unlock, Globe, Menu, Filter } from 'lucide-react';
+import { DropPointShape } from '@/lib/drop-point-shapes';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
   DropdownMenu,
@@ -603,16 +604,7 @@ export const InteractiveFloorPlan = ({
     }
   };
 
-  const getDropPointIcon = (type: string) => {
-    const icons = {
-      data: '📡',
-      fiber: '🌐', 
-      security: '🔒',
-      wireless: '📶',
-      power: '⚡'
-    };
-    return icons[type as keyof typeof icons] || '📡';
-  };
+  // Drop point icon function removed — now using DropPointShape component
 
   const getDropPointColor = (status: string) => {
     switch (status) {
@@ -653,6 +645,19 @@ export const InteractiveFloorPlan = ({
         return 'text-red-600';
       default:
         return 'text-red-600';
+    }
+  };
+
+  const getStatusHexColor = (status: string) => {
+    switch (status) {
+      case 'planned': return '#ef4444';
+      case 'roughed_in': return '#f97316';
+      case 'finished': return '#22c55e';
+      case 'tested': return '#22c55e';
+      case 'installed': return '#3b82f6';
+      case 'active': return '#22c55e';
+      case 'inactive': return '#ef4444';
+      default: return '#ef4444';
     }
   };
 
@@ -1056,10 +1061,10 @@ export const InteractiveFloorPlan = ({
                             }}
                           >
                             <div
-                              className={`transform -translate-x-1/2 -translate-y-1/2 rounded-full border-2 flex items-center justify-center text-white font-bold hover:scale-110 transition-transform shadow-lg ${
+                              className={`transform -translate-x-1/2 -translate-y-1/2 flex items-center justify-center hover:scale-110 transition-transform drop-shadow-lg ${
                                 draggedPoint && draggedPoint.id === point.id 
-                                  ? `cursor-grabbing scale-110 ${getDropPointColor(point.status)}` 
-                                  : `cursor-grab ${getDropPointColor(point.status)}`
+                                  ? 'cursor-grabbing scale-110' 
+                                  : 'cursor-grab'
                               }`}
                               onMouseDown={(e) => handlePointerDown(e, point, 'dropPoint')}
                               onTouchStart={(e) => handlePointerDown(e, point, 'dropPoint')}
@@ -1073,9 +1078,10 @@ export const InteractiveFloorPlan = ({
                               style={{
                                 width: `${24 * filters.markerScale}px`,
                                 height: `${24 * filters.markerScale}px`,
+                                color: getStatusHexColor(point.status),
                               }}
                             >
-                              <span style={{ fontSize: `${10 * filters.markerScale}px` }}>{getDropPointIcon(point.point_type)}</span>
+                              <DropPointShape type={point.point_type} size={24 * filters.markerScale} />
                               {point.status === 'tested' && (
                                 <div className="absolute inset-0 flex items-center justify-center text-white font-bold" style={{ fontSize: `${8 * filters.markerScale}px` }}>✓</div>
                               )}
