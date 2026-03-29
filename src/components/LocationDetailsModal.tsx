@@ -45,6 +45,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { InteractiveMap } from "@/components/InteractiveMap";
 import { DropPointList } from "@/components/DropPointList";
 import { FloorPlanViewer } from "@/components/FloorPlanViewer";
+import { FloorPlanListView } from "@/components/FloorPlanListView";
 import { RiserDiagramViewer } from "@/components/RiserDiagramViewer";
 import { RiserDiagramLibrary } from "@/components/RiserDiagramLibrary";
 import { CreateRiserDiagramModal } from "@/components/CreateRiserDiagramModal";
