@@ -224,7 +224,7 @@ export const InteractiveMap = ({ locationId, floors = 1, currentFloor = 1, backg
                 </TooltipTrigger>
                 <TooltipContent className="bg-popover border">
                   <div className="text-sm">
-                    {point.label && <p className="font-medium">{point.label}</p>}
+                    {point.label && <p className="font-medium">{formatCableLabel(null, point.label) || point.label}</p>}
                     <p className="text-muted-foreground">{point.room}</p>
                     <p className="text-xs capitalize">
                       {point.type}

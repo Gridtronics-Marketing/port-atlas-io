@@ -96,10 +96,11 @@ function drawDropPointMarker(
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 3;
     
+    const displayLabel = formatCableLabel(marker.typeSpecificData, marker.label) || marker.label;
     const textX = x + 14;
     const textY = y + 4;
-    ctx.strokeText(marker.label, textX, textY);
-    ctx.fillText(marker.label, textX, textY);
+    ctx.strokeText(displayLabel, textX, textY);
+    ctx.fillText(displayLabel, textX, textY);
   }
 }
 
