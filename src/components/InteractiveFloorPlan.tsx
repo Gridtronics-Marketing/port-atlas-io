@@ -648,6 +648,19 @@ export const InteractiveFloorPlan = ({
     }
   };
 
+  const getStatusHexColor = (status: string) => {
+    switch (status) {
+      case 'planned': return '#ef4444';
+      case 'roughed_in': return '#f97316';
+      case 'finished': return '#22c55e';
+      case 'tested': return '#22c55e';
+      case 'installed': return '#3b82f6';
+      case 'active': return '#22c55e';
+      case 'inactive': return '#ef4444';
+      default: return '#ef4444';
+    }
+  };
+
   return (
     <div className={`flex flex-row gap-0 w-full ${className}`}>
       {/* Main Floor Plan Area */}
