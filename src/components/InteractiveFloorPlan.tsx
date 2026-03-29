@@ -166,7 +166,8 @@ export const InteractiveFloorPlan = ({
   const getFileExtension = (url?: string, path?: string, name?: string) => {
     if (!url && !path && !name) return '';
     const source = name || path || url || '';
-    return source.split('.').pop()?.toLowerCase() || '';
+    const cleanSource = source.split('?')[0].split('#')[0];
+    return cleanSource.split('.').pop()?.toLowerCase() || '';
   };
 
   const fileExtension = getFileExtension(actualFileUrl, filePath, fileName);
