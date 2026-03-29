@@ -692,15 +692,6 @@ export const InteractiveFloorPlan = ({
                     <Globe className="h-4 w-4 mr-2" />
                     Satellite View
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setShowDrawModeModal(true)}>
-                    <PenTool className="h-4 w-4 mr-2" />
-                    Draw Floor Plan
-                  </DropdownMenuItem>
-                  {floorPlanFiles && isDrawnFloorPlan(floorPlanFiles, floorNumber) && (
-                    <DropdownMenuItem onClick={() => setShowDrawModeModal(true)}>
-                      <Edit className="h-4 w-4 mr-2" />
-                      Edit Drawing
-                    </DropdownMenuItem>
                   )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
