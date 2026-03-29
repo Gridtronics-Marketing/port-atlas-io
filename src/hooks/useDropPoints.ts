@@ -32,6 +32,7 @@ export interface DropPoint {
   tested_by: string | null;
   tested_date: string | null;
   trade: string | null;
+  type_specific_data: Record<string, any> | null;
   is_locked: boolean | null;
   locked_by: string | null;
   locked_at: string | null;
