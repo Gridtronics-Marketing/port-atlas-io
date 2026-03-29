@@ -51,22 +51,7 @@ export const InteractiveMap = ({ locationId, floors = 1, currentFloor = 1, backg
       cable_count: dp.cable_count || 1
     }));
 
-  const getDropPointIcon = (type: string) => {
-    switch (type) {
-      case "data":
-        return Zap;
-      case "fiber":
-        return Wifi;
-      case "security":
-        return Shield;
-      case "wireless":
-        return Radio;
-      case "power":
-        return Plus;
-      default:
-        return MapPin;
-    }
-  };
+  // Drop point icon function removed — now using DropPointShape component
 
   const getDropPointColor = (status: string) => {
     switch (status) {
