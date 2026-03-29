@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { MapPin, Plus, Zap, Shield, Wifi, Layers, Radio } from "lucide-react";
 import { DropPointShape } from "@/lib/drop-point-shapes";
+import { formatCableLabel } from "@/lib/cable-label-utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
