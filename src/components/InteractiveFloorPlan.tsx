@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Plus, RotateCcw, ZoomIn, ZoomOut, RefreshCw, Camera, FileImage, Upload, PenTool, Edit, Trash2, Route, Lock, Unlock, Globe, Menu, Filter } from 'lucide-react';
+import { Plus, RotateCcw, ZoomIn, ZoomOut, RefreshCw, Camera, FileImage, Upload, Edit, Trash2, Route, Lock, Unlock, Globe, Menu, Filter } from 'lucide-react';
 import { DropPointShape } from '@/lib/drop-point-shapes';
 import { formatCableLabel } from '@/lib/cable-label-utils';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -40,12 +40,12 @@ import { RoomViewModal } from './RoomViewModal';
 import { DropPointColorLegend } from './DropPointColorLegend';
 import { FloorPlanUploadDialog } from './FloorPlanUploadDialog';
 import { FloorPlanFilterDialog, type FloorPlanFilters } from './FloorPlanFilterDialog';
-import { ManualDrawModeCanvas } from './ManualDrawModeCanvas';
+
 import { AddWirePathModal } from './AddWirePathModal';
 import { useDropPoints } from '@/hooks/useDropPoints';
 import { useRoomViews } from '@/hooks/useRoomViews';
 import { useWirePaths, WirePath } from '@/hooks/useWirePaths';
-import { useFloorPlanDrawing, isDrawnFloorPlan, getDrawingData } from '@/hooks/useFloorPlanDrawing';
+import { useFloorPlanDrawing } from '@/hooks/useFloorPlanDrawing';
 import { getSignedStorageUrl, removeFloorPlanFromLocation } from '@/lib/storage-utils';
 import { useToast } from '@/hooks/use-toast';
 import { isValidUUID } from '@/lib/uuid-utils';
@@ -106,7 +106,7 @@ export const InteractiveFloorPlan = ({
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [uploadDialogDefaultTab, setUploadDialogDefaultTab] = useState<'upload' | 'satellite'>('upload');
-  const [showDrawModeModal, setShowDrawModeModal] = useState(false);
+  
   const [uploadedFileUrl, setUploadedFileUrl] = useState<string | undefined>(undefined);
   const [floorPlanFiles, setFloorPlanFiles] = useState<Record<string, any> | null>(null);
   const [showMoveConfirmation, setShowMoveConfirmation] = useState(false);
@@ -118,8 +118,8 @@ export const InteractiveFloorPlan = ({
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   
-  // Floor plan drawing hook
-  const { saveDrawing, isSaving: isDrawingSaving } = useFloorPlanDrawing(locationId, floorNumber);
+  // Floor plan drawing hook (kept for potential future use)
+  const { isSaving: isDrawingSaving } = useFloorPlanDrawing(locationId, floorNumber);
   
   const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -692,16 +692,6 @@ export const InteractiveFloorPlan = ({
                     <Globe className="h-4 w-4 mr-2" />
                     Satellite View
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setShowDrawModeModal(true)}>
-                    <PenTool className="h-4 w-4 mr-2" />
-                    Draw Floor Plan
-                  </DropdownMenuItem>
-                  {floorPlanFiles && isDrawnFloorPlan(floorPlanFiles, floorNumber) && (
-                    <DropdownMenuItem onClick={() => setShowDrawModeModal(true)}>
-                      <Edit className="h-4 w-4 mr-2" />
-                      Edit Drawing
-                    </DropdownMenuItem>
-                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     disabled={!validLocationId}
@@ -820,16 +810,6 @@ export const InteractiveFloorPlan = ({
                 <Globe className="h-4 w-4 mr-2" />
                 Satellite View
               </Button>
-              <Button variant="outline" size="sm" onClick={() => setShowDrawModeModal(true)}>
-                <PenTool className="h-4 w-4 mr-2" />
-                Draw Floor Plan
-              </Button>
-              {floorPlanFiles && isDrawnFloorPlan(floorPlanFiles, floorNumber) && (
-                <Button variant="ghost" size="sm" onClick={() => setShowDrawModeModal(true)}>
-                  <Edit className="h-4 w-4 mr-2" />
-                  Edit Drawing
-                </Button>
-              )}
               <FloorPlanFilterDialog filters={filters} onFiltersChange={setFilters} />
               <TooltipProvider>
                 <Tooltip>
@@ -1575,21 +1555,6 @@ export const InteractiveFloorPlan = ({
         defaultTab={uploadDialogDefaultTab}
       />
 
-      {/* Manual Draw Mode Canvas */}
-      <ManualDrawModeCanvas
-        open={showDrawModeModal}
-        onOpenChange={setShowDrawModeModal}
-        existingDrawingData={floorPlanFiles ? getDrawingData(floorPlanFiles, floorNumber) : null}
-        floorNumber={floorNumber}
-        hasExistingDropPoints={floorDropPoints.length > 0}
-        onSave={async (imageBlob, drawingJson) => {
-          const newUrl = await saveDrawing(imageBlob, drawingJson);
-          if (newUrl) {
-            setUploadedFileUrl(newUrl);
-            onFloorPlanSaved?.();
-          }
-        }}
-      />
 
       {/* Add Wire Path Modal */}
       <AddWirePathModal
