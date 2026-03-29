@@ -1,35 +1,54 @@
 
 
-# Show Cable Names on Map Labels
+# Compact Inline Badge Map Labels
 
-## Summary
-Replace the generic label on floor plan markers with the individual cable names from `type_specific_data.cable_names`, formatted compactly using dash notation for sequential runs (e.g., "1-4" instead of "1,2,3,4").
+## What changes
+Replace the current two-line black bubble label with a single-line **compact badge** attached directly to the shape marker.
 
-## Changes
+### Current
+```text
+┌──────────────┐
+│ 2 Cables     │  ← blue text, separate line
+│ D101, D102   │  ← white text, separate line
+└──────────────┘
+```
 
-### 1. `src/hooks/useDropPoints.ts` — Expose type_specific_data
-- Add `type_specific_data: Record<string, any> | null` to the `DropPoint` interface
-- Include it in the validated mapping (already fetched via `select('*')`)
+### New
+```text
+▲ ─ 2- D101, D102
+     ↑blue  ↑white
+```
 
-### 2. New utility: `src/lib/cable-label-utils.ts`
-- `formatCableLabel(typeSpecificData, cableCount)` function
-- Reads `cable_names` from type_specific_data, collects all names
-- Detects sequential numeric runs and collapses them: `1,2,3,4` → `1-4`, `1,2,5,6` → `1-2, 5-6`
-- Falls back to comma-separated list for non-numeric names
-- Returns the original `label` field if no cable_names exist
+A small rounded pill sitting right next to the marker with:
+- Cable count in blue (e.g. `2-`) immediately followed by cable names in white (e.g. `D101, D102`)
+- All on one line, smaller font, no multi-line box
+- Semi-transparent dark background (`bg-black/60`) with subtle border, tightly padded
+- Positioned with a small offset to the right of the shape, vertically centered
 
-### 3. `src/components/InteractiveFloorPlan.tsx` — Use cable names in map label
-- Import `formatCableLabel`
-- In the persistent label div (line ~1108), replace `{point.label || 'TBD'}` with the formatted cable names string, falling back to `point.label`
-- Keep the cable count line above as-is
+## File: `src/components/InteractiveFloorPlan.tsx` (~lines 1102-1110)
 
-### 4. `src/components/InteractiveMap.tsx` — Same update for the map tooltip/label
-- Use `formatCableLabel` for drop point labels shown on the map
+Replace the two-div label block with a single inline span:
 
-### 5. `src/lib/floor-plan-composite.ts` — Update exported label text
-- When drawing the label text on canvas export, use the same formatted cable name logic
+```tsx
+<div 
+  className="bg-black/60 text-white px-1 py-0.5 rounded whitespace-nowrap shadow-sm border border-white/10 flex items-center gap-0.5"
+  style={{ fontSize: `${9 * filters.markerScale}px` }}
+>
+  <span className="text-blue-400 font-semibold">
+    {point.cable_count || 1}-
+  </span>
+  <span className="font-medium">
+    {formatCableLabel(point.type_specific_data, point.label) || point.label || 'TBD'}
+  </span>
+</div>
+```
+
+Key differences:
+- Single line instead of two
+- Cable count shown as `2-` in blue, followed by names in white
+- Tighter padding (`px-1 py-0.5`), smaller font (9px base vs 10px)
+- Slightly more transparent background
 
 ## File Summary
-- **New**: `src/lib/cable-label-utils.ts`
-- **Modified**: `useDropPoints.ts` (interface), `InteractiveFloorPlan.tsx` (label), `InteractiveMap.tsx` (label), `floor-plan-composite.ts` (export label)
+- **Modified**: `src/components/InteractiveFloorPlan.tsx` (label block only, ~8 lines)
 
