@@ -40,7 +40,7 @@ import { RoomViewModal } from './RoomViewModal';
 import { DropPointColorLegend } from './DropPointColorLegend';
 import { FloorPlanUploadDialog } from './FloorPlanUploadDialog';
 import { FloorPlanFilterDialog, type FloorPlanFilters } from './FloorPlanFilterDialog';
-import { ManualDrawModeCanvas } from './ManualDrawModeCanvas';
+
 import { AddWirePathModal } from './AddWirePathModal';
 import { useDropPoints } from '@/hooks/useDropPoints';
 import { useRoomViews } from '@/hooks/useRoomViews';
