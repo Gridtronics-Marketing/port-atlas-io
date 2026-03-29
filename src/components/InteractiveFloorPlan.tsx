@@ -106,7 +106,7 @@ export const InteractiveFloorPlan = ({
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [uploadDialogDefaultTab, setUploadDialogDefaultTab] = useState<'upload' | 'satellite'>('upload');
-  const [showDrawModeModal, setShowDrawModeModal] = useState(false);
+  
   const [uploadedFileUrl, setUploadedFileUrl] = useState<string | undefined>(undefined);
   const [floorPlanFiles, setFloorPlanFiles] = useState<Record<string, any> | null>(null);
   const [showMoveConfirmation, setShowMoveConfirmation] = useState(false);
