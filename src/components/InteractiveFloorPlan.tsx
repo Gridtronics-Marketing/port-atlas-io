@@ -811,15 +811,6 @@ export const InteractiveFloorPlan = ({
                 <Globe className="h-4 w-4 mr-2" />
                 Satellite View
               </Button>
-              <Button variant="outline" size="sm" onClick={() => setShowDrawModeModal(true)}>
-                <PenTool className="h-4 w-4 mr-2" />
-                Draw Floor Plan
-              </Button>
-              {floorPlanFiles && isDrawnFloorPlan(floorPlanFiles, floorNumber) && (
-                <Button variant="ghost" size="sm" onClick={() => setShowDrawModeModal(true)}>
-                  <Edit className="h-4 w-4 mr-2" />
-                  Edit Drawing
-                </Button>
               )}
               <FloorPlanFilterDialog filters={filters} onFiltersChange={setFilters} />
               <TooltipProvider>
