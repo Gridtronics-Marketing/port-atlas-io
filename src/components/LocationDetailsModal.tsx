@@ -285,35 +285,38 @@ export const LocationDetailsModal = ({ location, open, onOpenChange, onEditLocat
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="w-full h-full max-w-none max-h-none sm:max-w-[900px] sm:max-h-[90vh] lg:max-w-[95vw] lg:w-[95vw] lg:h-[90vh] overflow-y-auto bg-card border rounded-none sm:rounded-xl p-4 sm:p-6">
           <DialogHeader>
-            <div className="flex items-start justify-between">
-              <div>
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+              <div className="min-w-0">
                 <DialogTitle className="flex items-center gap-2 text-xl">
-                  <MapPin className="h-5 w-5 text-primary" />
-                  {location.name}
+                  <MapPin className="h-5 w-5 text-primary shrink-0" />
+                  <span className="truncate">{location.name}</span>
                 </DialogTitle>
-                <div className="flex items-center gap-2 mt-2">
+                <div className="flex flex-wrap items-center gap-2 mt-2">
                   <Badge className={getStatusColor(location.status)}>
                     {location.status}
                   </Badge>
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-sm text-muted-foreground truncate">
                     {location.project?.client?.name || 'No Client'} • {location.address}
                   </span>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
                 {onEditLocation && (
                   <Button
                     variant="outline"
+                    size="sm"
                     onClick={() => onEditLocation(location)}
                     className="flex items-center gap-2"
                   >
                     <MapPin className="h-4 w-4" />
-                    Edit Location
+                    <span className="hidden sm:inline">Edit Location</span>
+                    <span className="sm:hidden">Edit</span>
                   </Button>
                 )}
-                <Button className="bg-gradient-primary hover:bg-primary-hover">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Drop Point
+                <Button size="sm" className="bg-gradient-primary hover:bg-primary-hover">
+                  <Plus className="h-4 w-4 mr-1" />
+                  <span className="hidden sm:inline">Add Drop Point</span>
+                  <span className="sm:hidden">Add Drop</span>
                 </Button>
               </div>
             </div>
