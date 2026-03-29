@@ -3,12 +3,15 @@
  * canvas drawings, drop points, and room views.
  */
 
+import { formatCableLabel } from './cable-label-utils';
+
 export interface DropPointMarker {
   x: number;
   y: number;
   label: string;
   type: string;
   status: string;
+  typeSpecificData?: Record<string, any> | null;
 }
 
 export interface RoomViewMarker {
