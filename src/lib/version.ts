@@ -1,4 +1,4 @@
-export const APP_VERSION = "1.12.0";
+export const APP_VERSION = "1.13.0";
 
 export interface VersionInfo {
   version: string;
@@ -7,6 +7,20 @@ export interface VersionInfo {
 }
 
 export const VERSION_HISTORY: VersionInfo[] = [
+  {
+    version: "1.13.0",
+    date: "2026-03-29",
+    changes: [
+      "New Floor Plan List View — floor plans now displayed as a card list (similar to Drop Points) with thumbnail previews",
+      "Open button launches full-screen floor plan viewer, Edit button opens rename/replace/annotate dialog",
+      "Add Floorplan dialog with three creation methods: Upload, Satellite View, and Draw Floorplan",
+      "Draw Floorplan uses annotation canvas on a blank white background — replaces legacy Fabric.js draw mode",
+      "Edit Floor Plan dialog supports renaming, replacing the map image, and annotating existing maps",
+      "Compact inline badge map labels — cable count shown in blue (e.g. '2-') followed by cable names in white on a single line",
+      "Cable name formatting with dash notation for sequential runs (e.g. '1-4' instead of '1,2,3,4')",
+      "Removed legacy ManualDrawModeCanvas from InteractiveFloorPlan toolbar",
+    ]
+  },
   {
     version: "1.12.0",
     date: "2026-03-28",
