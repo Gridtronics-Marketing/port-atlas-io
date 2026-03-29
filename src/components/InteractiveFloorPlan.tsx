@@ -1557,21 +1557,6 @@ export const InteractiveFloorPlan = ({
         defaultTab={uploadDialogDefaultTab}
       />
 
-      {/* Manual Draw Mode Canvas */}
-      <ManualDrawModeCanvas
-        open={showDrawModeModal}
-        onOpenChange={setShowDrawModeModal}
-        existingDrawingData={floorPlanFiles ? getDrawingData(floorPlanFiles, floorNumber) : null}
-        floorNumber={floorNumber}
-        hasExistingDropPoints={floorDropPoints.length > 0}
-        onSave={async (imageBlob, drawingJson) => {
-          const newUrl = await saveDrawing(imageBlob, drawingJson);
-          if (newUrl) {
-            setUploadedFileUrl(newUrl);
-            onFloorPlanSaved?.();
-          }
-        }}
-      />
 
       {/* Add Wire Path Modal */}
       <AddWirePathModal
