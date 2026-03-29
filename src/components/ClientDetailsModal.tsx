@@ -339,38 +339,62 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onUp
                   <p className="text-xs text-muted-foreground text-center">Click pins to view details</p>
                 </div>
               ) : (
-                <div className="border rounded-lg overflow-hidden">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Address</TableHead>
-                        <TableHead>Floors</TableHead>
-                        <TableHead>Drops</TableHead>
-                        <TableHead>Status</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {locations.map((location) => (
-                        <TableRow
-                          key={location.id}
-                          className="cursor-pointer"
-                          onClick={() => setSelectedLocation(location)}
-                        >
-                          <TableCell className="font-medium">{location.name}</TableCell>
-                          <TableCell className="text-muted-foreground text-sm max-w-[200px] truncate">
-                            {location.address || "—"}
-                          </TableCell>
-                          <TableCell className="text-muted-foreground">{location.floors}</TableCell>
-                          <TableCell className="text-muted-foreground">{location.drop_points_count || 0}</TableCell>
-                          <TableCell>
-                            <Badge variant="secondary" className="text-xs">{location.status}</Badge>
-                          </TableCell>
+                <>
+                  {/* Desktop table */}
+                  <div className="border rounded-lg overflow-hidden hidden sm:block">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Address</TableHead>
+                          <TableHead>Floors</TableHead>
+                          <TableHead>Drops</TableHead>
+                          <TableHead>Status</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                      </TableHeader>
+                      <TableBody>
+                        {locations.map((location) => (
+                          <TableRow
+                            key={location.id}
+                            className="cursor-pointer"
+                            onClick={() => setSelectedLocation(location)}
+                          >
+                            <TableCell className="font-medium">{location.name}</TableCell>
+                            <TableCell className="text-muted-foreground text-sm max-w-[200px] truncate">
+                              {location.address || "—"}
+                            </TableCell>
+                            <TableCell className="text-muted-foreground">{location.floors}</TableCell>
+                            <TableCell className="text-muted-foreground">{location.drop_points_count || 0}</TableCell>
+                            <TableCell>
+                              <Badge variant="secondary" className="text-xs">{location.status}</Badge>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  {/* Mobile card list */}
+                  <div className="space-y-2 sm:hidden">
+                    {locations.map((location) => (
+                      <div
+                        key={location.id}
+                        className="border rounded-lg p-3 cursor-pointer hover:bg-muted/40 transition-colors active:bg-muted/60"
+                        onClick={() => setSelectedLocation(location)}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="font-medium text-foreground">{location.name}</p>
+                          <Badge variant="secondary" className="text-xs">{location.status}</Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground truncate">{location.address || "No address"}</p>
+                        <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
+                          <span>{location.floors} floor{location.floors > 1 ? 's' : ''}</span>
+                          <span>•</span>
+                          <span>{location.drop_points_count || 0} drops</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
               )}
             </div>
 
