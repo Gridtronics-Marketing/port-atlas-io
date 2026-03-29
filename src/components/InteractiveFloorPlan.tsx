@@ -692,7 +692,6 @@ export const InteractiveFloorPlan = ({
                     <Globe className="h-4 w-4 mr-2" />
                     Satellite View
                   </DropdownMenuItem>
-                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     disabled={!validLocationId}
