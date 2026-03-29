@@ -3,12 +3,15 @@
  * canvas drawings, drop points, and room views.
  */
 
+import { formatCableLabel } from './cable-label-utils';
+
 export interface DropPointMarker {
   x: number;
   y: number;
   label: string;
   type: string;
   status: string;
+  typeSpecificData?: Record<string, any> | null;
 }
 
 export interface RoomViewMarker {
@@ -93,10 +96,11 @@ function drawDropPointMarker(
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 3;
     
+    const displayLabel = formatCableLabel(marker.typeSpecificData, marker.label) || marker.label;
     const textX = x + 14;
     const textY = y + 4;
-    ctx.strokeText(marker.label, textX, textY);
-    ctx.fillText(marker.label, textX, textY);
+    ctx.strokeText(displayLabel, textX, textY);
+    ctx.fillText(displayLabel, textX, textY);
   }
 }
 

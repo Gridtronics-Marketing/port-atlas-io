@@ -32,6 +32,7 @@ export interface DropPoint {
   tested_by: string | null;
   tested_date: string | null;
   trade: string | null;
+  type_specific_data: Record<string, any> | null;
   is_locked: boolean | null;
   locked_by: string | null;
   locked_at: string | null;
@@ -139,6 +140,7 @@ export const useDropPoints = (locationId?: string) => {
           cable_count: point.cable_count ?? 0,
           notes: point.notes ?? null,
           test_results: point.test_results ?? null,
+          type_specific_data: point.type_specific_data ?? null,
         })) as DropPoint[];
         
         setDropPoints(validatedData);
