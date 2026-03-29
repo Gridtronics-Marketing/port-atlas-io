@@ -603,16 +603,7 @@ export const InteractiveFloorPlan = ({
     }
   };
 
-  const getDropPointIcon = (type: string) => {
-    const icons = {
-      data: '📡',
-      fiber: '🌐', 
-      security: '🔒',
-      wireless: '📶',
-      power: '⚡'
-    };
-    return icons[type as keyof typeof icons] || '📡';
-  };
+  // Drop point icon function removed — now using DropPointShape component
 
   const getDropPointColor = (status: string) => {
     switch (status) {
