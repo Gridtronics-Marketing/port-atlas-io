@@ -1100,13 +1100,15 @@ export const InteractiveFloorPlan = ({
                                 }}
                               >
                                 <div 
-                                  className="bg-black/80 backdrop-blur-sm text-white px-1.5 py-0.5 rounded-md whitespace-nowrap shadow-md border border-white/20"
-                                  style={{ fontSize: `${10 * filters.markerScale}px` }}
+                                  className="bg-black/60 text-white px-1 py-0.5 rounded whitespace-nowrap shadow-sm border border-white/10 flex items-center gap-0.5"
+                                  style={{ fontSize: `${9 * filters.markerScale}px` }}
                                 >
-                                  <div className="font-medium text-blue-300" style={{ fontSize: `${10 * filters.markerScale}px` }}>
-                                    {point.cable_count ? `${point.cable_count} Cable${point.cable_count > 1 ? 's' : ''}` : 'TBD'}
-                                  </div>
-                                  <div className="font-medium">{formatCableLabel(point.type_specific_data, point.label) || point.label || 'TBD'}</div>
+                                  <span className="text-blue-400 font-semibold">
+                                    {point.cable_count || 1}-
+                                  </span>
+                                  <span className="font-medium">
+                                    {formatCableLabel(point.type_specific_data, point.label) || point.label || 'TBD'}
+                                  </span>
                                 </div>
                               </div>
                             )}
