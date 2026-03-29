@@ -140,6 +140,7 @@ export const useDropPoints = (locationId?: string) => {
           cable_count: point.cable_count ?? 0,
           notes: point.notes ?? null,
           test_results: point.test_results ?? null,
+          type_specific_data: point.type_specific_data ?? null,
         })) as DropPoint[];
         
         setDropPoints(validatedData);

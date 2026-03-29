@@ -1105,7 +1105,7 @@ export const InteractiveFloorPlan = ({
                                   <div className="font-medium text-blue-300" style={{ fontSize: `${10 * filters.markerScale}px` }}>
                                     {point.cable_count ? `${point.cable_count} Cable${point.cable_count > 1 ? 's' : ''}` : 'TBD'}
                                   </div>
-                                  <div className="font-medium">{point.label || 'TBD'}</div>
+                                  <div className="font-medium">{formatCableLabel(point.type_specific_data, point.label) || point.label || 'TBD'}</div>
                                 </div>
                               </div>
                             )}
