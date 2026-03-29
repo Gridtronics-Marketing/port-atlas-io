@@ -118,8 +118,8 @@ export const InteractiveFloorPlan = ({
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   
-  // Floor plan drawing hook
-  const { saveDrawing, isSaving: isDrawingSaving } = useFloorPlanDrawing(locationId, floorNumber);
+  // Floor plan drawing hook (kept for potential future use)
+  const { isSaving: isDrawingSaving } = useFloorPlanDrawing(locationId, floorNumber);
   
   const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
