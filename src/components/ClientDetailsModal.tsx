@@ -196,7 +196,7 @@ export const ClientDetailsModal = ({ client, isOpen, onClose, onEditClient, onUp
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-full h-full max-w-none max-h-none sm:w-[95vw] sm:h-[95vh] sm:max-w-[95vw] sm:max-h-[95vh] overflow-y-auto sm:rounded-lg">
+      <DialogContent className="w-full h-full max-w-none max-h-none sm:w-[95vw] sm:h-[95vh] sm:max-w-[95vw] sm:max-h-[95vh] overflow-y-auto rounded-none sm:rounded-xl p-4 sm:p-6">
         <DialogHeader className="sr-only">
           <DialogTitle>{client.name}</DialogTitle>
           <DialogDescription>Client details for {client.name}</DialogDescription>
