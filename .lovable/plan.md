@@ -1,49 +1,31 @@
 
 
-# Fix: Floor Plan Image Not Loading in Full-Screen Editor
+# Fix: Floor Plan Image Not Rendering in Full-Screen Editor
 
-## Problem
-When opening a floor plan via the "Open" button, the `FloorPlanEditorPage` passes `locationId` and `floorNumber` to `InteractiveFloorPlan`, but does **not** pass `fileUrl` or `filePath`. The component loads `floorPlanFiles` from the database (lines 187-203) but never uses them to resolve the actual image URL. So it always shows "No Floor Plan Uploaded."
+## Root Cause
+Two issues prevent the floor plan from displaying:
+
+1. **File extension detection fails on signed URLs**: When the image URL is resolved from the database (no `filePath`/`fileName` props), the `getFileExtension` function parses the signed URL. The URL looks like `...floor_1.png?token=eyJ...`. Calling `.split('.').pop()` returns `"png?token=eyJ..."`, which does NOT match `'png'` in the `isImage` array. So `isImage` is `false` and the component renders "No Floor Plan Uploaded" instead of the `<img>` tag.
+
+2. **Potential signed URL failure**: If `getSignedStorageUrl` returns `''` (empty string on error), the `if (url)` check correctly skips it, but the image never loads.
 
 ## Fix
 
-### `src/components/InteractiveFloorPlan.tsx` (~lines 186-203)
-After loading `floorPlanFiles` from the DB, use `getFloorPlanImagePath()` to extract the image path for the current `floorNumber`, then resolve a signed URL and set it as `resolvedFileUrl`:
+### `src/components/InteractiveFloorPlan.tsx`
+
+**Change the `getFileExtension` function** (~line 166) to strip query parameters before extracting the extension:
 
 ```typescript
-useEffect(() => {
-  if (!validLocationId) return;
-  
-  const loadFloorPlanFiles = async () => {
-    const { data } = await supabase
-      .from('locations')
-      .select('floor_plan_files')
-      .eq('id', locationId)
-      .single();
-    
-    if (data?.floor_plan_files) {
-      setFloorPlanFiles(data.floor_plan_files as Record<string, any>);
-      
-      // Auto-resolve floor plan image if no URL/path was provided via props
-      if (!fileUrl && !filePath) {
-        const imagePath = getFloorPlanImagePath(
-          data.floor_plan_files as Record<string, any>,
-          floorNumber.toString()
-        );
-        if (imagePath) {
-          const url = await getSignedStorageUrl('floor-plans', imagePath);
-          if (url) setResolvedFileUrl(url);
-        }
-      }
-    }
-  };
-  
-  loadFloorPlanFiles();
-}, [locationId, validLocationId, floorNumber, fileUrl, filePath]);
+const getFileExtension = (url?: string, path?: string, name?: string) => {
+  if (!url && !path && !name) return '';
+  const source = name || path || url || '';
+  // Strip query string and hash before extracting extension
+  const cleanSource = source.split('?')[0].split('#')[0];
+  return cleanSource.split('.').pop()?.toLowerCase() || '';
+};
 ```
 
-Also add the import for `getFloorPlanImagePath` from `@/lib/storage-utils` (it's already partially imported on line 49).
+This single-line addition (`split('?')[0].split('#')[0]`) ensures that `floor_1.png?token=xxx` correctly yields `png`.
 
 ## File Summary
-- **Modified**: `src/components/InteractiveFloorPlan.tsx` (one `useEffect` update + import addition)
-
+- **Modified**: `src/components/InteractiveFloorPlan.tsx` (1 function, ~1 line change)
