@@ -1,55 +1,47 @@
 
 
-# Mobile-Responsive Client Details Modal
+# Custom Drop Point Shapes by Type
 
-## Problem
-The Client Details modal is unusable on mobile — the header buttons overflow, the two-column layout doesn't stack properly, tables are too wide, and the full-screen dialog sizing has issues on small screens.
+## Summary
+Replace the current emoji-based / generic circle markers on the interactive floor plan with distinct **SVG shapes** per drop point type, making each type instantly recognizable at a glance.
+
+## Shape Mapping
+```text
+Data           ▲  Triangle
+WiFi           ●  Circle
+Camera         ◻▸ Small square with triangle (camera shape)
+MDF            ★  Star (5-point)
+IDF            ★  Star (5-point, same as MDF)
+Access Control ▯  Rectangle (portrait/standing)
+AV             ◻⊺ Small square with antenna line on top
+Other          ◆  Diamond (fallback)
+```
 
 ## Changes
 
-### 1. `src/components/ClientDetailsModal.tsx`
+### 1. New shared utility: `src/lib/drop-point-shapes.tsx`
+- Export a `DropPointShape` React component that takes `type` and `size` props and renders the correct inline SVG shape
+- Each shape is a simple SVG: triangle path, circle, camera composite, 5-point star path, tall rectangle, square-with-antenna, diamond
+- All shapes use `currentColor` fill so they inherit the status color from the parent
 
-**Header bar (line ~206):**
-- Stack the header vertically on mobile: title/badge on top, action buttons below
-- Collapse Edit/Email/More buttons into a compact row with smaller sizing on mobile
-- Use `flex-col sm:flex-row` for the header wrapper
+### 2. `src/components/InteractiveFloorPlan.tsx`
+- **Replace `getDropPointIcon`** (line 606-615) — delete the emoji map entirely
+- **Replace the marker div** (lines 1058-1082): swap `rounded-full` circle for a transparent container, render `<DropPointShape type={point.point_type} size={24 * filters.markerScale} />` inside
+- Keep existing: status color applied as `color` style (shapes use `currentColor`), drag handling, scale, labels, cable count badge
 
-**Two-column layout (line ~272):**
-- Already uses `grid-cols-1 lg:grid-cols-5` — this is fine, but reorder so the sidebar cards appear **after** main content on mobile (they currently do since sidebar is `lg:col-span-2` second in DOM — correct)
+### 3. `src/components/InteractiveMap.tsx`
+- Replace `getDropPointIcon` function (lines 53-68) — use `DropPointShape` instead of Lucide icons
+- Update marker button (line 218): remove `rounded-full`, render shape component instead of `<IconComponent />`
 
-**Properties table (line ~342):**
-- On mobile, replace the 5-column table with a card-based list layout
-- Each property becomes a tappable card showing name, address, status, and drop count
-- Use `hidden sm:table` for the table and `sm:hidden` for the card list
+### 4. `src/lib/floor-plan-composite.ts`
+- Replace `drawDropPointMarker` (lines 71-97): instead of drawing a circle, draw the type-appropriate shape (triangle, circle, star, etc.) using canvas path commands
+- Add a `drawShapeByType(ctx, type, x, y, size)` helper with canvas path equivalents of each SVG shape
 
-**Contacts table (line ~408):**
-- Same pattern — hide table on mobile, show stacked contact cards instead
-- Each card: name (bold), role badge, phone + email as tappable links
-
-**Overview grid (line ~457):**
-- Already `grid-cols-2 sm:grid-cols-4` — fine as-is
-
-**Dialog sizing (line ~199):**
-- On mobile: make it truly full-screen with no border-radius
-- Update class: `w-full h-full max-w-none max-h-none sm:w-[95vw] sm:h-[95vh] sm:max-w-[95vw] sm:max-h-[95vh] overflow-y-auto rounded-none sm:rounded-xl p-4 sm:p-6`
-
-### 2. `src/components/LocationDetailsModal.tsx`
-
-**Dialog sizing (line ~286):**
-- Make full-screen on mobile: `w-full h-full max-w-none max-h-none sm:max-w-[900px] sm:max-h-[90vh] lg:max-w-[95vw] lg:w-[95vw] lg:h-[90vh] rounded-none sm:rounded-xl p-4 sm:p-6`
-
-**Header buttons (line ~303):**
-- Stack "Edit Location" and "Add Drop Point" below the title on mobile
-- `flex-col sm:flex-row` with full-width buttons on small screens
-
-**Tabs bar (line ~378):**
-- Replace the fixed 8-column grid with a horizontally scrollable `overflow-x-auto` wrapper
-- Use `w-auto inline-flex` instead of `grid grid-cols-8` so tabs scroll naturally
-- Hide icon labels on mobile — show only icons with tooltips, or abbreviate text
-
-**Stats grid (line ~324):**
-- Already `grid-cols-2 md:grid-cols-4` — good as-is
+### 5. `src/components/DropPointColorLegend.tsx`
+- Add a **type legend section** below the existing status colors showing each shape with its label (Data ▲, WiFi ●, Camera, MDF ★, etc.)
+- Use the same `DropPointShape` component at small size
 
 ## File Summary
-- **Modified**: `ClientDetailsModal.tsx`, `LocationDetailsModal.tsx`
+- **New**: `src/lib/drop-point-shapes.tsx`
+- **Modified**: `InteractiveFloorPlan.tsx`, `InteractiveMap.tsx`, `floor-plan-composite.ts`, `DropPointColorLegend.tsx`
 
