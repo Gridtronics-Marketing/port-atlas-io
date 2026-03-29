@@ -196,11 +196,23 @@ export const InteractiveFloorPlan = ({
       
       if (data?.floor_plan_files) {
         setFloorPlanFiles(data.floor_plan_files as Record<string, any>);
+        
+        // Auto-resolve floor plan image if no URL/path was provided via props
+        if (!fileUrl && !filePath) {
+          const imagePath = getFloorPlanImagePath(
+            data.floor_plan_files as Record<string, any>,
+            floorNumber.toString()
+          );
+          if (imagePath) {
+            const url = await getSignedStorageUrl('floor-plans', imagePath);
+            if (url) setResolvedFileUrl(url);
+          }
+        }
       }
     };
     
     loadFloorPlanFiles();
-  }, [locationId, validLocationId]);
+  }, [locationId, validLocationId, floorNumber, fileUrl, filePath]);
 
   // Update container dimensions
   useEffect(() => {
