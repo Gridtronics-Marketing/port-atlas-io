@@ -132,6 +132,7 @@ export const ClientDropPointPlacementDialog = ({
                 <SelectItem value="camera">Camera</SelectItem>
                 <SelectItem value="access_control">Access Control</SelectItem>
                 <SelectItem value="av">A/V</SelectItem>
+                <SelectItem value="speaker">Speaker</SelectItem>
                 <SelectItem value="other">Other</SelectItem>
               </SelectContent>
             </Select>

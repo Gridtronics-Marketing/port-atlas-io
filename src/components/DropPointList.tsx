@@ -205,6 +205,7 @@ const DropPointListContent = ({ locationId }: DropPointListProps) => {
             <SelectItem value="security">Security</SelectItem>
             <SelectItem value="wireless">Wireless</SelectItem>
             <SelectItem value="power">Power</SelectItem>
+            <SelectItem value="speaker">Speaker</SelectItem>
           </SelectContent>
         </Select>
 

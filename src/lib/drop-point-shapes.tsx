@@ -182,6 +182,28 @@ export function drawDropPointShape(
       break;
     }
 
+    case 'speaker': { // speaker with sound waves
+      const bw = s * 0.5;
+      const bh = s * 0.7;
+      ctx.rect(cx - s * 0.8, cy - bh / 2, bw, bh);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(cx - s * 0.8 + bw, cy - bh / 2);
+      ctx.lineTo(cx + s * 0.2, cy - s);
+      ctx.lineTo(cx + s * 0.2, cy + s);
+      ctx.lineTo(cx - s * 0.8 + bw, cy + bh / 2);
+      ctx.closePath();
+      ctx.fill();
+      // sound waves
+      ctx.beginPath();
+      ctx.arc(cx + s * 0.3, cy, s * 0.4, -Math.PI / 4, Math.PI / 4);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(cx + s * 0.3, cy, s * 0.7, -Math.PI / 4, Math.PI / 4);
+      ctx.stroke();
+      break;
+    }
+
     default: // diamond
       ctx.moveTo(cx, cy - s);
       ctx.lineTo(cx + s, cy);

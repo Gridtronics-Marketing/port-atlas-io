@@ -30,6 +30,7 @@ const DROP_POINT_TYPES = [
   { value: 'idf', label: 'IDF' },
   { value: 'access_control', label: 'Access Control' },
   { value: 'av', label: 'A/V' },
+  { value: 'speaker', label: 'Speaker' },
   { value: 'other', label: 'Other' },
 ];
 
