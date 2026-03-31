@@ -100,6 +100,7 @@ export const dropPointShapeTypes = [
   { type: 'idf', label: 'IDF' },
   { type: 'accesscontrol', label: 'Access Control' },
   { type: 'av', label: 'AV' },
+  { type: 'speaker', label: 'Speaker' },
   { type: 'other', label: 'Other' },
 ];
 
