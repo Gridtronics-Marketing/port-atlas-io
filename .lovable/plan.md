@@ -1,35 +1,32 @@
 
 
-# Add "Speaker" Drop Point Type
+# Update Version Number and Change Log
 
-## Summary
-Add a new "Speaker" drop point type with a speaker-shaped SVG icon across all relevant files.
+## Changes to `src/lib/version.ts`
 
-## Changes
+**Bump version** from `1.13.0` to `1.14.0` and add a new changelog entry at the top of `VERSION_HISTORY`:
 
-### 1. `src/lib/drop-point-shapes.tsx`
-- Add `case 'speaker':` to `getShapePath()` — SVG speaker icon (rectangle body + sound waves or horn)
-- Add `{ type: 'speaker', label: 'Speaker' }` to `dropPointShapeTypes` array
-- Add `case 'speaker':` to `drawDropPointShape()` canvas function
+```typescript
+export const APP_VERSION = "1.14.0";
+```
 
-### 2. `src/components/AddDropPointModal.tsx` (line 33)
-- Add `{ value: 'speaker', label: 'Speaker' }` to `DROP_POINT_TYPES` array
-
-### 3. `src/components/FloorPlanFilterDialog.tsx` (line 44)
-- Add `{ value: 'speaker', label: 'Speaker' }` to `DROP_POINT_TYPES` array
-
-### 4. `src/components/ClientDropPointPlacementDialog.tsx` (line 134)
-- Add `<SelectItem value="speaker">Speaker</SelectItem>`
-
-### 5. `src/components/ClientDropPointPlacementSession.tsx` (line 80)
-- Add `<SelectItem value="speaker">Speaker</SelectItem>`
-
-### 6. `src/components/DropPointList.tsx` (line 205 area)
-- Add `<SelectItem value="speaker">Speaker</SelectItem>` to the type filter
-
-### Speaker SVG Shape
-A speaker icon: rectangle body with two arcs representing sound waves — distinct from all existing shapes.
+New entry:
+```typescript
+{
+  version: "1.14.0",
+  date: "2026-03-31",
+  changes: [
+    "Google Maps-style floor plan viewer — pan by drag, zoom by mouse wheel (PC) or pinch gesture (mobile), no scrollbars",
+    "Floating action buttons for Drop Point, Room View, and Filter — always visible regardless of zoom position",
+    "Secondary actions (Upload, Satellite, Wire Path, Export PDF, Delete) moved to floating '...' menu",
+    "Removed floor plan legend and instructions panel for cleaner map view",
+    "Fixed floor plan image not loading in full-screen editor — resolves file URL from database when not passed as prop",
+    "Fixed signed URL file extension detection — strips query parameters before checking image type",
+    "Added Speaker drop point type with speaker icon (rectangle body + sound waves)",
+  ]
+}
+```
 
 ## File Summary
-- **Modified** (6 files): `drop-point-shapes.tsx`, `AddDropPointModal.tsx`, `FloorPlanFilterDialog.tsx`, `ClientDropPointPlacementDialog.tsx`, `ClientDropPointPlacementSession.tsx`, `DropPointList.tsx`
+- **Modified**: `src/lib/version.ts` — version bump + new changelog entry
 
