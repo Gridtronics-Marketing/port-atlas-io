@@ -72,6 +72,17 @@ function getShapePath(type: string): React.ReactNode {
         </>
       );
 
+    // Speaker — Speaker icon with sound waves
+    case 'speaker':
+      return (
+        <>
+          <rect x="2" y="8" width="6" height="8" />
+          <polygon points="8,8 15,3 15,21 8,16" />
+          <path d="M18,9 Q21,12 18,15" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          <path d="M20,6 Q24,12 20,18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        </>
+      );
+
     // Other / fallback — Diamond
     default:
       return <polygon points="12,1 23,12 12,23 1,12" />;
