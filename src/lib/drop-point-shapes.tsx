@@ -72,6 +72,17 @@ function getShapePath(type: string): React.ReactNode {
         </>
       );
 
+    // Speaker — Speaker icon with sound waves
+    case 'speaker':
+      return (
+        <>
+          <rect x="2" y="8" width="6" height="8" />
+          <polygon points="8,8 15,3 15,21 8,16" />
+          <path d="M18,9 Q21,12 18,15" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          <path d="M20,6 Q24,12 20,18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        </>
+      );
+
     // Other / fallback — Diamond
     default:
       return <polygon points="12,1 23,12 12,23 1,12" />;
@@ -89,6 +100,7 @@ export const dropPointShapeTypes = [
   { type: 'idf', label: 'IDF' },
   { type: 'accesscontrol', label: 'Access Control' },
   { type: 'av', label: 'AV' },
+  { type: 'speaker', label: 'Speaker' },
   { type: 'other', label: 'Other' },
 ];
 
@@ -167,6 +179,28 @@ export function drawDropPointShape(
       ctx.stroke();
       ctx.beginPath();
       ctx.arc(cx, cy - s, s * 0.2, 0, Math.PI * 2);
+      break;
+    }
+
+    case 'speaker': { // speaker with sound waves
+      const bw = s * 0.5;
+      const bh = s * 0.7;
+      ctx.rect(cx - s * 0.8, cy - bh / 2, bw, bh);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(cx - s * 0.8 + bw, cy - bh / 2);
+      ctx.lineTo(cx + s * 0.2, cy - s);
+      ctx.lineTo(cx + s * 0.2, cy + s);
+      ctx.lineTo(cx - s * 0.8 + bw, cy + bh / 2);
+      ctx.closePath();
+      ctx.fill();
+      // sound waves
+      ctx.beginPath();
+      ctx.arc(cx + s * 0.3, cy, s * 0.4, -Math.PI / 4, Math.PI / 4);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(cx + s * 0.3, cy, s * 0.7, -Math.PI / 4, Math.PI / 4);
+      ctx.stroke();
       break;
     }
 
